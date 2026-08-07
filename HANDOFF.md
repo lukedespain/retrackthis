@@ -6,12 +6,22 @@ prove the whole loop works. It does — sign up, post a job (real Stripe
 escrow), submit takes, pick a winner (real capture + attempted transfer),
 cancel for a refund, all tested against real Supabase + Stripe test mode.
 
-The UI works but was never meant to be the final design pass — that's what
-this handoff is for. Tailwind is already wired up, there's a starting design
-system (`components/ui/Button.tsx`, `components/ui/Badge.tsx`, one accent
-color in `tailwind.config.ts`), and Inter is loaded via `next/font`. Original
-brief was Gumroad/Figma-style minimalism — lots of whitespace, one accent
-color, clean sans-serif. Lean into that.
+**Update:** Cursor already did a first design pass (commit `3ff7a3f`,
+"Apply a minimal Gumroad-style frontend design pass"). Claude reviewed it —
+boundaries were respected (no backend/API/schema changes snuck in), and it's
+good work: a real extended design system now lives in `components/ui/`
+(`Card`, `Input`, `Textarea`, `EmptyState`, `RoleToggle`, `SegmentedControl`,
+plus `Button`/`Badge` from before), `components/AuthLayout.tsx`,
+`components/DashboardHeader.tsx`, and `components/Logo.tsx`. **Build on
+these, don't reinvent them.** The repo now has a GitHub remote
+(`github.com/lukedespain/retrackthis`, branch `main`) — commit and push
+directly, no more local-only setup needed.
+
+Tailwind is wired up with an extended theme (`accent`/`accent-muted`,
+`surface`, `shadow-card`, custom radii — see `tailwind.config.ts`), and Inter
+is loaded via `next/font`. Original brief was Gumroad/Figma-style
+minimalism — lots of whitespace, one accent color, clean sans-serif. Keep
+leaning into that.
 
 ## What's fair game to restyle/rebuild freely
 
@@ -32,14 +42,16 @@ Every mutating API route derives the acting user from the session (never a
 client-supplied id), so forms should just call the routes as-is — no need to
 pass `creatorId`/`musicianId` anywhere in a request body.
 
+## Done since the last handoff
+
+- ~~Role switcher placement~~ — done. Creator/Musician is now a pill toggle
+  next to the username (`components/DashboardHeader.tsx`,
+  `components/ui/RoleToggle.tsx`), and "Open jobs / My submissions" mirrors
+  the same pattern one level down in the musician view.
+
 ## Known open items (from a product conversation, not yet built)
 
-1. **Role switcher placement.** Right now Creator/Musician tabs sit below
-   the header (`app/dashboard/page.tsx`). The idea is to move that switch
-   up next to the user's name, top-right — more like a mode toggle than a
-   tab row.
-
-2. **"My contacts" — a musician rolodex.** Idea: let a creator notify
+1. **"My contacts" — a musician rolodex.** Idea: let a creator notify
    musicians they've worked with before when posting a new job — a way to
    assemble a repeat remote team over time, while the open marketplace
    stays the discovery/onboarding path for people who don't have that
@@ -58,18 +70,18 @@ pass `creatorId`/`musicianId` anywhere in a request body.
    Bring this back to Claude for the data model / notification approach
    once the product questions above are answered.
 
-3. **Real card collection.** `PostJobForm.tsx` currently sends Stripe's
+2. **Real card collection.** `PostJobForm.tsx` currently sends Stripe's
    published test-mode PaymentMethod token (`pm_card_visa`) instead of a
    real card — there's no Stripe Elements integration yet. Needed before
    this can work with anything beyond Stripe test mode.
 
-4. **Real Stripe Connect onboarding.** Seeded musicians have fake/test
+3. **Real Stripe Connect onboarding.** Seeded musicians have fake/test
    `stripeAccountId` values. Building real onboarding also hit a snag worth
    knowing about: this Stripe account has Accounts v1 disabled (Stripe's
    pushing everyone to a newer v2 Accounts API), so account creation needs
    the v2 API, not the v1 helpers most Stripe examples still show.
 
-5. **Deployment.** Still local-only — no hosting, no domain wiring yet.
+4. **Deployment.** Still local-only — no hosting, no domain wiring yet.
 
 ## Local setup
 

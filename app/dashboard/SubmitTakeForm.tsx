@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AudioUpload } from "@/components/AudioUpload";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Textarea";
@@ -17,6 +18,7 @@ export function SubmitTakeForm({ jobId }: { jobId: string }) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setSubmitted(false);
 
     const formEl = e.currentTarget;
     const form = new FormData(formEl);
@@ -48,7 +50,7 @@ export function SubmitTakeForm({ jobId }: { jobId: string }) {
   }
 
   return (
-    <Card>
+    <Card padding="md">
       <h3 className="text-base font-semibold text-gray-900">Submit your take</h3>
       <p className="mt-1 text-sm text-gray-500">Free to submit — upload your best recording of the part.</p>
 
@@ -62,14 +64,10 @@ export function SubmitTakeForm({ jobId }: { jobId: string }) {
           hint="Optional"
         />
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {submitted && (
-          <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Take submitted successfully.
-          </div>
-        )}
+        {error && <Alert variant="error">{error}</Alert>}
+        {submitted && <Alert variant="success">Take submitted successfully.</Alert>}
 
-        <Button type="submit" disabled={submitting}>
+        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
           {submitting ? "Submitting…" : "Submit take"}
         </Button>
       </form>

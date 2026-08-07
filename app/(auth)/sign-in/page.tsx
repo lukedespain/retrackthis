@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { AuthFooterLink, AuthLayout } from "@/components/AuthLayout";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { supabaseClient } from "@/lib/supabaseClient";
@@ -47,7 +48,7 @@ export default function SignInPage() {
       <form onSubmit={handleSubmit} className="space-y-5">
         <Input label="Email" name="email" type="email" required autoComplete="email" />
         <Input label="Password" name="password" type="password" required autoComplete="current-password" />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <Alert variant="error">{error}</Alert>}
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? "Signing in…" : "Sign in"}
         </Button>

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { DashboardHeader } from "@/components/DashboardHeader";
+import { Spinner } from "@/components/ui/Spinner";
 import { supabaseClient } from "@/lib/supabaseClient";
 import { CompleteProfileForm } from "./CompleteProfileForm";
 import { CreatorView } from "./CreatorView";
@@ -42,9 +43,9 @@ export default function DashboardPage() {
 
   if (profile === undefined) {
     return (
-      <main className="mx-auto max-w-4xl px-6 py-10">
+      <main className="mx-auto max-w-4xl px-5 py-8 sm:px-6 sm:py-10">
         <div className="flex items-center justify-center py-32">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-accent" />
+          <Spinner />
         </div>
       </main>
     );
@@ -55,7 +56,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
+    <main className="mx-auto max-w-4xl px-5 py-8 sm:px-6 sm:py-10">
       <DashboardHeader
         name={profile.name}
         roles={availableTabs}
@@ -64,7 +65,7 @@ export default function DashboardPage() {
         onSignOut={signOut}
       />
 
-      <div className="mt-10">
+      <div className="mt-8 sm:mt-10">
         {activeTab === "CREATOR" ? <CreatorView /> : <MusicianView />}
       </div>
     </main>

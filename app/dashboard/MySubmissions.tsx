@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Spinner } from "@/components/ui/Spinner";
 import { formatCents } from "@/lib/format";
 import type { MyTake } from "@/lib/types";
 
@@ -26,7 +27,7 @@ export function MySubmissions() {
   if (takes === null) {
     return (
       <div className="flex justify-center py-16">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-accent" />
+        <Spinner />
       </div>
     );
   }
@@ -44,15 +45,15 @@ export function MySubmissions() {
     <div className="space-y-3">
       {takes.map((take) => (
         <Card key={take.id} padding="sm">
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium text-gray-900">{take.job.title}</span>
             <Badge status={statusFor(take)} />
           </div>
           <p className="mt-1.5 text-sm text-gray-500">
             {take.job.instrument} · {formatCents(take.job.priceCents)}
           </p>
-          {take.note && <p className="mt-2 text-sm text-gray-500">{take.note}</p>}
-          <audio controls src={take.audioFileUrl} className="mt-3 h-9 w-full max-w-sm" />
+          {take.note && <p className="mt-2 text-sm leading-relaxed text-gray-500">{take.note}</p>}
+          <audio controls src={take.audioFileUrl} className="audio-player mt-3" />
         </Card>
       ))}
     </div>

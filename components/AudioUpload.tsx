@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Alert } from "@/components/ui/Alert";
 import { AUDIO_UPLOAD_HINT, MAX_AUDIO_UPLOAD_BYTES, MAX_AUDIO_UPLOAD_MB } from "@/lib/constants";
 import { supabaseClient } from "@/lib/supabaseClient";
 
@@ -69,11 +70,11 @@ export function AudioUpload({
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       <div className="mt-1.5">
         <label
-          className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-center transition-colors ${
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed px-4 py-7 text-center transition-all duration-150 ease-out active:scale-[0.995] sm:py-8 ${
             status === "done"
               ? "border-emerald-200 bg-emerald-50/50 text-emerald-700"
               : status === "error"
-                ? "border-red-200 bg-red-50/50 text-red-600"
+                ? "border-red-200 bg-red-50/50 text-red-600 hover:border-red-300"
                 : status === "uploading"
                   ? "border-accent/30 bg-accent-muted/50 text-accent"
                   : "border-gray-200 text-gray-500 hover:border-accent/40 hover:bg-accent-muted/30 hover:text-accent"
@@ -93,10 +94,17 @@ export function AudioUpload({
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
             </svg>
           )}
+          {status === "error" && (
+            <svg className="mb-2 h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          )}
           <span className="text-sm font-medium">{statusMessages[status]}</span>
         </label>
         {error ? (
-          <p className="mt-2 text-xs text-red-600">{error}</p>
+          <Alert variant="error" className="mt-2 py-2 text-xs">
+            {error}
+          </Alert>
         ) : (
           <p className="mt-2 text-xs text-gray-400">{AUDIO_UPLOAD_HINT}</p>
         )}

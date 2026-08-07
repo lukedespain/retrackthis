@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AudioUpload } from "@/components/AudioUpload";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -50,7 +51,7 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
   }
 
   return (
-    <Card>
+    <Card padding="md">
       <h3 className="text-base font-semibold text-gray-900">Post a new job</h3>
       <p className="mt-1 text-sm text-gray-500">
         Your payment will be held in escrow until you pick a winner.
@@ -97,13 +98,13 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
           />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <Alert variant="error">{error}</Alert>}
 
-        <div className="flex gap-3 pt-2">
-          <Button type="submit" disabled={submitting}>
+        <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:gap-3">
+          <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
             {submitting ? "Posting…" : "Post job"}
           </Button>
-          <Button type="button" variant="ghost" onClick={onCancel}>
+          <Button type="button" variant="ghost" onClick={onCancel} className="w-full sm:w-auto">
             Cancel
           </Button>
         </div>

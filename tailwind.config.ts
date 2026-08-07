@@ -36,6 +36,12 @@ const config: Config = {
         "2xl": "1rem",
         "3xl": "1.25rem",
       },
+      transitionDuration: {
+        DEFAULT: "150ms",
+      },
+      transitionTimingFunction: {
+        DEFAULT: "cubic-bezier(0.4, 0, 0.2, 1)",
+      },
     },
   },
   plugins: [],

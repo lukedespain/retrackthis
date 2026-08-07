@@ -9,8 +9,8 @@ type Props = HTMLAttributes<HTMLDivElement> & {
 const paddingMap = {
   none: "",
   sm: "p-4",
-  md: "p-6",
-  lg: "p-8",
+  md: "p-5 sm:p-6",
+  lg: "p-6 sm:p-8",
 };
 
 export function Card({
@@ -23,9 +23,13 @@ export function Card({
 }: Props) {
   return (
     <div
-      className={`rounded-2xl bg-white shadow-card transition-all ${paddingMap[padding]} ${
+      className={`rounded-2xl bg-white shadow-card transition-all duration-150 ease-out ${paddingMap[padding]} ${
         selected ? "ring-2 ring-accent/30 shadow-card-hover" : ""
-      } ${hover ? "hover:shadow-card-hover cursor-pointer" : ""} ${className}`}
+      } ${
+        hover
+          ? "cursor-pointer hover:shadow-card-hover hover:ring-1 hover:ring-gray-200/80 active:scale-[0.995]"
+          : ""
+      } ${className}`}
       {...props}
     >
       {children}

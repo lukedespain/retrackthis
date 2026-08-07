@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthFooterLink, AuthLayout } from "@/components/AuthLayout";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { supabaseClient } from "@/lib/supabaseClient";
@@ -69,7 +70,7 @@ export default function SignUpPage() {
           autoComplete="new-password"
           hint="At least 6 characters"
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <Alert variant="error">{error}</Alert>}
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? "Creating account…" : "Sign up"}
         </Button>

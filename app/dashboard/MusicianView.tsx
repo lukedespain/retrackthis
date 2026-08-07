@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Spinner } from "@/components/ui/Spinner";
 import { formatCents, formatDeadline } from "@/lib/format";
 import type { Job } from "@/lib/types";
 import { MySubmissions } from "./MySubmissions";
@@ -16,7 +17,7 @@ export function MusicianView() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
             {subTab === "browse" ? "Open jobs" : "My submissions"}
@@ -34,10 +35,11 @@ export function MusicianView() {
           ]}
           value={subTab}
           onChange={setSubTab}
+          className="self-start"
         />
       </div>
 
-      <div className="mt-8">{subTab === "browse" ? <BrowseJobs /> : <MySubmissions />}</div>
+      <div className="mt-6 sm:mt-8">{subTab === "browse" ? <BrowseJobs /> : <MySubmissions />}</div>
     </div>
   );
 }
@@ -57,7 +59,7 @@ function BrowseJobs() {
   if (jobs === null) {
     return (
       <div className="flex justify-center py-16">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-accent" />
+        <Spinner />
       </div>
     );
   }
@@ -72,7 +74,7 @@ function BrowseJobs() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-8">
       <div className="space-y-2">
         {jobs.map((job) => (
           <Card
@@ -90,21 +92,25 @@ function BrowseJobs() {
         ))}
       </div>
 
-      <div>
+      <div className="min-w-0">
         {selectedJob ? (
           <div>
-            <h3 className="text-xl font-semibold tracking-tight text-gray-900">{selectedJob.title}</h3>
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+            <h3 className="text-lg font-semibold tracking-tight text-gray-900 sm:text-xl">
+              {selectedJob.title}
+            </h3>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-gray-500">
               <span>{selectedJob.instrument}</span>
+              <span aria-hidden="true">·</span>
               <span>{formatCents(selectedJob.priceCents)}</span>
+              <span aria-hidden="true">·</span>
               <span>{formatDeadline(selectedJob.deadline)}</span>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-gray-600">{selectedJob.description}</p>
             <div className="mt-4">
               <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Demo</p>
-              <audio controls src={selectedJob.demoFileUrl} className="h-9 w-full max-w-sm" />
+              <audio controls src={selectedJob.demoFileUrl} className="audio-player" />
             </div>
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-8">
               <SubmitTakeForm jobId={selectedJob.id} />
             </div>
           </div>
@@ -112,6 +118,7 @@ function BrowseJobs() {
           <EmptyState
             title="Select a job"
             description="Choose a gig from the list to see details and submit your take."
+            className="hidden lg:flex"
           />
         )}
       </div>

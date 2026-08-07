@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AuthLayout } from "@/components/AuthLayout";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -37,7 +38,7 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
     <AuthLayout title="One more thing" subtitle="What should we call you?">
       <form onSubmit={handleSubmit} className="space-y-5">
         <Input label="Name" name="name" required autoFocus placeholder="Alex Rivera" />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <Alert variant="error">{error}</Alert>}
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? "Saving…" : "Continue"}
         </Button>

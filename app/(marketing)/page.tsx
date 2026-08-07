@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { MarketingHeaderActions } from "@/components/MarketingHeaderActions";
 import { Button } from "@/components/ui/Button";
 
 export default function LandingPage() {
@@ -7,11 +8,7 @@ export default function LandingPage() {
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6 sm:px-6 sm:py-8">
         <Logo />
-        <Link href="/sign-in">
-          <Button variant="ghost" size="sm">
-            Sign in
-          </Button>
-        </Link>
+        <MarketingHeaderActions />
       </header>
 
       <main>

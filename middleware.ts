@@ -38,5 +38,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  // Refresh the session on all app routes — not just /dashboard. Limiting
+  // to dashboard meant visiting `/` skipped token renewal and could drop
+  // the session when navigating back.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

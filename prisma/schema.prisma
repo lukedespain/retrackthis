@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CREATOR
+  MUSICIAN
+}
+
+enum JobStatus {
+  OPEN
+  AWARDED
+  CANCELLED
+}
+
+model User {
+  id              String   @id // matches the Supabase Auth user id (uuid)
+  email           String   @unique
+  name            String
+  role            Role[]   // a person can be both a creator and a musician
+  stripeAccountId String?  // Stripe Connect account, musicians only
+  createdAt       DateTime @default(now())
+
+  jobsPosted      Job[]    @relation("JobsPosted")
+  takesSubmitted  Take[]
+}
+
+model Job {
+  id             String    @id @default(cuid())
+  creator        User      @relation("JobsPosted", fields: [creatorId], references: [id])
+  creatorId      String
+  title          String
+  instrument     String    // e.g. "Upright bass", "Piano"
+  description    String
+  demoFileUrl    String    // the MIDI/scratch demo the creator uploaded
+  priceCents     Int
+  deadline       DateTime
+  status         JobStatus @default(OPEN)
+  createdAt      DateTime  @default(now())
+
+  takes          Take[]
+  payment        Payment?
+}
+
+model Take {
+  id           String   @id @default(cuid())
+  job          Job      @relation(fields: [jobId], references: [id])
+  jobId        String
+  musician     User     @relation(fields: [musicianId], references: [id])
+  musicianId   String
+  audioFileUrl String
+  note         String?
+  isWinner     Boolean  @default(false)
+  submittedAt  DateTime @default(now())
+}
+
+model Payment {
+  id                    String   @id @default(cuid())
+  job                   Job      @relation(fields: [jobId], references: [id])
+  jobId                 String   @unique
+  stripePaymentIntentId String
+  amountCents           Int
+  platformFeeCents      Int
+  status                String   // "authorized" | "captured" | "transferred" | "cancelled"
+  createdAt             DateTime @default(now())
+}

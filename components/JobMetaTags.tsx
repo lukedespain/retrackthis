@@ -6,7 +6,7 @@ function MetaTag({
   children,
   className,
 }: {
-  emoji: string;
+  emoji?: string;
   children: React.ReactNode;
   className: string;
 }) {
@@ -14,7 +14,7 @@ function MetaTag({
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${className}`}
     >
-      <span aria-hidden="true">{emoji}</span>
+      {emoji ? <span aria-hidden="true">{emoji}</span> : null}
       <span>{children}</span>
     </span>
   );
@@ -38,9 +38,8 @@ export function JobMetaTags({
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      <MetaTag emoji={instrumentStyle.emoji} className={instrumentStyle.className}>
-        {instrument}
-      </MetaTag>
+      {/* Instrument: color only — emoji sets aren't unique enough across instruments */}
+      <MetaTag className={instrumentStyle.className}>{instrument}</MetaTag>
       <MetaTag emoji="💵" className="bg-emerald-50 text-emerald-800 ring-emerald-600/10">
         {formatCents(priceCents)}
       </MetaTag>

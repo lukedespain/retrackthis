@@ -24,6 +24,6 @@
 
 @layer utilities {
   .audio-player {
-    @apply h-10 w-full max-w-none sm:max-w-sm;
+    @apply h-10 w-full;
   }
 }

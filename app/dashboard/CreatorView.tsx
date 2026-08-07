@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { AudioPlayer } from "@/components/AudioPlayer";
 import { formatCents, formatDeadline } from "@/lib/format";
 import type { Job, Take } from "@/lib/types";
 import { PostJobForm } from "./PostJobForm";
@@ -291,7 +292,7 @@ function TakeCard({
           {take.note && (
             <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{take.note}</p>
           )}
-          <audio controls src={take.audioFileUrl} className="audio-player mt-3" />
+          <AudioPlayer src={take.audioFileUrl} label="Take" className="mt-3" />
         </div>
         {jobOpen && !isWinner && (
           <Button

@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
+import { AudioPlayer } from "@/components/AudioPlayer";
 import { formatCents, formatDeadline } from "@/lib/format";
 import type { Job } from "@/lib/types";
 import { MySubmissions } from "./MySubmissions";
@@ -108,7 +109,7 @@ function BrowseJobs() {
             <p className="mt-4 text-sm leading-relaxed text-gray-600">{selectedJob.description}</p>
             <div className="mt-4">
               <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Demo</p>
-              <audio controls src={selectedJob.demoFileUrl} className="audio-player" />
+              <AudioPlayer src={selectedJob.demoFileUrl} label="Demo" />
             </div>
             <div className="mt-6 sm:mt-8">
               <SubmitTakeForm jobId={selectedJob.id} />

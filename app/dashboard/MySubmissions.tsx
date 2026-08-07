@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { AudioPlayer } from "@/components/AudioPlayer";
 import { formatCents } from "@/lib/format";
 import type { MyTake } from "@/lib/types";
 
@@ -53,7 +54,7 @@ export function MySubmissions() {
             {take.job.instrument} · {formatCents(take.job.priceCents)}
           </p>
           {take.note && <p className="mt-2 text-sm leading-relaxed text-gray-500">{take.note}</p>}
-          <audio controls src={take.audioFileUrl} className="audio-player mt-3" />
+          <AudioPlayer src={take.audioFileUrl} label="Take" className="mt-3" />
         </Card>
       ))}
     </div>

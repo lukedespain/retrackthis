@@ -57,21 +57,48 @@ export function AudioUpload({
     }
   }
 
+  const statusMessages = {
+    idle: "Choose an audio file",
+    uploading: "Uploading…",
+    done: fileName ? `Uploaded: ${fileName}` : "Uploaded",
+    error: "Upload failed — click to retry",
+  };
+
   return (
     <div>
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
       <div className="mt-1.5">
-        <label className="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 hover:border-accent hover:text-accent">
+        <label
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-center transition-colors ${
+            status === "done"
+              ? "border-emerald-200 bg-emerald-50/50 text-emerald-700"
+              : status === "error"
+                ? "border-red-200 bg-red-50/50 text-red-600"
+                : status === "uploading"
+                  ? "border-accent/30 bg-accent-muted/50 text-accent"
+                  : "border-gray-200 text-gray-500 hover:border-accent/40 hover:bg-accent-muted/30 hover:text-accent"
+          }`}
+        >
           <input type="file" accept="audio/*" className="hidden" onChange={handleFileChange} />
-          {status === "uploading" && "Uploading…"}
-          {status === "idle" && "Choose an audio file"}
-          {status === "done" && `Uploaded: ${fileName}`}
-          {status === "error" && "Upload failed — click to retry"}
+          {status === "uploading" && (
+            <div className="mb-2 h-4 w-4 animate-spin rounded-full border-2 border-accent/20 border-t-accent" />
+          )}
+          {status === "done" && (
+            <svg className="mb-2 h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+          {status === "idle" && (
+            <svg className="mb-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+          )}
+          <span className="text-sm font-medium">{statusMessages[status]}</span>
         </label>
         {error ? (
-          <p className="mt-1 text-xs text-red-600">{error}</p>
+          <p className="mt-2 text-xs text-red-600">{error}</p>
         ) : (
-          <p className="mt-1 text-xs text-gray-400">{AUDIO_UPLOAD_HINT}</p>
+          <p className="mt-2 text-xs text-gray-400">{AUDIO_UPLOAD_HINT}</p>
         )}
       </div>
     </div>

@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AuthFooterLink, AuthLayout } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 export default function SignUpPage() {
@@ -32,7 +33,6 @@ export default function SignUpPage() {
     if (data.session) {
       router.push("/dashboard");
     } else {
-      // Email confirmation is required before a session exists.
       setNeedsConfirmation(true);
       setSubmitting(false);
     }
@@ -40,52 +40,40 @@ export default function SignUpPage() {
 
   if (needsConfirmation) {
     return (
-      <main className="mx-auto max-w-sm px-6 py-24 text-center">
-        <h1 className="text-xl font-medium text-gray-900">Check your email</h1>
-        <p className="mt-2 text-sm text-gray-500">
-          We sent a confirmation link — click it, then come back and sign in.
-        </p>
-        <Link href="/sign-in" className="mt-6 inline-block text-sm text-accent">
-          Go to sign in
-        </Link>
-      </main>
+      <AuthLayout
+        title="Check your email"
+        subtitle="We sent a confirmation link — click it, then come back and sign in."
+        footer={<AuthFooterLink href="/sign-in">Go to sign in</AuthFooterLink>}
+      />
     );
   }
 
   return (
-    <main className="mx-auto max-w-sm px-6 py-24">
-      <h1 className="text-xl font-medium text-gray-900">Create an account</h1>
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <div>
-          <label className="text-sm font-medium text-gray-700">Email</label>
-          <input
-            name="email"
-            type="email"
-            required
-            className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700">Password</label>
-          <input
-            name="password"
-            type="password"
-            required
-            minLength={6}
-            className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
+    <AuthLayout
+      title="Create an account"
+      subtitle="Join as a creator, musician, or both"
+      footer={
+        <>
+          Already have an account? <AuthFooterLink href="/sign-in">Sign in</AuthFooterLink>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <Input label="Email" name="email" type="email" required autoComplete="email" />
+        <Input
+          label="Password"
+          name="password"
+          type="password"
+          required
+          minLength={6}
+          autoComplete="new-password"
+          hint="At least 6 characters"
+        />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? "Creating account…" : "Sign up"}
         </Button>
       </form>
-      <p className="mt-6 text-sm text-gray-500">
-        Already have an account?{" "}
-        <Link href="/sign-in" className="text-accent">
-          Sign in
-        </Link>
-      </p>
-    </main>
+    </AuthLayout>
   );
 }

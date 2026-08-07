@@ -1,0 +1,28 @@
+import { TextareaHTMLAttributes, forwardRef } from "react";
+
+type Props = TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  label: string;
+  hint?: string;
+};
+
+export const Textarea = forwardRef<HTMLTextAreaElement, Props>(function Textarea(
+  { label, hint, className = "", id, ...props },
+  ref
+) {
+  const inputId = id ?? props.name;
+
+  return (
+    <div className={className}>
+      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
+        {label}
+      </label>
+      <textarea
+        ref={ref}
+        id={inputId}
+        className="mt-1.5 w-full resize-none rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/10"
+        {...props}
+      />
+      {hint && <p className="mt-1.5 text-xs text-gray-400">{hint}</p>}
+    </div>
+  );
+});

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { AudioUpload } from "@/components/AudioUpload";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Textarea } from "@/components/ui/Textarea";
 
 export function SubmitTakeForm({ jobId }: { jobId: string }) {
   const [submitting, setSubmitting] = useState(false);
@@ -46,30 +48,31 @@ export function SubmitTakeForm({ jobId }: { jobId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl border border-gray-200 p-6">
-      <h3 className="text-base font-medium text-gray-900">Submit your take</h3>
+    <Card>
+      <h3 className="text-base font-semibold text-gray-900">Submit your take</h3>
+      <p className="mt-1 text-sm text-gray-500">Free to submit — upload your best recording of the part.</p>
 
-      <div className="mt-4 space-y-4">
+      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         <AudioUpload key={uploadKey} label="Your recording" kind="take" onUploaded={setAudioFileUrl} />
-        <div>
-          <label className="text-sm font-medium text-gray-700">Note (optional)</label>
-          <textarea
-            name="note"
-            rows={2}
-            placeholder="Anything the creator should know about your take?"
-            className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
-      </div>
+        <Textarea
+          label="Note"
+          name="note"
+          rows={2}
+          placeholder="Anything the creator should know about your take?"
+          hint="Optional"
+        />
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-      {submitted && <p className="mt-4 text-sm text-emerald-600">Take submitted.</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {submitted && (
+          <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Take submitted successfully.
+          </div>
+        )}
 
-      <div className="mt-6">
         <Button type="submit" disabled={submitting}>
           {submitting ? "Submitting…" : "Submit take"}
         </Button>
-      </div>
-    </form>
+      </form>
+    </Card>
   );
 }

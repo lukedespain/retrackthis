@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { formatCents, formatDeadline } from "@/lib/format";
 import type { Job, Take } from "@/lib/types";
 import { PostJobForm } from "./PostJobForm";
@@ -24,12 +26,19 @@ export function CreatorView() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium text-gray-900">My jobs</h2>
-        {!showPostForm && <Button onClick={() => setShowPostForm(true)}>Post a job</Button>}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">My jobs</h2>
+          <p className="mt-0.5 text-sm text-gray-500">Manage your posted gigs and review takes</p>
+        </div>
+        {!showPostForm && (
+          <Button onClick={() => setShowPostForm(true)} size="sm">
+            Post a job
+          </Button>
+        )}
       </div>
 
       {showPostForm && (
-        <div className="mt-4">
+        <div className="mt-8">
           <PostJobForm
             onCancel={() => setShowPostForm(false)}
             onPosted={() => {
@@ -40,10 +49,22 @@ export function CreatorView() {
         </div>
       )}
 
-      <div className="mt-6 space-y-3">
-        {jobs === null && <p className="text-sm text-gray-400">Loading…</p>}
+      <div className="mt-8 space-y-4">
+        {jobs === null && (
+          <div className="flex justify-center py-16">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-accent" />
+          </div>
+        )}
         {jobs?.length === 0 && !showPostForm && (
-          <p className="text-sm text-gray-400">No jobs yet — post one to get started.</p>
+          <EmptyState
+            title="No jobs yet"
+            description="Post your first gig to start receiving takes from musicians."
+            action={
+              <Button onClick={() => setShowPostForm(true)} size="sm">
+                Post a job
+              </Button>
+            }
+          />
         )}
         {jobs?.map((job) => (
           <CreatorJobCard
@@ -74,7 +95,8 @@ function CreatorJobCard({
   const [cancelError, setCancelError] = useState<string | null>(null);
   const isPastDeadline = job.status === "OPEN" && new Date(job.deadline).getTime() < Date.now();
 
-  async function cancelJob() {
+  async function cancelJob(e: React.MouseEvent) {
+    e.stopPropagation();
     setCancelling(true);
     setCancelError(null);
     try {
@@ -92,52 +114,58 @@ function CreatorJobCard({
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200">
-      <div className="flex w-full items-center justify-between px-6 py-4">
+    <Card padding="none" className="overflow-hidden">
+      <div className="flex items-start justify-between gap-4 px-6 py-5">
         <button onClick={onToggle} className="flex-1 text-left">
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <span className="font-medium text-gray-900">{job.title}</span>
             <Badge status={job.status} />
           </div>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1.5 text-sm text-gray-500">
             {job.instrument} · {formatCents(job.priceCents)} · {formatDeadline(job.deadline)}
           </p>
         </button>
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-2">
           {job.status === "OPEN" && (
-            <button
-              onClick={cancelJob}
-              disabled={cancelling}
-              className="text-sm text-gray-400 hover:text-red-600 disabled:opacity-50"
-            >
+            <Button variant="danger" size="sm" onClick={cancelJob} disabled={cancelling}>
               {cancelling ? "Cancelling…" : "Cancel & refund"}
-            </button>
+            </Button>
           )}
-          <button onClick={onToggle} className="text-sm text-gray-400">
+          <Button variant="ghost" size="sm" onClick={onToggle}>
             {expanded ? "Hide takes" : "View takes"}
-          </button>
+          </Button>
         </div>
       </div>
 
       {isPastDeadline && (
-        <div className="border-t border-amber-100 bg-amber-50 px-6 py-3 text-sm text-amber-800">
-          Deadline passed with no winner picked yet. Choose a take below, or cancel for a full refund —
-          this job will cancel itself automatically if left unattended.
+        <div className="border-t border-amber-100 bg-amber-50 px-6 py-3.5 text-sm leading-relaxed text-amber-800">
+          Deadline passed with no winner picked yet. Choose a take below, or cancel for a full
+          refund — this job will cancel itself automatically if left unattended.
         </div>
       )}
 
-      {cancelError && <p className="px-6 py-2 text-sm text-red-600">{cancelError}</p>}
+      {cancelError && (
+        <p className="border-t border-gray-100 px-6 py-3 text-sm text-red-600">{cancelError}</p>
+      )}
 
       {expanded && (
-        <div className="border-t border-gray-100 px-6 py-4">
+        <div className="border-t border-gray-100 bg-surface px-6 py-5">
           <TakesList jobId={job.id} jobOpen={job.status === "OPEN"} onAwarded={onChanged} />
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
-function TakesList({ jobId, jobOpen, onAwarded }: { jobId: string; jobOpen: boolean; onAwarded: () => void }) {
+function TakesList({
+  jobId,
+  jobOpen,
+  onAwarded,
+}: {
+  jobId: string;
+  jobOpen: boolean;
+  onAwarded: () => void;
+}) {
   const [takes, setTakes] = useState<Take[] | null>(null);
   const [selectingId, setSelectingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -173,26 +201,43 @@ function TakesList({ jobId, jobOpen, onAwarded }: { jobId: string; jobOpen: bool
     }
   }
 
-  if (takes === null) return <p className="text-sm text-gray-400">Loading takes…</p>;
-  if (takes.length === 0) return <p className="text-sm text-gray-400">No takes submitted yet.</p>;
+  if (takes === null) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-accent" />
+      </div>
+    );
+  }
+
+  if (takes.length === 0) {
+    return <p className="py-4 text-center text-sm text-gray-400">No takes submitted yet.</p>;
+  }
 
   return (
     <div className="space-y-3">
+      <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
+        {takes.length} {takes.length === 1 ? "take" : "takes"}
+      </p>
       {takes.map((take) => (
-        <div key={take.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
-          <div>
+        <div
+          key={take.id}
+          className="flex flex-col gap-4 rounded-xl bg-white p-4 shadow-card sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-900">{take.musician.name}</span>
               {take.isWinner && <Badge status="AWARDED" />}
             </div>
-            {take.note && <p className="mt-0.5 text-sm text-gray-500">{take.note}</p>}
-            <audio controls src={take.audioFileUrl} className="mt-2 h-9 w-72" />
+            {take.note && <p className="mt-1 text-sm text-gray-500">{take.note}</p>}
+            <audio controls src={take.audioFileUrl} className="mt-3 h-9 w-full max-w-sm" />
           </div>
           {jobOpen && !take.isWinner && (
             <Button
               variant="secondary"
+              size="sm"
               onClick={() => selectWinner(take.id)}
               disabled={selectingId !== null}
+              className="shrink-0"
             >
               {selectingId === take.id ? "Selecting…" : "Choose this one"}
             </Button>

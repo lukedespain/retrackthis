@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { formatCents } from "@/lib/format";
 import type { MyTake } from "@/lib/types";
 
-function statusFor(take: MyTake) {
-  if (take.isWinner) return { label: "Selected", className: "bg-accent/10 text-accent" };
-  if (take.job.status === "AWARDED") return { label: "Not selected", className: "bg-gray-100 text-gray-500" };
-  if (take.job.status === "CANCELLED") return { label: "Job cancelled", className: "bg-gray-100 text-gray-500" };
-  return { label: "Pending", className: "bg-emerald-50 text-emerald-700" };
+function statusFor(take: MyTake): string {
+  if (take.isWinner) return "SELECTED";
+  if (take.job.status === "AWARDED") return "NOT SELECTED";
+  if (take.job.status === "CANCELLED") return "JOB CANCELLED";
+  return "PENDING";
 }
 
 export function MySubmissions() {
@@ -20,33 +23,38 @@ export function MySubmissions() {
       .then(setTakes);
   }, []);
 
-  if (takes === null) return <p className="text-sm text-gray-400">Loading…</p>;
-  if (takes.length === 0) return <p className="text-sm text-gray-400">You haven't submitted any takes yet.</p>;
+  if (takes === null) {
+    return (
+      <div className="flex justify-center py-16">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-accent" />
+      </div>
+    );
+  }
+
+  if (takes.length === 0) {
+    return (
+      <EmptyState
+        title="No submissions yet"
+        description="Browse open jobs and submit your first take to get started."
+      />
+    );
+  }
 
   return (
     <div className="space-y-3">
-      {takes.map((take) => {
-        const status = statusFor(take);
-        return (
-          <div key={take.id} className="rounded-2xl border border-gray-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <span className="font-medium text-gray-900">{take.job.title}</span>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${status.className}`}>
-                    {status.label}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-gray-500">
-                  {take.job.instrument} · {formatCents(take.job.priceCents)}
-                </p>
-              </div>
-            </div>
-            {take.note && <p className="mt-2 text-sm text-gray-500">{take.note}</p>}
-            <audio controls src={take.audioFileUrl} className="mt-2 h-9 w-72" />
+      {takes.map((take) => (
+        <Card key={take.id} padding="sm">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="font-medium text-gray-900">{take.job.title}</span>
+            <Badge status={statusFor(take)} />
           </div>
-        );
-      })}
+          <p className="mt-1.5 text-sm text-gray-500">
+            {take.job.instrument} · {formatCents(take.job.priceCents)}
+          </p>
+          {take.note && <p className="mt-2 text-sm text-gray-500">{take.note}</p>}
+          <audio controls src={take.audioFileUrl} className="mt-3 h-9 w-full max-w-sm" />
+        </Card>
+      ))}
     </div>
   );
 }

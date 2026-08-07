@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { AuthFooterLink, AuthLayout } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 export default function SignInPage() {
@@ -34,38 +35,23 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="mx-auto max-w-sm px-6 py-24">
-      <h1 className="text-xl font-medium text-gray-900">Sign in</h1>
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <div>
-          <label className="text-sm font-medium text-gray-700">Email</label>
-          <input
-            name="email"
-            type="email"
-            required
-            className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700">Password</label>
-          <input
-            name="password"
-            type="password"
-            required
-            className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to your account"
+      footer={
+        <>
+          Don&apos;t have an account? <AuthFooterLink href="/sign-up">Sign up</AuthFooterLink>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <Input label="Email" name="email" type="email" required autoComplete="email" />
+        <Input label="Password" name="password" type="password" required autoComplete="current-password" />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? "Signing in…" : "Sign in"}
         </Button>
       </form>
-      <p className="mt-6 text-sm text-gray-500">
-        Don&apos;t have an account?{" "}
-        <Link href="/sign-up" className="text-accent">
-          Sign up
-        </Link>
-      </p>
-    </main>
+    </AuthLayout>
   );
 }

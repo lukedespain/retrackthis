@@ -2,7 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  color: #1a1a1a;
-  background: #ffffff;
+@layer base {
+  body {
+    @apply bg-white text-gray-900 antialiased;
+  }
+
+  ::selection {
+    @apply bg-accent/20;
+  }
 }

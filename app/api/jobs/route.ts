@@ -15,10 +15,21 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { title, instrument, description, demoFileUrl, priceCents, deadline, paymentMethodId } = body;
+  const { title, instrument, description, demoFileUrl, priceCents, deadline, paymentMethodId, bpm } =
+    body;
 
   if (!title || !instrument || !demoFileUrl || !priceCents || !deadline || !paymentMethodId) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  // bpm: number = fixed tempo; null/undefined/empty = flexible
+  let bpmValue: number | null = null;
+  if (bpm !== null && bpm !== undefined && bpm !== "") {
+    const parsed = Number(bpm);
+    if (!Number.isFinite(parsed) || parsed < 1 || parsed > 400) {
+      return NextResponse.json({ error: "BPM must be between 1 and 400" }, { status: 400 });
+    }
+    bpmValue = Math.round(parsed);
   }
 
   const paymentIntent = await stripe.paymentIntents.create({
@@ -38,6 +49,7 @@ export async function POST(req: NextRequest) {
       description,
       demoFileUrl,
       priceCents,
+      bpm: bpmValue,
       deadline: new Date(deadline),
       payment: {
         create: {

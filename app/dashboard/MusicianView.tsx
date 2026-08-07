@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AudioPlayer } from "@/components/AudioPlayer";
+import { JobMetaTags } from "@/components/JobMetaTags";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
-import { AudioPlayer } from "@/components/AudioPlayer";
-import { formatCents, formatDeadline } from "@/lib/format";
 import type { Job } from "@/lib/types";
 import { MySubmissions } from "./MySubmissions";
 import { SubmitTakeForm } from "./SubmitTakeForm";
@@ -69,7 +69,7 @@ function BrowseJobs() {
     return (
       <EmptyState
         title="No open jobs right now"
-        description="Check back soon — new gigs are posted regularly."
+        description="Check back soon. New gigs are posted regularly."
       />
     );
   }
@@ -86,9 +86,14 @@ function BrowseJobs() {
             onClick={() => setSelectedJobId(job.id)}
           >
             <span className="font-medium text-gray-900">{job.title}</span>
-            <p className="mt-1 text-sm text-gray-500">
-              {job.instrument} · {formatCents(job.priceCents)} · {formatDeadline(job.deadline)}
-            </p>
+            <div className="mt-2">
+              <JobMetaTags
+                instrument={job.instrument}
+                priceCents={job.priceCents}
+                deadline={job.deadline}
+                bpm={job.bpm}
+              />
+            </div>
           </Card>
         ))}
       </div>
@@ -99,12 +104,13 @@ function BrowseJobs() {
             <h3 className="text-lg font-semibold tracking-tight text-gray-900 sm:text-xl">
               {selectedJob.title}
             </h3>
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-gray-500">
-              <span>{selectedJob.instrument}</span>
-              <span aria-hidden="true">·</span>
-              <span>{formatCents(selectedJob.priceCents)}</span>
-              <span aria-hidden="true">·</span>
-              <span>{formatDeadline(selectedJob.deadline)}</span>
+            <div className="mt-3">
+              <JobMetaTags
+                instrument={selectedJob.instrument}
+                priceCents={selectedJob.priceCents}
+                deadline={selectedJob.deadline}
+                bpm={selectedJob.bpm}
+              />
             </div>
             <p className="mt-4 text-sm leading-relaxed text-gray-600">{selectedJob.description}</p>
             <div className="mt-4">

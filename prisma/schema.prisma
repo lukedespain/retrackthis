@@ -39,6 +39,8 @@ model Job {
   description    String
   demoFileUrl    String    // the MIDI/scratch demo the creator uploaded
   priceCents     Int
+  // null = flexible/relative tempo; set = fixed BPM the take should match
+  bpm            Int?
   deadline       DateTime
   status         JobStatus @default(OPEN)
   createdAt      DateTime  @default(now())

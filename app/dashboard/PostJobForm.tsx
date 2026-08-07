@@ -12,6 +12,7 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [demoFileUrl, setDemoFileUrl] = useState<string | null>(null);
+  const [fixedTempo, setFixedTempo] = useState(true);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -21,6 +22,7 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
     const form = new FormData(e.currentTarget);
     const priceDollars = Number(form.get("price"));
     const deadlineDays = Number(form.get("deadlineDays"));
+    const bpmRaw = form.get("bpm");
 
     try {
       const res = await fetch("/api/jobs", {
@@ -32,6 +34,7 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
           description: form.get("description"),
           demoFileUrl: demoFileUrl ?? "https://example-demo-files.test/placeholder-demo.mp3",
           priceCents: Math.round(priceDollars * 100),
+          bpm: fixedTempo ? Number(bpmRaw) : null,
           deadline: new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000).toISOString(),
           paymentMethodId: "pm_card_visa",
         }),
@@ -81,9 +84,49 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
             name="description"
             required
             rows={3}
-            placeholder="What's the part? Tempo, feel, any references?"
+            placeholder="What's the part? Feel, references, anything helpful?"
             className="sm:col-span-2"
           />
+
+          <div className="sm:col-span-2 space-y-3 rounded-xl border border-gray-100 bg-surface px-4 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Fixed tempo</p>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  Turn off if the part should follow the demo freely (flexible tempo).
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={fixedTempo}
+                onClick={() => setFixedTempo((v) => !v)}
+                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
+                  fixedTempo ? "bg-accent" : "bg-gray-200"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform duration-150 ${
+                    fixedTempo ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+            {fixedTempo && (
+              <Input
+                label="Tempo (BPM)"
+                name="bpm"
+                type="number"
+                min="1"
+                max="400"
+                step="1"
+                defaultValue="120"
+                required
+                placeholder="120"
+              />
+            )}
+          </div>
+
           <div className="sm:col-span-2">
             <AudioUpload label="Demo file" kind="demo" onUploaded={setDemoFileUrl} />
           </div>

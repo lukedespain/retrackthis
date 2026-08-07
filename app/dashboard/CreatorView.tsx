@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { formatCents, formatDeadline } from "@/lib/format";
+import { JobMetaTags } from "@/components/JobMetaTags";
 import type { Job, Take } from "@/lib/types";
 import { PostJobForm } from "./PostJobForm";
 
@@ -128,9 +128,14 @@ function CreatorJobCard({
             <span className="font-medium text-gray-900">{job.title}</span>
             <Badge status={job.status} />
           </div>
-          <p className="mt-1.5 text-sm text-gray-500">
-            {job.instrument} · {formatCents(job.priceCents)} · {formatDeadline(job.deadline)}
-          </p>
+          <div className="mt-2.5">
+            <JobMetaTags
+              instrument={job.instrument}
+              priceCents={job.priceCents}
+              deadline={job.deadline}
+              bpm={job.bpm}
+            />
+          </div>
         </button>
         <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
           {job.status === "OPEN" && (
@@ -154,7 +159,7 @@ function CreatorJobCard({
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
             Deadline passed with no winner picked yet. Choose a take below, or cancel for a full
-            refund — this job will cancel itself automatically if left unattended.
+            refund. This job will cancel itself automatically if left unattended.
           </Alert>
         </div>
       )}

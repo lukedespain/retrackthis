@@ -27,7 +27,7 @@ export function AudioUpload({
     if (file.size > MAX_AUDIO_UPLOAD_BYTES) {
       setStatus("error");
       setFileName(file.name);
-      setError(`That file is too large — max ${MAX_AUDIO_UPLOAD_MB}MB. Trim it to a shorter excerpt and try again.`);
+      setError(`That file is too large (max ${MAX_AUDIO_UPLOAD_MB}MB). Trim it to a shorter excerpt and try again.`);
       e.target.value = "";
       return;
     }
@@ -62,7 +62,7 @@ export function AudioUpload({
     idle: "Choose an audio file",
     uploading: "Uploading…",
     done: fileName ? `Uploaded: ${fileName}` : "Uploaded",
-    error: "Upload failed — click to retry",
+    error: "Upload failed. Click to retry",
   };
 
   return (

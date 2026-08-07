@@ -52,7 +52,7 @@ export function SubmitTakeForm({ jobId }: { jobId: string }) {
   return (
     <Card padding="md">
       <h3 className="text-base font-semibold text-gray-900">Submit your take</h3>
-      <p className="mt-1 text-sm text-gray-500">Free to submit — upload your best recording of the part.</p>
+      <p className="mt-1 text-sm text-gray-500">Free to submit. Upload your best recording of the part.</p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         <AudioUpload key={uploadKey} label="Your recording" kind="take" onUploaded={setAudioFileUrl} />

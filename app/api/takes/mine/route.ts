@@ -12,7 +12,7 @@ export async function GET() {
 
   const takes = await db.take.findMany({
     where: { musicianId },
-    include: { job: { select: { id: true, title: true, instrument: true, priceCents: true, status: true } } },
+    include: { job: { select: { id: true, title: true, instrument: true, priceCents: true, bpm: true, status: true } } },
     orderBy: { submittedAt: "desc" },
   });
 

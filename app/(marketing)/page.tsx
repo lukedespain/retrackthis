@@ -20,7 +20,7 @@ export default function LandingPage() {
             </h1>
             <p className="mt-5 max-w-lg text-base leading-relaxed text-gray-500 sm:mt-6 sm:text-lg">
               Post a demo of the part you need. Working musicians submit their own recorded takes.
-              Pick the one you love — only that musician gets paid.
+              Pick the one you love. Only that musician gets paid.
             </p>
             <div className="mt-8 flex flex-col gap-2 sm:mt-10 sm:flex-row sm:flex-wrap sm:gap-3">
               <Link href="/sign-up" className="w-full sm:w-auto">
@@ -42,12 +42,12 @@ export default function LandingPage() {
               <Step
                 number="01"
                 title="Post the part"
-                body="Upload a demo — even just a MIDI scratch track — describe what you need, set a price, and your payment is held in escrow."
+                body="Upload a demo (even just a MIDI scratch track), describe what you need, set a price, and your payment is held in escrow."
               />
               <Step
                 number="02"
                 title="Musicians submit takes"
-                body="Real musicians record and upload their own version of the part. Free to try — no cost to submit."
+                body="Real musicians record and upload their own version of the part. Free to try, no cost to submit."
               />
               <Step
                 number="03"
@@ -64,7 +64,7 @@ export default function LandingPage() {
               Money in escrow. Musicians know the gig is real.
             </h2>
             <p className="mt-3 max-w-lg text-sm leading-relaxed text-gray-600 sm:mt-4 sm:text-base">
-              When you post a job, your payment is authorized and held — not charged until you pick a
+              When you post a job, your payment is authorized and held, not charged until you pick a
               winner. Musicians can trust the opportunity is genuine, without the race-to-the-bottom
               dynamics of open bidding platforms.
             </p>

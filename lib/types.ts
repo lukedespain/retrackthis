@@ -6,6 +6,8 @@ export type Job = {
   description: string;
   demoFileUrl: string;
   priceCents: number;
+  /** null = flexible tempo; number = fixed BPM */
+  bpm: number | null;
   deadline: string;
   status: "OPEN" | "AWARDED" | "CANCELLED";
   createdAt: string;
@@ -33,6 +35,7 @@ export type MyTake = {
     title: string;
     instrument: string;
     priceCents: number;
+    bpm: number | null;
     status: "OPEN" | "AWARDED" | "CANCELLED";
   };
 };

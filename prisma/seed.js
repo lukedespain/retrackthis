@@ -92,9 +92,10 @@ async function main() {
       title: "Upright bass for a jazz waltz",
       instrument: "Upright Bass",
       description:
-        "3/4 time, walking bass line over a ii-V-I in F. Demo has a scratch MIDI part — swing feel please.",
+        "3/4 time, walking bass line over a ii-V-I in F. Demo has a scratch MIDI part. Swing feel please.",
       demoFileUrl: "https://example-demo-files.test/jazz-waltz-demo.mp3",
       priceCents: 7500,
+      bpm: 140,
       deadline: inDays(5),
       status: "OPEN",
       payment: {
@@ -112,6 +113,7 @@ async function main() {
       description: "Upbeat, percussive slap bass for an 8-bar chorus. Reference: 70s funk.",
       demoFileUrl: "https://example-demo-files.test/pop-chorus-demo.mp3",
       priceCents: 5000,
+      bpm: 108,
       deadline: inDays(3),
       status: "OPEN",
       payment: {
@@ -128,6 +130,7 @@ async function main() {
       description: "16-bar fingerpicked intro, dropped D tuning.",
       demoFileUrl: "https://example-demo-files.test/intro-demo.mp3",
       priceCents: 6000,
+      bpm: null,
       deadline: inDays(-1),
       status: "AWARDED",
     },

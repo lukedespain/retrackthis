@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AudioPlayer } from "@/components/AudioPlayer";
+import { JobMetaTags } from "@/components/JobMetaTags";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
-import { AudioPlayer } from "@/components/AudioPlayer";
-import { formatCents } from "@/lib/format";
 import type { MyTake } from "@/lib/types";
 
 function statusFor(take: MyTake): string {
@@ -50,9 +50,14 @@ export function MySubmissions() {
             <span className="font-medium text-gray-900">{take.job.title}</span>
             <Badge status={statusFor(take)} />
           </div>
-          <p className="mt-1.5 text-sm text-gray-500">
-            {take.job.instrument} · {formatCents(take.job.priceCents)}
-          </p>
+          <div className="mt-2.5">
+            <JobMetaTags
+              instrument={take.job.instrument}
+              priceCents={take.job.priceCents}
+              bpm={take.job.bpm}
+              showDeadline={false}
+            />
+          </div>
           {take.note && <p className="mt-2 text-sm leading-relaxed text-gray-500">{take.note}</p>}
           <AudioPlayer src={take.audioFileUrl} label="Take" className="mt-3" />
         </Card>

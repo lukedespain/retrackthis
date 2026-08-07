@@ -43,7 +43,7 @@ export default function SignUpPage() {
     return (
       <AuthLayout
         title="Check your email"
-        subtitle="We sent a confirmation link — click it, then come back and sign in."
+        subtitle="We sent a confirmation link. Click it, then come back and sign in."
         footer={<AuthFooterLink href="/sign-in">Go to sign in</AuthFooterLink>}
       />
     );

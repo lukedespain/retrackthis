@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { JobMetaTags } from "@/components/JobMetaTags";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -47,15 +48,13 @@ export function MusicianView() {
 
 function BrowseJobs() {
   const [jobs, setJobs] = useState<Job[] | null>(null);
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/jobs")
       .then((res) => res.json())
       .then(setJobs);
   }, []);
-
-  const selectedJob = jobs?.find((j) => j.id === selectedJobId) ?? null;
 
   if (jobs === null) {
     return (
@@ -75,18 +74,47 @@ function BrowseJobs() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-8">
-      <div className="space-y-2">
-        {jobs.map((job) => (
-          <Card
-            key={job.id}
-            padding="sm"
-            hover
-            selected={selectedJobId === job.id}
-            onClick={() => setSelectedJobId(job.id)}
+    <div className="space-y-3">
+      {jobs.map((job) => (
+        <OpenJobCard
+          key={job.id}
+          job={job}
+          expanded={expandedJobId === job.id}
+          onToggle={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function OpenJobCard({
+  job,
+  expanded,
+  onToggle,
+}: {
+  job: Job;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (expanded) {
+      cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [expanded]);
+
+  return (
+    <div ref={cardRef}>
+      <Card padding="none" className="overflow-hidden">
+        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
+          <button
+            type="button"
+            onClick={onToggle}
+            className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2"
           >
             <span className="font-medium text-gray-900">{job.title}</span>
-            <div className="mt-2">
+            <div className="mt-2.5">
               <JobMetaTags
                 instrument={job.instrument}
                 priceCents={job.priceCents}
@@ -94,41 +122,31 @@ function BrowseJobs() {
                 bpm={job.bpm}
               />
             </div>
-          </Card>
-        ))}
-      </div>
+          </button>
+          <Button variant="ghost" size="sm" onClick={onToggle} className="w-full shrink-0 sm:w-auto">
+            {expanded ? "Hide" : "View job"}
+          </Button>
+        </div>
 
-      <div className="min-w-0">
-        {selectedJob ? (
-          <div>
-            <h3 className="text-lg font-semibold tracking-tight text-gray-900 sm:text-xl">
-              {selectedJob.title}
-            </h3>
-            <div className="mt-3">
-              <JobMetaTags
-                instrument={selectedJob.instrument}
-                priceCents={selectedJob.priceCents}
-                deadline={selectedJob.deadline}
-                bpm={selectedJob.bpm}
-              />
-            </div>
-            <p className="mt-4 text-sm leading-relaxed text-gray-600">{selectedJob.description}</p>
-            <div className="mt-4">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Demo</p>
-              <AudioPlayer src={selectedJob.demoFileUrl} label="Demo" />
-            </div>
-            <div className="mt-6 sm:mt-8">
-              <SubmitTakeForm jobId={selectedJob.id} />
+        <div
+          className={`grid transition-all duration-200 ease-out ${
+            expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="border-t border-gray-100 bg-surface px-4 py-4 sm:px-6 sm:py-5">
+              <p className="text-sm leading-relaxed text-gray-600">{job.description}</p>
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Demo</p>
+                <AudioPlayer src={job.demoFileUrl} label="Demo" />
+              </div>
+              <div className="mt-6">
+                <SubmitTakeForm jobId={job.id} />
+              </div>
             </div>
           </div>
-        ) : (
-          <EmptyState
-            title="Select a job"
-            description="Choose a gig from the list to see details and submit your take."
-            className="hidden lg:flex"
-          />
-        )}
-      </div>
+        </div>
+      </Card>
     </div>
   );
 }

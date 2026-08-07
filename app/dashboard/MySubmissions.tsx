@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { JobMetaTags } from "@/components/JobMetaTags";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
@@ -18,6 +19,7 @@ function statusFor(take: MyTake): string {
 
 export function MySubmissions() {
   const [takes, setTakes] = useState<MyTake[] | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/takes/mine")
@@ -45,23 +47,79 @@ export function MySubmissions() {
   return (
     <div className="space-y-3">
       {takes.map((take) => (
-        <Card key={take.id} padding="sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-gray-900">{take.job.title}</span>
-            <Badge status={statusFor(take)} />
-          </div>
-          <div className="mt-2.5">
-            <JobMetaTags
-              instrument={take.job.instrument}
-              priceCents={take.job.priceCents}
-              bpm={take.job.bpm}
-              showDeadline={false}
-            />
-          </div>
-          {take.note && <p className="mt-2 text-sm leading-relaxed text-gray-500">{take.note}</p>}
-          <AudioPlayer src={take.audioFileUrl} label="Take" className="mt-3" />
-        </Card>
+        <SubmissionCard
+          key={take.id}
+          take={take}
+          expanded={expandedId === take.id}
+          onToggle={() => setExpandedId(expandedId === take.id ? null : take.id)}
+        />
       ))}
+    </div>
+  );
+}
+
+function SubmissionCard({
+  take,
+  expanded,
+  onToggle,
+}: {
+  take: MyTake;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (expanded) {
+      cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [expanded]);
+
+  return (
+    <div ref={cardRef}>
+      <Card padding="none" className="overflow-hidden">
+        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
+          <button
+            type="button"
+            onClick={onToggle}
+            className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium text-gray-900">{take.job.title}</span>
+              <Badge status={statusFor(take)} />
+            </div>
+            <div className="mt-2.5">
+              <JobMetaTags
+                instrument={take.job.instrument}
+                priceCents={take.job.priceCents}
+                bpm={take.job.bpm}
+                showDeadline={false}
+              />
+            </div>
+          </button>
+          <Button variant="ghost" size="sm" onClick={onToggle} className="w-full shrink-0 sm:w-auto">
+            {expanded ? "Hide" : "View take"}
+          </Button>
+        </div>
+
+        <div
+          className={`grid transition-all duration-200 ease-out ${
+            expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="border-t border-gray-100 bg-surface px-4 py-4 sm:px-6 sm:py-5">
+              {take.note && (
+                <p className="mb-4 text-sm leading-relaxed text-gray-600">{take.note}</p>
+              )}
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+                Your take
+              </p>
+              <AudioPlayer src={take.audioFileUrl} label="Take" />
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

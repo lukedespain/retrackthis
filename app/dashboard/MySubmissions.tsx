@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { JobMetaTags } from "@/components/JobMetaTags";
+import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -92,7 +92,6 @@ function SubmissionCard({
               <JobMetaTags
                 instrument={take.job.instrument}
                 priceCents={take.job.priceCents}
-                bpm={take.job.bpm}
                 showDeadline={false}
               />
             </div>
@@ -110,9 +109,12 @@ function SubmissionCard({
           <div className="overflow-hidden">
             <div className="border-t border-gray-100 bg-surface px-4 py-4 sm:px-6 sm:py-5">
               {take.note && (
-                <p className="mb-4 text-sm leading-relaxed text-gray-600">{take.note}</p>
+                <p className="text-sm leading-relaxed text-gray-600">{take.note}</p>
               )}
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+              <div className={take.note ? "mt-3" : undefined}>
+                <TempoTag bpm={take.job.bpm} />
+              </div>
+              <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wider text-gray-400">
                 Your take
               </p>
               <AudioPlayer src={take.audioFileUrl} label="Take" />

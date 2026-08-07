@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { JobMetaTags } from "@/components/JobMetaTags";
+import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -119,7 +119,6 @@ function OpenJobCard({
                 instrument={job.instrument}
                 priceCents={job.priceCents}
                 deadline={job.deadline}
-                bpm={job.bpm}
               />
             </div>
           </button>
@@ -136,6 +135,9 @@ function OpenJobCard({
           <div className="overflow-hidden">
             <div className="border-t border-gray-100 bg-surface px-4 py-4 sm:px-6 sm:py-5">
               <p className="text-sm leading-relaxed text-gray-600">{job.description}</p>
+              <div className="mt-3">
+                <TempoTag bpm={job.bpm} />
+              </div>
               <div className="mt-4">
                 <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Demo</p>
                 <AudioPlayer src={job.demoFileUrl} label="Demo" />

@@ -1,5 +1,4 @@
 import { formatCents, formatDeadline } from "@/lib/format";
-import { styleForInstrument } from "@/lib/instruments";
 
 function MetaTag({
   emoji,
@@ -20,26 +19,21 @@ function MetaTag({
   );
 }
 
+/** Instrument = brand accent (what you're retracking). Price / due stay softer. */
 export function JobMetaTags({
   instrument,
   priceCents,
   deadline,
-  bpm,
   showDeadline = true,
 }: {
   instrument: string;
   priceCents: number;
   deadline?: string | Date;
-  /** null/undefined = flexible (relative) tempo; number = fixed BPM */
-  bpm?: number | null;
   showDeadline?: boolean;
 }) {
-  const instrumentStyle = styleForInstrument(instrument);
-
   return (
     <div className="flex flex-wrap gap-1.5">
-      {/* Instrument: color only — emoji sets aren't unique enough across instruments */}
-      <MetaTag className={instrumentStyle.className}>{instrument}</MetaTag>
+      <MetaTag className="bg-accent text-white ring-accent/30">{instrument}</MetaTag>
       <MetaTag emoji="💵" className="bg-emerald-50 text-emerald-800 ring-emerald-600/10">
         {formatCents(priceCents)}
       </MetaTag>
@@ -48,15 +42,22 @@ export function JobMetaTags({
           {formatDeadline(deadline)}
         </MetaTag>
       )}
-      {bpm === null || bpm === undefined ? (
-        <MetaTag emoji="🌊" className="bg-purple-50 text-purple-800 ring-purple-600/10">
-          Flexible tempo
-        </MetaTag>
-      ) : (
-        <MetaTag emoji="⏱️" className="bg-purple-50 text-purple-800 ring-purple-600/10">
-          {bpm} BPM
-        </MetaTag>
-      )}
     </div>
+  );
+}
+
+/** Tempo lives in expanded detail — not on the collapsed card preview. */
+export function TempoTag({ bpm }: { bpm?: number | null }) {
+  if (bpm === null || bpm === undefined) {
+    return (
+      <MetaTag emoji="🌊" className="bg-white text-gray-900 ring-gray-900/15">
+        Flexible tempo
+      </MetaTag>
+    );
+  }
+  return (
+    <MetaTag emoji="⏱️" className="bg-white text-gray-900 ring-gray-900/15">
+      {bpm} BPM
+    </MetaTag>
   );
 }

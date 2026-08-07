@@ -22,7 +22,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing name" }, { status: 400 });
   }
 
-  const roles = ["CREATOR", "MUSICIAN"] as const;
+  // Mutable copy — Prisma's Role[] input rejects `as const` readonly tuples.
+  const roles = ["CREATOR", "MUSICIAN"] as Array<"CREATOR" | "MUSICIAN">;
   const profile = await db.user.upsert({
     where: { id: user.id },
     update: { name, role: roles },

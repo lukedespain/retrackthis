@@ -21,9 +21,7 @@ export function MarketingHeaderActions() {
   if (signedIn) {
     return (
       <Link href="/dashboard">
-        <Button variant="ghost" size="sm">
-          Dashboard
-        </Button>
+        <Button size="sm">Dashboard</Button>
       </Link>
     );
   }

@@ -22,7 +22,7 @@ export function DashboardHeader({
   return (
     <header className="border-b border-gray-100 pb-5 sm:pb-6">
       <div className="flex items-center justify-between gap-3">
-        <Logo href="/dashboard" />
+        <Logo href="/" />
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
           <RoleToggle roles={roles} active={activeRole} onChange={onRoleChange} />
           <UserMenu name={name} onSignOut={onSignOut} />

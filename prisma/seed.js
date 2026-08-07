@@ -122,6 +122,83 @@ async function main() {
     },
   });
 
+  // Extra open jobs so instrument / tempo / price / due tags have variety in the UI.
+  const variety = [
+    {
+      title: "Warm Rhodes chords for a neo-soul ballad",
+      instrument: "Keys",
+      description: "Soft electric piano voicings under a vocal demo. Keep it sparse.",
+      priceCents: 9000,
+      bpm: 72,
+      days: 10,
+    },
+    {
+      title: "Punchy kick and snare for a trap beat",
+      instrument: "Drums",
+      description: "Replace the programmed kit with a live one-shots feel. Hard-hitting.",
+      priceCents: 12000,
+      bpm: 140,
+      days: 4,
+    },
+    {
+      title: "Breathy lead vocal ad-libs",
+      instrument: "Vocals",
+      description: "Stacked oh's and yeah's for the last chorus. Match the demo key.",
+      priceCents: 15000,
+      bpm: null,
+      days: 14,
+    },
+    {
+      title: "Cello countermelody for a film cue",
+      instrument: "Cello",
+      description: "Long tones that bloom into a short melodic answer. Intimate room sound.",
+      priceCents: 20000,
+      bpm: 66,
+      days: 7,
+    },
+    {
+      title: "Saxophone hook for an indie pop chorus",
+      instrument: "Saxophone",
+      description: "Catchy 4-bar hook, slightly overdriven.",
+      priceCents: 8500,
+      bpm: 118,
+      days: 6,
+    },
+    {
+      title: "Muted trumpet for a noir jazz intro",
+      instrument: "Trumpet",
+      description: "Smoke-filled club vibe. Flexible time is fine; follow the piano.",
+      priceCents: 11000,
+      bpm: null,
+      days: 9,
+    },
+  ];
+
+  for (const job of variety) {
+    const pi = await authorizedPaymentIntent(job.priceCents);
+    await db.job.create({
+      data: {
+        creatorId: alex.id,
+        title: job.title,
+        instrument: job.instrument,
+        description: job.description,
+        demoFileUrl: "https://example-demo-files.test/placeholder-demo.mp3",
+        priceCents: job.priceCents,
+        bpm: job.bpm,
+        deadline: inDays(job.days),
+        status: "OPEN",
+        payment: {
+          create: {
+            stripePaymentIntentId: pi.id,
+            amountCents: job.priceCents,
+            platformFeeCents: 0,
+            status: "authorized",
+          },
+        },
+      },
+    });
+  }
+
   const guitarJob = await db.job.create({
     data: {
       creatorId: alex.id,

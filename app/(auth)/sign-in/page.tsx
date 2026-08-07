@@ -1,14 +1,31 @@
 "use client";
 
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 import { AuthFooterLink, AuthLayout } from "@/components/AuthLayout";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Spinner } from "@/components/ui/Spinner";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthLayout title="Welcome back" subtitle="Sign in to your account">
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        </AuthLayout>
+      }
+    >
+      <SignInForm />
+    </Suspense>
+  );
+}
+
+function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [submitting, setSubmitting] = useState(false);

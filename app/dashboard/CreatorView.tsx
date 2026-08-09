@@ -15,9 +15,11 @@ import { PostJobForm } from "./PostJobForm";
 export function CreatorView({
   initialShowPost = false,
   hideHeading = false,
+  onPostClosed,
 }: {
   initialShowPost?: boolean;
   hideHeading?: boolean;
+  onPostClosed?: () => void;
 }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [showPostForm, setShowPostForm] = useState(initialShowPost);
@@ -35,6 +37,11 @@ export function CreatorView({
   useEffect(() => {
     if (initialShowPost) setShowPostForm(true);
   }, [initialShowPost]);
+
+  function closePostForm() {
+    setShowPostForm(false);
+    onPostClosed?.();
+  }
 
   return (
     <div>
@@ -63,9 +70,9 @@ export function CreatorView({
       {showPostForm && (
         <div className={hideHeading ? "mb-6 sm:mb-8" : "mt-6 sm:mt-8"}>
           <PostJobForm
-            onCancel={() => setShowPostForm(false)}
+            onCancel={closePostForm}
             onPosted={() => {
-              setShowPostForm(false);
+              closePostForm();
               loadJobs();
             }}
           />

@@ -124,7 +124,14 @@ function DashboardPageInner() {
 
       <div className="mt-6 sm:mt-8">
         {tab === "jobs" ? (
-          <CreatorView initialShowPost={openPost} hideHeading />
+          <CreatorView
+            initialShowPost={openPost}
+            hideHeading
+            onPostClosed={() => {
+              setOpenPost(false);
+              router.replace("/dashboard", { scroll: false });
+            }}
+          />
         ) : (
           <MySubmissions />
         )}

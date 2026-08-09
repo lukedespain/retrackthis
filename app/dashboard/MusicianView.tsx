@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import { Button } from "@/components/ui/Button";
@@ -8,11 +8,20 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
+import { formatCents } from "@/lib/format";
 import type { Job } from "@/lib/types";
 import { MySubmissions } from "./MySubmissions";
 import { SubmitTakeForm } from "./SubmitTakeForm";
 
 type SubTab = "browse" | "submissions";
+
+const DUE_WITHIN_OPTIONS = [
+  { value: "", label: "Any deadline" },
+  { value: "7", label: "Due within 7 days" },
+  { value: "14", label: "Due within 14 days" },
+  { value: "30", label: "Due within 30 days" },
+  { value: "60", label: "Due within 60 days" },
+] as const;
 
 export function MusicianView() {
   const [subTab, setSubTab] = useState<SubTab>("browse");
@@ -49,12 +58,50 @@ export function MusicianView() {
 function BrowseJobs() {
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [instrument, setInstrument] = useState("");
+  const [minPriceCents, setMinPriceCents] = useState(0);
+  const [dueWithinDays, setDueWithinDays] = useState("");
 
   useEffect(() => {
     fetch("/api/jobs")
       .then((res) => res.json())
-      .then(setJobs);
+      .then((data: Job[]) => {
+        setJobs(data);
+        if (data.length > 0) {
+          setMinPriceCents(0);
+        }
+      });
   }, []);
+
+  const instruments = useMemo(() => {
+    if (!jobs) return [];
+    return Array.from(new Set(jobs.map((job) => job.instrument))).sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }, [jobs]);
+
+  const priceBounds = useMemo(() => {
+    if (!jobs || jobs.length === 0) return { min: 0, max: 10000 };
+    const prices = jobs.map((job) => job.priceCents);
+    return { min: 0, max: Math.max(...prices) };
+  }, [jobs]);
+
+  const filteredJobs = useMemo(() => {
+    if (!jobs) return [];
+    const now = Date.now();
+    const dueLimitMs = dueWithinDays
+      ? now + Number(dueWithinDays) * 24 * 60 * 60 * 1000
+      : null;
+
+    return jobs.filter((job) => {
+      if (instrument && job.instrument !== instrument) return false;
+      if (job.priceCents < minPriceCents) return false;
+      if (dueLimitMs !== null && new Date(job.deadline).getTime() > dueLimitMs) return false;
+      return true;
+    });
+  }, [jobs, instrument, minPriceCents, dueWithinDays]);
+
+  const filtersActive = instrument !== "" || minPriceCents > 0 || dueWithinDays !== "";
 
   if (jobs === null) {
     return (
@@ -74,15 +121,107 @@ function BrowseJobs() {
   }
 
   return (
-    <div className="space-y-3">
-      {jobs.map((job) => (
-        <OpenJobCard
-          key={job.id}
-          job={job}
-          expanded={expandedJobId === job.id}
-          onToggle={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
+    <div className="space-y-4">
+      <div className="grid gap-4 rounded-2xl border border-gray-100 bg-white p-4 sm:grid-cols-3 sm:p-5">
+        <label className="block">
+          <span className="block text-sm font-medium text-gray-700">Instrument</span>
+          <select
+            value={instrument}
+            onChange={(e) => setInstrument(e.target.value)}
+            className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-all duration-150 ease-out hover:border-gray-300 focus:border-accent focus:ring-2 focus:ring-accent/10"
+          >
+            <option value="">All instruments</option>
+            {instruments.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="block text-sm font-medium text-gray-700">
+            Paying at least {formatCents(minPriceCents)}
+          </span>
+          <input
+            type="range"
+            min={priceBounds.min}
+            max={priceBounds.max}
+            step={100}
+            value={Math.min(minPriceCents, priceBounds.max)}
+            onChange={(e) => setMinPriceCents(Number(e.target.value))}
+            className="mt-3 w-full accent-accent"
+          />
+          <div className="mt-1 flex justify-between text-xs text-gray-400">
+            <span>{formatCents(priceBounds.min)}</span>
+            <span>{formatCents(priceBounds.max)}</span>
+          </div>
+        </label>
+
+        <label className="block">
+          <span className="block text-sm font-medium text-gray-700">Deadline</span>
+          <select
+            value={dueWithinDays}
+            onChange={(e) => setDueWithinDays(e.target.value)}
+            className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-all duration-150 ease-out hover:border-gray-300 focus:border-accent focus:ring-2 focus:ring-accent/10"
+          >
+            {DUE_WITHIN_OPTIONS.map((opt) => (
+              <option key={opt.value || "any"} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {filtersActive && (
+          <div className="sm:col-span-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setInstrument("");
+                setMinPriceCents(0);
+                setDueWithinDays("");
+              }}
+            >
+              Clear filters
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {filteredJobs.length === 0 ? (
+        <EmptyState
+          title="No jobs match these filters"
+          description="Try widening the instrument, pay, or deadline filters."
+          action={
+            filtersActive ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setInstrument("");
+                  setMinPriceCents(0);
+                  setDueWithinDays("");
+                }}
+              >
+                Clear filters
+              </Button>
+            ) : undefined
+          }
         />
-      ))}
+      ) : (
+        <div className="space-y-3">
+          {filteredJobs.map((job) => (
+            <OpenJobCard
+              key={job.id}
+              job={job}
+              expanded={expandedJobId === job.id}
+              onToggle={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -140,7 +279,7 @@ function OpenJobCard({
               </div>
               <div className="mt-4">
                 <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Demo</p>
-                <AudioPlayer src={job.demoFileUrl} label="Demo" />
+                <AudioPlayer src={job.demoFileUrl} label="Demo" allowDownload />
               </div>
               <div className="mt-6">
                 <SubmitTakeForm jobId={job.id} />

@@ -251,12 +251,26 @@ function TakesList({
     );
   }
 
+  // After award: only the winning take (no runner-up list). While open: all takes to choose from.
+  const visibleTakes = jobOpen ? takes : takes.filter((take) => take.isWinner);
+
+  if (visibleTakes.length === 0) {
+    return (
+      <EmptyState
+        title="No awarded take"
+        description="This job closed without a selected take."
+      />
+    );
+  }
+
   return (
     <div className="space-y-3">
-      <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
-        {takes.length} {takes.length === 1 ? "take" : "takes"}
-      </p>
-      {takes.map((take) => (
+      {jobOpen && (
+        <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
+          {takes.length} {takes.length === 1 ? "take" : "takes"}
+        </p>
+      )}
+      {visibleTakes.map((take) => (
         <TakeCard
           key={take.id}
           take={take}
@@ -302,7 +316,12 @@ function TakeCard({
           {take.note && (
             <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{take.note}</p>
           )}
-          <AudioPlayer src={take.audioFileUrl} label="Take" className="mt-3" />
+          <AudioPlayer
+            src={take.audioFileUrl}
+            label="Take"
+            className="mt-3"
+            allowDownload={isWinner}
+          />
         </div>
         {jobOpen && !isWinner && (
           <Button

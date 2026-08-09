@@ -1,4 +1,5 @@
 import { formatCents, formatDeadline } from "@/lib/format";
+import { emojiForInstrument } from "@/lib/instruments";
 
 function MetaTag({
   emoji,
@@ -19,7 +20,6 @@ function MetaTag({
   );
 }
 
-/** Instrument = brand accent (what you're retracking). Price / due stay softer. */
 export function JobMetaTags({
   instrument,
   priceCents,
@@ -33,7 +33,12 @@ export function JobMetaTags({
 }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      <MetaTag className="bg-accent text-white ring-accent/30">{instrument}</MetaTag>
+      <MetaTag
+        emoji={emojiForInstrument(instrument)}
+        className="bg-white text-gray-900 ring-gray-900/15"
+      >
+        {instrument}
+      </MetaTag>
       <MetaTag emoji="💵" className="bg-emerald-50 text-emerald-800 ring-emerald-600/10">
         {formatCents(priceCents)}
       </MetaTag>

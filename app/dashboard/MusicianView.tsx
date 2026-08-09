@@ -8,20 +8,14 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
-import { formatCents } from "@/lib/format";
+import { emojiForInstrument } from "@/lib/instruments";
 import type { Job } from "@/lib/types";
 import { MySubmissions } from "./MySubmissions";
 import { SubmitTakeForm } from "./SubmitTakeForm";
 
 type SubTab = "browse" | "submissions";
-
-const DUE_WITHIN_OPTIONS = [
-  { value: "", label: "Any deadline" },
-  { value: "7", label: "Due within 7 days" },
-  { value: "14", label: "Due within 14 days" },
-  { value: "30", label: "Due within 30 days" },
-  { value: "60", label: "Due within 60 days" },
-] as const;
+type SortKey = "pay" | "posted";
+type SortDir = "asc" | "desc";
 
 export function MusicianView() {
   const [subTab, setSubTab] = useState<SubTab>("browse");
@@ -58,19 +52,15 @@ export function MusicianView() {
 function BrowseJobs() {
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
-  const [instrument, setInstrument] = useState("");
-  const [minPriceCents, setMinPriceCents] = useState(0);
-  const [dueWithinDays, setDueWithinDays] = useState("");
+  /** Empty set = all instruments */
+  const [selectedInstruments, setSelectedInstruments] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<SortKey>("posted");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   useEffect(() => {
     fetch("/api/jobs")
       .then((res) => res.json())
-      .then((data: Job[]) => {
-        setJobs(data);
-        if (data.length > 0) {
-          setMinPriceCents(0);
-        }
-      });
+      .then(setJobs);
   }, []);
 
   const instruments = useMemo(() => {
@@ -80,28 +70,42 @@ function BrowseJobs() {
     );
   }, [jobs]);
 
-  const priceBounds = useMemo(() => {
-    if (!jobs || jobs.length === 0) return { min: 0, max: 10000 };
-    const prices = jobs.map((job) => job.priceCents);
-    return { min: 0, max: Math.max(...prices) };
-  }, [jobs]);
-
   const filteredJobs = useMemo(() => {
     if (!jobs) return [];
-    const now = Date.now();
-    const dueLimitMs = dueWithinDays
-      ? now + Number(dueWithinDays) * 24 * 60 * 60 * 1000
-      : null;
 
-    return jobs.filter((job) => {
-      if (instrument && job.instrument !== instrument) return false;
-      if (job.priceCents < minPriceCents) return false;
-      if (dueLimitMs !== null && new Date(job.deadline).getTime() > dueLimitMs) return false;
-      return true;
+    const filtered =
+      selectedInstruments.size === 0
+        ? [...jobs]
+        : jobs.filter((job) => selectedInstruments.has(job.instrument));
+
+    filtered.sort((a, b) => {
+      const aVal =
+        sortKey === "pay" ? a.priceCents : new Date(a.createdAt).getTime();
+      const bVal =
+        sortKey === "pay" ? b.priceCents : new Date(b.createdAt).getTime();
+      return sortDir === "desc" ? bVal - aVal : aVal - bVal;
     });
-  }, [jobs, instrument, minPriceCents, dueWithinDays]);
 
-  const filtersActive = instrument !== "" || minPriceCents > 0 || dueWithinDays !== "";
+    return filtered;
+  }, [jobs, selectedInstruments, sortKey, sortDir]);
+
+  function toggleInstrument(name: string) {
+    setSelectedInstruments((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  function cycleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((dir) => (dir === "desc" ? "asc" : "desc"));
+      return;
+    }
+    setSortKey(key);
+    setSortDir("desc");
+  }
 
   if (jobs === null) {
     return (
@@ -120,92 +124,99 @@ function BrowseJobs() {
     );
   }
 
+  const payLabel =
+    sortKey === "pay"
+      ? sortDir === "desc"
+        ? "Pay · high → low"
+        : "Pay · low → high"
+      : "Pay";
+  const dateLabel =
+    sortKey === "posted"
+      ? sortDir === "desc"
+        ? "Newest"
+        : "Oldest"
+      : "Date";
+
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 rounded-2xl border border-gray-100 bg-white p-4 sm:grid-cols-3 sm:p-5">
-        <label className="block">
-          <span className="block text-sm font-medium text-gray-700">Instrument</span>
-          <select
-            value={instrument}
-            onChange={(e) => setInstrument(e.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-all duration-150 ease-out hover:border-gray-300 focus:border-accent focus:ring-2 focus:ring-accent/10"
+    <div className="space-y-5">
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedInstruments(new Set())}
+            aria-pressed={selectedInstruments.size === 0}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
+              selectedInstruments.size === 0
+                ? "bg-gray-900 text-white"
+                : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"
+            }`}
           >
-            <option value="">All instruments</option>
-            {instruments.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
+            All
+          </button>
+          {instruments.map((name) => {
+            const selected = selectedInstruments.has(name);
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => toggleInstrument(name)}
+                aria-pressed={selected}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
+                  selected
+                    ? "bg-gray-900 text-white"
+                    : "bg-white text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <span aria-hidden="true">{emojiForInstrument(name)}</span>
+                <span>{name}</span>
+              </button>
+            );
+          })}
+        </div>
 
-        <label className="block">
-          <span className="block text-sm font-medium text-gray-700">
-            Paying at least {formatCents(minPriceCents)}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
+            Sort
           </span>
-          <input
-            type="range"
-            min={priceBounds.min}
-            max={priceBounds.max}
-            step={100}
-            value={Math.min(minPriceCents, priceBounds.max)}
-            onChange={(e) => setMinPriceCents(Number(e.target.value))}
-            className="mt-3 w-full accent-accent"
-          />
-          <div className="mt-1 flex justify-between text-xs text-gray-400">
-            <span>{formatCents(priceBounds.min)}</span>
-            <span>{formatCents(priceBounds.max)}</span>
-          </div>
-        </label>
-
-        <label className="block">
-          <span className="block text-sm font-medium text-gray-700">Deadline</span>
-          <select
-            value={dueWithinDays}
-            onChange={(e) => setDueWithinDays(e.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-all duration-150 ease-out hover:border-gray-300 focus:border-accent focus:ring-2 focus:ring-accent/10"
+          <button
+            type="button"
+            onClick={() => cycleSort("pay")}
+            aria-pressed={sortKey === "pay"}
+            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
+              sortKey === "pay"
+                ? "bg-accent text-white"
+                : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"
+            }`}
           >
-            {DUE_WITHIN_OPTIONS.map((opt) => (
-              <option key={opt.value || "any"} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {filtersActive && (
-          <div className="sm:col-span-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setInstrument("");
-                setMinPriceCents(0);
-                setDueWithinDays("");
-              }}
-            >
-              Clear filters
-            </Button>
-          </div>
-        )}
+            {payLabel}
+          </button>
+          <button
+            type="button"
+            onClick={() => cycleSort("posted")}
+            aria-pressed={sortKey === "posted"}
+            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
+              sortKey === "posted"
+                ? "bg-accent text-white"
+                : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"
+            }`}
+          >
+            {dateLabel}
+          </button>
+        </div>
       </div>
 
       {filteredJobs.length === 0 ? (
         <EmptyState
-          title="No jobs match these filters"
-          description="Try widening the instrument, pay, or deadline filters."
+          title="No jobs for these instruments"
+          description="Try selecting All, or pick a different instrument."
           action={
-            filtersActive ? (
+            selectedInstruments.size > 0 ? (
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => {
-                  setInstrument("");
-                  setMinPriceCents(0);
-                  setDueWithinDays("");
-                }}
+                onClick={() => setSelectedInstruments(new Set())}
               >
-                Clear filters
+                Show all
               </Button>
             ) : undefined
           }

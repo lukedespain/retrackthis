@@ -27,10 +27,17 @@ export function MarketingHeaderActions() {
   }
 
   return (
-    <Link href="/sign-in">
-      <Button variant="ghost" size="sm">
-        Sign in
-      </Button>
-    </Link>
+    <div className="flex items-center gap-2 sm:gap-3">
+      <Link href="/jobs">
+        <Button variant="ghost" size="sm">
+          Browse jobs
+        </Button>
+      </Link>
+      <Link href="/sign-in">
+        <Button variant="ghost" size="sm">
+          Sign in
+        </Button>
+      </Link>
+    </div>
   );
 }

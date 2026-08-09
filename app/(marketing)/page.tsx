@@ -25,12 +25,12 @@ export default function LandingPage() {
                 Pick the one that works best for you.
               </p>
               <div className="mt-8 flex flex-col gap-2 sm:mt-10 sm:flex-row sm:flex-wrap sm:gap-3">
-                <Link href="/sign-up" className="w-full sm:w-auto">
-                  <Button className="w-full sm:w-auto">Post a job</Button>
+                <Link href="/jobs" className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto">Find work</Button>
                 </Link>
                 <Link href="/sign-up" className="w-full sm:w-auto">
                   <Button variant="secondary" className="w-full sm:w-auto">
-                    Find work
+                    Post a job
                   </Button>
                 </Link>
               </div>

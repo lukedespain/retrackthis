@@ -13,12 +13,19 @@ export function SubmitTakeForm({ jobId }: { jobId: string }) {
   const [submitted, setSubmitted] = useState(false);
   const [audioFileUrl, setAudioFileUrl] = useState<string | null>(null);
   const [uploadKey, setUploadKey] = useState(0);
+  const [attestHuman, setAttestHuman] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     setSubmitted(false);
+
+    if (!attestHuman) {
+      setError("Confirm this take is a real human performance before submitting.");
+      setSubmitting(false);
+      return;
+    }
 
     const formEl = e.currentTarget;
     const form = new FormData(formEl);
@@ -30,6 +37,7 @@ export function SubmitTakeForm({ jobId }: { jobId: string }) {
         body: JSON.stringify({
           audioFileUrl: audioFileUrl ?? "https://example-demo-files.test/placeholder-take.mp3",
           note: form.get("note"),
+          attestHuman: true,
         }),
       });
 
@@ -41,6 +49,7 @@ export function SubmitTakeForm({ jobId }: { jobId: string }) {
       setSubmitted(true);
       formEl.reset();
       setAudioFileUrl(null);
+      setAttestHuman(false);
       setUploadKey((k) => k + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -64,10 +73,24 @@ export function SubmitTakeForm({ jobId }: { jobId: string }) {
           hint="Optional"
         />
 
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition-colors hover:border-gray-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/20">
+          <input
+            type="checkbox"
+            checked={attestHuman}
+            onChange={(e) => setAttestHuman(e.target.checked)}
+            required
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent focus:ring-accent/30"
+          />
+          <span className="text-sm leading-relaxed text-gray-700">
+            I confirm this take is a real, live human performance — not AI-generated, AI-assisted, or
+            produced by a generative music tool in any way.
+          </span>
+        </label>
+
         {error && <Alert variant="error">{error}</Alert>}
         {submitted && <Alert variant="success">Take submitted successfully.</Alert>}
 
-        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+        <Button type="submit" disabled={submitting || !attestHuman} className="w-full sm:w-auto">
           {submitting ? "Submitting…" : "Submit take"}
         </Button>
       </form>

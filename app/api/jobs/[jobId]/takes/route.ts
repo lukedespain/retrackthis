@@ -10,7 +10,18 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   }
 
   const body = await req.json();
-  const { audioFileUrl, note } = body;
+  const { audioFileUrl, note, attestHuman } = body;
+
+  if (!attestHuman) {
+    return NextResponse.json(
+      { error: "You must confirm this take is a real human performance, not AI-generated." },
+      { status: 400 }
+    );
+  }
+
+  if (!audioFileUrl) {
+    return NextResponse.json({ error: "Missing audio file" }, { status: 400 });
+  }
 
   const job = await db.job.findUnique({ where: { id: params.jobId } });
   if (!job || job.status !== "OPEN") {
@@ -18,7 +29,13 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   }
 
   const take = await db.take.create({
-    data: { jobId: params.jobId, musicianId, audioFileUrl, note },
+    data: {
+      jobId: params.jobId,
+      musicianId,
+      audioFileUrl,
+      note: note || null,
+      humanAttestedAt: new Date(),
+    },
   });
 
   return NextResponse.json(take, { status: 201 });

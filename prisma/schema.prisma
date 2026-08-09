@@ -59,6 +59,8 @@ model Take {
   note         String?
   isWinner     Boolean  @default(false)
   submittedAt  DateTime @default(now())
+  // Set when musician confirms the take is a real human performance (not AI)
+  humanAttestedAt DateTime?
 }
 
 model Payment {

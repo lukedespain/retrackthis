@@ -1,22 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { Logo } from "./Logo";
 import { UserMenu } from "./UserMenu";
-import { RoleToggle } from "./ui/RoleToggle";
-
-type Role = "CREATOR" | "MUSICIAN";
+import { Button } from "./ui/Button";
 
 export function DashboardHeader({
   name,
-  roles,
-  activeRole,
-  onRoleChange,
   onSignOut,
 }: {
   name: string;
-  roles: Role[];
-  activeRole: Role;
-  onRoleChange: (role: Role) => void;
   onSignOut: () => void;
 }) {
   return (
@@ -24,7 +17,11 @@ export function DashboardHeader({
       <div className="flex items-center justify-between gap-3">
         <Logo href="/" />
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
-          <RoleToggle roles={roles} active={activeRole} onChange={onRoleChange} />
+          <Link href="/jobs">
+            <Button variant="ghost" size="sm">
+              Browse jobs
+            </Button>
+          </Link>
           <UserMenu name={name} onSignOut={onSignOut} />
         </div>
       </div>

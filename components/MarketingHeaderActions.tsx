@@ -15,15 +15,7 @@ export function MarketingHeaderActions() {
   }, []);
 
   if (signedIn === null) {
-    return <div className="h-8 w-20" aria-hidden />;
-  }
-
-  if (signedIn) {
-    return (
-      <Link href="/dashboard">
-        <Button size="sm">Dashboard</Button>
-      </Link>
-    );
+    return <div className="h-8 w-28" aria-hidden />;
   }
 
   return (
@@ -33,11 +25,17 @@ export function MarketingHeaderActions() {
           Browse jobs
         </Button>
       </Link>
-      <Link href="/sign-in">
-        <Button variant="ghost" size="sm">
-          Sign in
-        </Button>
-      </Link>
+      {signedIn ? (
+        <Link href="/dashboard">
+          <Button size="sm">Dashboard</Button>
+        </Link>
+      ) : (
+        <Link href="/sign-in">
+          <Button variant="ghost" size="sm">
+            Sign in
+          </Button>
+        </Link>
+      )}
     </div>
   );
 }

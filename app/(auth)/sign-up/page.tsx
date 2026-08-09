@@ -1,15 +1,31 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthFooterLink, AuthLayout } from "@/components/AuthLayout";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Spinner } from "@/components/ui/Spinner";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <Spinner />
+        </div>
+      }
+    >
+      <SignUpForm />
+    </Suspense>
+  );
+}
+
+function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
@@ -32,7 +48,7 @@ export default function SignUpPage() {
     }
 
     if (data.session) {
-      router.push("/dashboard");
+      router.push(searchParams.get("next") ?? "/dashboard");
     } else {
       setNeedsConfirmation(true);
       setSubmitting(false);
@@ -49,13 +65,17 @@ export default function SignUpPage() {
     );
   }
 
+  const signInHref = searchParams.get("next")
+    ? `/sign-in?next=${encodeURIComponent(searchParams.get("next")!)}`
+    : "/sign-in";
+
   return (
     <AuthLayout
       title="Create an account"
       subtitle="Join as a creator, musician, or both"
       footer={
         <>
-          Already have an account? <AuthFooterLink href="/sign-in">Sign in</AuthFooterLink>
+          Already have an account? <AuthFooterLink href={signInHref}>Sign in</AuthFooterLink>
         </>
       }
     >

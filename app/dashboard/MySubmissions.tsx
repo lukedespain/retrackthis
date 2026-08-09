@@ -40,6 +40,11 @@ export function MySubmissions() {
       <EmptyState
         title="No submissions yet"
         description="Browse open jobs and submit your first take to get started."
+        action={
+          <a href="/jobs">
+            <Button size="sm">Browse jobs</Button>
+          </a>
+        }
       />
     );
   }

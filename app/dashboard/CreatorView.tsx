@@ -12,9 +12,15 @@ import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import type { Job, Take } from "@/lib/types";
 import { PostJobForm } from "./PostJobForm";
 
-export function CreatorView() {
+export function CreatorView({
+  initialShowPost = false,
+  hideHeading = false,
+}: {
+  initialShowPost?: boolean;
+  hideHeading?: boolean;
+}) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
-  const [showPostForm, setShowPostForm] = useState(false);
+  const [showPostForm, setShowPostForm] = useState(initialShowPost);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
 
   async function loadJobs() {
@@ -26,22 +32,36 @@ export function CreatorView() {
     loadJobs();
   }, []);
 
+  useEffect(() => {
+    if (initialShowPost) setShowPostForm(true);
+  }, [initialShowPost]);
+
   return (
     <div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">My jobs</h2>
-          <p className="mt-0.5 text-sm text-gray-500">Manage your posted gigs and review takes</p>
+      {!hideHeading && (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">My jobs</h2>
+            <p className="mt-0.5 text-sm text-gray-500">Manage your posted gigs and review takes</p>
+          </div>
+          {!showPostForm && (
+            <Button onClick={() => setShowPostForm(true)} size="sm" className="w-full sm:w-auto">
+              Post a job
+            </Button>
+          )}
         </div>
-        {!showPostForm && (
+      )}
+
+      {hideHeading && !showPostForm && (
+        <div className="mb-6 flex justify-end sm:mb-8">
           <Button onClick={() => setShowPostForm(true)} size="sm" className="w-full sm:w-auto">
             Post a job
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {showPostForm && (
-        <div className="mt-6 sm:mt-8">
+        <div className={hideHeading ? "mb-6 sm:mb-8" : "mt-6 sm:mt-8"}>
           <PostJobForm
             onCancel={() => setShowPostForm(false)}
             onPosted={() => {
@@ -52,7 +72,7 @@ export function CreatorView() {
         </div>
       )}
 
-      <div className="mt-6 space-y-3 sm:mt-8 sm:space-y-4">
+      <div className={hideHeading ? "space-y-3 sm:space-y-4" : "mt-6 space-y-3 sm:mt-8 sm:space-y-4"}>
         {jobs === null && (
           <div className="flex justify-center py-16">
             <Spinner />

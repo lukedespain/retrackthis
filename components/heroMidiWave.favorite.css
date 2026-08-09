@@ -1,0 +1,56 @@
+/**
+ * FAVORITE SNAPSHOT — CSS for the two-stage hero.
+ * Live styles live in app/globals.css; paste this back if restoring the favorite.
+ */
+
+/*
+.hero-midi-track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  animation: hero-strip-scroll 16s linear infinite;
+}
+
+.hero-wave-track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  align-items: center;
+  animation: hero-strip-scroll 16s linear infinite;
+}
+
+.hero-divider {
+  opacity: 0.9;
+}
+
+.hero-divider-glow {
+  animation: hero-divider-breathe 3.5s ease-in-out infinite;
+}
+
+@keyframes hero-strip-scroll {
+  from {
+    transform: translateX(-800px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes hero-divider-breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-midi-track,
+  .hero-wave-track,
+  .hero-divider-glow {
+    animation: none !important;
+  }
+}
+*/

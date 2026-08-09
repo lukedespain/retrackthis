@@ -17,7 +17,7 @@ export default function LandingPage() {
             <div className="max-w-2xl">
               <p className="text-sm font-medium text-accent">For producers, songwriters & composers</p>
               <h1 className="mt-3 text-4xl font-semibold leading-[1.1] tracking-tight text-gray-900 sm:mt-4 sm:text-5xl lg:text-6xl">
-                Real demos. Real takes. Real music.
+                Retrack your demo with real musicians.
               </h1>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-gray-500 sm:mt-6 sm:text-lg">
                 Post a demo of the part you need retracked. Working musicians submit their best take.

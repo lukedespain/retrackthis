@@ -53,13 +53,13 @@
     animation: hero-divider-breathe 3.5s ease-in-out infinite;
   }
 
-  /* Strip width is 800px (see STRIP_WIDTH) — scroll exactly one copy */
+  /* Strip width is 800px (see STRIP_WIDTH) — scroll exactly one copy, left → right */
   @keyframes hero-strip-scroll {
     from {
-      transform: translateX(0);
+      transform: translateX(-800px);
     }
     to {
-      transform: translateX(-800px);
+      transform: translateX(0);
     }
   }
 

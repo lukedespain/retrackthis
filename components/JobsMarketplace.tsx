@@ -1,9 +1,11 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { OpenJobsBrowse } from "@/components/OpenJobsBrowse";
 import { POST_JOB_HREF, SIGN_UP_TO_POST_HREF } from "@/components/MarketingHeroCtas";
 import { Button } from "@/components/ui/Button";
 import { supabaseClient } from "@/lib/supabaseClient";
-import Link from "next/link";
-import { useEffect, useState } from "react";
 
 export function JobsMarketplace() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);

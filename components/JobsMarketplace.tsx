@@ -1,13 +1,9 @@
-"use client";
-
-import Link from "next/link";
-import { useEffect, useState } from "react";
 import { OpenJobsBrowse } from "@/components/OpenJobsBrowse";
+import { POST_JOB_HREF, SIGN_UP_TO_POST_HREF } from "@/components/MarketingHeroCtas";
 import { Button } from "@/components/ui/Button";
 import { supabaseClient } from "@/lib/supabaseClient";
-
-const POST_HREF = "/dashboard?tab=jobs&post=1";
-const SIGN_UP_TO_POST = `/sign-up?next=${encodeURIComponent(POST_HREF)}`;
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export function JobsMarketplace() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -30,7 +26,10 @@ export function JobsMarketplace() {
             ready to submit a take.
           </p>
         </div>
-        <Link href={signedIn ? POST_HREF : SIGN_UP_TO_POST} className="w-full shrink-0 sm:w-auto">
+        <Link
+          href={signedIn ? POST_JOB_HREF : SIGN_UP_TO_POST_HREF}
+          className="w-full shrink-0 sm:w-auto"
+        >
           <Button className="w-full sm:w-auto" disabled={signedIn === null}>
             Post a job
           </Button>

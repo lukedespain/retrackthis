@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { HeroMidiWave } from "@/components/HeroMidiWave";
 import { Logo } from "@/components/Logo";
 import { MarketingHeaderActions } from "@/components/MarketingHeaderActions";
-import { Button } from "@/components/ui/Button";
+import { MarketingHeroCtas } from "@/components/MarketingHeroCtas";
 
 export default function LandingPage() {
   return (
@@ -24,16 +23,7 @@ export default function LandingPage() {
                 Post a demo of the part you need retracked. Working musicians submit their best take.
                 Pick the one that works best for you.
               </p>
-              <div className="mt-8 flex flex-col gap-2 sm:mt-10 sm:flex-row sm:flex-wrap sm:gap-3">
-                <Link href="/jobs" className="w-full sm:w-auto">
-                  <Button className="w-full sm:w-auto">Find work</Button>
-                </Link>
-                <Link href="/sign-up" className="w-full sm:w-auto">
-                  <Button variant="secondary" className="w-full sm:w-auto">
-                    Post a job
-                  </Button>
-                </Link>
-              </div>
+              <MarketingHeroCtas />
             </div>
           </div>
 

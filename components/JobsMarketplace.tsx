@@ -11,9 +11,17 @@ export function JobsMarketplace() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     supabaseClient.auth.getSession().then(({ data }) => {
-      setSignedIn(!!data.session);
+      if (!cancelled) setSignedIn(!!data.session);
     });
+    const { data: sub } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      setSignedIn(!!session);
+    });
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   return (
@@ -28,14 +36,18 @@ export function JobsMarketplace() {
             ready to submit a take.
           </p>
         </div>
-        <Link
-          href={signedIn ? POST_JOB_HREF : SIGN_UP_TO_POST_HREF}
-          className="w-full shrink-0 sm:w-auto"
-        >
-          <Button className="w-full sm:w-auto" disabled={signedIn === null}>
+        {signedIn === null ? (
+          <Button className="w-full shrink-0 sm:w-auto" disabled>
             Post a job
           </Button>
-        </Link>
+        ) : (
+          <Link
+            href={signedIn ? POST_JOB_HREF : SIGN_UP_TO_POST_HREF}
+            className="w-full shrink-0 sm:w-auto"
+          >
+            <Button className="w-full sm:w-auto">Post a job</Button>
+          </Link>
+        )}
       </div>
 
       <div className="mt-8 sm:mt-10">

@@ -18,11 +18,11 @@ export default function LandingPage() {
             <div className="max-w-2xl">
               <p className="text-sm font-medium text-accent">For producers, songwriters & composers</p>
               <h1 className="mt-3 text-4xl font-semibold leading-[1.1] tracking-tight text-gray-900 sm:mt-4 sm:text-5xl lg:text-6xl">
-                Real musicians. Real takes. You pick your favorite.
+                Real demos. Real takes. Real music.
               </h1>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-gray-500 sm:mt-6 sm:text-lg">
-                Post a demo of the part you need. Working musicians submit their own recorded takes.
-                Pick the one you love. Only that musician gets paid.
+                Post a demo of the part you need retracked. Working musicians submit their best take.
+                Pick the one that works best for you.
               </p>
               <div className="mt-8 flex flex-col gap-2 sm:mt-10 sm:flex-row sm:flex-wrap sm:gap-3">
                 <Link href="/sign-up" className="w-full sm:w-auto">
@@ -65,14 +65,24 @@ export default function LandingPage() {
 
         <section className="mx-auto max-w-5xl px-5 py-16 sm:px-6 sm:py-24">
           <div className="rounded-2xl bg-accent-muted px-6 py-12 sm:rounded-3xl sm:px-16 sm:py-16">
-            <h2 className="max-w-md text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-              Money in escrow. Musicians know the gig is real.
+            <p className="text-sm font-medium text-accent">Why RetrackThis exists</p>
+            <h2 className="mt-3 max-w-xl text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+              Music is losing its humanism. We&apos;re building a place to get it back.
             </h2>
-            <p className="mt-3 max-w-lg text-sm leading-relaxed text-gray-600 sm:mt-4 sm:text-base">
-              When you post a job, your payment is authorized and held, not charged until you pick a
-              winner. Musicians can trust the opportunity is genuine, without the race-to-the-bottom
-              dynamics of open bidding platforms.
-            </p>
+            <div className="mt-4 max-w-2xl space-y-4 text-sm leading-relaxed text-gray-600 sm:mt-5 sm:text-base">
+              <p>
+                Generative AI is trained on what&apos;s already been made. It can remix the past, but it
+                can&apos;t feel a demo the way a musician can — the pocket, the breath, the thing you meant
+                between the notes. When demos get fed into tools like Suno, and when players are asked to
+                chase AI-shaped parts, the soul gets sanded off.
+              </p>
+              <p>
+                RetrackThis is for the opposite of that. Producers, songwriters, and composers post the
+                part they need. Real musicians listen, play it on real instruments, and send back takes
+                that actually respond to the music. Only the take you pick gets paid. People with skills
+                get work. People writing music get human performances again.
+              </p>
+            </div>
           </div>
         </section>
       </main>

@@ -1,38 +1,43 @@
 import Link from "next/link";
+import { HeroMidiWave } from "@/components/HeroMidiWave";
 import { Logo } from "@/components/Logo";
 import { MarketingHeaderActions } from "@/components/MarketingHeaderActions";
 import { Button } from "@/components/ui/Button";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6 sm:px-6 sm:py-8">
         <Logo />
         <MarketingHeaderActions />
       </header>
 
       <main>
-        <section className="mx-auto max-w-5xl px-5 pb-20 pt-12 sm:px-6 sm:pb-32 sm:pt-24">
-          <div className="max-w-2xl">
-            <p className="text-sm font-medium text-accent">For producers, songwriters & composers</p>
-            <h1 className="mt-3 text-4xl font-semibold leading-[1.1] tracking-tight text-gray-900 sm:mt-4 sm:text-5xl lg:text-6xl">
-              Real musicians. Real takes. You pick your favorite.
-            </h1>
-            <p className="mt-5 max-w-lg text-base leading-relaxed text-gray-500 sm:mt-6 sm:text-lg">
-              Post a demo of the part you need. Working musicians submit their own recorded takes.
-              Pick the one you love. Only that musician gets paid.
-            </p>
-            <div className="mt-8 flex flex-col gap-2 sm:mt-10 sm:flex-row sm:flex-wrap sm:gap-3">
-              <Link href="/sign-up" className="w-full sm:w-auto">
-                <Button className="w-full sm:w-auto">Post a job</Button>
-              </Link>
-              <Link href="/sign-up" className="w-full sm:w-auto">
-                <Button variant="secondary" className="w-full sm:w-auto">
-                  Find work
-                </Button>
-              </Link>
+        <section className="pt-12 sm:pt-24">
+          <div className="mx-auto max-w-5xl px-5 sm:px-6">
+            <div className="max-w-2xl">
+              <p className="text-sm font-medium text-accent">For producers, songwriters & composers</p>
+              <h1 className="mt-3 text-4xl font-semibold leading-[1.1] tracking-tight text-gray-900 sm:mt-4 sm:text-5xl lg:text-6xl">
+                Real musicians. Real takes. You pick your favorite.
+              </h1>
+              <p className="mt-5 max-w-lg text-base leading-relaxed text-gray-500 sm:mt-6 sm:text-lg">
+                Post a demo of the part you need. Working musicians submit their own recorded takes.
+                Pick the one you love. Only that musician gets paid.
+              </p>
+              <div className="mt-8 flex flex-col gap-2 sm:mt-10 sm:flex-row sm:flex-wrap sm:gap-3">
+                <Link href="/sign-up" className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto">Post a job</Button>
+                </Link>
+                <Link href="/sign-up" className="w-full sm:w-auto">
+                  <Button variant="secondary" className="w-full sm:w-auto">
+                    Find work
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
+
+          <HeroMidiWave />
         </section>
 
         <section className="border-t border-gray-100 bg-surface">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-function RetrackMark({ className = "" }: { className?: string }) {
+export function RetrackMark({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       {/* Circular retract/repeat arrows */}

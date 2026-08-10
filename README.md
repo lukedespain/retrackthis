@@ -73,3 +73,28 @@ email sender is rate-limited and will block repeated sign-ups otherwise.
   refreshed in `middleware.ts`
 - **Stripe** — escrow via manual-capture PaymentIntents, payouts via Connect
   transfers (Connect *onboarding* isn't built yet — see `HANDOFF.md`)
+
+## Stripe webhook (production)
+
+Endpoint: `POST /api/webhooks/stripe` → `https://retrackthis.com/api/webhooks/stripe`
+
+1. Stripe Dashboard → **Developers → Webhooks → Add endpoint**
+2. URL: `https://retrackthis.com/api/webhooks/stripe`
+3. Events to send:
+   - `payment_intent.payment_failed`
+   - `payment_intent.canceled`
+   - `payment_intent.amount_capturable_updated`
+   - `payment_intent.succeeded`
+   - `account.updated`
+4. Copy the endpoint **Signing secret** (`whsec_…`) into Vercel as `STRIPE_WEBHOOK_SECRET`
+5. Ensure Vercel also has matching-mode keys:
+   - `STRIPE_SECRET_KEY` (`sk_test_…` or `sk_live_…`)
+   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (`pk_test_…` or `pk_live_…`)
+6. Redeploy after changing env vars
+7. In the webhook detail page, **Send test webhook** and confirm a `200` response
+
+Local testing: `stripe listen --forward-to localhost:3000/api/webhooks/stripe` and put that CLI `whsec_` into `.env.local`.
+
+Handlers sync `Payment.status` from PaymentIntent events and, for Connect,
+save `User.stripeAccountId` when `account.updated` has `metadata.userId` and
+`payouts_enabled` (account creation with that metadata lands in the Connect step).

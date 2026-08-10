@@ -70,6 +70,6 @@ model Payment {
   stripePaymentIntentId String
   amountCents           Int
   platformFeeCents      Int
-  status                String   // "authorized" | "captured" | "transferred" | "cancelled"
+  status                String   // "authorized" | "captured" | "transferred" | "cancelled" | "failed"
   createdAt             DateTime @default(now())
 }

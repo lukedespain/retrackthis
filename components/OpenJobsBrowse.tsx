@@ -14,6 +14,7 @@ import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 
 type SortKey = "pay" | "posted";
 type SortDir = "asc" | "desc";
+type MyTakeSummary = { jobId: string; audioFileUrl: string };
 
 /**
  * Shared open-jobs marketplace.
@@ -25,12 +26,31 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [selectedInstruments, setSelectedInstruments] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>("posted");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [myTakesByJob, setMyTakesByJob] = useState<Record<string, MyTakeSummary>>({});
 
   useEffect(() => {
     fetch("/api/jobs")
       .then((res) => res.json())
       .then(setJobs);
   }, []);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    fetch("/api/takes/mine")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((takes: Array<{ jobId: string; audioFileUrl: string }>) => {
+        const map: Record<string, MyTakeSummary> = {};
+        for (const take of takes) {
+          map[take.jobId] = { jobId: take.jobId, audioFileUrl: take.audioFileUrl };
+        }
+        setMyTakesByJob(map);
+      })
+      .catch(() => {});
+  }, [signedIn]);
+
+  function handleTakeSubmitted(take: MyTakeSummary) {
+    setMyTakesByJob((prev) => ({ ...prev, [take.jobId]: take }));
+  }
 
   const instruments = useMemo(() => {
     if (!jobs) return [];
@@ -190,6 +210,8 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
               job={job}
               signedIn={signedIn}
               expanded={expandedJobId === job.id}
+              myTake={myTakesByJob[job.id]}
+              onTakeSubmitted={handleTakeSubmitted}
               onToggle={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
             />
           ))}
@@ -203,11 +225,15 @@ function OpenJobCard({
   job,
   signedIn,
   expanded,
+  myTake,
+  onTakeSubmitted,
   onToggle,
 }: {
   job: Job;
   signedIn: boolean;
   expanded: boolean;
+  myTake?: MyTakeSummary;
+  onTakeSubmitted: (take: MyTakeSummary) => void;
   onToggle: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -229,12 +255,17 @@ function OpenJobCard({
             className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2"
           >
             <span className="font-medium text-gray-900">{job.title}</span>
-            <div className="mt-2.5">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
               <JobMetaTags
                 instrument={job.instrument}
                 priceCents={job.priceCents}
                 deadline={job.deadline}
               />
+              {myTake && (
+                <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
+                  Your take · pending
+                </span>
+              )}
             </div>
           </button>
           <Button variant="ghost" size="sm" onClick={onToggle} className="w-full shrink-0 sm:w-auto">
@@ -259,7 +290,12 @@ function OpenJobCard({
               </div>
               <div className="mt-6">
                 {signedIn ? (
-                  <SubmitTakeForm jobId={job.id} />
+                  <SubmitTakeForm
+                    jobId={job.id}
+                    alreadySubmitted={Boolean(myTake)}
+                    existingTakeUrl={myTake?.audioFileUrl}
+                    onSubmitted={onTakeSubmitted}
+                  />
                 ) : (
                   <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 text-center sm:px-6">
                     <p className="text-sm text-gray-600">

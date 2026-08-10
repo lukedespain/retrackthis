@@ -26,6 +26,21 @@
   .audio-player {
     @apply h-10 w-full;
   }
+
+  .submit-confetti {
+    animation: submit-confetti-fly 1.1s ease-out forwards;
+  }
+
+  @keyframes submit-confetti-fly {
+    0% {
+      opacity: 1;
+      transform: translate(-50%, 0) rotate(0deg) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(calc(-50% + var(--dx)), var(--dy)) rotate(var(--rot)) scale(0.6);
+    }
+  }
 }
 
 /* Homepage hero: MIDI piano-roll → thin line → DAW waveform (seamless loops) */

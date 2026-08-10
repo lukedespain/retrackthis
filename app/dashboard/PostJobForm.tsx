@@ -15,6 +15,15 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { getStripe, hasStripePublishableKey } from "@/lib/stripeClient";
 
+function StripeAmountSync({ amount }: { amount: number }) {
+  const elements = useElements();
+  useEffect(() => {
+    if (!elements) return;
+    elements.update({ amount });
+  }, [amount, elements]);
+  return null;
+}
+
 export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCancel: () => void }) {
   const [priceDollars, setPriceDollars] = useState(75);
   const priceCents = Math.max(100, Math.round((Number.isFinite(priceDollars) ? priceDollars : 0) * 100));
@@ -22,6 +31,8 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
   const stripePromise = useMemo(() => getStripe(), []);
   const keyConfigured = hasStripePublishableKey();
 
+  // Keep Elements options stable so changing price doesn't remount the form
+  // (and wipe title/demo/card fields). Amount updates via StripeAmountSync.
   const elementsOptions = useMemo(
     () => ({
       mode: "payment" as const,
@@ -41,7 +52,8 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
         },
       },
     }),
-    [priceCents]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-once; amount synced below
+    []
   );
 
   return (
@@ -57,7 +69,8 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
           publishable key in Vercel and redeploy.
         </Alert>
       ) : (
-        <Elements stripe={stripePromise} options={elementsOptions} key={priceCents}>
+        <Elements stripe={stripePromise} options={elementsOptions}>
+          <StripeAmountSync amount={priceCents} />
           <PostJobFormFields
             priceDollars={priceDollars}
             onPriceChange={setPriceDollars}

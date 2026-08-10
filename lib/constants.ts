@@ -5,4 +5,4 @@
 // strict duration check.
 export const MAX_AUDIO_UPLOAD_MB = 20;
 export const MAX_AUDIO_UPLOAD_BYTES = MAX_AUDIO_UPLOAD_MB * 1024 * 1024;
-export const AUDIO_UPLOAD_HINT = `Keep it to a short excerpt, not the full track. Roughly 60–90 seconds is plenty (max ${MAX_AUDIO_UPLOAD_MB}MB).`;
+export const AUDIO_UPLOAD_HINT = `Keep it to a short excerpt, not the full track. Roughly 60-90 seconds is plenty (max ${MAX_AUDIO_UPLOAD_MB}MB).`;

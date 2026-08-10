@@ -95,7 +95,7 @@ export function SubmitTakeForm({
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-semibold text-gray-900">Take submitted</h3>
             <p className="mt-1 text-sm text-gray-500">
-              You&apos;re in. Status: <span className="font-medium text-gray-800">Pending</span> — the
+              You&apos;re in. Status: <span className="font-medium text-gray-800">Pending</span>. The
               creator will review takes and pick a winner.
             </p>
             {submittedUrl && (
@@ -146,7 +146,7 @@ export function SubmitTakeForm({
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent focus:ring-accent/30"
           />
           <span className="text-sm leading-relaxed text-gray-700">
-            I confirm this take is a real, live human performance — not AI-generated, AI-assisted, or
+            I confirm this take is a real, live human performance, not AI-generated, AI-assisted, or
             produced by a generative music tool in any way.
           </span>
         </label>

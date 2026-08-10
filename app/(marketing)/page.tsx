@@ -62,7 +62,7 @@ export default function LandingPage() {
             <div className="mt-4 max-w-2xl space-y-4 text-sm leading-relaxed text-gray-600 sm:mt-5 sm:text-base">
               <p>
                 Generative AI is trained on what&apos;s already been made. It can remix the past, but it
-                can&apos;t feel a demo the way a musician can — the pocket, the breath, the thing you meant
+                can&apos;t feel a demo the way a musician can: the pocket, the breath, the thing you meant
                 between the notes. When demos get fed into tools like Suno, and when players are asked to
                 chase AI-shaped parts, the soul gets sanded off.
               </p>

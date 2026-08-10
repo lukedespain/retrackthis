@@ -265,7 +265,7 @@ function PostJobFormFields({
         <div className="sm:col-span-2 space-y-2">
           <p className="text-sm font-medium text-gray-700">Payment</p>
           <p className="text-xs text-gray-500">
-            Card is authorized for ${priceDollars || "—"} and only charged when you pick a winner.
+            Card is authorized for ${priceDollars || "-"} and only charged when you pick a winner.
           </p>
           <div className="rounded-xl border border-gray-200 bg-white px-3.5 py-3 min-h-[48px]">
             {elementError ? (

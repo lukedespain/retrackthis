@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   Elements,
   PaymentElement,
@@ -13,13 +13,14 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { getStripe } from "@/lib/stripeClient";
+import { getStripe, hasStripePublishableKey } from "@/lib/stripeClient";
 
 export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCancel: () => void }) {
   const [priceDollars, setPriceDollars] = useState(75);
   const priceCents = Math.max(100, Math.round((Number.isFinite(priceDollars) ? priceDollars : 0) * 100));
 
   const stripePromise = useMemo(() => getStripe(), []);
+  const keyConfigured = hasStripePublishableKey();
 
   const elementsOptions = useMemo(
     () => ({
@@ -47,14 +48,29 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
         Your payment will be held in escrow until you pick a winner.
       </p>
 
-      <Elements stripe={stripePromise} options={elementsOptions} key={priceCents}>
-        <PostJobFormFields
-          priceDollars={priceDollars}
-          onPriceChange={setPriceDollars}
-          onPosted={onPosted}
-          onCancel={onCancel}
-        />
-      </Elements>
+      {!keyConfigured ? (
+        <Alert variant="error" className="mt-6">
+          Payment form can&apos;t load: missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY. Set the RetrackThis
+          publishable key in Vercel and redeploy.
+        </Alert>
+      ) : (
+        <Elements stripe={stripePromise} options={elementsOptions} key={priceCents}>
+          <PostJobFormFields
+            priceDollars={priceDollars}
+            onPriceChange={setPriceDollars}
+            onPosted={onPosted}
+            onCancel={onCancel}
+          />
+        </Elements>
+      )}
+
+      {!keyConfigured && (
+        <div className="mt-4">
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }
@@ -74,8 +90,23 @@ function PostJobFormFields({
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [elementError, setElementError] = useState<string | null>(null);
   const [demoFileUrl, setDemoFileUrl] = useState<string | null>(null);
   const [fixedTempo, setFixedTempo] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getStripe().then((s) => {
+      if (!cancelled && !s) {
+        setElementError(
+          "Stripe failed to initialize. Check that NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is a valid pk_live_… key and redeploy."
+        );
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -220,13 +251,20 @@ function PostJobFormFields({
           <p className="text-xs text-gray-500">
             Card is authorized for ${priceDollars || "—"} and only charged when you pick a winner.
           </p>
-          <div className="rounded-xl border border-gray-200 bg-white px-3.5 py-3">
-            <PaymentElement
-              options={{
-                layout: "tabs",
-                paymentMethodOrder: ["card"],
-              }}
-            />
+          <div className="rounded-xl border border-gray-200 bg-white px-3.5 py-3 min-h-[48px]">
+            {elementError ? (
+              <Alert variant="error">{elementError}</Alert>
+            ) : (
+              <PaymentElement
+                options={{
+                  layout: "tabs",
+                  paymentMethodOrder: ["card"],
+                }}
+                onLoadError={(e) =>
+                  setElementError(e.error.message ?? "Payment form failed to load.")
+                }
+              />
+            )}
           </div>
         </div>
       </div>

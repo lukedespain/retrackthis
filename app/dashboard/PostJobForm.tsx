@@ -27,6 +27,7 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
       amount: priceCents,
       currency: "usd",
       captureMethod: "manual" as const,
+      paymentMethodCreation: "manual" as const,
       appearance: {
         theme: "stripe" as const,
         variables: {

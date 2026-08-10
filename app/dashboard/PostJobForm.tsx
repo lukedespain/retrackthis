@@ -29,6 +29,9 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
       currency: "usd",
       captureMethod: "manual" as const,
       paymentMethodCreation: "manual" as const,
+      // Live RetrackThis account isn't enabled for every PM type Stripe may
+      // auto-offer (e.g. transfers). Cards-only avoids capability errors.
+      paymentMethodTypes: ["card"] as string[],
       appearance: {
         theme: "stripe" as const,
         variables: {
@@ -259,6 +262,11 @@ function PostJobFormFields({
                 options={{
                   layout: "tabs",
                   paymentMethodOrder: ["card"],
+                  wallets: {
+                    applePay: "never",
+                    googlePay: "never",
+                    link: "never",
+                  },
                 }}
                 onLoadError={(e) =>
                   setElementError(e.error.message ?? "Payment form failed to load.")

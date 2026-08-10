@@ -89,10 +89,12 @@ Endpoint: `POST /api/webhooks/stripe` → `https://retrackthis.com/api/webhooks/
 4. Copy the endpoint **Signing secret** (`whsec_…`) into Vercel as `STRIPE_WEBHOOK_SECRET`
 5. Ensure Vercel also has matching-mode keys:
    - `STRIPE_SECRET_KEY` (`sk_test_…` or `sk_live_…`)
-   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (`pk_test_…` or `pk_live_…`)
+   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (`pk_test_…` or `pk_live_…`) — required for the post-job card form (Stripe Elements)
 6. Redeploy after changing env vars
 7. In the webhook detail page, **Send test webhook** and confirm a `200` response
 
+Posting a job collects a real card via Stripe Payment Element (authorize / hold only;
+capture still happens when you pick a winner).
 Local testing: `stripe listen --forward-to localhost:3000/api/webhooks/stripe` and put that CLI `whsec_` into `.env.local`.
 
 Handlers sync `Payment.status` from PaymentIntent events and, for Connect,

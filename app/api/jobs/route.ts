@@ -22,6 +22,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  if (typeof paymentMethodId !== "string" || !paymentMethodId.startsWith("pm_")) {
+    return NextResponse.json({ error: "Invalid payment method" }, { status: 400 });
+  }
+
+  if (!Number.isFinite(priceCents) || priceCents < 100) {
+    return NextResponse.json({ error: "Price must be at least $1" }, { status: 400 });
+  }
+
   // bpm: number = fixed tempo; null/undefined/empty = flexible
   let bpmValue: number | null = null;
   if (bpm !== null && bpm !== undefined && bpm !== "") {
@@ -32,15 +40,28 @@ export async function POST(req: NextRequest) {
     bpmValue = Math.round(parsed);
   }
 
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: priceCents,
-    currency: "usd",
-    payment_method: paymentMethodId,
-    capture_method: "manual", // authorize now, capture later on winner selection
-    confirm: true,
-    automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-  });
+  let paymentIntent;
+  try {
+    paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(priceCents),
+      currency: "usd",
+      payment_method: paymentMethodId,
+      capture_method: "manual",
+      confirm: true,
+      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+    });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Card authorization failed. Try another card.";
+    return NextResponse.json({ error: message }, { status: 402 });
+  }
 
+  if (paymentIntent.status !== "requires_capture" && paymentIntent.status !== "succeeded") {
+    return NextResponse.json(
+      { error: `Unexpected payment status: ${paymentIntent.status}` },
+      { status: 402 }
+    );
+  }
   const job = await db.job.create({
     data: {
       creatorId,

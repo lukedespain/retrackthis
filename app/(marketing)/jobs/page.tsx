@@ -1,4 +1,5 @@
 import { Logo } from "@/components/Logo";
+import { MarketingFooter } from "@/components/MarketingFooter";
 import { MarketingHeaderActions } from "@/components/MarketingHeaderActions";
 import { JobsMarketplace } from "@/components/JobsMarketplace";
 
@@ -13,6 +14,8 @@ export default function PublicJobsPage() {
       <main className="mx-auto max-w-5xl px-5 pb-16 sm:px-6 sm:pb-24">
         <JobsMarketplace />
       </main>
+
+      <MarketingFooter />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { HeroMidiWave } from "@/components/HeroMidiWave";
 import { Logo } from "@/components/Logo";
+import { MarketingFooter } from "@/components/MarketingFooter";
 import { MarketingHeaderActions } from "@/components/MarketingHeaderActions";
 import { MarketingHeroCtas } from "@/components/MarketingHeroCtas";
 
@@ -77,12 +78,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-gray-100">
-        <div className="mx-auto flex max-w-5xl flex-col items-start gap-4 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-10">
-          <Logo />
-          <p className="text-sm text-gray-400">Real musicians, no AI performances.</p>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }

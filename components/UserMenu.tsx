@@ -48,7 +48,14 @@ export function UserMenu({
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.error ?? "Could not open Stripe Express");
       if (!body?.url) throw new Error("Stripe did not return a dashboard link");
-      window.location.href = body.url;
+      const opened = window.open(body.url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        // Popup blocked: fall back to same-tab navigation.
+        window.location.href = body.url;
+        return;
+      }
+      setOpen(false);
+      setOpeningExpress(false);
     } catch (err) {
       setExpressError(err instanceof Error ? err.message : "Could not open Stripe Express");
       setOpeningExpress(false);

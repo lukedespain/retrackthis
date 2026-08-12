@@ -7,9 +7,11 @@ import { Button } from "./ui/Button";
 
 export function DashboardHeader({
   name,
+  hasStripeAccount = false,
   onSignOut,
 }: {
   name: string;
+  hasStripeAccount?: boolean;
   onSignOut: () => void;
 }) {
   return (
@@ -22,7 +24,7 @@ export function DashboardHeader({
               Browse jobs
             </Button>
           </Link>
-          <UserMenu name={name} onSignOut={onSignOut} />
+          <UserMenu name={name} hasStripeAccount={hasStripeAccount} onSignOut={onSignOut} />
         </div>
       </div>
     </header>

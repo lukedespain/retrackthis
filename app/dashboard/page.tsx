@@ -10,7 +10,7 @@ import { CompleteProfileForm } from "./CompleteProfileForm";
 import { CreatorView } from "./CreatorView";
 import { MySubmissions } from "./MySubmissions";
 
-type Profile = { id: string; name: string; role: string[] };
+type Profile = { id: string; name: string; role: string[]; stripeAccountId?: string | null };
 type DashTab = "jobs" | "submissions";
 
 export default function DashboardPage() {
@@ -107,7 +107,11 @@ function DashboardPageInner() {
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-8 sm:px-6 sm:py-10">
-      <DashboardHeader name={profile.name} onSignOut={signOut} />
+      <DashboardHeader
+        name={profile.name}
+        hasStripeAccount={Boolean(profile.stripeAccountId)}
+        onSignOut={signOut}
+      />
 
       <div className="mt-8 flex flex-col gap-4 sm:mt-10 sm:flex-row sm:items-start sm:justify-between">
         <div>

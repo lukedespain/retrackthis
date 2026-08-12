@@ -22,6 +22,7 @@ type MyTakeSummary = { jobId: string; audioFileUrl: string };
  */
 export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [selectedInstruments, setSelectedInstruments] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>("posted");
@@ -29,13 +30,37 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [myTakesByJob, setMyTakesByJob] = useState<Record<string, MyTakeSummary>>({});
 
   useEffect(() => {
+    let cancelled = false;
     fetch("/api/jobs")
-      .then((res) => res.json())
-      .then(setJobs);
+      .then(async (res) => {
+        const body = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(body?.error ?? `Could not load jobs (${res.status})`);
+        }
+        if (!Array.isArray(body)) {
+          throw new Error("Unexpected response loading jobs");
+        }
+        if (!cancelled) {
+          setLoadError(null);
+          setJobs(body);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setLoadError(err instanceof Error ? err.message : "Could not load jobs");
+          setJobs([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    if (!signedIn) return;
+    if (!signedIn) {
+      setMyTakesByJob({});
+      return;
+    }
     fetch("/api/takes/mine")
       .then((res) => (res.ok ? res.json() : []))
       .then((takes: Array<{ jobId: string; audioFileUrl: string }>) => {
@@ -99,6 +124,20 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
       <div className="flex justify-center py-16">
         <Spinner />
       </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <EmptyState
+        title="Couldn’t load jobs"
+        description={loadError}
+        action={
+          <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
+            Try again
+          </Button>
+        }
+      />
     );
   }
 

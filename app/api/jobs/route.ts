@@ -111,11 +111,21 @@ export async function GET(req: NextRequest) {
     (job) => job.status === "OPEN" && new Date(job.deadline).getTime() + CANCEL_GRACE_PERIOD_MS < now
   );
 
+  // Don't block the marketplace on Stripe cancels (that was hanging /jobs).
+  // Hide past-grace jobs from OPEN browse and sweep in the background.
   if (expired.length > 0) {
-    await Promise.all(expired.map((job) => cancelJobAndRefund(job.id)));
-    const refreshed = await db.job.findMany({ where, orderBy: { createdAt: "desc" } });
-    return NextResponse.json(refreshed);
+    for (const job of expired) {
+      void cancelJobAndRefund(job.id).catch((err) => {
+        console.error(`[jobs sweep] failed for ${job.id}`, err);
+      });
+    }
   }
 
-  return NextResponse.json(jobs);
+  const expiredIds = new Set(expired.map((job) => job.id));
+  const visible =
+    "status" in where && where.status === "OPEN"
+      ? jobs.filter((job) => !expiredIds.has(job.id))
+      : jobs;
+
+  return NextResponse.json(visible);
 }

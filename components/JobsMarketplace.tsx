@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 export function JobsMarketplace() {
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,30 +32,21 @@ export function JobsMarketplace() {
             Open jobs
           </h1>
           <p className="mt-1.5 max-w-lg text-sm text-gray-500 sm:text-base">
-            Browse real gigs from producers and songwriters. Create a free account when you&apos;re
-            ready to submit a take.
+            {signedIn
+              ? "Browse real gigs from producers and songwriters. Open a card to listen and submit your take."
+              : "Browse real gigs from producers and songwriters. Create a free account when you're ready to submit a take."}
           </p>
         </div>
-        {signedIn === null ? (
-          <Button className="w-full shrink-0 sm:w-auto" disabled>
-            Post a job
-          </Button>
-        ) : (
-          <Link
-            href={signedIn ? POST_JOB_HREF : SIGN_UP_TO_POST_HREF}
-            className="w-full shrink-0 sm:w-auto"
-          >
-            <Button className="w-full sm:w-auto">Post a job</Button>
-          </Link>
-        )}
+        <Link
+          href={signedIn ? POST_JOB_HREF : SIGN_UP_TO_POST_HREF}
+          className="w-full shrink-0 sm:w-auto"
+        >
+          <Button className="w-full sm:w-auto">Post a job</Button>
+        </Link>
       </div>
 
       <div className="mt-8 sm:mt-10">
-        {signedIn === null ? (
-          <div className="h-40" aria-hidden />
-        ) : (
-          <OpenJobsBrowse signedIn={signedIn} />
-        )}
+        <OpenJobsBrowse signedIn={signedIn} />
       </div>
     </>
   );

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { stripe, calcPlatformFeeCents } from "@/lib/stripe";
+import { assertMusicianPayoutsReady } from "@/lib/stripeConnect";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
 // POST /api/jobs/:jobId/select-winner  { takeId }
@@ -30,6 +31,12 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     return NextResponse.json({ error: "Not authorized to select a winner for this job" }, { status: 403 });
   }
   if (!take.musician.stripeAccountId) {
+    return NextResponse.json({ error: "Musician hasn't finished Stripe onboarding" }, { status: 400 });
+  }
+
+  try {
+    await assertMusicianPayoutsReady(take.musician.stripeAccountId);
+  } catch {
     return NextResponse.json({ error: "Musician hasn't finished Stripe onboarding" }, { status: 400 });
   }
 

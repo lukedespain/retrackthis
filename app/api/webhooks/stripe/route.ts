@@ -105,19 +105,14 @@ async function syncPaymentFromIntent(
 }
 
 /**
- * When Connect onboarding finishes, metadata.userId (our User.id / Supabase
- * auth id) must be set on the Account at creation (Step 3). We store the
- * account id once payouts are enabled.
+ * When Connect onboarding progresses, metadata.userId (our User.id / Supabase
+ * auth id) must be set on the Account at creation. We store the account id
+ * (and keep it in sync) so musicians can resume onboarding and receive transfers.
  */
 async function handleConnectAccountUpdated(account: Stripe.Account) {
   const userId = account.metadata?.userId;
   if (!userId) {
     console.warn(`[stripe webhook] account.updated ${account.id} missing metadata.userId`);
-    return;
-  }
-
-  const payoutsReady = Boolean(account.payouts_enabled);
-  if (!payoutsReady) {
     return;
   }
 

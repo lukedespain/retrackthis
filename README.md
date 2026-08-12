@@ -72,7 +72,8 @@ email sender is rate-limited and will block repeated sign-ups otherwise.
 - **Supabase Auth** — email/password via `@supabase/ssr`, session cookies
   refreshed in `middleware.ts`
 - **Stripe** — escrow via manual-capture PaymentIntents, payouts via Connect
-  transfers (Connect *onboarding* isn't built yet — see `HANDOFF.md`)
+  transfers. Musicians onboard from **Dashboard → My submissions → Set up payouts**
+  (Express Account Link; Accounts v2 with v1 fallback).
 
 ## Stripe webhook (production)
 

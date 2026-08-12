@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
+import { PayoutSetupCard } from "@/components/PayoutSetupCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -17,7 +18,7 @@ function statusFor(take: MyTake): string {
   return "PENDING";
 }
 
-export function MySubmissions() {
+export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?: boolean }) {
   const [takes, setTakes] = useState<MyTake[] | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -35,30 +36,32 @@ export function MySubmissions() {
     );
   }
 
-  if (takes.length === 0) {
-    return (
-      <EmptyState
-        title="No submissions yet"
-        description="Browse open jobs and submit your first take to get started."
-        action={
-          <a href="/jobs">
-            <Button size="sm">Browse jobs</Button>
-          </a>
-        }
-      />
-    );
-  }
-
   return (
-    <div className="space-y-3">
-      {takes.map((take) => (
-        <SubmissionCard
-          key={take.id}
-          take={take}
-          expanded={expandedId === take.id}
-          onToggle={() => setExpandedId(expandedId === take.id ? null : take.id)}
+    <div className="space-y-5">
+      <PayoutSetupCard highlightReturn={payoutsHighlight} />
+
+      {takes.length === 0 ? (
+        <EmptyState
+          title="No submissions yet"
+          description="Browse open jobs and submit your first take to get started."
+          action={
+            <a href="/jobs">
+              <Button size="sm">Browse jobs</Button>
+            </a>
+          }
         />
-      ))}
+      ) : (
+        <div className="space-y-3">
+          {takes.map((take) => (
+            <SubmissionCard
+              key={take.id}
+              take={take}
+              expanded={expandedId === take.id}
+              onToggle={() => setExpandedId(expandedId === take.id ? null : take.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

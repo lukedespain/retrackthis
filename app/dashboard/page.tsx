@@ -35,6 +35,7 @@ function DashboardPageInner() {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [tab, setTab] = useState<DashTab>("jobs");
   const [openPost, setOpenPost] = useState(false);
+  const [payoutsHighlight, setPayoutsHighlight] = useState(false);
 
   async function loadProfile() {
     const res = await fetch("/api/auth/me");
@@ -59,7 +60,15 @@ function DashboardPageInner() {
       setTab("jobs");
       setOpenPost(true);
     }
-  }, [searchParams]);
+
+    const payouts = searchParams.get("payouts");
+    if (payouts === "return" || payouts === "refresh") {
+      setTab("submissions");
+      setPayoutsHighlight(true);
+      // Drop the query flag so refresh doesn't keep flashing.
+      router.replace("/dashboard?tab=submissions", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   async function signOut() {
     await supabaseClient.auth.signOut();
@@ -133,7 +142,7 @@ function DashboardPageInner() {
             }}
           />
         ) : (
-          <MySubmissions />
+          <MySubmissions payoutsHighlight={payoutsHighlight} />
         )}
       </div>
     </main>

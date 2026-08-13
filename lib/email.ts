@@ -20,7 +20,8 @@ export async function sendEmail({ to, subject, heading, bodyHtml, ctaLabel, ctaH
     return;
   }
 
-  const from = process.env.RESEND_FROM?.trim() || "RetrackThis <beth.t@example.com>";
+  const from = process.env.RESEND_FROM?.trim() || "RetrackThis <hello@retrackthis.com>";
+  const replyTo = process.env.RESEND_REPLY_TO?.trim() || "music@lukedespain.com";
   const settingsUrl = `${appBaseUrl()}/dashboard/settings`;
 
   const html = `<!doctype html>
@@ -51,7 +52,7 @@ export async function sendEmail({ to, subject, heading, bodyHtml, ctaLabel, ctaH
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to, subject, html }),
+    body: JSON.stringify({ from, to, reply_to: replyTo, subject, html }),
   });
 
   if (!res.ok) {

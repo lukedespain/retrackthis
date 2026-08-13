@@ -111,3 +111,10 @@ save `User.stripeAccountId` when `account.updated` has `metadata.userId` and
    - `RESEND_API_KEY` (`re_…`)
    - `RESEND_FROM` e.g. `RetrackThis <beth.t@example.com>`
 3. Redeploy. Until these are set, job posting still works; emails are skipped.
+
+Inbound (`hello@retrackthis.com` → `music@lukedespain.com`):
+
+1. Resend → Domain → Enable receiving, wait until the MX record is **Verified**
+2. Resend → Webhooks → Add `https://retrackthis.com/api/webhooks/resend` for `email.received`
+3. Put the signing secret in Vercel as `RESEND_WEBHOOK_SECRET`
+4. Redeploy

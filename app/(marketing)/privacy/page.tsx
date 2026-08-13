@@ -109,8 +109,8 @@ export default function PrivacyPolicyPage() {
       <LegalSection title="Contact">
         <p>
           Privacy questions:{" "}
-          <a className="font-medium text-gray-900 underline-offset-2 hover:underline" href="mailto:music@lukedespain.com">
-            music@lukedespain.com
+          <a className="font-medium text-gray-900 underline-offset-2 hover:underline" href="mailto:hello@retrackthis.com">
+            hello@retrackthis.com
           </a>
           .
         </p>

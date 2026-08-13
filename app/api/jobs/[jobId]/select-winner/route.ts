@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { db } from "@/lib/db";
 import { stripe, calcPlatformFeeCents } from "@/lib/stripe";
 import { assertMusicianPayoutsReady } from "@/lib/stripeConnect";
+import { notifyMusicianAwarded } from "@/lib/notify";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
 function stripeMessage(err: unknown): string {
@@ -108,6 +109,8 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         data: { status: "transferred", platformFeeCents },
       }),
     ]);
+
+    await notifyMusicianAwarded({ musicianId: take.musicianId, jobTitle: job.title });
 
     return NextResponse.json({ success: true });
   } catch (err) {

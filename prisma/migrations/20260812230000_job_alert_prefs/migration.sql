@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "notifyJobAlerts" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "User" ADD COLUMN "notifyInstruments" TEXT[] DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "User" ADD COLUMN "notifyTakeSubmitted" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "User" ADD COLUMN "notifyTakeOutcome" BOOLEAN NOT NULL DEFAULT true;

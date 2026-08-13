@@ -74,6 +74,8 @@ email sender is rate-limited and will block repeated sign-ups otherwise.
 - **Stripe** — escrow via manual-capture PaymentIntents, payouts via Connect
   transfers. Musicians onboard from **Dashboard → My submissions → Set up payouts**
   (Express Account Link; Accounts v2 with v1 fallback).
+- **Email** — Resend. Musicians pick instrument filters in **Settings**; new
+  matching jobs, new takes, and award/cancel outcomes send optional emails.
 
 ## Stripe webhook (production)
 
@@ -101,3 +103,11 @@ Local testing: `stripe listen --forward-to localhost:3000/api/webhooks/stripe` a
 Handlers sync `Payment.status` from PaymentIntent events and, for Connect,
 save `User.stripeAccountId` when `account.updated` has `metadata.userId` and
 `payouts_enabled` (account creation with that metadata lands in the Connect step).
+
+## Email (Resend)
+
+1. Create a [Resend](https://resend.com) account and verify `retrackthis.com`
+2. Add to Vercel:
+   - `RESEND_API_KEY` (`re_…`)
+   - `RESEND_FROM` e.g. `RetrackThis <beth.t@example.com>`
+3. Redeploy. Until these are set, job posting still works; emails are skipped.

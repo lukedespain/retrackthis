@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { CANCEL_GRACE_PERIOD_MS, cancelJobAndRefund } from "@/lib/jobActions";
+import { notifyNewJobPosted } from "@/lib/notify";
 import { stripe } from "@/lib/stripe";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
@@ -83,6 +84,8 @@ export async function POST(req: NextRequest) {
     },
     include: { payment: true },
   });
+
+  await notifyNewJobPosted(job);
 
   return NextResponse.json(job, { status: 201 });
 }

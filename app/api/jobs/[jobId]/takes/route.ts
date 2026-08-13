@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { notifyCreatorTakeSubmitted } from "@/lib/notify";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
 // POST /api/jobs/:jobId/takes — a musician submits their recorded take
@@ -36,6 +37,12 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
       note: note || null,
       humanAttestedAt: new Date(),
     },
+    include: { musician: { select: { name: true } } },
+  });
+
+  await notifyCreatorTakeSubmitted({
+    job: { id: job.id, title: job.title, creatorId: job.creatorId },
+    musicianName: take.musician.name,
   });
 
   return NextResponse.json(take, { status: 201 });

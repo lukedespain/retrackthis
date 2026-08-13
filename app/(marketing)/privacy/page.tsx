@@ -38,6 +38,10 @@ export default function PrivacyPolicyPage() {
           <li>Process authorizations, captures, refunds, and musician payouts via Stripe.</li>
           <li>Enforce our human-performance rules and Terms of Service.</li>
           <li>Secure the service, prevent fraud, and debug outages.</li>
+          <li>
+            Send optional email alerts (new matching jobs, new takes on your jobs, award/cancel
+            outcomes) based on the preferences you set in Settings.
+          </li>
           <li>Communicate about your account, jobs, or important service changes.</li>
         </ul>
       </LegalSection>

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { notifyMusiciansJobCancelled } from "@/lib/notify";
 import { stripe } from "@/lib/stripe";
 
 // How long an OPEN job can sit past its deadline with no winner before the
@@ -28,4 +29,6 @@ export async function cancelJobAndRefund(jobId: string) {
       ? [db.payment.update({ where: { id: job.payment.id }, data: { status: "cancelled" } })]
       : []),
   ]);
+
+  await notifyMusiciansJobCancelled({ jobId: job.id, jobTitle: job.title });
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
@@ -39,6 +40,7 @@ export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?:
   return (
     <div className="space-y-5">
       <PayoutSetupCard highlightReturn={payoutsHighlight} />
+      <JobAlertNudge />
 
       {takes.length === 0 ? (
         <EmptyState
@@ -63,6 +65,39 @@ export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?:
         </div>
       )}
     </div>
+  );
+}
+
+function JobAlertNudge() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/settings/notifications")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((prefs) => {
+        if (prefs && !prefs.notifyJobAlerts) setShow(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  if (!show) return null;
+
+  return (
+    <Card padding="md" className="border border-dashed border-gray-200">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-900">Get emailed about new gigs</p>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Pick the instruments you play and we&apos;ll ping you when a matching job opens.
+          </p>
+        </div>
+        <Link href="/dashboard/settings" className="shrink-0">
+          <Button size="sm" variant="secondary" className="w-full sm:w-auto">
+            Choose instruments
+          </Button>
+        </Link>
+      </div>
+    </Card>
   );
 }
 

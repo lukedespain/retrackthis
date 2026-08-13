@@ -114,6 +114,15 @@ export function UserMenu({
             </p>
           )}
 
+          <Link
+            href="/dashboard/settings"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-600 transition-colors duration-150 hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+          >
+            Settings
+          </Link>
+
           <div className="my-1 h-px bg-gray-100" />
           <button
             type="button"

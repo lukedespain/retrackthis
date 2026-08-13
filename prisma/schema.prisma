@@ -26,6 +26,12 @@ model User {
   stripeAccountId String?  // Stripe Connect account, musicians only
   createdAt       DateTime @default(now())
 
+  // Email notification prefs (musicians pick instruments; creators get take alerts)
+  notifyJobAlerts      Boolean  @default(false)
+  notifyInstruments    String[] @default([])
+  notifyTakeSubmitted  Boolean  @default(true)
+  notifyTakeOutcome    Boolean  @default(true)
+
   jobsPosted      Job[]    @relation("JobsPosted")
   takesSubmitted  Take[]
 }

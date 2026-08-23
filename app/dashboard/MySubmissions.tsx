@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { AudioPlayer } from "@/components/AudioPlayer";
+import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import { PayoutSetupCard } from "@/components/PayoutSetupCard";
 import { Badge } from "@/components/ui/Badge";
@@ -158,9 +158,13 @@ function SubmissionCard({
                 <TempoTag bpm={take.job.bpm} />
               </div>
               <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wider text-gray-400">
-                Your take
+                Your submission
               </p>
-              <AudioPlayer src={take.audioFileUrl} label="Take" />
+              <TakeSubmissionFiles
+                files={take.files}
+                fallbackAudioUrl={take.audioFileUrl}
+                allowDownload
+              />
             </div>
           </div>
         </div>

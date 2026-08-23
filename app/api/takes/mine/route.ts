@@ -12,9 +12,24 @@ export async function GET() {
 
   const takes = await db.take.findMany({
     where: { musicianId },
-    include: { job: { select: { id: true, title: true, instrument: true, priceCents: true, bpm: true, status: true } } },
+    include: {
+      job: { select: { id: true, title: true, instrument: true, priceCents: true, bpm: true, status: true } },
+      files: { orderBy: { sortOrder: "asc" } },
+    },
     orderBy: { submittedAt: "desc" },
   });
 
-  return NextResponse.json(takes);
+  return NextResponse.json(
+    takes.map((take) => ({
+      ...take,
+      files: take.files.map((f) => ({
+        id: f.id,
+        kind: f.kind,
+        label: f.label,
+        fileUrl: f.fileUrl,
+        sortOrder: f.sortOrder,
+        audioIndex: f.audioIndex,
+      })),
+    }))
+  );
 }

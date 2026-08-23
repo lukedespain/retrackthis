@@ -61,12 +61,35 @@ model Take {
   jobId        String
   musician     User     @relation(fields: [musicianId], references: [id])
   musicianId   String
-  audioFileUrl String
+  audioFileUrl String   // primary preview audio (first take); kept for backwards compat
   note         String?
   isWinner     Boolean  @default(false)
   submittedAt  DateTime @default(now())
   // Set when musician confirms the take is a real human performance (not AI)
   humanAttestedAt DateTime?
+
+  files        TakeFile[]
+
+  @@unique([jobId, musicianId])
+}
+
+enum TakeFileKind {
+  AUDIO
+  MIDI
+}
+
+model TakeFile {
+  id         String       @id @default(cuid())
+  take       Take         @relation(fields: [takeId], references: [id], onDelete: Cascade)
+  takeId     String
+  kind       TakeFileKind
+  label      String
+  fileUrl    String
+  sortOrder  Int          @default(0)
+  // Pairs MIDI with an audio take (0-based). Null = shared across all takes.
+  audioIndex Int?
+
+  @@index([takeId])
 }
 
 model Payment {

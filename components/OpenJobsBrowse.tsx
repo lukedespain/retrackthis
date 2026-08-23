@@ -14,7 +14,7 @@ import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 
 type SortKey = "pay" | "posted";
 type SortDir = "asc" | "desc";
-type MyTakeSummary = { jobId: string; audioFileUrl: string };
+type MyTakeSummary = { jobId: string; audioFileUrl: string; files?: import("@/lib/takeFiles").TakeFileRecord[] };
 
 /**
  * Shared open-jobs marketplace.
@@ -63,10 +63,14 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
     }
     fetch("/api/takes/mine")
       .then((res) => (res.ok ? res.json() : []))
-      .then((takes: Array<{ jobId: string; audioFileUrl: string }>) => {
+      .then((takes: Array<{ jobId: string; audioFileUrl: string; files?: MyTakeSummary["files"] }>) => {
         const map: Record<string, MyTakeSummary> = {};
         for (const take of takes) {
-          map[take.jobId] = { jobId: take.jobId, audioFileUrl: take.audioFileUrl };
+          map[take.jobId] = {
+            jobId: take.jobId,
+            audioFileUrl: take.audioFileUrl,
+            files: take.files,
+          };
         }
         setMyTakesByJob(map);
       })
@@ -333,6 +337,7 @@ function OpenJobCard({
                     jobId={job.id}
                     alreadySubmitted={Boolean(myTake)}
                     existingTakeUrl={myTake?.audioFileUrl}
+                    existingFiles={myTake?.files}
                     onSubmitted={onTakeSubmitted}
                   />
                 ) : (

@@ -1,3 +1,5 @@
+import type { TakeFileRecord } from "@/lib/takeFiles";
+
 export type Job = {
   id: string;
   creatorId: string;
@@ -22,14 +24,17 @@ export type Take = {
   isWinner: boolean;
   submittedAt: string;
   musician: { id: string; name: string };
+  files?: TakeFileRecord[];
 };
 
 export type MyTake = {
   id: string;
+  jobId: string;
   audioFileUrl: string;
   note: string | null;
   isWinner: boolean;
   submittedAt: string;
+  files?: TakeFileRecord[];
   job: {
     id: string;
     title: string;

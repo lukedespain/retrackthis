@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
-import { AudioPlayer } from "@/components/AudioPlayer";
+import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
+import { audioFiles, midiFiles } from "@/lib/takeFiles";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import type { Job, Take } from "@/lib/types";
 import { PostJobForm } from "./PostJobForm";
@@ -326,6 +327,8 @@ function TakeCard({
   onSelect: () => void;
 }) {
   const isWinner = take.isWinner;
+  const audioCount = take.files?.length ? audioFiles(take.files).length : 1;
+  const hasMidi = take.files?.length ? midiFiles(take.files).length > 0 : false;
 
   return (
     <Card
@@ -339,16 +342,28 @@ function TakeCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium text-gray-900">{take.musician.name}</span>
             {isWinner && <Badge status="AWARDED" />}
+            {audioCount > 1 && (
+              <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                {audioCount} takes
+              </span>
+            )}
+            {hasMidi && (
+              <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700 ring-1 ring-inset ring-violet-100">
+                MIDI included
+              </span>
+            )}
           </div>
           {take.note && (
             <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{take.note}</p>
           )}
-          <AudioPlayer
-            src={take.audioFileUrl}
-            label="Take"
-            className="mt-3"
-            allowDownload={isWinner}
-          />
+          <div className="mt-3">
+            <TakeSubmissionFiles
+              files={take.files}
+              fallbackAudioUrl={take.audioFileUrl}
+              allowDownload={isWinner}
+              collapsible={audioCount > 1}
+            />
+          </div>
         </div>
         {jobOpen && !isWinner && (
           <Button

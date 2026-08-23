@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { AUDIO_BUCKET, ensureAudioBucket, supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // POST /api/uploads/sign { fileName, kind } — mints a signed Supabase
-// Storage upload URL so the browser can upload the audio file directly
-// (bytes never pass through our server). "kind" is "demo" or "take", just
-// used to namespace the storage path.
+// Storage upload URL so the browser can upload the file directly
+// (bytes never pass through our server). kind namespaces the storage path.
 export async function POST(req: NextRequest) {
   const { fileName, kind } = await req.json();
 
-  if (!fileName || !kind) {
+  const allowedKinds = new Set(["demo", "take", "take-midi"]);
+  if (!fileName || !kind || !allowedKinds.has(kind)) {
     return NextResponse.json({ error: "Missing fileName or kind" }, { status: 400 });
   }
 

@@ -28,9 +28,12 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  const path = request.nextUrl.pathname;
+  const needsAuth = path.startsWith("/dashboard") || path.startsWith("/admin");
+
+  if (!user && needsAuth) {
     const redirectUrl = new URL("/sign-in", request.url);
-    redirectUrl.searchParams.set("next", request.nextUrl.pathname);
+    redirectUrl.searchParams.set("next", path);
     return NextResponse.redirect(redirectUrl);
   }
 

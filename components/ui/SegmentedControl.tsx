@@ -10,7 +10,9 @@ export function SegmentedControl<T extends string>({
   className?: string;
 }) {
   return (
-    <div className={`inline-flex max-w-full rounded-full bg-gray-100 p-0.5 ${className}`}>
+    <div
+      className={`inline-flex max-w-full rounded-full bg-gray-100 p-0.5 dark:bg-gray-800 ${className}`}
+    >
       {options.map((option) => (
         <button
           key={option.value}
@@ -18,8 +20,8 @@ export function SegmentedControl<T extends string>({
           onClick={() => onChange(option.value)}
           className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 active:scale-[0.97] sm:px-4 sm:text-sm ${
             value === option.value
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+              ? "bg-[#ffffff] text-[#111827] shadow-sm dark:bg-[#030712] dark:text-[#f9fafb]"
+              : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           }`}
         >
           {option.label}

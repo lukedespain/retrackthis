@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -11,11 +12,20 @@ const config: Config = {
         accent: {
           DEFAULT: "#5B4BFF",
           hover: "#4A3BE0",
-          muted: "#EEECFF",
+          muted: "var(--accent-soft)",
         },
         surface: {
-          DEFAULT: "#FAFAFA",
-          raised: "#FFFFFF",
+          DEFAULT: "var(--panel-soft)",
+          raised: "var(--panel)",
+        },
+        page: "var(--page)",
+        ink: {
+          DEFAULT: "var(--ink)",
+          muted: "var(--ink-muted)",
+        },
+        line: {
+          DEFAULT: "var(--line)",
+          strong: "var(--line-strong)",
         },
       },
       fontFamily: {
@@ -30,6 +40,7 @@ const config: Config = {
       boxShadow: {
         card: "0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.04)",
         "card-hover": "0 4px 12px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04)",
+        "card-dark": "0 1px 2px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.06)",
       },
       borderRadius: {
         xl: "0.875rem",

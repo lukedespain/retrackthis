@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { CANCEL_GRACE_PERIOD_MS, cancelJobAndRefund } from "@/lib/jobActions";
-import { notifyNewJobPosted } from "@/lib/notify";
+import { notifyJobInvites, notifyNewJobPosted } from "@/lib/notify";
 import { stripe } from "@/lib/stripe";
 import { getSessionUserId } from "@/lib/supabaseServer";
+import { isAllowedInstrumentId, labelForInstrumentId } from "@/lib/instruments";
+
+function sanitizeInviteEmails(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const emails = value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim().toLowerCase())
+    .filter((item) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item));
+  return Array.from(new Set(emails)).slice(0, 5);
+}
 
 // POST /api/jobs — creator posts a new job.
 // Creates the Job row AND authorizes (but does not capture) a Stripe
@@ -16,12 +26,38 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { title, instrument, description, demoFileUrl, priceCents, deadline, paymentMethodId, bpm } =
-    body;
+  const {
+    title,
+    instrument,
+    instrumentId,
+    description,
+    demoFileUrl,
+    priceCents,
+    deadline,
+    paymentMethodId,
+    bpm,
+    inviteEmails,
+  } = body;
 
-  if (!title || !instrument || !demoFileUrl || !priceCents || !deadline || !paymentMethodId) {
+  if (!title || !description || !demoFileUrl || !priceCents || !deadline || !paymentMethodId) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
+
+  let instrumentLabel = typeof instrument === "string" ? instrument.trim() : "";
+  let resolvedInstrumentId = typeof instrumentId === "string" ? instrumentId.trim() : "";
+
+  if (resolvedInstrumentId) {
+    if (!isAllowedInstrumentId(resolvedInstrumentId)) {
+      return NextResponse.json({ error: "Invalid instrument" }, { status: 400 });
+    }
+    instrumentLabel = labelForInstrumentId(resolvedInstrumentId);
+  }
+
+  if (!instrumentLabel) {
+    return NextResponse.json({ error: "Pick an instrument for this job." }, { status: 400 });
+  }
+
+  const invites = sanitizeInviteEmails(inviteEmails);
 
   if (typeof paymentMethodId !== "string" || !paymentMethodId.startsWith("pm_")) {
     return NextResponse.json({ error: "Invalid payment method" }, { status: 400 });
@@ -67,7 +103,8 @@ export async function POST(req: NextRequest) {
     data: {
       creatorId,
       title,
-      instrument,
+      instrument: instrumentLabel,
+      instrumentId: resolvedInstrumentId || null,
       description,
       demoFileUrl,
       priceCents,
@@ -86,6 +123,18 @@ export async function POST(req: NextRequest) {
   });
 
   await notifyNewJobPosted(job);
+
+  if (invites.length > 0) {
+    const creator = await db.user.findUnique({
+      where: { id: creatorId },
+      select: { name: true },
+    });
+    await notifyJobInvites({
+      job,
+      creatorName: creator?.name ?? "A creator",
+      emails: invites,
+    });
+  }
 
   return NextResponse.json(job, { status: 201 });
 }

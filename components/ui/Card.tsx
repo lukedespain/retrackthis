@@ -23,11 +23,11 @@ export function Card({
 }: Props) {
   return (
     <div
-      className={`rounded-2xl bg-white shadow-card transition-all duration-150 ease-out ${paddingMap[padding]} ${
+      className={`rounded-2xl bg-white shadow-card transition-all duration-150 ease-out dark:shadow-card-dark ${paddingMap[padding]} ${
         selected ? "ring-2 ring-accent/30 shadow-card-hover" : ""
       } ${
         hover
-          ? "cursor-pointer hover:shadow-card-hover hover:ring-1 hover:ring-gray-200/80 active:scale-[0.995]"
+          ? "cursor-pointer hover:shadow-card-hover hover:ring-1 hover:ring-gray-200/80 active:scale-[0.995] dark:hover:ring-gray-700"
           : ""
       } ${className}`}
       {...props}

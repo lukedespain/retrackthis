@@ -8,6 +8,7 @@ type JobLite = {
   id: string;
   title: string;
   instrument: string;
+  instrumentId?: string | null;
   description: string;
   priceCents: number;
   deadline: Date;
@@ -52,7 +53,7 @@ export async function notifyNewJobPosted(job: JobLite) {
   });
 
   const recipients = users.filter((user) =>
-    jobMatchesAlertFilters(job.instrument, user.notifyInstruments)
+    jobMatchesAlertFilters(job.instrument, job.instrumentId, user.notifyInstruments)
   );
 
   await Promise.all(
@@ -67,6 +68,36 @@ export async function notifyNewJobPosted(job: JobLite) {
             <p style="margin:0;">${escape(snippet(job.description))}</p>`,
           ctaLabel: "View job",
           ctaHref: jobUrl(),
+        })
+      )
+    )
+  );
+}
+
+export async function notifyJobInvites(opts: {
+  job: JobLite;
+  creatorName: string;
+  emails: string[];
+}) {
+  if (!emailConfigured() || opts.emails.length === 0) return;
+
+  const signUpHref = `${appBaseUrl()}/sign-up?next=${encodeURIComponent("/jobs")}`;
+
+  await Promise.all(
+    opts.emails.map((email) =>
+      safeSend(`job-invite ${opts.job.id} → ${email}`, () =>
+        sendEmail({
+          to: email,
+          subject: `${opts.creatorName} invited you to a ${opts.job.instrument} gig on RetrackThis`,
+          heading: "You're invited to submit a take",
+          bodyHtml: `<p style="margin:0 0 10px;">Hi there,</p>
+            <p style="margin:0 0 10px;"><strong>${escape(opts.creatorName)}</strong> posted a job and invited you to send a take:</p>
+            <p style="margin:0 0 10px;"><strong>${escape(opts.job.title)}</strong> · ${escape(opts.job.instrument)} · ${escape(formatCents(opts.job.priceCents))}</p>
+            <p style="margin:0;">${escape(snippet(opts.job.description))}</p>
+            <p style="margin:12px 0 0;">Create a free account (or sign in), browse jobs, and submit your take.</p>`,
+          ctaLabel: "View open jobs",
+          ctaHref: signUpHref,
+          includeSettingsFooter: false,
         })
       )
     )

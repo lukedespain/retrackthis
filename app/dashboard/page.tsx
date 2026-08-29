@@ -10,7 +10,7 @@ import { CompleteProfileForm } from "./CompleteProfileForm";
 import { CreatorView } from "./CreatorView";
 import { MySubmissions } from "./MySubmissions";
 
-type Profile = { id: string; name: string; role: string[]; stripeAccountId?: string | null };
+type Profile = { id: string; name: string; role: string[]; stripeAccountId?: string | null; isAdmin?: boolean };
 type DashTab = "jobs" | "submissions";
 
 export default function DashboardPage() {
@@ -110,6 +110,7 @@ function DashboardPageInner() {
       <DashboardHeader
         name={profile.name}
         hasStripeAccount={Boolean(profile.stripeAccountId)}
+        isAdmin={Boolean(profile.isAdmin)}
         onSignOut={signOut}
       />
 

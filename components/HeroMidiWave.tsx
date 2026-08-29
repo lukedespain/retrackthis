@@ -16,7 +16,7 @@ export function HeroMidiWave() {
 
   return (
     <div
-      className="hero-midi-wave relative mt-14 overflow-hidden border-t border-gray-100 bg-gradient-to-b from-surface via-white to-surface sm:mt-20"
+      className="hero-midi-wave relative mt-14 overflow-hidden border-t border-gray-100 bg-[var(--panel-soft)] sm:mt-20"
       aria-hidden="true"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(91,75,255,0.05),transparent_70%)]" />
@@ -28,7 +28,7 @@ export function HeroMidiWave() {
             <MidiStrip />
             <MidiStrip />
           </div>
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-white to-transparent sm:w-12" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-[var(--fade)] to-transparent sm:w-12" />
         </div>
 
         <StageDivider />
@@ -42,8 +42,8 @@ export function HeroMidiWave() {
                 take.selected ? "ring-1 ring-accent/25" : ""
               }`}
             >
-              <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-6 bg-gradient-to-r from-white to-transparent" />
-              <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-6 bg-gradient-to-l from-white to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-6 bg-gradient-to-r from-[var(--fade)] to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-6 bg-gradient-to-l from-[var(--fade)] to-transparent" />
               <div className="hero-wave-track h-full">
                 <WaveStrip
                   samples={take.samples}
@@ -64,7 +64,7 @@ export function HeroMidiWave() {
 
         {/* 03 — Pick your favorite (same shape as selected take) */}
         <div className="relative min-w-0 flex-[1.05] overflow-hidden">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-8 bg-gradient-to-r from-white to-transparent sm:w-12" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-8 bg-gradient-to-r from-[var(--fade)] to-transparent sm:w-12" />
           <div className="hero-wave-track h-full items-center">
             <WaveStrip samples={selected.samples} tone="accent" />
             <WaveStrip samples={selected.samples} tone="accent" />
@@ -93,7 +93,7 @@ function MidiStrip() {
       {MIDI_LANES.map((top) => (
         <div
           key={top}
-          className="absolute left-0 right-0 h-px bg-gray-100/90"
+          className="absolute left-0 right-0 h-px bg-gray-100/90 dark:bg-gray-700/80"
           style={{ top: `${top}%` }}
         />
       ))}
@@ -128,7 +128,7 @@ function WaveStrip({
   // Scale amplitudes to fit compact lanes
   const scale = compact ? 0.32 : 1;
   const last = samples.length - 1;
-  const colorClass = tone === "accent" ? "text-accent" : "text-gray-300";
+  const colorClass = tone === "accent" ? "text-accent" : "text-gray-300 dark:text-gray-600";
 
   const amps = samples.map((a) => a * scale);
 

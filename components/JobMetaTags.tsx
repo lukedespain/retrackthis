@@ -35,7 +35,7 @@ export function JobMetaTags({
     <div className="flex flex-wrap gap-1.5">
       <MetaTag
         emoji={emojiForInstrument(instrument)}
-        className="bg-white text-gray-900 ring-gray-900/15"
+        className="bg-white text-gray-900 ring-gray-900/15 dark:ring-white/15"
       >
         {instrument}
       </MetaTag>
@@ -55,13 +55,13 @@ export function JobMetaTags({
 export function TempoTag({ bpm }: { bpm?: number | null }) {
   if (bpm === null || bpm === undefined) {
     return (
-      <MetaTag emoji="🌊" className="bg-white text-gray-900 ring-gray-900/15">
+      <MetaTag emoji="🌊" className="bg-white text-gray-900 ring-gray-900/15 dark:ring-white/15">
         Flexible tempo
       </MetaTag>
     );
   }
   return (
-    <MetaTag emoji="⏱️" className="bg-white text-gray-900 ring-gray-900/15">
+    <MetaTag emoji="⏱️" className="bg-white text-gray-900 ring-gray-900/15 dark:ring-white/15">
       {bpm} BPM
     </MetaTag>
   );

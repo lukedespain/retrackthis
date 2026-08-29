@@ -38,12 +38,12 @@ export function Logo({ href = "/" }: { href?: string }) {
   return (
     <Link
       href={href}
-      className="group inline-flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2"
+      className="group inline-flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950"
     >
       <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-white transition-transform duration-150 ease-out group-hover:scale-105 group-active:scale-95">
         <RetrackMark className="h-4 w-4" />
       </span>
-      <span className="text-base font-semibold tracking-tight text-gray-900">RetrackThis</span>
+      <span className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">RetrackThis</span>
     </Link>
   );
 }

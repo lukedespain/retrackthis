@@ -3,8 +3,37 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --page: #ffffff;
+    --ink: #111827;
+    --ink-muted: #6b7280;
+    --panel: #ffffff;
+    --panel-soft: #fafafa;
+    --line: #f3f4f6;
+    --line-strong: #e5e7eb;
+    --fade: #ffffff;
+    --accent-soft: #eeecff;
+    --chip: #f3f4f6;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --page: #030712;
+    --ink: #f3f4f6;
+    --ink-muted: #9ca3af;
+    --panel: #111827;
+    --panel-soft: #0b1220;
+    --line: #1f2937;
+    --line-strong: #374151;
+    --fade: #030712;
+    --accent-soft: #1e1b4b;
+    --chip: #1f2937;
+  }
+
   body {
-    @apply bg-white text-gray-900 antialiased;
+    background-color: var(--page);
+    color: var(--ink);
+    @apply antialiased;
   }
 
   ::selection {
@@ -41,6 +70,160 @@
       transform: translate(calc(-50% + var(--dx)), var(--dy)) rotate(var(--rot)) scale(0.6);
     }
   }
+}
+
+/*
+ * Compatibility layer: many screens still use light-only Tailwind utilities.
+ * Remap the common ones under html.dark so dark mode stays readable site-wide.
+ * Prefer adding explicit dark: classes on new UI; these keep older pages coherent.
+ */
+html.dark .bg-white {
+  background-color: var(--panel) !important;
+}
+html.dark .bg-surface {
+  background-color: var(--panel-soft) !important;
+}
+html.dark .bg-accent-muted {
+  background-color: var(--accent-soft) !important;
+}
+html.dark .bg-accent-muted\/20 {
+  background-color: rgb(30 27 75 / 0.35) !important;
+}
+html.dark .bg-accent-muted\/40 {
+  background-color: rgb(30 27 75 / 0.55) !important;
+}
+html.dark .bg-accent-muted\/50 {
+  background-color: rgb(30 27 75 / 0.65) !important;
+}
+html.dark .bg-accent\/15 {
+  background-color: rgb(91 75 255 / 0.18) !important;
+}
+html.dark .bg-accent\/20 {
+  background-color: rgb(91 75 255 / 0.22) !important;
+}
+html.dark .bg-gray-50 {
+  background-color: #0b1220 !important;
+}
+html.dark .bg-gray-100 {
+  background-color: var(--chip) !important;
+}
+html.dark .from-white {
+  --tw-gradient-from: var(--fade) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(3 7 18 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+html.dark .via-white {
+  --tw-gradient-to: rgb(3 7 18 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--fade) var(--tw-gradient-via-position),
+    var(--tw-gradient-to) !important;
+}
+html.dark .to-white {
+  --tw-gradient-to: var(--fade) var(--tw-gradient-to-position) !important;
+}
+
+html.dark .text-gray-900 {
+  color: #f3f4f6 !important;
+}
+html.dark .text-gray-800 {
+  color: #e5e7eb !important;
+}
+html.dark .text-gray-700 {
+  color: #d1d5db !important;
+}
+html.dark .text-gray-600 {
+  color: #9ca3af !important;
+}
+html.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+html.dark .text-gray-400 {
+  color: #6b7280 !important;
+}
+html.dark .text-gray-300 {
+  color: #4b5563 !important;
+}
+
+html.dark .border-gray-100 {
+  border-color: var(--line) !important;
+}
+html.dark .border-gray-200 {
+  border-color: var(--line-strong) !important;
+}
+html.dark .ring-gray-200,
+html.dark .ring-gray-200\/80 {
+  --tw-ring-color: rgb(55 65 81 / 0.8) !important;
+}
+html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--line) !important;
+}
+html.dark .hover\:bg-gray-50:hover {
+  background-color: #1f2937 !important;
+}
+html.dark .hover\:bg-gray-100:hover {
+  background-color: #1f2937 !important;
+}
+html.dark .hover\:text-gray-900:hover {
+  color: #ffffff !important;
+}
+html.dark .hover\:border-gray-300:hover {
+  border-color: #4b5563 !important;
+}
+html.dark .placeholder\:text-gray-400::placeholder {
+  color: #6b7280 !important;
+}
+html.dark .disabled\:bg-gray-50:disabled {
+  background-color: #0b1220 !important;
+}
+
+/* Soft status / chip pastels → darker tints */
+html.dark .bg-emerald-50 {
+  background-color: rgb(6 78 59 / 0.35) !important;
+}
+html.dark .bg-emerald-50\/60 {
+  background-color: rgb(6 78 59 / 0.28) !important;
+}
+html.dark .text-emerald-700,
+html.dark .text-emerald-800,
+html.dark .text-emerald-900 {
+  color: #6ee7b7 !important;
+}
+html.dark .text-emerald-800\/70,
+html.dark .text-emerald-800\/80 {
+  color: rgb(110 231 183 / 0.85) !important;
+}
+html.dark .border-emerald-100 {
+  border-color: rgb(6 95 70 / 0.5) !important;
+}
+html.dark .bg-blue-50 {
+  background-color: rgb(30 58 138 / 0.35) !important;
+}
+html.dark .text-blue-800 {
+  color: #93c5fd !important;
+}
+html.dark .bg-amber-50 {
+  background-color: rgb(120 53 15 / 0.35) !important;
+}
+html.dark .text-amber-700,
+html.dark .text-amber-800 {
+  color: #fcd34d !important;
+}
+html.dark .bg-red-50 {
+  background-color: rgb(127 29 29 / 0.35) !important;
+}
+html.dark .text-red-600,
+html.dark .text-red-700 {
+  color: #fca5a5 !important;
+}
+html.dark .hover\:bg-red-50:hover {
+  background-color: rgb(127 29 29 / 0.45) !important;
+}
+html.dark .ring-gray-900\/15 {
+  --tw-ring-color: rgb(255 255 255 / 0.12) !important;
+}
+
+/* Homepage hero MIDI strip — keep lane lines subtle on dark */
+html.dark .hero-midi-wave .bg-gray-100\/90 {
+  background-color: rgb(55 65 81 / 0.9) !important;
 }
 
 /* Homepage hero: MIDI piano-roll → thin line → DAW waveform (seamless loops) */

@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ALL_INSTRUMENTS_ID, INSTRUMENT_CATEGORIES } from "@/lib/instruments";
+import { ALL_INSTRUMENTS_ID, sanitizeInstrumentIds } from "@/lib/instruments";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
-const ALLOWED_IDS = new Set([ALL_INSTRUMENTS_ID, ...INSTRUMENT_CATEGORIES.map((c) => c.id)]);
-
-function sanitizeInstruments(value: unknown): string[] {
+function sanitizeNotifyInstruments(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  const ids = value.filter((id): id is string => typeof id === "string" && ALLOWED_IDS.has(id));
-  if (ids.includes(ALL_INSTRUMENTS_ID)) return [ALL_INSTRUMENTS_ID];
-  return Array.from(new Set(ids));
+  if (value.includes(ALL_INSTRUMENTS_ID)) return [ALL_INSTRUMENTS_ID];
+  return sanitizeInstrumentIds(value);
 }
 
 export async function GET() {
@@ -56,7 +53,7 @@ export async function PATCH(req: NextRequest) {
   if ("notifyJobAlerts" in body) data.notifyJobAlerts = Boolean(body.notifyJobAlerts);
   if ("notifyTakeSubmitted" in body) data.notifyTakeSubmitted = Boolean(body.notifyTakeSubmitted);
   if ("notifyTakeOutcome" in body) data.notifyTakeOutcome = Boolean(body.notifyTakeOutcome);
-  if ("notifyInstruments" in body) data.notifyInstruments = sanitizeInstruments(body.notifyInstruments);
+  if ("notifyInstruments" in body) data.notifyInstruments = sanitizeNotifyInstruments(body.notifyInstruments);
 
   if (data.notifyJobAlerts && data.notifyInstruments && data.notifyInstruments.length === 0) {
     data.notifyJobAlerts = false;

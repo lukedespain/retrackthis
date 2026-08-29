@@ -8,14 +8,16 @@ import { Button } from "./ui/Button";
 export function DashboardHeader({
   name,
   hasStripeAccount = false,
+  isAdmin = false,
   onSignOut,
 }: {
   name: string;
   hasStripeAccount?: boolean;
+  isAdmin?: boolean;
   onSignOut: () => void;
 }) {
   return (
-    <header className="border-b border-gray-100 pb-5 sm:pb-6">
+    <header className="border-b border-gray-100 pb-5 sm:pb-6 dark:border-gray-800">
       <div className="flex items-center justify-between gap-3">
         <Logo href="/" />
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
@@ -24,7 +26,12 @@ export function DashboardHeader({
               Browse jobs
             </Button>
           </Link>
-          <UserMenu name={name} hasStripeAccount={hasStripeAccount} onSignOut={onSignOut} />
+          <UserMenu
+            name={name}
+            hasStripeAccount={hasStripeAccount}
+            isAdmin={isAdmin}
+            onSignOut={onSignOut}
+          />
         </div>
       </div>
     </header>

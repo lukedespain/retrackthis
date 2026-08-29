@@ -5,6 +5,7 @@ export type Job = {
   creatorId: string;
   title: string;
   instrument: string;
+  instrumentId?: string | null;
   description: string;
   demoFileUrl: string;
   priceCents: number;

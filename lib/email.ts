@@ -7,13 +7,23 @@ type SendEmailInput = {
   bodyHtml: string;
   ctaLabel?: string;
   ctaHref?: string;
+  /** Default: notification settings footer. Pass false for transactional invites. */
+  includeSettingsFooter?: boolean;
 };
 
 export function emailConfigured() {
   return Boolean(process.env.RESEND_API_KEY);
 }
 
-export async function sendEmail({ to, subject, heading, bodyHtml, ctaLabel, ctaHref }: SendEmailInput) {
+export async function sendEmail({
+  to,
+  subject,
+  heading,
+  bodyHtml,
+  ctaLabel,
+  ctaHref,
+  includeSettingsFooter = true,
+}: SendEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn("[email] skipped (RESEND_API_KEY not set):", subject, "→", to);
@@ -23,6 +33,15 @@ export async function sendEmail({ to, subject, heading, bodyHtml, ctaLabel, ctaH
   const from = process.env.RESEND_FROM?.trim() || "RetrackThis <hello@retrackthis.com>";
   const replyTo = process.env.RESEND_REPLY_TO?.trim() || "music@lukedespain.com";
   const settingsUrl = `${appBaseUrl()}/dashboard/settings`;
+
+  const footer = includeSettingsFooter
+    ? `<p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">
+        You’re getting this because of your RetrackThis notification settings.
+        <a href="${escapeAttr(settingsUrl)}" style="color:#6b7280;">Manage alerts</a>
+      </p>`
+    : `<p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">
+        Sent via RetrackThis · <a href="${escapeAttr(appBaseUrl())}" style="color:#6b7280;">retrackthis.com</a>
+      </p>`;
 
   const html = `<!doctype html>
 <html>
@@ -38,10 +57,7 @@ export async function sendEmail({ to, subject, heading, bodyHtml, ctaLabel, ctaH
             : ""
         }
       </div>
-      <p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">
-        You’re getting this because of your RetrackThis notification settings.
-        <a href="${escapeAttr(settingsUrl)}" style="color:#6b7280;">Manage alerts</a>
-      </p>
+      ${footer}
     </div>
   </body>
 </html>`;

@@ -32,6 +32,12 @@ model User {
   notifyTakeSubmitted  Boolean  @default(true)
   notifyTakeOutcome    Boolean  @default(true)
 
+  // Instruments this musician plays (catalog ids: piano, synth, keys, organ, …)
+  instruments     String[] @default([])
+
+  // Platform admin (dashboard at /admin). Also granted via ADMIN_EMAILS allowlist.
+  isAdmin         Boolean  @default(false)
+
   jobsPosted      Job[]    @relation("JobsPosted")
   takesSubmitted  Take[]
 }
@@ -41,7 +47,8 @@ model Job {
   creator        User      @relation("JobsPosted", fields: [creatorId], references: [id])
   creatorId      String
   title          String
-  instrument     String    // e.g. "Upright bass", "Piano"
+  instrument     String    // display label, e.g. "Synth"
+  instrumentId   String?   // catalog id when posted via picker
   description    String
   demoFileUrl    String    // the MIDI/scratch demo the creator uploaded
   priceCents     Int

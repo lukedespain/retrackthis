@@ -82,7 +82,7 @@ export function PayoutSetupCard({ highlightReturn = false }: { highlightReturn?:
           )}
         </div>
         <p className="mt-3 text-xs text-emerald-800/70">
-          Manage bank details anytime from the menu → Stripe Express.
+          Manage bank details anytime from the menu → Payouts.
         </p>
       </Card>
     );

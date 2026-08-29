@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { InstrumentMultiSelect } from "@/components/InstrumentMultiSelect";
 import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ALL_INSTRUMENTS_ID, INSTRUMENT_CATEGORIES } from "@/lib/instruments";
+import { ALL_INSTRUMENTS_ID, labelForInstrumentId } from "@/lib/instruments";
 
 type Prefs = {
   notifyJobAlerts: boolean;
@@ -12,11 +14,22 @@ type Prefs = {
   notifyTakeOutcome: boolean;
 };
 
+function sameIds(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  const left = [...a].sort();
+  const right = [...b].sort();
+  return left.every((id, index) => id === right[index]);
+}
+
 export function NotificationSettings() {
   const [prefs, setPrefs] = useState<Prefs | null>(null);
+  const [alertDraft, setAlertDraft] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  const allSelected = alertDraft.includes(ALL_INSTRUMENTS_ID);
+  const dirty = prefs ? !sameIds(prefs.notifyInstruments, alertDraft) : false;
 
   useEffect(() => {
     fetch("/api/settings/notifications")
@@ -24,6 +37,7 @@ export function NotificationSettings() {
         const body = await res.json().catch(() => null);
         if (!res.ok) throw new Error(body?.error ?? "Could not load settings");
         setPrefs(body);
+        setAlertDraft(body.notifyInstruments ?? []);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Could not load settings");
@@ -43,6 +57,7 @@ export function NotificationSettings() {
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.error ?? "Could not save settings");
       setPrefs(body);
+      setAlertDraft(body.notifyInstruments ?? []);
       setSaved(true);
       window.setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -52,22 +67,31 @@ export function NotificationSettings() {
     }
   }
 
-  function toggleInstrument(id: string) {
+  function saveAlertInstruments() {
     if (!prefs) return;
-    const selected = new Set(prefs.notifyInstruments);
-    if (id === ALL_INSTRUMENTS_ID) {
-      const next = selected.has(ALL_INSTRUMENTS_ID) ? [] : [ALL_INSTRUMENTS_ID];
-      const enabled = next.length > 0;
-      void save({ ...prefs, notifyInstruments: next, notifyJobAlerts: enabled });
+    const notifyInstruments = alertDraft;
+    const notifyJobAlerts = notifyInstruments.length > 0;
+    void save({ ...prefs, notifyInstruments, notifyJobAlerts });
+  }
+
+  function resetAlertDraft() {
+    if (!prefs) return;
+    setAlertDraft(prefs.notifyInstruments);
+    setError(null);
+  }
+
+  function toggleAllInstruments() {
+    if (allSelected) {
+      setAlertDraft([]);
       return;
     }
-
-    selected.delete(ALL_INSTRUMENTS_ID);
-    if (selected.has(id)) selected.delete(id);
-    else selected.add(id);
-    const next = Array.from(selected);
-    void save({ ...prefs, notifyInstruments: next, notifyJobAlerts: next.length > 0 });
+    setAlertDraft([ALL_INSTRUMENTS_ID]);
   }
+
+  const specificIds = useMemo(
+    () => alertDraft.filter((id) => id !== ALL_INSTRUMENTS_ID),
+    [alertDraft]
+  );
 
   if (!prefs && !error) {
     return <p className="text-sm text-gray-500">Loading notification settings…</p>;
@@ -77,15 +101,13 @@ export function NotificationSettings() {
     return <Alert variant="error">{error}</Alert>;
   }
 
-  const allSelected = prefs.notifyInstruments.includes(ALL_INSTRUMENTS_ID);
-
   return (
     <div className="space-y-5">
       <Card padding="md">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">New job alerts</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">New job alerts</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Email me when a creator posts a gig that matches the instruments I play.
             </p>
           </div>
@@ -106,23 +128,58 @@ export function NotificationSettings() {
           />
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          <Chip
-            selected={allSelected}
-            onClick={() => toggleInstrument(ALL_INSTRUMENTS_ID)}
-            label="All instruments"
+        <div className="mt-5 space-y-4">
+          <button
+            type="button"
+            onClick={toggleAllInstruments}
+            disabled={saving}
+            aria-pressed={allSelected}
+            className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 disabled:opacity-50 dark:focus-visible:ring-offset-gray-900 ${
+              allSelected
+                ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                : "bg-white text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 dark:bg-gray-950 dark:text-gray-200 dark:ring-gray-700 dark:hover:bg-gray-800"
+            }`}
+          >
+            All instruments
+          </button>
+
+          <InstrumentMultiSelect
+            label="Alert me for"
+            hint={
+              allSelected
+                ? "Turn off All instruments above to pick specific parts."
+                : "Expand a category and pick the gigs you want emailed about."
+            }
+            selectedIds={specificIds}
+            onChange={(ids) => setAlertDraft(ids)}
+            disabled={saving || allSelected}
+            allowCustom={false}
+            chipLabel={labelForInstrumentId}
+            triggerLabel="Select instruments for alerts"
           />
-          {INSTRUMENT_CATEGORIES.map((category) => (
-            <Chip
-              key={category.id}
-              selected={!allSelected && prefs.notifyInstruments.includes(category.id)}
-              onClick={() => toggleInstrument(category.id)}
-              emoji={category.emoji}
-              label={category.label}
-            />
-          ))}
         </div>
-        {!prefs.notifyJobAlerts && (
+
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            disabled={!dirty || saving}
+            onClick={saveAlertInstruments}
+          >
+            {saving ? "Saving…" : "Save alert preferences"}
+          </Button>
+          {dirty && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={resetAlertDraft}
+              className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 disabled:opacity-50 dark:text-gray-400 dark:hover:text-white"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+
+        {!prefs.notifyJobAlerts && alertDraft.length === 0 && (
           <p className="mt-3 text-xs text-gray-400">
             Select instruments to turn alerts on. Leave them empty to stay quiet.
           </p>
@@ -130,7 +187,7 @@ export function NotificationSettings() {
       </Card>
 
       <Card padding="md">
-        <h2 className="text-base font-semibold text-gray-900">Other emails</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">Other emails</h2>
         <div className="mt-4 space-y-4">
           <PrefRow
             title="New takes on my jobs"
@@ -150,36 +207,8 @@ export function NotificationSettings() {
       </Card>
 
       {error && <Alert variant="error">{error}</Alert>}
-      {saved && <p className="text-sm text-emerald-700">Saved</p>}
+      {saved && !dirty && <p className="text-sm text-emerald-700 dark:text-emerald-400">Saved</p>}
     </div>
-  );
-}
-
-function Chip({
-  selected,
-  onClick,
-  label,
-  emoji,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  label: string;
-  emoji?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
-        selected
-          ? "bg-gray-900 text-white"
-          : "bg-white text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
-      }`}
-    >
-      {emoji ? <span aria-hidden="true">{emoji}</span> : null}
-      <span>{label}</span>
-    </button>
   );
 }
 
@@ -199,8 +228,8 @@ function PrefRow({
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <p className="text-sm font-medium text-gray-900">{title}</p>
-        <p className="mt-0.5 text-sm text-gray-500">{description}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-white">{title}</p>
+        <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{description}</p>
       </div>
       <Toggle checked={checked} disabled={disabled} onChange={onChange} />
     </div>
@@ -224,7 +253,7 @@ function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 disabled:opacity-50 ${
-        checked ? "bg-accent" : "bg-gray-200"
+        checked ? "bg-accent" : "bg-gray-200 dark:bg-gray-700"
       }`}
     >
       <span

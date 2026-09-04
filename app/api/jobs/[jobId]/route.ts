@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminUser } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
@@ -6,10 +7,11 @@ function isHttpUrl(value: unknown): value is string {
   return typeof value === "string" && /^https?:\/\//i.test(value.trim());
 }
 
-// PATCH /api/jobs/:jobId — creator updates an OPEN job (references, tempo, copy).
+// PATCH /api/jobs/:jobId — creator or admin updates an OPEN job.
+// Title, description, reference audio, and tempo only — never price or payment.
 export async function PATCH(req: NextRequest, { params }: { params: { jobId: string } }) {
-  const creatorId = await getSessionUserId();
-  if (!creatorId) {
+  const sessionUserId = await getSessionUserId();
+  if (!sessionUserId) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
@@ -17,14 +19,37 @@ export async function PATCH(req: NextRequest, { params }: { params: { jobId: str
   if (!job) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
   }
-  if (job.creatorId !== creatorId) {
+
+  const isOwner = job.creatorId === sessionUserId;
+  const admin = isOwner ? null : await getAdminUser();
+  if (!isOwner && !admin) {
     return NextResponse.json({ error: "Not authorized to edit this job" }, { status: 403 });
   }
+
   if (job.status !== "OPEN") {
     return NextResponse.json({ error: "Only open jobs can be edited" }, { status: 400 });
   }
 
   const body = await req.json();
+
+  // Hard-block anything payment-related even if a client sends it.
+  const blocked = [
+    "priceCents",
+    "price",
+    "paymentMethodId",
+    "payment",
+    "stripePaymentIntentId",
+    "platformFeeCents",
+    "creatorId",
+    "status",
+  ];
+  if (blocked.some((key) => key in body)) {
+    return NextResponse.json(
+      { error: "Price and payment details can’t be changed when editing a job." },
+      { status: 400 }
+    );
+  }
+
   const data: {
     title?: string;
     description?: string;
@@ -85,5 +110,5 @@ export async function PATCH(req: NextRequest, { params }: { params: { jobId: str
     data,
   });
 
-  return NextResponse.json({ job: updated });
+  return NextResponse.json({ job: updated, editedByAdmin: Boolean(admin) });
 }

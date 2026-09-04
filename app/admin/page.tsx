@@ -7,8 +7,9 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { AdminJobsPanel, type AdminJobRow } from "./AdminJobsPanel";
 
-type Tab = "members" | "instruments" | "income";
+type Tab = "members" | "jobs" | "instruments" | "income";
 type Period = "7d" | "30d" | "90d" | "all";
 
 type Profile = {
@@ -103,6 +104,8 @@ function AdminPageInner() {
   const [period, setPeriod] = useState<Period>("30d");
   const [members, setMembers] = useState<Member[] | null>(null);
   const [memberQuery, setMemberQuery] = useState("");
+  const [adminJobs, setAdminJobs] = useState<AdminJobRow[] | null>(null);
+  const [jobsReloadToken, setJobsReloadToken] = useState(0);
   const [instruments, setInstruments] = useState<{
     covered: InstrumentRow[];
     needed: InstrumentRow[];
@@ -120,7 +123,7 @@ function AdminPageInner() {
 
   useEffect(() => {
     const t = searchParams.get("tab");
-    if (t === "members" || t === "instruments" || t === "income") setTab(t);
+    if (t === "members" || t === "jobs" || t === "instruments" || t === "income") setTab(t);
     const p = searchParams.get("period");
     if (p === "7d" || p === "30d" || p === "90d" || p === "all") setPeriod(p);
   }, [searchParams]);
@@ -157,6 +160,15 @@ function AdminPageInner() {
           if (!res.ok) throw new Error("Could not load members");
           const body = await res.json();
           if (!cancelled) setMembers(body.members);
+        } else if (tab === "jobs") {
+          const res = await fetch("/api/admin/jobs");
+          if (res.status === 403) {
+            router.push("/dashboard");
+            return;
+          }
+          if (!res.ok) throw new Error("Could not load jobs");
+          const body = await res.json();
+          if (!cancelled) setAdminJobs(body.jobs);
         } else if (tab === "instruments") {
           const res = await fetch("/api/admin/instruments");
           if (res.status === 403) {
@@ -187,7 +199,7 @@ function AdminPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [profile, tab, period, router]);
+  }, [profile, tab, period, router, jobsReloadToken]);
 
   const filteredMembers = useMemo(() => {
     if (!members) return [];
@@ -251,7 +263,7 @@ function AdminPageInner() {
               Operations
             </h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Members, instrument coverage, and income.
+              Members, jobs, instrument coverage, and income.
             </p>
           </div>
           <SegmentedControl
@@ -259,6 +271,7 @@ function AdminPageInner() {
             onChange={changeTab}
             options={[
               { value: "members", label: "Members" },
+              { value: "jobs", label: "Jobs" },
               { value: "instruments", label: "Instruments" },
               { value: "income", label: "Income" },
             ]}
@@ -271,7 +284,13 @@ function AdminPageInner() {
           </p>
         )}
 
-        {loadingTab && !((tab === "members" && members) || (tab === "instruments" && instruments) || (tab === "income" && stats)) ? (
+        {loadingTab &&
+        !(
+          (tab === "members" && members) ||
+          (tab === "jobs" && adminJobs) ||
+          (tab === "instruments" && instruments) ||
+          (tab === "income" && stats)
+        ) ? (
           <div className="flex justify-center py-20">
             <Spinner />
           </div>
@@ -352,6 +371,13 @@ function AdminPageInner() {
               </table>
             </div>
           </section>
+        )}
+
+        {tab === "jobs" && adminJobs && (
+          <AdminJobsPanel
+            jobs={adminJobs}
+            onChanged={() => setJobsReloadToken((n) => n + 1)}
+          />
         )}
 
         {tab === "instruments" && instruments && (

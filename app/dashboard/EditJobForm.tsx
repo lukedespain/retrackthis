@@ -14,10 +14,13 @@ export function EditJobForm({
   job,
   onCancel,
   onSaved,
+  adminAs,
 }: {
   job: Job;
   onCancel: () => void;
   onSaved: () => void;
+  /** When set, form is shown as admin editing on behalf of this creator. */
+  adminAs?: { name: string; email: string; priceLabel?: string };
 }) {
   const [title, setTitle] = useState(job.title);
   const [description, setDescription] = useState(job.description);
@@ -87,14 +90,30 @@ export function EditJobForm({
       className="space-y-5 rounded-2xl border border-accent/20 bg-accent-muted/30 p-4 sm:p-5"
     >
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">Edit job</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent">
+          {adminAs ? "Admin edit" : "Edit job"}
+        </p>
         <h3 className="mt-1 text-base font-semibold text-gray-900 dark:text-white">
           Update references &amp; tempo
         </h3>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Your escrow and price stay the same. Changes show up for musicians right away.
+          {adminAs
+            ? `Editing for ${adminAs.name} (${adminAs.email}). Price and payment stay locked`
+            : "Your escrow and price stay the same"}
+          {adminAs?.priceLabel ? ` at ${adminAs.priceLabel}` : ""}. Changes show up for musicians
+          right away.
         </p>
       </div>
+
+      {adminAs && (
+        <Alert variant="warning">
+          <p className="font-medium">Price &amp; payment locked</p>
+          <p className="mt-1">
+            You can change title, description, reference tracks, and tempo only. You cannot change
+            the escrow amount or card on file.
+          </p>
+        </Alert>
+      )}
 
       {!backingFileUrl && (
         <Alert variant="warning">

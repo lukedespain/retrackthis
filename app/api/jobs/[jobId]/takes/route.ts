@@ -58,8 +58,11 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     audioTakes.push({ label: "Take 1", fileUrl: String(legacyAudioUrl) });
   }
 
-  if (audioTakes.length === 0) {
-    return NextResponse.json({ error: "Upload at least one audio take before submitting." }, { status: 400 });
+  if (audioTakes.length === 0 && midiFiles.length === 0) {
+    return NextResponse.json(
+      { error: "Upload at least one audio take or MIDI file before submitting." },
+      { status: 400 }
+    );
   }
 
   const job = await db.job.findUnique({ where: { id: params.jobId } });
@@ -74,7 +77,8 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     return NextResponse.json({ error: "You already submitted a take for this job." }, { status: 400 });
   }
 
-  const primaryAudioUrl = audioTakes[0].fileUrl;
+  // MIDI-only takes store the first MIDI URL in audioFileUrl for legacy list UIs.
+  const primaryAudioUrl = audioTakes[0]?.fileUrl ?? midiFiles[0]?.fileUrl ?? "";
 
   const take = await db.take.create({
     data: {

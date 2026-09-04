@@ -135,11 +135,37 @@ export function TakeSubmissionFiles({
   const audioItems =
     audio.length > 0
       ? audio
-      : fallbackAudioUrl
+      : fallbackAudioUrl && !allMidi.some((m) => m.fileUrl === fallbackAudioUrl)
         ? [{ id: "legacy", kind: "AUDIO" as const, label: "Take 1", fileUrl: fallbackAudioUrl, sortOrder: 0 }]
         : [];
 
-  if (audioItems.length === 0) return null;
+  // MIDI-only submissions: no audio rows, just downloadable MIDI files.
+  if (audioItems.length === 0) {
+    if (allMidi.length === 0) return null;
+    return (
+      <div className="space-y-3">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 px-3 py-3">
+          <p className="text-xs font-medium uppercase tracking-wider text-emerald-900">MIDI takes</p>
+          {allowDownload ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {allMidi.map((file) => (
+                <FileDownloadLink
+                  key={file.id}
+                  href={file.fileUrl}
+                  label={file.label}
+                  filename={guessFilename(file.fileUrl, `${file.label}.mid`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="mt-1.5 text-xs text-emerald-800/80">
+              MIDI included — download after you choose this musician.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const rows = files?.length ? pairedTakeRows(files) : audioItems.map((a) => ({ audio: a, midi: null }));
 

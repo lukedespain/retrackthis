@@ -332,7 +332,12 @@ function OpenJobCard({
                   <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
                     Part being retracked
                   </p>
-                  <AudioPlayer src={job.demoFileUrl} label="Part to retrack" allowDownload={signedIn} />
+                  <AudioPlayer
+                    src={job.demoFileUrl}
+                    label="Part to retrack"
+                    allowDownload={signedIn}
+                    bpm={job.bpm}
+                  />
                 </div>
                 {job.backingFileUrl ? (
                   <div>
@@ -343,6 +348,7 @@ function OpenJobCard({
                       src={job.backingFileUrl}
                       label="Background"
                       allowDownload={signedIn}
+                      bpm={job.bpm}
                     />
                   </div>
                 ) : null}

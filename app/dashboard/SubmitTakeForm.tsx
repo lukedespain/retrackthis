@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Textarea";
 import { AUDIO_FILE_ACCEPT, AUDIO_UPLOAD_HINT } from "@/lib/constants";
-import { MAX_AUDIO_TAKES, type TakeFileRecord } from "@/lib/takeFiles";
+import { MAX_AUDIO_TAKES, MAX_MIDI_FILES, type TakeFileRecord } from "@/lib/takeFiles";
+
+type SubmitMode = "audio" | "midi" | "both";
 
 type TakeRow = {
   audioLabel: string;
@@ -21,33 +23,16 @@ function emptyRow(index: number): TakeRow {
   return {
     audioLabel: `Take ${index + 1}`,
     audioFileUrl: null,
-    midiLabel: `MIDI for Take ${index + 1}`,
+    midiLabel: `MIDI ${index + 1}`,
     midiFileUrl: null,
   };
 }
 
-function PairArrow() {
-  return (
-    <>
-      <div
-        className="hidden shrink-0 items-center justify-center self-center px-1 text-gray-300 md:flex"
-        aria-hidden
-      >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-        </svg>
-      </div>
-      <div
-        className="flex shrink-0 items-center justify-center self-center py-1 text-gray-300 md:hidden"
-        aria-hidden
-      >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m0 0l-5-5m5 5l5-5" />
-        </svg>
-      </div>
-    </>
-  );
-}
+const MODE_OPTIONS: Array<{ value: SubmitMode; label: string; hint: string }> = [
+  { value: "audio", label: "Audio", hint: "Recorded performance" },
+  { value: "midi", label: "MIDI", hint: "MIDI file only" },
+  { value: "both", label: "Both", hint: "Audio + MIDI" },
+];
 
 export function SubmitTakeForm({
   jobId,
@@ -67,10 +52,8 @@ export function SubmitTakeForm({
   const [submitted, setSubmitted] = useState(alreadySubmitted);
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(existingTakeUrl ?? null);
   const [submittedFiles, setSubmittedFiles] = useState<TakeFileRecord[] | undefined>(existingFiles);
+  const [mode, setMode] = useState<SubmitMode | null>(null);
   const [rows, setRows] = useState<TakeRow[]>([emptyRow(0)]);
-  const [sharedMidi, setSharedMidi] = useState(true);
-  const [sharedMidiLabel, setSharedMidiLabel] = useState("All takes");
-  const [sharedMidiUrl, setSharedMidiUrl] = useState<string | null>(null);
   const [attestHuman, setAttestHuman] = useState(false);
   const [burst, setBurst] = useState(false);
 
@@ -82,51 +65,37 @@ export function SubmitTakeForm({
     }
   }, [alreadySubmitted, existingTakeUrl, existingFiles]);
 
+  const maxRows = mode === "midi" ? MAX_MIDI_FILES : MAX_AUDIO_TAKES;
+
   const readyAudioRows = rows
     .map((row, index) => ({ ...row, index }))
     .filter((row) => row.audioFileUrl && row.audioLabel.trim());
 
-  const canSubmit = attestHuman && readyAudioRows.length > 0;
+  const readyMidiRows = rows
+    .map((row, index) => ({ ...row, index }))
+    .filter((row) => row.midiFileUrl && row.midiLabel.trim());
+
+  const canSubmit =
+    Boolean(mode) &&
+    attestHuman &&
+    (mode === "audio"
+      ? readyAudioRows.length > 0
+      : mode === "midi"
+        ? readyMidiRows.length > 0
+        : readyAudioRows.length > 0 && readyAudioRows.every((row) => row.midiFileUrl));
 
   function updateRow(index: number, patch: Partial<TakeRow>) {
     setRows((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
 
   function addRow() {
-    setRows((current) => (current.length < MAX_AUDIO_TAKES ? [...current, emptyRow(current.length)] : current));
+    setRows((current) => (current.length < maxRows ? [...current, emptyRow(current.length)] : current));
   }
 
-  function toggleSharedMidi(next: boolean) {
-    if (next) {
-      const firstMidi = rows.find((row) => row.midiFileUrl);
-      setSharedMidiUrl(firstMidi?.midiFileUrl ?? sharedMidiUrl);
-      if (firstMidi?.midiLabel) setSharedMidiLabel(firstMidi.midiLabel.replace(/ for Take \d+$/i, "") || "All takes");
-      setRows((current) => current.map((row) => ({ ...row, midiFileUrl: null })));
-    } else if (sharedMidiUrl) {
-      setRows((current) =>
-        current.map((row, index) =>
-          index === 0 ? { ...row, midiFileUrl: sharedMidiUrl, midiLabel: sharedMidiLabel } : row
-        )
-      );
-      setSharedMidiUrl(null);
-    }
-    setSharedMidi(next);
-  }
-
-  function buildMidiPayload() {
-    if (sharedMidi) {
-      if (!sharedMidiUrl || !sharedMidiLabel.trim()) return [];
-      return [{ label: sharedMidiLabel.trim(), fileUrl: sharedMidiUrl, audioIndex: null }];
-    }
-
-    return rows
-      .map((row, index) => ({ row, index }))
-      .filter(({ row }) => row.midiFileUrl && row.midiLabel.trim())
-      .map(({ row, index }) => ({
-        label: row.midiLabel.trim(),
-        fileUrl: row.midiFileUrl as string,
-        audioIndex: index,
-      }));
+  function chooseMode(next: SubmitMode) {
+    setMode(next);
+    setRows([emptyRow(0)]);
+    setError(null);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -140,25 +109,68 @@ export function SubmitTakeForm({
       return;
     }
 
-    if (readyAudioRows.length === 0) {
-      setError("Upload at least one audio take before submitting.");
+    if (!mode) {
+      setError("Choose whether you’re submitting audio, MIDI, or both.");
       setSubmitting(false);
       return;
     }
 
+    if (mode === "audio" || mode === "both") {
+      if (readyAudioRows.length === 0) {
+        setError("Upload at least one audio take before submitting.");
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    if (mode === "midi" && readyMidiRows.length === 0) {
+      setError("Upload at least one MIDI file before submitting.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (mode === "both") {
+      const missingMidi = readyAudioRows.some((row) => !row.midiFileUrl);
+      if (missingMidi) {
+        setError("Add a MIDI file for each audio take, or switch to Audio only.");
+        setSubmitting(false);
+        return;
+      }
+    }
+
     const formEl = e.currentTarget;
     const form = new FormData(formEl);
+
+    const audioTakes =
+      mode === "midi"
+        ? []
+        : readyAudioRows.map(({ audioLabel, audioFileUrl }) => ({
+            label: audioLabel.trim(),
+            fileUrl: audioFileUrl as string,
+          }));
+
+    const midiFiles =
+      mode === "audio"
+        ? []
+        : mode === "midi"
+          ? readyMidiRows.map(({ midiLabel, midiFileUrl }) => ({
+              label: midiLabel.trim(),
+              fileUrl: midiFileUrl as string,
+              audioIndex: null as number | null,
+            }))
+          : readyAudioRows.map(({ midiLabel, midiFileUrl, index }) => ({
+              label: midiLabel.trim(),
+              fileUrl: midiFileUrl as string,
+              audioIndex: index,
+            }));
 
     try {
       const res = await fetch(`/api/jobs/${jobId}/takes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          audioTakes: readyAudioRows.map(({ audioLabel, audioFileUrl }) => ({
-            label: audioLabel.trim(),
-            fileUrl: audioFileUrl,
-          })),
-          midiFiles: buildMidiPayload(),
+          audioTakes,
+          midiFiles,
           note: form.get("note"),
           attestHuman: true,
         }),
@@ -221,166 +233,137 @@ export function SubmitTakeForm({
     <Card padding="md">
       <h3 className="text-base font-semibold text-gray-900">Submit your take</h3>
       <p className="mt-1 text-sm text-gray-500">
-        Free to submit. Add up to three audio options — pair each with its own MIDI, or use one MIDI
-        file for all of them.
+        Free to submit. First choose what you&apos;re uploading — then add up to three options.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-        <div className="space-y-4">
-          <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-900">MIDI pairing</p>
-              <p className="mt-0.5 text-xs text-gray-500">
-                Recorded live? Leave MIDI blank. Same part every time? Use one shared file.
-              </p>
-            </div>
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-gray-50 px-3 py-2 text-sm text-gray-700 ring-1 ring-inset ring-gray-200">
-              <input
-                type="checkbox"
-                checked={sharedMidi}
-                onChange={(e) => toggleSharedMidi(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent/30"
-              />
-              Same MIDI track for all takes
-            </label>
+        <div>
+          <p className="text-sm font-medium text-gray-900">What are you uploading?</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-3">
+            {MODE_OPTIONS.map((option) => {
+              const selected = mode === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => chooseMode(option.value)}
+                  className={`rounded-2xl border px-4 py-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 ${
+                    selected
+                      ? "border-accent bg-accent-muted shadow-sm"
+                      : "border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-950"
+                  }`}
+                >
+                  <span className="block text-sm font-semibold text-gray-900 dark:text-white">
+                    {option.label}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-gray-500">{option.hint}</span>
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          {sharedMidi && (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
-              <h4 className="text-sm font-semibold text-emerald-900">Shared MIDI</h4>
-              <p className="mt-1 text-xs text-emerald-800/80">
-                One file linked to every audio take you upload below.
-              </p>
-              <label className="mt-3 block text-xs font-medium text-gray-700">
-                Track name
-                <input
-                  type="text"
-                  value={sharedMidiLabel}
-                  onChange={(e) => setSharedMidiLabel(e.target.value)}
-                  placeholder="All takes"
-                  className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                />
-              </label>
-              <div className="mt-3">
-                <FileUpload
-                  label={sharedMidiUrl ? "Replace MIDI" : "Upload shared MIDI"}
-                  kind="take-midi"
-                  accept=".mid,.midi,audio/midi"
-                  compact
-                  hint=".mid or .midi files only. Optional."
-                  onUploaded={setSharedMidiUrl}
-                />
-              </div>
-            </div>
-          )}
-
+        {mode && (
           <div className="space-y-4">
             {rows.map((row, index) => (
-              <div key={index} className="space-y-2">
+              <div
+                key={index}
+                className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
+              >
                 <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                  Option {index + 1}
+                  Take {index + 1}
                 </p>
-                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-stretch">
-                  <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-4">
-                    <h4 className="text-sm font-semibold text-blue-900">Audio take</h4>
-                    <label className="mt-3 block text-xs font-medium text-gray-700">
+
+                {(mode === "audio" || mode === "both") && (
+                  <div className="space-y-3">
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
                       Track name
                       <input
                         type="text"
                         value={row.audioLabel}
                         onChange={(e) => updateRow(index, { audioLabel: e.target.value })}
                         placeholder={`Take ${index + 1}`}
-                        className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                        className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                       />
                     </label>
-                    <div className="mt-3">
-                      <FileUpload
-                        label={row.audioFileUrl ? "Replace audio" : "Upload audio"}
-                        kind="take"
-                        accept={AUDIO_FILE_ACCEPT}
-                        compact
-                        hint={index === 0 ? AUDIO_UPLOAD_HINT : undefined}
-                        onUploaded={(url) => updateRow(index, { audioFileUrl: url })}
-                      />
-                    </div>
+                    <FileUpload
+                      label={row.audioFileUrl ? "Replace audio" : "Upload audio"}
+                      kind="take"
+                      accept={AUDIO_FILE_ACCEPT}
+                      compact
+                      hint={index === 0 ? AUDIO_UPLOAD_HINT : undefined}
+                      onUploaded={(url) => updateRow(index, { audioFileUrl: url })}
+                    />
                   </div>
+                )}
 
-                  <PairArrow />
-
-                  {sharedMidi ? (
-                    <div className="flex flex-col justify-center rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/30 p-4 text-center md:text-left">
-                      <p className="text-sm font-medium text-emerald-900">MIDI optional</p>
-                      <p className="mt-1 text-xs text-emerald-800/80">
-                        Uses your shared MIDI file{sharedMidiUrl ? "" : " — upload it above"}.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
-                      <h4 className="text-sm font-semibold text-emerald-900">MIDI optional</h4>
-                      <p className="mt-1 text-xs text-emerald-800/80">
-                        Only if this take has its own MIDI part.
-                      </p>
-                      <label className="mt-3 block text-xs font-medium text-gray-700">
-                        Track name
-                        <input
-                          type="text"
-                          value={row.midiLabel}
-                          onChange={(e) => updateRow(index, { midiLabel: e.target.value })}
-                          placeholder={`MIDI for Take ${index + 1}`}
-                          className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                        />
-                      </label>
-                      <div className="mt-3">
-                        <FileUpload
-                          label={row.midiFileUrl ? "Replace MIDI" : "Upload MIDI"}
-                          kind="take-midi"
-                          accept=".mid,.midi,audio/midi"
-                          compact
-                          hint={index === 0 ? ".mid or .midi files only." : undefined}
-                          onUploaded={(url) => updateRow(index, { midiFileUrl: url })}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {(mode === "midi" || mode === "both") && (
+                  <div className="space-y-3">
+                    {mode === "both" && (
+                      <p className="text-xs font-medium text-gray-500">Paired MIDI for this take</p>
+                    )}
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                      MIDI name
+                      <input
+                        type="text"
+                        value={row.midiLabel}
+                        onChange={(e) => updateRow(index, { midiLabel: e.target.value })}
+                        placeholder={`MIDI ${index + 1}`}
+                        className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                      />
+                    </label>
+                    <FileUpload
+                      label={row.midiFileUrl ? "Replace MIDI" : "Upload MIDI"}
+                      kind="take-midi"
+                      accept=".mid,.midi,audio/midi"
+                      compact
+                      hint={index === 0 ? ".mid or .midi files only." : undefined}
+                      onUploaded={(url) => updateRow(index, { midiFileUrl: url })}
+                    />
+                  </div>
+                )}
               </div>
             ))}
+
+            {rows.length < maxRows && (
+              <Button type="button" variant="secondary" size="sm" onClick={addRow} className="w-full sm:w-auto">
+                Add another take
+              </Button>
+            )}
           </div>
+        )}
 
-          {rows.length < MAX_AUDIO_TAKES && (
-            <Button type="button" variant="secondary" size="sm" onClick={addRow} className="w-full sm:w-auto">
-              Add another take
+        {mode && (
+          <>
+            <Textarea
+              label="Note"
+              name="note"
+              rows={2}
+              placeholder="Anything the creator should know about your take?"
+              hint="Optional"
+            />
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition-colors hover:border-gray-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/20 dark:border-gray-800 dark:bg-gray-950">
+              <input
+                type="checkbox"
+                checked={attestHuman}
+                onChange={(e) => setAttestHuman(e.target.checked)}
+                required
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent focus:ring-accent/30"
+              />
+              <span className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                I confirm this take is a real, live human performance, not AI-generated, AI-assisted,
+                or produced by a generative music tool in any way.
+              </span>
+            </label>
+
+            {error && <Alert variant="error">{error}</Alert>}
+
+            <Button type="submit" disabled={submitting || !canSubmit} className="w-full sm:w-auto">
+              {submitting ? "Submitting…" : "Submit take"}
             </Button>
-          )}
-        </div>
-
-        <Textarea
-          label="Note"
-          name="note"
-          rows={2}
-          placeholder="Anything the creator should know about your take?"
-          hint="Optional"
-        />
-
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition-colors hover:border-gray-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/20">
-          <input
-            type="checkbox"
-            checked={attestHuman}
-            onChange={(e) => setAttestHuman(e.target.checked)}
-            required
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent focus:ring-accent/30"
-          />
-          <span className="text-sm leading-relaxed text-gray-700">
-            I confirm this take is a real, live human performance, not AI-generated, AI-assisted, or
-            produced by a generative music tool in any way.
-          </span>
-        </label>
-
-        {error && <Alert variant="error">{error}</Alert>}
-
-        <Button type="submit" disabled={submitting || !canSubmit} className="w-full sm:w-auto">
-          {submitting ? "Submitting…" : "Submit take"}
-        </Button>
+          </>
+        )}
       </form>
     </Card>
   );

@@ -286,14 +286,24 @@ function CreatorJobCard({
                     <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
                       Part being retracked
                     </p>
-                    <AudioPlayer src={job.demoFileUrl} label="Part to retrack" allowDownload />
+                    <AudioPlayer
+                      src={job.demoFileUrl}
+                      label="Part to retrack"
+                      allowDownload
+                      bpm={job.bpm}
+                    />
                   </div>
                   {job.backingFileUrl ? (
                     <div>
                       <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
                         Background / instrumental
                       </p>
-                      <AudioPlayer src={job.backingFileUrl} label="Background" allowDownload />
+                      <AudioPlayer
+                        src={job.backingFileUrl}
+                        label="Background"
+                        allowDownload
+                        bpm={job.bpm}
+                      />
                     </div>
                   ) : (
                     <p className="text-sm text-amber-700 dark:text-amber-400">

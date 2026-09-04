@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AudioPlayer } from "@/components/AudioPlayer";
+import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -281,31 +281,14 @@ function CreatorJobCard({
                 <div className={job.description ? "mt-3 mb-4" : "mb-4"}>
                   <TempoTag bpm={job.bpm} />
                 </div>
-                <div className="mb-6 space-y-4">
-                  <div>
-                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-                      Part being retracked
-                    </p>
-                    <AudioPlayer
-                      src={job.demoFileUrl}
-                      label="Part to retrack"
-                      allowDownload
-                      bpm={job.bpm}
-                    />
-                  </div>
-                  {job.backingFileUrl ? (
-                    <div>
-                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-                        Background / instrumental
-                      </p>
-                      <AudioPlayer
-                        src={job.backingFileUrl}
-                        label="Background"
-                        allowDownload
-                        bpm={job.bpm}
-                      />
-                    </div>
-                  ) : (
+                <div className="mb-6 space-y-3">
+                  <ReferenceTracksPlayer
+                    partSrc={job.demoFileUrl}
+                    backingSrc={job.backingFileUrl}
+                    bpm={job.bpm}
+                    allowDownload
+                  />
+                  {!job.backingFileUrl && job.status === "OPEN" ? (
                     <p className="text-sm text-amber-700 dark:text-amber-400">
                       No background track yet.{" "}
                       <button
@@ -316,7 +299,7 @@ function CreatorJobCard({
                         Add one
                       </button>
                     </p>
-                  )}
+                  ) : null}
                 </div>
                 <TakesList jobId={job.id} jobOpen={job.status === "OPEN"} onAwarded={onChanged} />
               </>

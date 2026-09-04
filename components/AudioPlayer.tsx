@@ -44,12 +44,19 @@ export function AudioPlayer({
   const ctxRef = useRef<AudioContext | null>(null);
   const nextBeatRef = useRef(0);
   const rafRef = useRef<number | null>(null);
+  const withClickRef = useRef(false);
   const [withClick, setWithClick] = useState(false);
   const [mixing, setMixing] = useState(false);
   const [mixError, setMixError] = useState<string | null>(null);
 
+  withClickRef.current = withClick;
+
   useEffect(() => {
-    if (!hasFixedTempo) setWithClick(false);
+    if (!hasFixedTempo) {
+      withClickRef.current = false;
+      setWithClick(false);
+      stopClickLoop();
+    }
   }, [hasFixedTempo]);
 
   useEffect(() => {
@@ -78,7 +85,7 @@ export function AudioPlayer({
 
   function tickClicks() {
     const audio = audioRef.current;
-    if (!audio || !withClick || !hasFixedTempo || !bpm || audio.paused) {
+    if (!audio || !withClickRef.current || !hasFixedTempo || !bpm || audio.paused) {
       rafRef.current = null;
       return;
     }
@@ -99,6 +106,7 @@ export function AudioPlayer({
   }
 
   function startClickLoop() {
+    if (!withClickRef.current) return;
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     syncNextBeatFromAudio();
     void ensureCtx().resume();
@@ -143,12 +151,12 @@ export function AudioPlayer({
           className="audio-player min-w-0 flex-1"
           preload="metadata"
           onPlay={() => {
-            if (withClick) startClickLoop();
+            if (withClickRef.current) startClickLoop();
           }}
           onPause={stopClickLoop}
           onEnded={stopClickLoop}
           onSeeked={() => {
-            if (withClick && audioRef.current && !audioRef.current.paused) {
+            if (withClickRef.current && audioRef.current && !audioRef.current.paused) {
               startClickLoop();
             } else {
               syncNextBeatFromAudio();
@@ -199,6 +207,7 @@ export function AudioPlayer({
           disabled={!hasFixedTempo}
           onChange={(e) => {
             const next = e.target.checked;
+            withClickRef.current = next;
             setWithClick(next);
             if (next && audioRef.current && !audioRef.current.paused) {
               startClickLoop();

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AudioPlayer } from "@/components/AudioPlayer";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
+import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -327,31 +327,13 @@ function OpenJobCard({
               <div className="mt-3">
                 <TempoTag bpm={job.bpm} />
               </div>
-              <div className="mt-4 space-y-4">
-                <div>
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Part being retracked
-                  </p>
-                  <AudioPlayer
-                    src={job.demoFileUrl}
-                    label="Part to retrack"
-                    allowDownload={signedIn}
-                    bpm={job.bpm}
-                  />
-                </div>
-                {job.backingFileUrl ? (
-                  <div>
-                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-                      Background / instrumental
-                    </p>
-                    <AudioPlayer
-                      src={job.backingFileUrl}
-                      label="Background"
-                      allowDownload={signedIn}
-                      bpm={job.bpm}
-                    />
-                  </div>
-                ) : null}
+              <div className="mt-4">
+                <ReferenceTracksPlayer
+                  partSrc={job.demoFileUrl}
+                  backingSrc={job.backingFileUrl}
+                  bpm={job.bpm}
+                  allowDownload={signedIn}
+                />
               </div>
               <div className="mt-6">
                 {signedIn ? (

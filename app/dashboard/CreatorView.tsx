@@ -12,6 +12,7 @@ import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { audioFiles, midiFiles } from "@/lib/takeFiles";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import type { Job, Take } from "@/lib/types";
+import { EditJobForm } from "./EditJobForm";
 import { PostJobForm } from "./PostJobForm";
 
 export function CreatorView({
@@ -125,7 +126,10 @@ function CreatorJobCard({
 }) {
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const isPastDeadline = job.status === "OPEN" && new Date(job.deadline).getTime() < Date.now();
+  const missingBacking = job.status === "OPEN" && !job.backingFileUrl;
+  const flexibleTempo = job.status === "OPEN" && job.bpm == null;
 
   async function cancelJob(e: React.MouseEvent) {
     e.stopPropagation();
@@ -145,6 +149,12 @@ function CreatorJobCard({
     }
   }
 
+  function startEdit(e?: React.MouseEvent) {
+    e?.stopPropagation();
+    setEditing(true);
+    if (!expanded) onToggle();
+  }
+
   return (
     <Card padding="none" className="overflow-hidden">
       <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
@@ -156,6 +166,11 @@ function CreatorJobCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium text-gray-900">{job.title}</span>
             <Badge status={job.status} />
+            {missingBacking && (
+              <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800">
+                Needs background track
+              </span>
+            )}
           </div>
           <div className="mt-2.5">
             <JobMetaTags
@@ -167,21 +182,65 @@ function CreatorJobCard({
         </button>
         <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
           {job.status === "OPEN" && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={cancelJob}
-              disabled={cancelling}
-              className="flex-1 sm:flex-none"
-            >
-              {cancelling ? "Cancelling…" : "Cancel & refund"}
-            </Button>
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={startEdit}
+                className="flex-1 sm:flex-none"
+              >
+                {editing ? "Editing…" : "Edit job"}
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={cancelJob}
+                disabled={cancelling || editing}
+                className="flex-1 sm:flex-none"
+              >
+                {cancelling ? "Cancelling…" : "Cancel & refund"}
+              </Button>
+            </>
           )}
-          <Button variant="ghost" size="sm" onClick={onToggle} className="flex-1 sm:flex-none">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggle}
+            disabled={editing}
+            className="flex-1 sm:flex-none"
+          >
             {expanded ? "Hide takes" : "View takes"}
           </Button>
         </div>
       </div>
+
+      {(missingBacking || flexibleTempo) && !editing && job.status === "OPEN" && (
+        <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
+          <Alert variant="warning">
+            <p className="font-medium">
+              {missingBacking && flexibleTempo
+                ? "Finish setting up this job"
+                : missingBacking
+                  ? "Add a background / instrumental track"
+                  : "Set a fixed tempo if you want one"}
+            </p>
+            <p className="mt-1">
+              {missingBacking
+                ? "Your existing scratch stays as the part being retracked. Use Edit job to upload the bed without that part"
+                : "This job is currently flexible tempo. Use Edit job to turn on Fixed tempo and enter a BPM"}
+              {missingBacking && flexibleTempo
+                ? ", and to switch from flexible tempo to a fixed BPM"
+                : null}
+              .
+            </p>
+            <div className="mt-3">
+              <Button size="sm" onClick={() => startEdit()}>
+                Edit job
+              </Button>
+            </div>
+          </Alert>
+        </div>
+      )}
 
       {isPastDeadline && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
@@ -200,34 +259,58 @@ function CreatorJobCard({
 
       <div
         className={`grid transition-all duration-200 ease-out ${
-          expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          expanded || editing ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         }`}
       >
         <div className="overflow-hidden">
           <div className="border-t border-gray-100 bg-surface px-4 py-4 sm:px-6 sm:py-5">
-            {job.description && (
-              <p className="text-sm leading-relaxed text-gray-600">{job.description}</p>
-            )}
-            <div className={job.description ? "mt-3 mb-4" : "mb-4"}>
-              <TempoTag bpm={job.bpm} />
-            </div>
-            <div className="mb-6 space-y-4">
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-                  Part being retracked
-                </p>
-                <AudioPlayer src={job.demoFileUrl} label="Part to retrack" allowDownload />
-              </div>
-              {job.backingFileUrl ? (
-                <div>
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Background / instrumental
-                  </p>
-                  <AudioPlayer src={job.backingFileUrl} label="Background" allowDownload />
+            {editing ? (
+              <EditJobForm
+                job={job}
+                onCancel={() => setEditing(false)}
+                onSaved={() => {
+                  setEditing(false);
+                  onChanged();
+                }}
+              />
+            ) : (
+              <>
+                {job.description && (
+                  <p className="text-sm leading-relaxed text-gray-600">{job.description}</p>
+                )}
+                <div className={job.description ? "mt-3 mb-4" : "mb-4"}>
+                  <TempoTag bpm={job.bpm} />
                 </div>
-              ) : null}
-            </div>
-            <TakesList jobId={job.id} jobOpen={job.status === "OPEN"} onAwarded={onChanged} />
+                <div className="mb-6 space-y-4">
+                  <div>
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+                      Part being retracked
+                    </p>
+                    <AudioPlayer src={job.demoFileUrl} label="Part to retrack" allowDownload />
+                  </div>
+                  {job.backingFileUrl ? (
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+                        Background / instrumental
+                      </p>
+                      <AudioPlayer src={job.backingFileUrl} label="Background" allowDownload />
+                    </div>
+                  ) : (
+                    <p className="text-sm text-amber-700 dark:text-amber-400">
+                      No background track yet.{" "}
+                      <button
+                        type="button"
+                        onClick={() => startEdit()}
+                        className="font-medium underline underline-offset-2"
+                      >
+                        Add one
+                      </button>
+                    </p>
+                  )}
+                </div>
+                <TakesList jobId={job.id} jobOpen={job.status === "OPEN"} onAwarded={onChanged} />
+              </>
+            )}
           </div>
         </div>
       </div>

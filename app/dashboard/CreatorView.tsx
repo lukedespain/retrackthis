@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AudioPlayer } from "@/components/AudioPlayer";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -209,6 +210,22 @@ function CreatorJobCard({
             )}
             <div className={job.description ? "mt-3 mb-4" : "mb-4"}>
               <TempoTag bpm={job.bpm} />
+            </div>
+            <div className="mb-6 space-y-4">
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+                  Part being retracked
+                </p>
+                <AudioPlayer src={job.demoFileUrl} label="Part to retrack" allowDownload />
+              </div>
+              {job.backingFileUrl ? (
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Background / instrumental
+                  </p>
+                  <AudioPlayer src={job.backingFileUrl} label="Background" allowDownload />
+                </div>
+              ) : null}
             </div>
             <TakesList jobId={job.id} jobOpen={job.status === "OPEN"} onAwarded={onChanged} />
           </div>

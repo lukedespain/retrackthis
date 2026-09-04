@@ -8,6 +8,8 @@ export type Job = {
   instrumentId?: string | null;
   description: string;
   demoFileUrl: string;
+  /** Background / instrumental without the part being retracked */
+  backingFileUrl?: string | null;
   priceCents: number;
   /** null = flexible tempo; number = fixed BPM */
   bpm: number | null;

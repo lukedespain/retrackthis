@@ -7,13 +7,14 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-import { AudioUpload } from "@/components/AudioUpload";
+import { FileUpload } from "@/components/FileUpload";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { useTheme } from "@/components/ThemeProvider";
+import { AUDIO_FILE_ACCEPT } from "@/lib/constants";
 import { displayLabelForInstrumentId, labelForInstrumentId } from "@/lib/instruments";
 import { getStripe, hasStripePublishableKey } from "@/lib/stripeClient";
 import { PostJobInstrumentPicker } from "./MusicianInstrumentsSettings";
@@ -125,6 +126,7 @@ function PostJobFormInner({
   const [error, setError] = useState<string | null>(null);
   const [elementError, setElementError] = useState<string | null>(null);
   const [demoFileUrl, setDemoFileUrl] = useState<string | null>(null);
+  const [backingFileUrl, setBackingFileUrl] = useState<string | null>(null);
   const [fixedTempo, setFixedTempo] = useState(true);
   const [instrumentId, setInstrumentId] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -178,6 +180,11 @@ function PostJobFormInner({
       return;
     }
 
+    if (!demoFileUrl) {
+      setError("Upload the part being retracked (e.g. vocal demo only).");
+      return;
+    }
+
     if (stripeReady && (!stripe || !elements)) {
       setError("Payment form is still loading. Try again in a moment.");
       return;
@@ -221,7 +228,8 @@ function PostJobFormInner({
           instrumentId,
           instrument: labelForInstrumentId(instrumentId),
           description: form.get("description"),
-          demoFileUrl: demoFileUrl ?? "https://example-demo-files.test/placeholder-demo.mp3",
+          demoFileUrl,
+          backingFileUrl,
           priceCents: Math.round(price * 100),
           bpm: fixedTempo ? Number(bpmRaw) : null,
           deadline: new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000).toISOString(),
@@ -331,8 +339,28 @@ function PostJobFormInner({
           )}
         </div>
 
-        <div className="sm:col-span-2">
-          <AudioUpload label="Demo file" kind="demo" onUploaded={setDemoFileUrl} />
+        <div className="sm:col-span-2 space-y-4">
+          <div>
+            <p className="text-sm font-medium text-gray-900">Reference tracks</p>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Upload the isolated part you want retracked, plus the bed without that part. Full
+              songs and WAV files are fine.
+            </p>
+          </div>
+          <FileUpload
+            label="1 · Part being retracked"
+            kind="demo"
+            accept={AUDIO_FILE_ACCEPT}
+            hint="Required. Just the part to replace — e.g. vocal demo only, guide guitar, scratch bass. MP3 or WAV."
+            onUploaded={setDemoFileUrl}
+          />
+          <FileUpload
+            label="2 · Background / instrumental"
+            kind="demo-backing"
+            accept={AUDIO_FILE_ACCEPT}
+            hint="Recommended. The rest of the song without that part — e.g. instrumental without the vocal. MP3 or WAV."
+            onUploaded={setBackingFileUrl}
+          />
         </div>
         <Input
           label="Deadline"

@@ -327,9 +327,25 @@ function OpenJobCard({
               <div className="mt-3">
                 <TempoTag bpm={job.bpm} />
               </div>
-              <div className="mt-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Demo</p>
-                <AudioPlayer src={job.demoFileUrl} label="Demo" allowDownload={signedIn} />
+              <div className="mt-4 space-y-4">
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Part being retracked
+                  </p>
+                  <AudioPlayer src={job.demoFileUrl} label="Part to retrack" allowDownload={signedIn} />
+                </div>
+                {job.backingFileUrl ? (
+                  <div>
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+                      Background / instrumental
+                    </p>
+                    <AudioPlayer
+                      src={job.backingFileUrl}
+                      label="Background"
+                      allowDownload={signedIn}
+                    />
+                  </div>
+                ) : null}
               </div>
               <div className="mt-6">
                 {signedIn ? (

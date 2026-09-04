@@ -50,7 +50,8 @@ model Job {
   instrument     String    // display label, e.g. "Synth"
   instrumentId   String?   // catalog id when posted via picker
   description    String
-  demoFileUrl    String    // the MIDI/scratch demo the creator uploaded
+  demoFileUrl    String    // part being retracked (e.g. vocal demo only)
+  backingFileUrl String?   // background without that part (e.g. instrumental)
   priceCents     Int
   // null = flexible/relative tempo; set = fixed BPM the take should match
   bpm            Int?

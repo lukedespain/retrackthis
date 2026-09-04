@@ -2,12 +2,17 @@
 
 import { useRef, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
-import { AUDIO_UPLOAD_HINT, MAX_AUDIO_UPLOAD_BYTES, MAX_AUDIO_UPLOAD_MB } from "@/lib/constants";
+import {
+  AUDIO_FILE_ACCEPT,
+  AUDIO_UPLOAD_HINT,
+  MAX_AUDIO_UPLOAD_BYTES,
+  MAX_AUDIO_UPLOAD_MB,
+} from "@/lib/constants";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 type Status = "idle" | "uploading" | "done" | "error";
 
-export type UploadKind = "demo" | "take" | "take-midi";
+export type UploadKind = "demo" | "demo-backing" | "take" | "take-midi";
 
 function fileMatchesAccept(file: File, accept: string) {
   if (!accept || accept === "*") return true;
@@ -31,7 +36,7 @@ export function FileUpload({
   label,
   kind,
   onUploaded,
-  accept = "audio/*",
+  accept = AUDIO_FILE_ACCEPT,
   hint = AUDIO_UPLOAD_HINT,
   compact = false,
 }: {
@@ -226,7 +231,7 @@ export function FileUpload({
 /** @deprecated Use FileUpload */
 export function AudioUpload(props: {
   label: string;
-  kind: "demo" | "take";
+  kind: "demo" | "demo-backing" | "take";
   onUploaded: (publicUrl: string) => void;
 }) {
   return <FileUpload {...props} />;

@@ -34,8 +34,9 @@ export default function TermsOfServicePage() {
             your projects as you describe when posting.
           </li>
           <li>
-            Jobs should request a short excerpt or part, not an entire unreleased song dump meant to
-            circumvent normal licensing.
+            You may upload full-song reference files (the part to retrack and a background bed). You
+            remain responsible for having the rights to share that material and to use awarded takes
+            as described when posting.
           </li>
           <li>
             Escrow holds are released if you cancel an open job, or if a job expires without an

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createServerSupabaseClient, getSessionUserId } from "@/lib/supabaseServer";
 
-const DEFAULT_ADMIN_EMAILS = ["music@lukedespain.com"];
+const DEFAULT_ADMIN_EMAILS = ["music@lukedespain.com", "dabthenatural@gmail.com"];
 
 /** Comma-separated ADMIN_EMAILS env, plus the default bootstrap account. */
 export function adminEmailAllowlist(): Set<string> {

@@ -7,7 +7,7 @@ import { AUDIO_BUCKET, ensureAudioBucket, supabaseAdmin } from "@/lib/supabaseAd
 export async function POST(req: NextRequest) {
   const { fileName, kind } = await req.json();
 
-  const allowedKinds = new Set(["demo", "take", "take-midi"]);
+  const allowedKinds = new Set(["demo", "demo-backing", "take", "take-midi"]);
   if (!fileName || !kind || !allowedKinds.has(kind)) {
     return NextResponse.json({ error: "Missing fileName or kind" }, { status: 400 });
   }

@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     instrumentId,
     description,
     demoFileUrl,
+    backingFileUrl,
     priceCents,
     deadline,
     paymentMethodId,
@@ -42,6 +43,16 @@ export async function POST(req: NextRequest) {
   if (!title || !description || !demoFileUrl || !priceCents || !deadline || !paymentMethodId) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
+
+  if (typeof demoFileUrl !== "string" || !demoFileUrl.trim()) {
+    return NextResponse.json(
+      { error: "Upload the part being retracked (e.g. vocal demo)." },
+      { status: 400 }
+    );
+  }
+
+  const backing =
+    typeof backingFileUrl === "string" && backingFileUrl.trim() ? backingFileUrl.trim() : null;
 
   let instrumentLabel = typeof instrument === "string" ? instrument.trim() : "";
   let resolvedInstrumentId = typeof instrumentId === "string" ? instrumentId.trim() : "";
@@ -106,7 +117,8 @@ export async function POST(req: NextRequest) {
       instrument: instrumentLabel,
       instrumentId: resolvedInstrumentId || null,
       description,
-      demoFileUrl,
+      demoFileUrl: demoFileUrl.trim(),
+      backingFileUrl: backing,
       priceCents,
       bpm: bpmValue,
       deadline: new Date(deadline),

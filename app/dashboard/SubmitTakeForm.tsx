@@ -7,7 +7,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Textarea";
-import { AUDIO_UPLOAD_HINT } from "@/lib/constants";
+import { AUDIO_FILE_ACCEPT, AUDIO_UPLOAD_HINT } from "@/lib/constants";
 import { MAX_AUDIO_TAKES, type TakeFileRecord } from "@/lib/takeFiles";
 
 type TakeRow = {
@@ -297,6 +297,7 @@ export function SubmitTakeForm({
                       <FileUpload
                         label={row.audioFileUrl ? "Replace audio" : "Upload audio"}
                         kind="take"
+                        accept={AUDIO_FILE_ACCEPT}
                         compact
                         hint={index === 0 ? AUDIO_UPLOAD_HINT : undefined}
                         onUploaded={(url) => updateRow(index, { audioFileUrl: url })}

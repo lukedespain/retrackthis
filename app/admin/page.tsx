@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { SiteHeader } from "@/components/SiteHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
-import { supabaseClient } from "@/lib/supabaseClient";
 import { AdminJobsPanel, type AdminJobRow } from "./AdminJobsPanel";
 
 type Tab = "members" | "jobs" | "instruments" | "income";
@@ -228,34 +227,27 @@ function AdminPageInner() {
     router.replace(`/admin?${params.toString()}`, { scroll: false });
   }
 
-  async function signOut() {
-    await supabaseClient.auth.signOut();
-    router.push("/");
-    router.refresh();
-  }
-
   if (profile === undefined) {
     return (
-      <main className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
-        <div className="flex items-center justify-center py-32">
-          <Spinner />
-        </div>
-      </main>
+      <div className="min-h-screen">
+        <SiteHeader />
+        <main className="mx-auto max-w-6xl px-5 py-16 sm:px-6">
+          <div className="flex items-center justify-center py-24">
+            <Spinner />
+          </div>
+        </main>
+      </div>
     );
   }
 
   if (!profile) return null;
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
-      <DashboardHeader
-        name={profile.name}
-        hasStripeAccount={Boolean(profile.stripeAccountId)}
-        isAdmin
-        onSignOut={signOut}
-      />
+    <div className="min-h-screen">
+      <SiteHeader />
 
-      <div className="mt-8 space-y-6">
+      <main className="mx-auto max-w-6xl px-5 pb-16 sm:px-6 sm:pb-24">
+      <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-accent">Admin</p>
@@ -485,11 +477,12 @@ function AdminPageInner() {
 
         <p className="text-xs text-gray-400">
           <Link href="/dashboard" className="underline-offset-2 hover:underline">
-            Back to dashboard
+            Back to my jobs
           </Link>
         </p>
       </div>
-    </main>
+      </main>
+    </div>
   );
 }
 

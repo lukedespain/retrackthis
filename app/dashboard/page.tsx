@@ -2,26 +2,34 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { SiteHeader } from "@/components/SiteHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
-import { supabaseClient } from "@/lib/supabaseClient";
 import { CompleteProfileForm } from "./CompleteProfileForm";
 import { CreatorView } from "./CreatorView";
 import { MySubmissions } from "./MySubmissions";
 
-type Profile = { id: string; name: string; role: string[]; stripeAccountId?: string | null; isAdmin?: boolean };
+type Profile = {
+  id: string;
+  name: string;
+  role: string[];
+  stripeAccountId?: string | null;
+  isAdmin?: boolean;
+};
 type DashTab = "jobs" | "submissions";
 
 export default function DashboardPage() {
   return (
     <Suspense
       fallback={
-        <main className="mx-auto max-w-4xl px-5 py-8 sm:px-6 sm:py-10">
-          <div className="flex items-center justify-center py-32">
-            <Spinner />
-          </div>
-        </main>
+        <div className="min-h-screen">
+          <SiteHeader />
+          <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
+            <div className="flex items-center justify-center py-24">
+              <Spinner />
+            </div>
+          </main>
+        </div>
       }
     >
       <DashboardPageInner />
@@ -65,16 +73,9 @@ function DashboardPageInner() {
     if (payouts === "return" || payouts === "refresh") {
       setTab("submissions");
       setPayoutsHighlight(true);
-      // Drop the query flag so refresh doesn't keep flashing.
       router.replace("/dashboard?tab=submissions", { scroll: false });
     }
   }, [searchParams, router]);
-
-  async function signOut() {
-    await supabaseClient.auth.signOut();
-    router.push("/");
-    router.refresh();
-  }
 
   function changeTab(next: DashTab) {
     setTab(next);
@@ -93,11 +94,14 @@ function DashboardPageInner() {
 
   if (profile === undefined) {
     return (
-      <main className="mx-auto max-w-4xl px-5 py-8 sm:px-6 sm:py-10">
-        <div className="flex items-center justify-center py-32">
-          <Spinner />
-        </div>
-      </main>
+      <div className="min-h-screen">
+        <SiteHeader />
+        <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
+          <div className="flex items-center justify-center py-24">
+            <Spinner />
+          </div>
+        </main>
+      </div>
     );
   }
 
@@ -106,50 +110,47 @@ function DashboardPageInner() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-8 sm:px-6 sm:py-10">
-      <DashboardHeader
-        name={profile.name}
-        hasStripeAccount={Boolean(profile.stripeAccountId)}
-        isAdmin={Boolean(profile.isAdmin)}
-        onSignOut={signOut}
-      />
+    <div className="min-h-screen">
+      <SiteHeader />
 
-      <div className="mt-8 flex flex-col gap-4 sm:mt-10 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            {tab === "jobs" ? "My jobs" : "My submissions"}
-          </h2>
-          <p className="mt-0.5 text-sm text-gray-500">
-            {tab === "jobs"
-              ? "Manage your posted gigs and review takes"
-              : "Track the status of your submitted takes"}
-          </p>
-        </div>
-        <SegmentedControl
-          options={[
-            { value: "jobs" as const, label: "My jobs" },
-            { value: "submissions" as const, label: "My submissions" },
-          ]}
-          value={tab}
-          onChange={changeTab}
-          className="self-start"
-        />
-      </div>
-
-      <div className="mt-6 sm:mt-8">
-        {tab === "jobs" ? (
-          <CreatorView
-            initialShowPost={openPost}
-            hideHeading
-            onPostClosed={() => {
-              setOpenPost(false);
-              router.replace("/dashboard", { scroll: false });
-            }}
+      <main className="mx-auto max-w-5xl px-5 pb-16 sm:px-6 sm:pb-24">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl dark:text-white">
+              {tab === "jobs" ? "My jobs" : "My submissions"}
+            </h1>
+            <p className="mt-1.5 text-sm text-gray-500 sm:text-base dark:text-gray-400">
+              {tab === "jobs"
+                ? "Manage your posted gigs and review takes"
+                : "Track the status of your submitted takes"}
+            </p>
+          </div>
+          <SegmentedControl
+            options={[
+              { value: "jobs" as const, label: "My jobs" },
+              { value: "submissions" as const, label: "My submissions" },
+            ]}
+            value={tab}
+            onChange={changeTab}
+            className="self-start"
           />
-        ) : (
-          <MySubmissions payoutsHighlight={payoutsHighlight} />
-        )}
-      </div>
-    </main>
+        </div>
+
+        <div className="mt-8 sm:mt-10">
+          {tab === "jobs" ? (
+            <CreatorView
+              initialShowPost={openPost}
+              hideHeading
+              onPostClosed={() => {
+                setOpenPost(false);
+                router.replace("/dashboard", { scroll: false });
+              }}
+            />
+          ) : (
+            <MySubmissions payoutsHighlight={payoutsHighlight} />
+          )}
+        </div>
+      </main>
+    </div>
   );
 }

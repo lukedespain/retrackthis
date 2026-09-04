@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { Logo } from "./Logo";
 import { UserMenu } from "./UserMenu";
-import { Button } from "./ui/Button";
 
+/** @deprecated Prefer SiteHeader — kept for gradual migration. */
 export function DashboardHeader({
   name,
   hasStripeAccount = false,
@@ -17,23 +16,14 @@ export function DashboardHeader({
   onSignOut: () => void;
 }) {
   return (
-    <header className="border-b border-gray-100 pb-5 sm:pb-6 dark:border-gray-800">
-      <div className="flex items-center justify-between gap-3">
-        <Logo href="/" />
-        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
-          <Link href="/jobs">
-            <Button variant="ghost" size="sm">
-              Browse jobs
-            </Button>
-          </Link>
-          <UserMenu
-            name={name}
-            hasStripeAccount={hasStripeAccount}
-            isAdmin={isAdmin}
-            onSignOut={onSignOut}
-          />
-        </div>
-      </div>
+    <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6 sm:px-6 sm:py-8">
+      <Logo href="/" />
+      <UserMenu
+        name={name}
+        hasStripeAccount={hasStripeAccount}
+        isAdmin={isAdmin}
+        onSignOut={onSignOut}
+      />
     </header>
   );
 }

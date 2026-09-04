@@ -95,24 +95,42 @@ export function UserMenu({
           <div className="my-1 h-px bg-gray-100 dark:bg-gray-800" />
 
           <Link
-            href="/dashboard/settings"
+            href="/jobs"
             role="menuitem"
             onClick={() => setOpen(false)}
             className={menuItemClass}
           >
-            Settings
+            Browse jobs
+          </Link>
+          <Link
+            href="/dashboard?tab=jobs&post=1"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={menuItemClass}
+          >
+            Post a job
           </Link>
 
-          {isAdmin ? (
-            <Link
-              href="/admin"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className={menuItemClass}
-            >
-              Admin
-            </Link>
-          ) : null}
+          <div className="my-1 h-px bg-gray-100 dark:bg-gray-800" />
+
+          <Link
+            href="/dashboard"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={menuItemClass}
+          >
+            My jobs
+          </Link>
+          <Link
+            href="/dashboard?tab=submissions"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={menuItemClass}
+          >
+            My submissions
+          </Link>
+
+          <div className="my-1 h-px bg-gray-100 dark:bg-gray-800" />
 
           {hasStripeAccount ? (
             <button
@@ -134,6 +152,26 @@ export function UserMenu({
               Payouts
             </Link>
           )}
+
+          <Link
+            href="/dashboard/settings"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={menuItemClass}
+          >
+            Settings
+          </Link>
+
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className={menuItemClass}
+            >
+              Admin
+            </Link>
+          ) : null}
 
           {expressError && (
             <p className="px-3 pb-2 text-xs text-red-600 dark:text-red-400" role="alert">

@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { DashboardHeader } from "@/components/DashboardHeader";
+import { SiteHeader } from "@/components/SiteHeader";
 import { Spinner } from "@/components/ui/Spinner";
-import { supabaseClient } from "@/lib/supabaseClient";
 import { AccountSettings } from "../AccountSettings";
 import { MusicianInstrumentsSettings } from "../MusicianInstrumentsSettings";
 import { NotificationSettings } from "../NotificationSettings";
@@ -47,106 +46,100 @@ export default function SettingsPage() {
     });
   }, [profile]);
 
-  async function signOut() {
-    await supabaseClient.auth.signOut();
-    router.push("/");
-    router.refresh();
-  }
-
   if (profile === undefined) {
     return (
-      <main className="mx-auto max-w-4xl px-5 py-8 sm:px-6 sm:py-10">
-        <div className="flex items-center justify-center py-32">
-          <Spinner />
-        </div>
-      </main>
+      <div className="min-h-screen">
+        <SiteHeader />
+        <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
+          <div className="flex items-center justify-center py-24">
+            <Spinner />
+          </div>
+        </main>
+      </div>
     );
   }
 
   if (profile === null) return null;
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-8 sm:px-6 sm:py-10">
-      <DashboardHeader
-        name={profile.name}
-        hasStripeAccount={Boolean(profile.stripeAccountId)}
-        isAdmin={Boolean(profile.isAdmin)}
-        onSignOut={signOut}
-      />
+    <div className="min-h-screen">
+      <SiteHeader />
 
-      <div className="mt-8 sm:mt-10">
+      <main className="mx-auto max-w-5xl px-5 pb-16 sm:px-6 sm:pb-24">
         <Link
           href="/dashboard"
           className="text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
         >
-          ← Dashboard
+          ← My jobs
         </Link>
-        <h2 className="mt-3 text-lg font-semibold text-gray-900 dark:text-white">Settings</h2>
-        <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl dark:text-white">
+          Settings
+        </h1>
+        <p className="mt-1.5 text-sm text-gray-500 sm:text-base dark:text-gray-400">
           Instruments, alerts, account, and appearance.
         </p>
-      </div>
 
-      <nav
-        aria-label="Settings sections"
-        className="mt-5 flex gap-2 overflow-x-auto pb-1 sm:mt-6"
-      >
-        {SECTIONS.map((section) => (
-          <a
-            key={section.id}
-            href={`#${section.id}`}
-            className="shrink-0 rounded-full bg-gray-100 px-3.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            {section.label}
-          </a>
-        ))}
-      </nav>
+        <nav
+          aria-label="Settings sections"
+          className="mt-5 flex gap-2 overflow-x-auto pb-1 sm:mt-6"
+        >
+          {SECTIONS.map((section) => (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              className="shrink-0 rounded-full bg-gray-100 px-3.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              {section.label}
+            </a>
+          ))}
+        </nav>
 
-      <div className="mt-6 space-y-10 sm:mt-8">
-        <section aria-labelledby="instruments-heading" className="scroll-mt-8">
-          <h3
-            id="instruments-heading"
-            className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
-          >
-            Instruments
-          </h3>
-          <MusicianInstrumentsSettings />
-        </section>
+        <div className="mt-6 space-y-10 sm:mt-8">
+          <section aria-labelledby="instruments-heading" className="scroll-mt-8">
+            <h3
+              id="instruments-heading"
+              className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
+            >
+              Instruments
+            </h3>
+            <MusicianInstrumentsSettings />
+          </section>
 
-        <section aria-labelledby="notifications-heading" className="scroll-mt-8">
-          <h3
-            id="notifications-heading"
-            className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
-          >
-            Notifications
-          </h3>
-          <div id="notifications">
-            <NotificationSettings />
-          </div>
-        </section>
+          <section aria-labelledby="notifications-heading" className="scroll-mt-8">
+            <h3
+              id="notifications-heading"
+              className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
+            >
+              Notifications
+            </h3>
+            <div id="notifications">
+              <NotificationSettings />
+            </div>
+          </section>
 
-        <section aria-labelledby="account-heading" className="scroll-mt-8">
-          <h3
-            id="account-heading"
-            className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
-          >
-            Account
-          </h3>
-          <AccountSettings
-            onNameSaved={(name) => setProfile((prev) => (prev ? { ...prev, name } : prev))}
-          />
-        </section>
+          <section aria-labelledby="account-heading" className="scroll-mt-8">
+            <h3
+              id="account-heading"
+              className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
+            >
+              Account
+            </h3>
+            <AccountSettings
+              onNameSaved={(name) => setProfile((prev) => (prev ? { ...prev, name } : prev))}
+            />
+          </section>
 
-        <section aria-labelledby="theme-heading" className="scroll-mt-8">
-          <h3
-            id="theme-heading"
-            className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
-          >
-            Theme
-          </h3>
-          <ThemeSettings />
-        </section>
-      </div>
-    </main>
+          <section aria-labelledby="theme-heading" className="scroll-mt-8">
+            <h3
+              id="theme-heading"
+              className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
+            >
+              Theme
+            </h3>
+            <ThemeSettings />
+          </section>
+        </div>
+      </main>
+    </div>
   );
 }

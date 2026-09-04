@@ -1,16 +1,12 @@
 import { HeroMidiWave } from "@/components/HeroMidiWave";
-import { Logo } from "@/components/Logo";
 import { MarketingFooter } from "@/components/MarketingFooter";
-import { MarketingHeaderActions } from "@/components/MarketingHeaderActions";
 import { MarketingHeroCtas } from "@/components/MarketingHeroCtas";
+import { SiteHeader } from "@/components/SiteHeader";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6 sm:px-6 sm:py-8">
-        <Logo />
-        <MarketingHeaderActions />
-      </header>
+      <SiteHeader />
 
       <main>
         <section className="pt-12 sm:pt-24">

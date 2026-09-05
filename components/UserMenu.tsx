@@ -6,20 +6,31 @@ import { useEffect, useRef, useState } from "react";
 const menuItemClass =
   "block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-600 transition-colors duration-150 hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white";
 
+const sectionLabelClass =
+  "px-3 pb-0.5 pt-2 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500";
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className={sectionLabelClass} role="presentation">
+      {children}
+    </p>
+  );
+}
+
+function Divider() {
+  return <div className="my-1 h-px bg-gray-100 dark:bg-gray-800" role="separator" />;
+}
+
 export function UserMenu({
   name,
-  hasStripeAccount = false,
   isAdmin = false,
   onSignOut,
 }: {
   name: string;
-  hasStripeAccount?: boolean;
   isAdmin?: boolean;
   onSignOut: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [openingExpress, setOpeningExpress] = useState(false);
-  const [expressError, setExpressError] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,25 +56,8 @@ export function UserMenu({
     };
   }, [open]);
 
-  async function openExpressDashboard() {
-    setOpeningExpress(true);
-    setExpressError(null);
-    try {
-      const res = await fetch("/api/stripe/connect/dashboard", { method: "POST" });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error ?? "Could not open Stripe Express");
-      if (!body?.url) throw new Error("Stripe did not return a dashboard link");
-      const opened = window.open(body.url, "_blank", "noopener,noreferrer");
-      if (!opened) {
-        window.location.href = body.url;
-        return;
-      }
-      setOpen(false);
-      setOpeningExpress(false);
-    } catch (err) {
-      setExpressError(err instanceof Error ? err.message : "Could not open Stripe Express");
-      setOpeningExpress(false);
-    }
+  function close() {
+    setOpen(false);
   }
 
   return (
@@ -92,99 +86,57 @@ export function UserMenu({
           >
             {name}
           </p>
-          <div className="my-1 h-px bg-gray-100 dark:bg-gray-800" />
 
-          <Link
-            href="/jobs"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className={menuItemClass}
-          >
-            Browse jobs
-          </Link>
+          <Divider />
+
+          <SectionLabel>Producers</SectionLabel>
           <Link
             href="/dashboard?tab=jobs&post=1"
             role="menuitem"
-            onClick={() => setOpen(false)}
+            onClick={close}
             className={menuItemClass}
           >
             Post a job
           </Link>
-
-          <div className="my-1 h-px bg-gray-100 dark:bg-gray-800" />
-
-          <Link
-            href="/dashboard"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className={menuItemClass}
-          >
+          <Link href="/dashboard" role="menuitem" onClick={close} className={menuItemClass}>
             My jobs
+          </Link>
+
+          <Divider />
+
+          <SectionLabel>Musicians</SectionLabel>
+          <Link href="/jobs" role="menuitem" onClick={close} className={menuItemClass}>
+            Browse jobs
           </Link>
           <Link
             href="/dashboard?tab=submissions"
             role="menuitem"
-            onClick={() => setOpen(false)}
+            onClick={close}
             className={menuItemClass}
           >
             My submissions
           </Link>
 
-          <div className="my-1 h-px bg-gray-100 dark:bg-gray-800" />
-
-          {hasStripeAccount ? (
-            <button
-              type="button"
-              role="menuitem"
-              disabled={openingExpress}
-              onClick={openExpressDashboard}
-              className={`${menuItemClass} disabled:opacity-60`}
-            >
-              {openingExpress ? "Opening…" : "Payouts"}
-            </button>
-          ) : (
-            <Link
-              href="/dashboard?tab=submissions"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className={menuItemClass}
-            >
-              Payouts
-            </Link>
-          )}
+          <Divider />
 
           <Link
             href="/dashboard/settings"
             role="menuitem"
-            onClick={() => setOpen(false)}
+            onClick={close}
             className={menuItemClass}
           >
             Settings
           </Link>
-
           {isAdmin ? (
-            <Link
-              href="/admin"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className={menuItemClass}
-            >
+            <Link href="/admin" role="menuitem" onClick={close} className={menuItemClass}>
               Admin
             </Link>
           ) : null}
-
-          {expressError && (
-            <p className="px-3 pb-2 text-xs text-red-600 dark:text-red-400" role="alert">
-              {expressError}
-            </p>
-          )}
-
-          <div className="my-1 h-px bg-gray-100 dark:bg-gray-800" />
           <button
             type="button"
             role="menuitem"
             onClick={() => {
-              setOpen(false);
+              close();
               onSignOut();
             }}
             className={menuItemClass}

@@ -155,7 +155,7 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
         </form>
       </Card>
 
-      <Card padding="md">
+      <Card padding="md" id="email" className="scroll-mt-8">
         <h3 className="text-base font-semibold text-gray-900 dark:text-white">Email</h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Used for sign-in and notifications. Changing it may require confirmation.
@@ -185,7 +185,7 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
         </form>
       </Card>
 
-      <Card padding="md">
+      <Card padding="md" id="password" className="scroll-mt-8">
         <h3 className="text-base font-semibold text-gray-900 dark:text-white">Password</h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Enter your current password, then choose a new one.

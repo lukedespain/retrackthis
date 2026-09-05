@@ -70,8 +70,8 @@ export function MusicianInstrumentsSettings() {
         <div>
           <h2 className="text-base font-semibold text-gray-900 dark:text-white">What I play</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Update the parts you can record live. This powers which gigs creators can post and who
-            gets job alerts.
+            Update the parts you can record live. This powers which instruments creators can post
+            gigs for. Job alert emails are separate — manage those under Notifications.
           </p>
         </div>
         {!loading && (

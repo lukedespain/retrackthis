@@ -177,6 +177,7 @@ function CreatorJobCard({
               instrument={job.instrument}
               priceCents={job.priceCents}
               deadline={job.deadline}
+              takeCount={job.takeCount}
             />
           </div>
         </button>

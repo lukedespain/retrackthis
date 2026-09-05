@@ -108,7 +108,7 @@ export function NotificationSettings() {
           <div>
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">New job alerts</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Email me when a creator posts a gig that matches the instruments I play.
+              On by default. Email me when a creator posts a matching gig — turn off anytime.
             </p>
           </div>
           <Toggle
@@ -179,9 +179,9 @@ export function NotificationSettings() {
           )}
         </div>
 
-        {!prefs.notifyJobAlerts && alertDraft.length === 0 && (
+        {!prefs.notifyJobAlerts && (
           <p className="mt-3 text-xs text-gray-400">
-            Select instruments to turn alerts on. Leave them empty to stay quiet.
+            Alerts are off. Flip the switch above (or pick instruments and save) to turn them back on.
           </p>
         )}
       </Card>

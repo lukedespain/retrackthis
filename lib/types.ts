@@ -16,6 +16,8 @@ export type Job = {
   deadline: string;
   status: "OPEN" | "AWARDED" | "CANCELLED";
   createdAt: string;
+  /** Number of musician submissions (public count only — audio stays private). */
+  takeCount?: number;
 };
 
 export type Take = {

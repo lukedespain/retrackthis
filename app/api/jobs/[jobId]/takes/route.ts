@@ -122,8 +122,31 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   );
 }
 
-// GET /api/jobs/:jobId/takes — creator reviews all submitted takes
+// GET /api/jobs/:jobId/takes — creator (or admin) reviews submitted takes.
+// Audio is not public: musicians on the board only see a count, not files.
 export async function GET(_req: NextRequest, { params }: { params: { jobId: string } }) {
+  const sessionUserId = await getSessionUserId();
+  if (!sessionUserId) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+
+  const job = await db.job.findUnique({
+    where: { id: params.jobId },
+    select: { id: true, creatorId: true },
+  });
+  if (!job) {
+    return NextResponse.json({ error: "Job not found" }, { status: 404 });
+  }
+
+  const isCreator = job.creatorId === sessionUserId;
+  if (!isCreator) {
+    const { getAdminUser } = await import("@/lib/admin");
+    const admin = await getAdminUser();
+    if (!admin) {
+      return NextResponse.json({ error: "Not authorized to listen to these takes" }, { status: 403 });
+    }
+  }
+
   const takes = await db.take.findMany({
     where: { jobId: params.jobId },
     include: takeInclude,

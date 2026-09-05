@@ -24,11 +24,13 @@ export function JobMetaTags({
   instrument,
   priceCents,
   deadline,
+  takeCount,
   showDeadline = true,
 }: {
   instrument: string;
   priceCents: number;
   deadline?: string | Date;
+  takeCount?: number;
   showDeadline?: boolean;
 }) {
   return (
@@ -45,6 +47,18 @@ export function JobMetaTags({
       {showDeadline && deadline && (
         <MetaTag emoji="📅" className="bg-blue-50 text-blue-800 ring-blue-600/10">
           {formatDeadline(deadline)}
+        </MetaTag>
+      )}
+      {typeof takeCount === "number" && (
+        <MetaTag
+          emoji="🎧"
+          className={
+            takeCount > 0
+              ? "bg-violet-50 text-violet-800 ring-violet-600/10 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-400/20"
+              : "bg-gray-50 text-gray-500 ring-gray-500/10 dark:bg-gray-900 dark:text-gray-400"
+          }
+        >
+          {takeCount === 0 ? "No takes yet" : takeCount === 1 ? "1 take" : `${takeCount} takes`}
         </MetaTag>
       )}
     </div>

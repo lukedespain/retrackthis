@@ -75,7 +75,7 @@ email sender is rate-limited and will block repeated sign-ups otherwise.
   transfers. Musicians onboard from **Dashboard → My submissions → Set up payouts**
   (Express Account Link; Accounts v2 with v1 fallback).
 - **Email** — Resend. Musicians pick instrument filters in **Settings**; new
-  matching jobs, new takes, and award/cancel outcomes send optional emails.
+  matching jobs (on by default), new takes, and award/cancel outcomes send emails you can turn off.
 
 ## Stripe webhook (production)
 

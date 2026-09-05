@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sanitizeInstrumentIds } from "@/lib/instruments";
+import { ALL_INSTRUMENTS_ID, sanitizeInstrumentIds } from "@/lib/instruments";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
 // POST /api/auth/complete-profile { name, instruments? } — creates (or updates) the
@@ -31,7 +31,16 @@ export async function POST(req: NextRequest) {
   const profile = await db.user.upsert({
     where: { id: user.id },
     update: { name, role: roles, instruments },
-    create: { id: user.id, email: user.email!, name, role: roles, instruments },
+    create: {
+      id: user.id,
+      email: user.email!,
+      name,
+      role: roles,
+      instruments,
+      // Job alerts on by default; narrow to instruments they picked, or all.
+      notifyJobAlerts: true,
+      notifyInstruments: instruments.length > 0 ? instruments : [ALL_INSTRUMENTS_ID],
+    },
   });
 
   return NextResponse.json(profile);

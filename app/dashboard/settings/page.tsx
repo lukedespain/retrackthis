@@ -39,11 +39,17 @@ export default function SettingsPage() {
   }, [router]);
 
   useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
-    if (!hash) return;
-    window.requestAnimationFrame(() => {
-      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    function scrollToHash() {
+      const hash = window.location.hash.replace("#", "");
+      if (!hash) return;
+      window.requestAnimationFrame(() => {
+        document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+
+    scrollToHash();
+    window.addEventListener("hashchange", scrollToHash);
+    return () => window.removeEventListener("hashchange", scrollToHash);
   }, [profile]);
 
   if (profile === undefined) {

@@ -78,7 +78,19 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   }, [signedIn]);
 
   function handleTakeSubmitted(take: MyTakeSummary) {
-    setMyTakesByJob((prev) => ({ ...prev, [take.jobId]: take }));
+    setMyTakesByJob((prev) => {
+      const alreadyHad = Boolean(prev[take.jobId]);
+      if (!alreadyHad) {
+        setJobs((jobs) =>
+          jobs
+            ? jobs.map((job) =>
+                job.id === take.jobId ? { ...job, takeCount: (job.takeCount ?? 0) + 1 } : job
+              )
+            : jobs
+        );
+      }
+      return { ...prev, [take.jobId]: take };
+    });
   }
 
   const instruments = useMemo(() => {
@@ -303,6 +315,7 @@ function OpenJobCard({
                 instrument={job.instrument}
                 priceCents={job.priceCents}
                 deadline={job.deadline}
+                takeCount={job.takeCount ?? 0}
               />
               {myTake && (
                 <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">

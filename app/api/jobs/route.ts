@@ -168,7 +168,11 @@ export async function GET(req: NextRequest) {
     where = { creatorId };
   }
 
-  const jobs = await db.job.findMany({ where, orderBy: { createdAt: "desc" } });
+  const jobs = await db.job.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { takes: true } } },
+  });
 
   const now = Date.now();
   const expired = jobs.filter(
@@ -191,5 +195,10 @@ export async function GET(req: NextRequest) {
       ? jobs.filter((job) => !expiredIds.has(job.id))
       : jobs;
 
-  return NextResponse.json(visible);
+  return NextResponse.json(
+    visible.map(({ _count, ...job }) => ({
+      ...job,
+      takeCount: _count.takes,
+    }))
+  );
 }

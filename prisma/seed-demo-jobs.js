@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-// Additive demo jobs for browsing tag variety — does not wipe existing data.
+// Additive demo jobs for browsing tag variety: does not wipe existing data.
 const envLocalPath = path.join(__dirname, "..", ".env.local");
 for (const line of fs.readFileSync(envLocalPath, "utf8").split("\n")) {
   const m = line.match(/^([A-Z_]+)="?(.*?)"?$/);
@@ -92,7 +92,7 @@ const JOBS = [
   {
     title: "Banjo roll for a bluegrass breakdown",
     instrument: "Banjo",
-    description: `${DEMO_MARKER} Fast forward roll. Tempo is fixed — stay on the click.`,
+    description: `${DEMO_MARKER} Fast forward roll. Tempo is fixed: stay on the click.`,
     priceCents: 4500,
     bpm: 160,
     days: 5,

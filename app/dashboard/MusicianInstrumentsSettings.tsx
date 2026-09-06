@@ -71,7 +71,7 @@ export function MusicianInstrumentsSettings() {
           <h2 className="text-base font-semibold text-gray-900 dark:text-white">What I play</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Update the parts you can record live. This powers which instruments creators can post
-            gigs for. Job alert emails are separate — manage those under Notifications.
+            gigs for. Job alert emails are separate; manage those under Notifications.
           </p>
         </div>
         {!loading && (
@@ -120,7 +120,7 @@ export function MusicianInstrumentsSettings() {
   );
 }
 
-/** Used in post-job form — typeahead with pill selection. */
+/** Used in post-job form - typeahead with pill selection. */
 export function PostJobInstrumentPicker({
   selectedId,
   onChange,
@@ -136,7 +136,7 @@ export function PostJobInstrumentPicker({
       onChange={onChange}
       disabled={disabled}
       label="Instrument needed"
-      hint="Start typing the part you need — pick from the suggestions."
+      hint="Start typing the part you need. Pick from the suggestions."
     />
   );
 }

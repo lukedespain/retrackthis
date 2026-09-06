@@ -22,9 +22,9 @@ Icon paths match `components/Logo.tsx` exactly.
 
 ## SVG (editable source)
 
-- `logo-mark.svg` — icon only
-- `logo-full.svg` — icon + wordmark (dark text)
-- `logo-full-white.svg` — icon + wordmark (white text)
+- `logo-mark.svg`: icon only
+- `logo-full.svg`: icon + wordmark (dark text)
+- `logo-full-white.svg`: icon + wordmark (white text)
 
 Regenerate PNGs after SVG edits:
 

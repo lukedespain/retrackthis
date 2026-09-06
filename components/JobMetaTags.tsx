@@ -65,7 +65,7 @@ export function JobMetaTags({
   );
 }
 
-/** Tempo lives in expanded detail — not on the collapsed card preview. */
+/** Tempo lives in expanded detail - not on the collapsed card preview. */
 export function TempoTag({ bpm }: { bpm?: number | null }) {
   if (bpm === null || bpm === undefined) {
     return (

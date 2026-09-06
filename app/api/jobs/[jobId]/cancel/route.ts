@@ -4,7 +4,7 @@ import { cancelJobAndRefund } from "@/lib/jobActions";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
 // POST /api/jobs/:jobId/cancel
-// Creator cancels their own OPEN job — releases the Stripe authorization
+// Creator cancels their own OPEN job - releases the Stripe authorization
 // hold (no charge occurs) and marks the job CANCELLED. Lets a creator back
 // out with a full refund if no take is a good fit.
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {

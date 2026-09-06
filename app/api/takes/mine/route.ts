@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
-// GET /api/takes/mine — the signed-in musician's submitted takes, with
+// GET /api/takes/mine - the signed-in musician's submitted takes, with
 // enough job context to show status (pending / won / not selected).
 export async function GET() {
   const musicianId = await getSessionUserId();

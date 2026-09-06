@@ -210,7 +210,7 @@ export function EditJobForm({
                 1 · Part being retracked
               </p>
               <p className="mt-0.5 text-xs text-gray-500">
-                Currently saved — musicians hear this as the part to replace.
+                Currently saved. Musicians hear this as the part to replace.
               </p>
             </div>
             <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">

@@ -15,7 +15,7 @@ type Profile = {
 };
 
 /**
- * Site-wide header — same shell on marketing, jobs, and account pages.
+ * Site-wide header - same shell on marketing, jobs, and account pages.
  * Signed out: Sign in. Signed in: hamburger (Producers / Musicians / Settings).
  */
 export function SiteHeader({ className = "" }: { className?: string }) {

@@ -100,7 +100,7 @@ export function AdminJobsPanel({
                 Takes · {listeningJob.title}
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                Posted by {listeningJob.creator.name}. Listen only — awarding stays with the creator.
+                Posted by {listeningJob.creator.name}. Listen only. Awarding stays with the creator.
               </p>
             </div>
             <Button size="sm" variant="ghost" onClick={() => setListeningId(null)}>

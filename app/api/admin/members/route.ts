@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { labelForInstrumentId } from "@/lib/instruments";
 
-// GET /api/admin/members — all users with job/take counts and instruments
+// GET /api/admin/members - all users with job/take counts and instruments
 export async function GET() {
   const { error } = await requireAdmin();
   if (error) return error;

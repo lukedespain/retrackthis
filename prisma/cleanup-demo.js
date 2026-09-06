@@ -62,7 +62,7 @@ async function deleteJobs(jobs) {
 }
 
 async function main() {
-  console.log(APPLY ? "APPLY mode — will delete\n" : "DRY RUN — pass --apply to delete\n");
+  console.log(APPLY ? "APPLY mode: will delete\n" : "DRY RUN: pass --apply to delete\n");
 
   const seedUsers = await db.user.findMany({
     where: { email: { in: SEED_EMAILS } },

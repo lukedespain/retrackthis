@@ -46,7 +46,7 @@ export function InstrumentTypeahead({
   onChange,
   disabled = false,
   label = "Instrument needed",
-  hint = "Start typing — pick the exact part you need.",
+  hint = "Start typing. Pick the exact part you need.",
 }: InstrumentTypeaheadProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -167,7 +167,7 @@ export function InstrumentTypeahead({
         >
           {suggestions.length === 0 ? (
             <p className="px-3.5 py-3 text-sm text-gray-500 dark:text-gray-400">
-              No matches — try another name (e.g. “bass”, “keys”, “sax”).
+              No matches. Try another name (e.g. “bass”, “keys”, “sax”).
             </p>
           ) : (
             suggestions.map((item, index) => (

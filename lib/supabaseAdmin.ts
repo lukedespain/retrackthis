@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { MAX_AUDIO_UPLOAD_BYTES, MAX_AUDIO_UPLOAD_MB } from "@/lib/constants";
 
-// Server-only client using the service role key — never import this from
+// Server-only client using the service role key - never import this from
 // client components. Used to mint signed upload URLs and manage the bucket.
 export const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

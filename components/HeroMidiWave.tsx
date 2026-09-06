@@ -22,7 +22,7 @@ export function HeroMidiWave() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(91,75,255,0.05),transparent_70%)]" />
 
       <div className="relative mx-auto flex h-44 max-w-6xl items-stretch gap-0 sm:h-52">
-        {/* 01 — Post the part (MIDI) */}
+        {/* 01 - Post the part (MIDI) */}
         <div className="relative min-w-0 flex-[1.05] overflow-hidden">
           <div className="hero-midi-track">
             <MidiStrip />
@@ -33,7 +33,7 @@ export function HeroMidiWave() {
 
         <StageDivider />
 
-        {/* 02 — Musicians submit takes (3 stacked waveforms) */}
+        {/* 02 - Musicians submit takes (3 stacked waveforms) */}
         <div className="relative flex min-w-0 flex-1 flex-col justify-center gap-1.5 py-2 sm:gap-2 sm:py-3">
           {TAKES.map((take) => (
             <div
@@ -62,7 +62,7 @@ export function HeroMidiWave() {
 
         <StageDivider />
 
-        {/* 03 — Pick your favorite (same shape as selected take) */}
+        {/* 03 - Pick your favorite (same shape as selected take) */}
         <div className="relative min-w-0 flex-[1.05] overflow-hidden">
           <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-8 bg-gradient-to-r from-[var(--fade)] to-transparent sm:w-12" />
           <div className="hero-wave-track h-full items-center">

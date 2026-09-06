@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 // Server-side client (Server Components, Route Handlers) using the anon key
-// plus the caller's session cookies — respects RLS as that specific user.
+// plus the caller's session cookies - respects RLS as that specific user.
 export function createServerSupabaseClient() {
   const cookieStore = cookies();
   return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
@@ -14,7 +14,7 @@ export function createServerSupabaseClient() {
         try {
           cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
         } catch {
-          // Called from a Server Component render — middleware refreshes the
+          // Called from a Server Component render - middleware refreshes the
           // session cookie on the request instead, so this is safe to ignore.
         }
       },

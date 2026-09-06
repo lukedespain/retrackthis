@@ -9,7 +9,7 @@ export const POST_JOB_HREF = "/producers?tab=post";
 export const SIGN_UP_TO_POST_HREF = `/sign-up?next=${encodeURIComponent(POST_JOB_HREF)}`;
 export const FIND_WORK_HREF = "/musicians";
 
-/** Homepage CTAs — Post a job respects session (no nav until we know). */
+/** Homepage CTAs - Post a job respects session (no nav until we know). */
 export function MarketingHeroCtas() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
 

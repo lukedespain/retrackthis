@@ -17,7 +17,7 @@ export async function cancelJobAndRefund(jobId: string) {
     try {
       await stripe.paymentIntents.cancel(job.payment.stripePaymentIntentId);
     } catch (err) {
-      // Already canceled/captured on Stripe's side — still sync our records.
+      // Already canceled/captured on Stripe's side - still sync our records.
       const code = (err as { code?: string })?.code;
       if (code !== "payment_intent_unexpected_state") throw err;
     }

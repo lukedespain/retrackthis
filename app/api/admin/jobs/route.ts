@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { formatCents } from "@/lib/format";
 
-// GET /api/admin/jobs — open (+ recent) jobs for admin editing help
+// GET /api/admin/jobs - open (+ recent) jobs for admin editing help
 export async function GET() {
   const { error } = await requireAdmin();
   if (error) return error;

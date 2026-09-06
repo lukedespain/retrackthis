@@ -27,7 +27,7 @@ async function releasePayment(jobId) {
   try {
     await stripe.paymentIntents.cancel(payment.stripePaymentIntentId);
   } catch (err) {
-    // Already canceled/captured — still sync our row
+    // Already canceled/captured: still sync our row
     console.warn("  (stripe cancel skipped for %s: %s)", jobId, err.message);
   }
   await db.payment.update({ where: { jobId }, data: { status: "cancelled" } });

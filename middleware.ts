@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Refreshes the Supabase session cookie on every request (required for
-// @supabase/ssr — session tokens expire and need silent renewal), and
+// @supabase/ssr: session tokens expire and need silent renewal), and
 // gates /producers, /settings, and /admin behind a signed-in session.
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Refresh the session on all app routes — not just /dashboard. Limiting
+  // Refresh the session on all app routes, not just account pages. Limiting
   // to dashboard meant visiting `/` skipped token renewal and could drop
   // the session when navigating back.
   matcher: [

@@ -3,10 +3,10 @@ import { db } from "@/lib/db";
 import { ALL_INSTRUMENTS_ID, sanitizeInstrumentIds } from "@/lib/instruments";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
-// POST /api/auth/complete-profile { name, instruments? } — creates (or updates) the
+// POST /api/auth/complete-profile { name, instruments? } - creates (or updates) the
 // app-level User row for the signed-in Supabase Auth user. Runs once,
-// right after signup/first login, since Auth only knows email/password —
-// name is ours to collect. Every account gets both roles: nothing gates on
+// right after signup/first login, since Auth only knows email/password.
+// Name is ours to collect. Every account gets both roles: nothing gates on
 // picking one, and someone can post a job today and submit a take tomorrow.
 export async function POST(req: NextRequest) {
   const supabase = createServerSupabaseClient();
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   const instruments = sanitizeInstrumentIds(body.instruments);
 
-  // Mutable copy — Prisma's Role[] input rejects `as const` readonly tuples.
+  // Mutable copy - Prisma's Role[] input rejects `as const` readonly tuples.
   const roles = ["CREATOR", "MUSICIAN"] as Array<"CREATOR" | "MUSICIAN">;
   const profile = await db.user.upsert({
     where: { id: user.id },

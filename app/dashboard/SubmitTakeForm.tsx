@@ -251,7 +251,7 @@ export function SubmitTakeForm({
                 Replace take
               </Button>
               <p className="mt-2 text-xs text-gray-400">
-                Need a better file (e.g. WAV instead of MP3)? Upload a new version — it replaces what
+                Need a better file (e.g. WAV instead of MP3)? Upload a new version. It replaces what
                 the creator hears.
               </p>
             </div>
@@ -271,7 +271,7 @@ export function SubmitTakeForm({
           <p className="mt-1 text-sm text-gray-500">
             {isReplace
               ? "Upload the new file(s). This replaces your previous submission for this job."
-              : "Multiple musicians can submit for this job. You get one submission — with up to 3 takes inside it — and the producer picks who to pay."}
+              : "Multiple musicians can submit for this job. You get one submission, with up to 3 takes inside it, and the producer picks who to pay."}
           </p>
           {!isReplace && (
             <p className="mt-2 text-xs text-gray-400">

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 
 /**
- * Stripe webhook — async payment + Connect account events.
+ * Stripe webhook - async payment + Connect account events.
  * Dashboard endpoint: https://retrackthis.com/api/webhooks/stripe
  *
  * Capture / cancel / transfer still run in our API routes; this keeps DB
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         break;
 
       case "payment_intent.amount_capturable_updated":
-        // Manual-capture authorize succeeded — funds held, not charged yet.
+        // Manual-capture authorize succeeded - funds held, not charged yet.
         await syncPaymentFromIntent(event.data.object as Stripe.PaymentIntent, "authorized", {
           onlyIfIn: ["authorized", "failed"],
         });

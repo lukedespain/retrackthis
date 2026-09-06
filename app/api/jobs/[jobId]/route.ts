@@ -7,8 +7,8 @@ function isHttpUrl(value: unknown): value is string {
   return typeof value === "string" && /^https?:\/\//i.test(value.trim());
 }
 
-// PATCH /api/jobs/:jobId — creator or admin updates an OPEN job.
-// Title, description, reference audio, and tempo only — never price or payment.
+// PATCH /api/jobs/:jobId - creator or admin updates an OPEN job.
+// Title, description, reference audio, and tempo only - never price or payment.
 export async function PATCH(req: NextRequest, { params }: { params: { jobId: string } }) {
   const sessionUserId = await getSessionUserId();
   if (!sessionUserId) {

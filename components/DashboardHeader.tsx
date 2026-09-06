@@ -3,7 +3,7 @@
 import { Logo } from "./Logo";
 import { UserMenu } from "./UserMenu";
 
-/** @deprecated Prefer SiteHeader — kept for gradual migration. */
+/** @deprecated Prefer SiteHeader - kept for gradual migration. */
 export function DashboardHeader({
   name,
   isAdmin = false,

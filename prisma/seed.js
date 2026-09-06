@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-// Prisma's seed runner doesn't load .env.local — parse it ourselves so we
+// Prisma's seed runner doesn't load .env.local: parse it ourselves so we
 // have the Supabase service-role key and Stripe key available.
 const envLocalPath = path.join(__dirname, "..", ".env.local");
 for (const line of fs.readFileSync(envLocalPath, "utf8").split("\n")) {
@@ -20,7 +20,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-
 const TEST_PASSWORD = "testpass123";
 
 // Creates (or recreates) a real, pre-confirmed Supabase Auth account so the
-// seed data can be logged into directly — no email confirmation needed.
+// seed data can be logged into directly: no email confirmation needed.
 async function ensureAuthUser(email) {
   const { data: existing } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
   const match = existing.users.find((u) => u.email === email);
@@ -242,7 +242,7 @@ async function main() {
   });
 
   // Already-awarded job predates this seed run, so its PaymentIntent is a
-  // fake placeholder — fine, since nothing here calls Stripe on it again.
+  // fake placeholder: fine, since nothing here calls Stripe on it again.
   await db.payment.create({
     data: {
       jobId: guitarJob.id,

@@ -8,7 +8,7 @@ import {
   labelForInstrumentId,
 } from "@/lib/instruments";
 
-// GET /api/admin/instruments — coverage across catalog + custom write-ins
+// GET /api/admin/instruments - coverage across catalog + custom write-ins
 export async function GET() {
   const { error } = await requireAdmin();
   if (error) return error;

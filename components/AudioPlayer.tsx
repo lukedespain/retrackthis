@@ -33,7 +33,7 @@ export function AudioPlayer({
   filename?: string;
   /** Only show download when the listener is allowed to keep the file */
   allowDownload?: boolean;
-  /** Fixed tempo BPM — enables listen/download with metronome. Null = flexible. */
+  /** Fixed tempo BPM - enables listen/download with metronome. Null = flexible. */
   bpm?: number | null;
   className?: string;
 }) {

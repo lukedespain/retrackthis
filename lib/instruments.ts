@@ -1,4 +1,4 @@
-/** Canonical instrument catalog — grouped accordions for pickers, flat ids for profiles & jobs. */
+/** Canonical instrument catalog - grouped accordions for pickers, flat ids for profiles & jobs. */
 
 export type InstrumentCategory = {
   id: string;
@@ -26,7 +26,7 @@ export const CUSTOM_INSTRUMENT_PREFIX = "custom:";
 
 const CUSTOM_ID_PATTERN = /^custom:[a-z0-9-]+:[a-z0-9-]{1,48}$/;
 
-/** Session-focused taxonomy — each item is individually selectable. */
+/** Session-focused taxonomy - each item is individually selectable. */
 export const INSTRUMENT_GROUPS: InstrumentGroup[] = [
   {
     id: "fretted",

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUDIO_BUCKET, ensureAudioBucket, supabaseAdmin } from "@/lib/supabaseAdmin";
 
-// POST /api/uploads/sign { fileName, kind } — mints a signed Supabase
+// POST /api/uploads/sign { fileName, kind } - mints a signed Supabase
 // Storage upload URL so the browser can upload the file directly
 // (bytes never pass through our server). kind namespaces the storage path.
 export async function POST(req: NextRequest) {

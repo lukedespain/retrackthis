@@ -106,7 +106,7 @@ function MidiSlot({
           />
         </div>
       ) : (
-        <p className="mt-1.5 text-xs text-emerald-800/80">Included — download after you choose this musician.</p>
+        <p className="mt-1.5 text-xs text-emerald-800/80">Included. Download after you choose this musician.</p>
       )}
     </div>
   );
@@ -159,7 +159,7 @@ export function TakeSubmissionFiles({
             </div>
           ) : (
             <p className="mt-1.5 text-xs text-emerald-800/80">
-              MIDI included — download after you choose this musician.
+              MIDI included. Download after you choose this musician.
             </p>
           )}
         </div>
@@ -228,7 +228,7 @@ export function TakeSubmissionFiles({
                     </div>
                   ) : (
                     <p className="mt-1.5 text-xs text-emerald-800/80">
-                      MIDI included — download after you choose this musician.
+                      MIDI included. Download after you choose this musician.
                     </p>
                   )}
                 </div>

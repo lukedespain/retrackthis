@@ -42,7 +42,7 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
   return (
     <AuthLayout
       title="One more thing"
-      subtitle="What should we call you — and what do you play?"
+      subtitle="What should we call you, and what do you play?"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <Input label="Name" name="name" required autoFocus placeholder="Alex Rivera" />

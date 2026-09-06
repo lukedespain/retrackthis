@@ -15,7 +15,7 @@ function sanitizeInviteEmails(value: unknown): string[] {
   return Array.from(new Set(emails)).slice(0, 5);
 }
 
-// POST /api/jobs — creator posts a new job.
+// POST /api/jobs - creator posts a new job.
 // Creates the Job row AND authorizes (but does not capture) a Stripe
 // PaymentIntent for the price. This is the escrow: funds are held on the
 // creator's card, not charged, until a winner is picked.
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(job, { status: 201 });
 }
 
-// GET /api/jobs — list open jobs for musicians to browse.
+// GET /api/jobs - list open jobs for musicians to browse.
 // Pass ?mine=true to instead get the signed-in creator's jobs across all
 // statuses (used by the creator dashboard).
 //

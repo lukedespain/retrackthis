@@ -33,7 +33,7 @@ export const MIDI_NOTES: MidiNote[] = [
   { id: "n17", x: 760, lane: 44, w: 22, opacity: 0.82 },
 ];
 
-/** Take A — denser, punchier peaks (gray / not selected) */
+/** Take A - denser, punchier peaks (gray / not selected) */
 export const WAVE_TAKE_A: number[] = [
   6, 8, 10, 14, 22, 38, 55, 48, 28, 12, 8, 6, 9, 16, 30, 50, 64, 42, 18, 9, 7, 11, 20, 34, 28, 14,
   8, 6, 10, 18, 40, 58, 52, 26, 12, 8, 7, 12, 24, 44, 60, 46, 22, 10, 7, 6, 9, 15, 26, 36, 30, 16,
@@ -43,7 +43,7 @@ export const WAVE_TAKE_A: number[] = [
 ];
 
 /**
- * Take B — selected winner (purple). Same shape used on the right “pick” column.
+ * Take B - selected winner (purple). Same shape used on the right “pick” column.
  * Smoother, more sustained peaks.
  */
 export const WAVE_TAKE_B: number[] = [
@@ -54,7 +54,7 @@ export const WAVE_TAKE_B: number[] = [
   12, 18, 15, 10, 8, 11, 20, 35, 45, 40, 22, 12, 8, 6, 9, 15, 8, 10, 14, 22, 38, 52, 44, 24, 12, 8,
 ];
 
-/** Take C — sparser, quieter with occasional spikes (gray / not selected) */
+/** Take C - sparser, quieter with occasional spikes (gray / not selected) */
 export const WAVE_TAKE_C: number[] = [
   5, 6, 7, 6, 8, 10, 9, 7, 6, 5, 12, 28, 44, 36, 14, 7, 5, 6, 8, 11, 10, 7, 5, 6, 18, 40, 52, 30,
   12, 6, 5, 7, 9, 8, 6, 5, 7, 14, 32, 48, 58, 34, 13, 6, 5, 6, 8, 10, 9, 6, 5, 11, 26, 42, 38, 16,

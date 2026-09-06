@@ -34,7 +34,7 @@ const takeInclude = {
   files: { orderBy: { sortOrder: "asc" as const } },
 };
 
-// POST /api/jobs/:jobId/takes — a musician submits their recorded take(s)
+// POST /api/jobs/:jobId/takes - a musician submits their recorded take(s)
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const musicianId = await getSessionUserId();
   if (!musicianId) {
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   );
 }
 
-// GET /api/jobs/:jobId/takes — creator (or admin) reviews submitted takes.
+// GET /api/jobs/:jobId/takes - creator (or admin) reviews submitted takes.
 // Audio is not public: musicians on the board only see a count, not files.
 export async function GET(_req: NextRequest, { params }: { params: { jobId: string } }) {
   const sessionUserId = await getSessionUserId();

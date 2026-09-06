@@ -108,7 +108,7 @@ export function NotificationSettings() {
           <div>
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">New job alerts</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              On by default. Email me when a creator posts a matching gig — turn off anytime.
+              On by default. Email me when a creator posts a matching gig. Turn off anytime.
             </p>
           </div>
           <Toggle

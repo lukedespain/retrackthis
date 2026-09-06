@@ -1,5 +1,5 @@
 /**
- * FAVORITE SNAPSHOT — two-stage MIDI → waveform hero (Aug 2026).
+ * FAVORITE SNAPSHOT - two-stage MIDI → waveform hero (Aug 2026).
  * Not imported by the app. Restore by copying back over HeroMidiWave.tsx
  * and heroMidiWaveData.ts, and restoring the matching CSS in globals.css
  * (see heroMidiWave.favorite.css).

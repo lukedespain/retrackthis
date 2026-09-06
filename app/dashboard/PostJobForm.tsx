@@ -77,7 +77,7 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
       ) : (
         <>
           <Alert variant="warning" className="mt-6">
-            Payment form can&apos;t load locally — add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to
+            Payment form can&apos;t load locally. Add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to
             .env.local. You can still preview the job form below.
           </Alert>
           <PostJobFormInner
@@ -274,7 +274,7 @@ function PostJobFormInner({
               {displayLabelForInstrumentId(instrumentId)}.
             </p>
             <p className="mt-1.5">
-              You can still post — your payment stays in escrow until you pick a winner, and you can
+              You can still post. Your payment stays in escrow until you pick a winner, and you can
               cancel anytime if takes don&apos;t come through. We&apos;ll reach out and work to find
               musicians for this part. You can also invite someone you know below.
             </p>
@@ -351,14 +351,14 @@ function PostJobFormInner({
             label="1 · Part being retracked"
             kind="demo"
             accept={AUDIO_FILE_ACCEPT}
-            hint="Required. Just the part to replace — e.g. vocal demo only, guide guitar, scratch bass. MP3 or WAV."
+            hint="Required. Just the part to replace, e.g. vocal demo only, guide guitar, scratch bass. MP3 or WAV."
             onUploaded={setDemoFileUrl}
           />
           <FileUpload
             label="2 · Background / instrumental"
             kind="demo-backing"
             accept={AUDIO_FILE_ACCEPT}
-            hint="Recommended. The rest of the song without that part — e.g. instrumental without the vocal. MP3 or WAV."
+            hint="Recommended. The rest of the song without that part, e.g. instrumental without the vocal. MP3 or WAV."
             onUploaded={setBackingFileUrl}
           />
         </div>

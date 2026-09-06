@@ -35,7 +35,7 @@ const MODE_LABELS: Record<ModeId, string> = {
 
 /**
  * Shared-transport player for job reference tracks.
- * Part / Bed / Both — playhead stays aligned when switching.
+ * Part / Bed / Both - playhead stays aligned when switching.
  */
 export function ReferenceTracksPlayer({
   partSrc,
@@ -364,7 +364,7 @@ export function ReferenceTracksPlayer({
           </p>
           {hasAb ? (
             <p className="mt-0.5 text-xs text-gray-500">
-              Part, bed, or both — playhead stays put when you switch.
+              Part, bed, or both. Playhead stays put when you switch.
             </p>
           ) : null}
         </div>

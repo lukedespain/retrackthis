@@ -88,7 +88,7 @@ export async function notifyJobInvites(opts: {
       safeSend(`job-invite ${opts.job.id} → ${email}`, () =>
         sendEmail({
           to: email,
-          subject: `${opts.creatorName} invited you to a ${opts.job.instrument} gig on RetrackThis`,
+          subject: `${opts.creatorName} invited you to a ${opts.job.instrument} gig on Retrack This`,
           heading: "You're invited to submit a take",
           bodyHtml: `<p style="margin:0 0 10px;">Hi there,</p>
             <p style="margin:0 0 10px;"><strong>${escape(opts.creatorName)}</strong> posted a job and invited you to send a take:</p>

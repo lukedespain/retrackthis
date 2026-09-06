@@ -4,7 +4,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPage title="Privacy Policy" updated="August 12, 2026">
       <p>
-        This Privacy Policy explains what RetrackThis (retrackthis.com) collects and how we use it
+        This Privacy Policy explains what Retrack This (retrackthis.com) collects and how we use it
         when you browse, create an account, post jobs, or submit takes.
       </p>
 
@@ -94,7 +94,7 @@ export default function PrivacyPolicyPage() {
 
       <LegalSection title="Children">
         <p>
-          RetrackThis is not directed at children under 13, and we do not knowingly collect personal
+          Retrack This is not directed at children under 13, and we do not knowingly collect personal
           information from them.
         </p>
       </LegalSection>

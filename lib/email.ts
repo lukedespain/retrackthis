@@ -30,24 +30,24 @@ export async function sendEmail({
     return;
   }
 
-  const from = process.env.RESEND_FROM?.trim() || "RetrackThis <hello@retrackthis.com>";
+  const from = process.env.RESEND_FROM?.trim() || "Retrack This <hello@retrackthis.com>";
   const replyTo = process.env.RESEND_REPLY_TO?.trim() || "music@lukedespain.com";
   const settingsUrl = `${appBaseUrl()}/settings`;
 
   const footer = includeSettingsFooter
     ? `<p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">
-        You’re getting this because of your RetrackThis notification settings.
+        You’re getting this because of your Retrack This notification settings.
         <a href="${escapeAttr(settingsUrl)}" style="color:#6b7280;">Manage alerts</a>
       </p>`
     : `<p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">
-        Sent via RetrackThis · <a href="${escapeAttr(appBaseUrl())}" style="color:#6b7280;">retrackthis.com</a>
+        Sent via Retrack This · <a href="${escapeAttr(appBaseUrl())}" style="color:#6b7280;">retrackthis.com</a>
       </p>`;
 
   const html = `<!doctype html>
 <html>
   <body style="margin:0;padding:0;background:#f7f7f8;font-family:Inter,system-ui,-apple-system,sans-serif;color:#111827;">
     <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
-      <p style="margin:0 0 24px;font-size:13px;font-weight:600;letter-spacing:0.04em;color:#5B4BFF;">RetrackThis</p>
+      <p style="margin:0 0 24px;font-size:13px;font-weight:600;letter-spacing:0.04em;color:#5B4BFF;">Retrack This</p>
       <div style="background:#ffffff;border-radius:16px;padding:28px 24px;box-shadow:0 1px 2px rgba(16,24,40,0.04);">
         <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;font-weight:600;">${escapeHtml(heading)}</h1>
         <div style="font-size:15px;line-height:1.6;color:#4b5563;">${bodyHtml}</div>

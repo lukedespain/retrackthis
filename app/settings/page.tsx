@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -72,13 +71,7 @@ export default function SettingsPage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-5xl px-5 pb-16 sm:px-6 sm:pb-24">
-        <Link
-          href="/producers"
-          className="text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-        >
-          ← Producers
-        </Link>
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl dark:text-white">
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl dark:text-white">
           Settings
         </h1>
         <p className="mt-1.5 text-sm text-gray-500 sm:text-base dark:text-gray-400">

@@ -4,14 +4,14 @@ export default function TermsOfServicePage() {
   return (
     <LegalPage title="Terms of Service" updated="August 12, 2026">
       <p>
-        These Terms of Service (&quot;Terms&quot;) govern your use of RetrackThis
+        These Terms of Service (&quot;Terms&quot;) govern your use of Retrack This
         (retrackthis.com), a marketplace where creators post short demo parts and musicians submit
         recorded takes. By creating an account or using the service, you agree to these Terms.
       </p>
 
       <LegalSection title="The service">
         <p>
-          RetrackThis lets creators post jobs with a demo file, description, price, and deadline.
+          Retrack This lets creators post jobs with a demo file, description, price, and deadline.
           Payment is authorized (held) when a job is posted and only captured when the creator
           awards a winning take. Musicians may browse open jobs and submit takes for free. We take
           a platform fee from awarded jobs; the remainder is transferred to the winning musician
@@ -76,7 +76,7 @@ export default function TermsOfServicePage() {
       <LegalSection title="Payments">
         <p>
           Payments are processed by Stripe. Authorization, capture, refunds/cancels, and Connect
-          transfers follow Stripe&apos;s systems and timelines. Platform fees are set by RetrackThis
+          transfers follow Stripe&apos;s systems and timelines. Platform fees are set by Retrack This
           and may change with notice for future jobs. Past awarded jobs keep the fee in effect when
           they were awarded.
         </p>
@@ -95,7 +95,7 @@ export default function TermsOfServicePage() {
         <p>
           The service is provided &quot;as is.&quot; We do not guarantee uninterrupted availability,
           that every take will meet your creative needs, or that every musician or creator will
-          behave professionally. To the fullest extent allowed by law, RetrackThis is not liable for
+          behave professionally. To the fullest extent allowed by law, Retrack This is not liable for
           indirect, incidental, or consequential damages, or for amounts exceeding fees we earned on
           the job giving rise to the claim.
         </p>

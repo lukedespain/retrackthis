@@ -1,4 +1,4 @@
-# RetrackThis brand assets
+# Retrack This brand assets
 
 Purple: `#5B4BFF`  
 Wordmark text: `#111827` (dark) / `#FFFFFF` (on dark backgrounds)

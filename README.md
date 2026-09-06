@@ -109,7 +109,7 @@ save `User.stripeAccountId` when `account.updated` has `metadata.userId` and
 1. Create a [Resend](https://resend.com) account and verify `retrackthis.com`
 2. Add to Vercel:
    - `RESEND_API_KEY` (`re_…`)
-   - `RESEND_FROM` e.g. `RetrackThis <beth.t@example.com>`
+   - `RESEND_FROM` e.g. `Retrack This <beth.t@example.com>`
 3. Redeploy. Until these are set, job posting still works; emails are skipped.
 
 Inbound (`hello@retrackthis.com` → `music@lukedespain.com`):

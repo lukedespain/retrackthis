@@ -52,7 +52,7 @@ export default function LandingPage() {
 
         <section className="mx-auto max-w-5xl px-5 py-16 sm:px-6 sm:py-24">
           <div className="rounded-2xl bg-accent-muted px-6 py-12 sm:rounded-3xl sm:px-16 sm:py-16">
-            <p className="text-sm font-medium text-accent">Why RetrackThis exists</p>
+            <p className="text-sm font-medium text-accent">Why Retrack This exists</p>
             <h2 className="mt-3 max-w-xl text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
               Music is losing its humanism. We&apos;re building a place to get it back.
             </h2>
@@ -64,7 +64,7 @@ export default function LandingPage() {
                 chase AI-shaped parts, the soul gets sanded off.
               </p>
               <p>
-                RetrackThis is for the opposite of that. Producers, songwriters, and composers post the
+                Retrack This is for the opposite of that. Producers, songwriters, and composers post the
                 part they need. Real musicians listen, play it on real instruments, and send back takes
                 that actually respond to the music. Only the take you pick gets paid. People with skills
                 get work. People writing music get human performances again.

@@ -43,7 +43,7 @@ export function Logo({ href = "/" }: { href?: string }) {
       <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-white transition-transform duration-150 ease-out group-hover:scale-105 group-active:scale-95">
         <RetrackMark className="h-4 w-4" />
       </span>
-      <span className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">RetrackThis</span>
+      <span className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">Retrack This</span>
     </Link>
   );
 }

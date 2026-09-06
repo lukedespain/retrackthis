@@ -85,7 +85,15 @@ export function FileUpload({
       const { error: uploadError } = await supabaseClient.storage
         .from("audio-files")
         .uploadToSignedUrl(path, token, file);
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        const msg = uploadError.message || "Upload failed";
+        if (/maximum allowed size|too large|payload/i.test(msg)) {
+          throw new Error(
+            `That file is too large for upload (max ${MAX_AUDIO_UPLOAD_MB}MB). Try a shorter export or compress to MP3.`
+          );
+        }
+        throw uploadError;
+      }
 
       setStatus("done");
       onUploaded(publicUrl);

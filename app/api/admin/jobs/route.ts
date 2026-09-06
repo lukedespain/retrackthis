@@ -14,6 +14,7 @@ export async function GET() {
     include: {
       creator: { select: { id: true, name: true, email: true } },
       payment: { select: { amountCents: true, status: true } },
+      _count: { select: { takes: true } },
     },
   });
 
@@ -37,6 +38,7 @@ export async function GET() {
       paymentStatus: job.payment?.status ?? null,
       missingBacking: !job.backingFileUrl,
       flexibleTempo: job.bpm == null,
+      takeCount: job._count.takes,
     })),
   });
 }

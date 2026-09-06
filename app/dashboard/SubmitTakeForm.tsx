@@ -52,6 +52,7 @@ export function SubmitTakeForm({
   const [submitted, setSubmitted] = useState(alreadySubmitted);
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(existingTakeUrl ?? null);
   const [submittedFiles, setSubmittedFiles] = useState<TakeFileRecord[] | undefined>(existingFiles);
+  const [replacing, setReplacing] = useState(false);
   const [mode, setMode] = useState<SubmitMode | null>(null);
   const [rows, setRows] = useState<TakeRow[]>([emptyRow(0)]);
   const [attestHuman, setAttestHuman] = useState(false);
@@ -60,12 +61,14 @@ export function SubmitTakeForm({
   useEffect(() => {
     if (alreadySubmitted) {
       setSubmitted(true);
+      setReplacing(false);
       if (existingTakeUrl) setSubmittedUrl(existingTakeUrl);
       if (existingFiles?.length) setSubmittedFiles(existingFiles);
     }
   }, [alreadySubmitted, existingTakeUrl, existingFiles]);
 
   const maxRows = mode === "midi" ? MAX_MIDI_FILES : MAX_AUDIO_TAKES;
+  const isReplace = replacing;
 
   const readyAudioRows = rows
     .map((row, index) => ({ ...row, index }))
@@ -95,6 +98,25 @@ export function SubmitTakeForm({
   function chooseMode(next: SubmitMode) {
     setMode(next);
     setRows([emptyRow(0)]);
+    setError(null);
+  }
+
+  function startReplace() {
+    setReplacing(true);
+    setSubmitted(false);
+    setMode(null);
+    setRows([emptyRow(0)]);
+    setAttestHuman(false);
+    setError(null);
+    setBurst(false);
+  }
+
+  function cancelReplace() {
+    setReplacing(false);
+    setSubmitted(true);
+    setMode(null);
+    setRows([emptyRow(0)]);
+    setAttestHuman(false);
     setError(null);
   }
 
@@ -182,6 +204,7 @@ export function SubmitTakeForm({
       }
 
       const take = await res.json();
+      setReplacing(false);
       setSubmitted(true);
       setSubmittedUrl(take.audioFileUrl);
       setSubmittedFiles(take.files);
@@ -195,7 +218,7 @@ export function SubmitTakeForm({
     }
   }
 
-  if (submitted) {
+  if (submitted && !replacing) {
     return (
       <Card padding="md" className="relative overflow-hidden">
         {burst && <SuccessBurst />}
@@ -223,6 +246,15 @@ export function SubmitTakeForm({
                 />
               </div>
             )}
+            <div className="mt-4">
+              <Button type="button" variant="secondary" size="sm" onClick={startReplace}>
+                Replace take
+              </Button>
+              <p className="mt-2 text-xs text-gray-400">
+                Need a better file (e.g. WAV instead of MP3)? Upload a new version — it replaces what
+                the creator hears.
+              </p>
+            </div>
           </div>
         </div>
       </Card>
@@ -231,10 +263,23 @@ export function SubmitTakeForm({
 
   return (
     <Card padding="md">
-      <h3 className="text-base font-semibold text-gray-900">Submit your take</h3>
-      <p className="mt-1 text-sm text-gray-500">
-        Free to submit. First choose what you&apos;re uploading — then add up to three options.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900">
+            {isReplace ? "Replace your take" : "Submit your take"}
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {isReplace
+              ? "Upload the new file(s). This replaces your previous submission for this job."
+              : "Free to submit. First choose what you’re uploading — then add up to three options."}
+          </p>
+        </div>
+        {isReplace && (
+          <Button type="button" variant="ghost" size="sm" onClick={cancelReplace}>
+            Cancel
+          </Button>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         <div>
@@ -360,7 +405,13 @@ export function SubmitTakeForm({
             {error && <Alert variant="error">{error}</Alert>}
 
             <Button type="submit" disabled={submitting || !canSubmit} className="w-full sm:w-auto">
-              {submitting ? "Submitting…" : "Submit take"}
+              {submitting
+                ? isReplace
+                  ? "Replacing…"
+                  : "Submitting…"
+                : isReplace
+                  ? "Replace take"
+                  : "Submit take"}
             </Button>
           </>
         )}

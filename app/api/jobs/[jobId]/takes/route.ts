@@ -70,15 +70,60 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     return NextResponse.json({ error: "Job is not open for submissions" }, { status: 400 });
   }
 
+  // MIDI-only takes store the first MIDI URL in audioFileUrl for legacy list UIs.
+  const primaryAudioUrl = audioTakes[0]?.fileUrl ?? midiFiles[0]?.fileUrl ?? "";
+  const fileCreates = [
+    ...audioTakes.map((file, index) => ({
+      kind: "AUDIO" as const,
+      label: file.label,
+      fileUrl: file.fileUrl,
+      sortOrder: index,
+    })),
+    ...midiFiles.map((file, index) => ({
+      kind: "MIDI" as const,
+      label: file.label,
+      fileUrl: file.fileUrl,
+      sortOrder: index,
+      audioIndex: file.audioIndex ?? null,
+    })),
+  ];
+
   const existing = await db.take.findFirst({
     where: { jobId: params.jobId, musicianId },
   });
-  if (existing) {
-    return NextResponse.json({ error: "You already submitted a take for this job." }, { status: 400 });
-  }
 
-  // MIDI-only takes store the first MIDI URL in audioFileUrl for legacy list UIs.
-  const primaryAudioUrl = audioTakes[0]?.fileUrl ?? midiFiles[0]?.fileUrl ?? "";
+  if (existing) {
+    if (existing.isWinner) {
+      return NextResponse.json({ error: "This take was already selected and can’t be replaced." }, { status: 400 });
+    }
+
+    const take = await db.$transaction(async (tx) => {
+      await tx.takeFile.deleteMany({ where: { takeId: existing.id } });
+      return tx.take.update({
+        where: { id: existing.id },
+        data: {
+          audioFileUrl: primaryAudioUrl,
+          note: note || null,
+          humanAttestedAt: new Date(),
+          submittedAt: new Date(),
+          files: { create: fileCreates },
+        },
+        include: takeInclude,
+      });
+    });
+
+    await notifyCreatorTakeSubmitted({
+      job: { id: job.id, title: job.title, creatorId: job.creatorId },
+      musicianName: take.musician.name,
+      replaced: true,
+    });
+
+    return NextResponse.json({
+      ...take,
+      files: serializeFiles(take.files),
+      replaced: true,
+    });
+  }
 
   const take = await db.take.create({
     data: {
@@ -87,23 +132,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
       audioFileUrl: primaryAudioUrl,
       note: note || null,
       humanAttestedAt: new Date(),
-      files: {
-        create: [
-          ...audioTakes.map((file, index) => ({
-            kind: "AUDIO" as const,
-            label: file.label,
-            fileUrl: file.fileUrl,
-            sortOrder: index,
-          })),
-          ...midiFiles.map((file, index) => ({
-            kind: "MIDI" as const,
-            label: file.label,
-            fileUrl: file.fileUrl,
-            sortOrder: index,
-            audioIndex: file.audioIndex ?? null,
-          })),
-        ],
-      },
+      files: { create: fileCreates },
     },
     include: takeInclude,
   });

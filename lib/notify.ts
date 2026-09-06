@@ -107,6 +107,7 @@ export async function notifyJobInvites(opts: {
 export async function notifyCreatorTakeSubmitted(opts: {
   job: { id: string; title: string; creatorId: string };
   musicianName: string;
+  replaced?: boolean;
 }) {
   if (!emailConfigured()) return;
 
@@ -116,13 +117,18 @@ export async function notifyCreatorTakeSubmitted(opts: {
   });
   if (!creator?.notifyTakeSubmitted) return;
 
+  const replaced = Boolean(opts.replaced);
   await safeSend(`take-submitted ${opts.job.id}`, () =>
     sendEmail({
       to: creator.email,
-      subject: `New take on “${opts.job.title}”`,
-      heading: "Someone submitted a take",
+      subject: replaced
+        ? `Updated take on “${opts.job.title}”`
+        : `New take on “${opts.job.title}”`,
+      heading: replaced ? "A musician updated their take" : "Someone submitted a take",
       bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(creator.name.split(" ")[0] || "there")},</p>
-        <p style="margin:0;">${escape(opts.musicianName)} submitted a take on <strong>${escape(opts.job.title)}</strong>.</p>`,
+        <p style="margin:0;">${escape(opts.musicianName)} ${
+          replaced ? "replaced their take" : "submitted a take"
+        } on <strong>${escape(opts.job.title)}</strong>.</p>`,
       ctaLabel: "Review takes",
       ctaHref: dashboardJobsUrl(),
     })

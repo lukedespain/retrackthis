@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import { PayoutSetupCard } from "@/components/PayoutSetupCard";
@@ -111,6 +112,12 @@ function SubmissionCard({
   onToggle: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [liveTake, setLiveTake] = useState(take);
+  const canReplace = !liveTake.isWinner && liveTake.job.status === "OPEN";
+
+  useEffect(() => {
+    setLiveTake(take);
+  }, [take]);
 
   useEffect(() => {
     if (expanded) {
@@ -128,13 +135,13 @@ function SubmissionCard({
             className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-gray-900">{take.job.title}</span>
-              <Badge status={statusFor(take)} />
+              <span className="font-medium text-gray-900">{liveTake.job.title}</span>
+              <Badge status={statusFor(liveTake)} />
             </div>
             <div className="mt-2.5">
               <JobMetaTags
-                instrument={take.job.instrument}
-                priceCents={take.job.priceCents}
+                instrument={liveTake.job.instrument}
+                priceCents={liveTake.job.priceCents}
                 showDeadline={false}
               />
             </div>
@@ -151,20 +158,40 @@ function SubmissionCard({
         >
           <div className="overflow-hidden">
             <div className="border-t border-gray-100 bg-surface px-4 py-4 sm:px-6 sm:py-5">
-              {take.note && (
-                <p className="text-sm leading-relaxed text-gray-600">{take.note}</p>
+              {liveTake.note && (
+                <p className="text-sm leading-relaxed text-gray-600">{liveTake.note}</p>
               )}
-              <div className={take.note ? "mt-3" : undefined}>
-                <TempoTag bpm={take.job.bpm} />
+              <div className={liveTake.note ? "mt-3" : undefined}>
+                <TempoTag bpm={liveTake.job.bpm} />
               </div>
-              <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wider text-gray-400">
-                Your submission
-              </p>
-              <TakeSubmissionFiles
-                files={take.files}
-                fallbackAudioUrl={take.audioFileUrl}
-                allowDownload
-              />
+              {canReplace ? (
+                <div className="mt-4">
+                  <SubmitTakeForm
+                    jobId={liveTake.jobId}
+                    alreadySubmitted
+                    existingTakeUrl={liveTake.audioFileUrl}
+                    existingFiles={liveTake.files}
+                    onSubmitted={(next) =>
+                      setLiveTake((prev) => ({
+                        ...prev,
+                        audioFileUrl: next.audioFileUrl,
+                        files: next.files,
+                      }))
+                    }
+                  />
+                </div>
+              ) : (
+                <>
+                  <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wider text-gray-400">
+                    Your submission
+                  </p>
+                  <TakeSubmissionFiles
+                    files={liveTake.files}
+                    fallbackAudioUrl={liveTake.audioFileUrl}
+                    allowDownload
+                  />
+                </>
+              )}
             </div>
           </div>
         </div>

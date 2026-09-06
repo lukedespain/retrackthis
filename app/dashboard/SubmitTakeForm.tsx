@@ -271,8 +271,13 @@ export function SubmitTakeForm({
           <p className="mt-1 text-sm text-gray-500">
             {isReplace
               ? "Upload the new file(s). This replaces your previous submission for this job."
-              : "Free to submit. First choose what you’re uploading — then add up to three options."}
+              : "Multiple musicians can submit for this job. You get one submission — with up to 3 takes inside it — and the producer picks who to pay."}
           </p>
+          {!isReplace && (
+            <p className="mt-2 text-xs text-gray-400">
+              One submission per job · up to 3 takes · free to submit
+            </p>
+          )}
         </div>
         {isReplace && (
           <Button type="button" variant="ghost" size="sm" onClick={cancelReplace}>

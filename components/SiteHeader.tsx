@@ -16,7 +16,7 @@ type Profile = {
 
 /**
  * Site-wide header — same shell on marketing, jobs, and account pages.
- * Signed out: Browse jobs + Sign in. Signed in: Browse jobs + hamburger (no Dashboard CTA).
+ * Signed out: Sign in. Signed in: hamburger (Producers / Musicians / Settings).
  */
 export function SiteHeader({ className = "" }: { className?: string }) {
   const router = useRouter();

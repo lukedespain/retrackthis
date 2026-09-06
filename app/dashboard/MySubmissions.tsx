@@ -48,7 +48,7 @@ export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?:
           title="No submissions yet"
           description="Browse open jobs and submit your first take to get started."
           action={
-            <a href="/jobs">
+            <a href="/musicians">
               <Button size="sm">Browse jobs</Button>
             </a>
           }
@@ -92,7 +92,7 @@ function JobAlertNudge() {
             Pick the instruments you play and we&apos;ll ping you when a matching job opens.
           </p>
         </div>
-        <Link href="/dashboard/settings" className="shrink-0">
+        <Link href="/settings" className="shrink-0">
           <Button size="sm" variant="secondary" className="w-full sm:w-auto">
             Choose instruments
           </Button>

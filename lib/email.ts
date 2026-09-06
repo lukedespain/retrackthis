@@ -32,7 +32,7 @@ export async function sendEmail({
 
   const from = process.env.RESEND_FROM?.trim() || "RetrackThis <hello@retrackthis.com>";
   const replyTo = process.env.RESEND_REPLY_TO?.trim() || "music@lukedespain.com";
-  const settingsUrl = `${appBaseUrl()}/dashboard/settings`;
+  const settingsUrl = `${appBaseUrl()}/settings`;
 
   const footer = includeSettingsFooter
     ? `<p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">

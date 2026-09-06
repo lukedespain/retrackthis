@@ -48,7 +48,7 @@ function SignInForm() {
       return;
     }
 
-    router.push(searchParams.get("next") ?? "/dashboard");
+    router.push(searchParams.get("next") ?? "/producers");
     router.refresh();
   }
 

@@ -16,15 +16,15 @@ type JobLite = {
 };
 
 function jobUrl() {
-  return `${appBaseUrl()}/jobs`;
+  return `${appBaseUrl()}/musicians`;
 }
 
 function dashboardJobsUrl() {
-  return `${appBaseUrl()}/dashboard`;
+  return `${appBaseUrl()}/producers`;
 }
 
 function dashboardSubmissionsUrl() {
-  return `${appBaseUrl()}/dashboard?tab=submissions`;
+  return `${appBaseUrl()}/musicians?tab=submissions`;
 }
 
 function snippet(text: string, max = 180) {
@@ -81,7 +81,7 @@ export async function notifyJobInvites(opts: {
 }) {
   if (!emailConfigured() || opts.emails.length === 0) return;
 
-  const signUpHref = `${appBaseUrl()}/sign-up?next=${encodeURIComponent("/jobs")}`;
+  const signUpHref = `${appBaseUrl()}/sign-up?next=${encodeURIComponent("/musicians")}`;
 
   await Promise.all(
     opts.emails.map((email) =>

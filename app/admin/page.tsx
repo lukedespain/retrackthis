@@ -135,7 +135,7 @@ function AdminPageInner() {
       }
       const body = await res.json();
       if (!body.profile?.isAdmin) {
-        router.push("/dashboard");
+        router.push("/producers");
         return;
       }
       setProfile(body.profile);
@@ -153,7 +153,7 @@ function AdminPageInner() {
         if (tab === "members") {
           const res = await fetch("/api/admin/members");
           if (res.status === 403) {
-            router.push("/dashboard");
+            router.push("/producers");
             return;
           }
           if (!res.ok) throw new Error("Could not load members");
@@ -162,7 +162,7 @@ function AdminPageInner() {
         } else if (tab === "jobs") {
           const res = await fetch("/api/admin/jobs");
           if (res.status === 403) {
-            router.push("/dashboard");
+            router.push("/producers");
             return;
           }
           if (!res.ok) throw new Error("Could not load jobs");
@@ -171,7 +171,7 @@ function AdminPageInner() {
         } else if (tab === "instruments") {
           const res = await fetch("/api/admin/instruments");
           if (res.status === 403) {
-            router.push("/dashboard");
+            router.push("/producers");
             return;
           }
           if (!res.ok) throw new Error("Could not load instruments");
@@ -180,7 +180,7 @@ function AdminPageInner() {
         } else {
           const res = await fetch(`/api/admin/stats?period=${period}`);
           if (res.status === 403) {
-            router.push("/dashboard");
+            router.push("/producers");
             return;
           }
           if (!res.ok) throw new Error("Could not load stats");
@@ -476,7 +476,7 @@ function AdminPageInner() {
         )}
 
         <p className="text-xs text-gray-400">
-          <Link href="/dashboard" className="underline-offset-2 hover:underline">
+          <Link href="/producers" className="underline-offset-2 hover:underline">
             Back to my jobs
           </Link>
         </p>

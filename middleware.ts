@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Refreshes the Supabase session cookie on every request (required for
 // @supabase/ssr — session tokens expire and need silent renewal), and
-// gates /dashboard behind a signed-in session.
+// gates /producers, /settings, and /admin behind a signed-in session.
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -29,11 +29,15 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const needsAuth = path.startsWith("/dashboard") || path.startsWith("/admin");
+  const needsAuth =
+    path.startsWith("/producers") ||
+    path.startsWith("/settings") ||
+    path.startsWith("/dashboard") ||
+    path.startsWith("/admin");
 
   if (!user && needsAuth) {
     const redirectUrl = new URL("/sign-in", request.url);
-    redirectUrl.searchParams.set("next", path);
+    redirectUrl.searchParams.set("next", path + request.nextUrl.search);
     return NextResponse.redirect(redirectUrl);
   }
 

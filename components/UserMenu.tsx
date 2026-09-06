@@ -90,26 +90,21 @@ export function UserMenu({
           <Divider />
 
           <SectionLabel>Producers</SectionLabel>
-          <Link
-            href="/dashboard?tab=jobs&post=1"
-            role="menuitem"
-            onClick={close}
-            className={menuItemClass}
-          >
+          <Link href="/producers?tab=post" role="menuitem" onClick={close} className={menuItemClass}>
             Post a job
           </Link>
-          <Link href="/dashboard" role="menuitem" onClick={close} className={menuItemClass}>
+          <Link href="/producers" role="menuitem" onClick={close} className={menuItemClass}>
             My jobs
           </Link>
 
           <Divider />
 
           <SectionLabel>Musicians</SectionLabel>
-          <Link href="/jobs" role="menuitem" onClick={close} className={menuItemClass}>
+          <Link href="/musicians" role="menuitem" onClick={close} className={menuItemClass}>
             Browse jobs
           </Link>
           <Link
-            href="/dashboard?tab=submissions"
+            href="/musicians?tab=submissions"
             role="menuitem"
             onClick={close}
             className={menuItemClass}
@@ -119,12 +114,7 @@ export function UserMenu({
 
           <Divider />
 
-          <Link
-            href="/dashboard/settings"
-            role="menuitem"
-            onClick={close}
-            className={menuItemClass}
-          >
+          <Link href="/settings" role="menuitem" onClick={close} className={menuItemClass}>
             Settings
           </Link>
           {isAdmin ? (

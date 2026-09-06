@@ -292,7 +292,7 @@ function OpenJobCard({
   onToggle: () => void;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const signUpHref = `/sign-up?next=${encodeURIComponent("/dashboard")}`;
+  const signUpHref = `/sign-up?next=${encodeURIComponent("/musicians")}`;
 
   useEffect(() => {
     if (expanded) {
@@ -368,7 +368,7 @@ function OpenJobCard({
                     <p className="mt-2 text-xs text-gray-400">
                       Already have an account?{" "}
                       <Link
-                        href={`/sign-in?next=${encodeURIComponent("/dashboard")}`}
+                        href={`/sign-in?next=${encodeURIComponent("/musicians")}`}
                         className="font-medium text-gray-600 underline-offset-2 hover:text-gray-900 hover:underline"
                       >
                         Sign in

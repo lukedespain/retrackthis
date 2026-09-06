@@ -5,8 +5,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { supabaseClient } from "@/lib/supabaseClient";
 
-export const POST_JOB_HREF = "/dashboard?tab=jobs&post=1";
+export const POST_JOB_HREF = "/producers?tab=post";
 export const SIGN_UP_TO_POST_HREF = `/sign-up?next=${encodeURIComponent(POST_JOB_HREF)}`;
+export const FIND_WORK_HREF = "/musicians";
 
 /** Homepage CTAs — Post a job respects session (no nav until we know). */
 export function MarketingHeroCtas() {
@@ -40,7 +41,7 @@ export function MarketingHeroCtas() {
           <Button className="w-full sm:w-auto">Post a job</Button>
         </Link>
       )}
-      <Link href="/jobs" className="w-full sm:w-auto">
+      <Link href={FIND_WORK_HREF} className="w-full sm:w-auto">
         <Button variant="secondary" className="w-full sm:w-auto">
           Find work
         </Button>

@@ -48,7 +48,7 @@ function SignUpForm() {
     }
 
     if (data.session) {
-      router.push(searchParams.get("next") ?? "/dashboard");
+      router.push(searchParams.get("next") ?? "/producers");
     } else {
       setNeedsConfirmation(true);
       setSubmitting(false);

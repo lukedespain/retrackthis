@@ -18,10 +18,13 @@ import { PostJobForm } from "./PostJobForm";
 export function CreatorView({
   initialShowPost = false,
   hideHeading = false,
+  hidePostButton = false,
   onPostClosed,
 }: {
   initialShowPost?: boolean;
   hideHeading?: boolean;
+  /** When the hub toggle already has Post a job, hide the inline button. */
+  hidePostButton?: boolean;
   onPostClosed?: () => void;
 }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
@@ -54,7 +57,7 @@ export function CreatorView({
             <h2 className="text-lg font-semibold text-gray-900">My jobs</h2>
             <p className="mt-0.5 text-sm text-gray-500">Manage your posted gigs and review takes</p>
           </div>
-          {!showPostForm && (
+          {!showPostForm && !hidePostButton && (
             <Button onClick={() => setShowPostForm(true)} size="sm" className="w-full sm:w-auto">
               Post a job
             </Button>
@@ -62,7 +65,7 @@ export function CreatorView({
         </div>
       )}
 
-      {hideHeading && !showPostForm && (
+      {hideHeading && !showPostForm && !hidePostButton && (
         <div className="mb-6 flex justify-end sm:mb-8">
           <Button onClick={() => setShowPostForm(true)} size="sm" className="w-full sm:w-auto">
             Post a job

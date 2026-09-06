@@ -12,11 +12,11 @@ function appBaseUrl() {
 }
 
 export function connectReturnUrl() {
-  return `${appBaseUrl()}/dashboard?tab=submissions&payouts=return`;
+  return `${appBaseUrl()}/musicians?tab=submissions&payouts=return`;
 }
 
 export function connectRefreshUrl() {
-  return `${appBaseUrl()}/dashboard?tab=submissions&payouts=refresh`;
+  return `${appBaseUrl()}/musicians?tab=submissions&payouts=refresh`;
 }
 
 type V2Account = {

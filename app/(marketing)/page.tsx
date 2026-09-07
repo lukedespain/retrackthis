@@ -28,25 +28,48 @@ export default function LandingPage() {
         </section>
 
         <section className="border-t border-gray-100 bg-surface">
-          <div className="mx-auto max-w-5xl px-5 py-16 sm:px-6 sm:py-24">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-gray-400">How it works</h2>
-            <div className="mt-10 grid grid-cols-1 gap-12 sm:mt-12 sm:grid-cols-3 sm:gap-16">
-              <Step
-                number="01"
-                title="Post the part"
-                body="Upload a demo (even just a MIDI scratch track), describe what you need, set a price, and your payment is held in escrow."
-              />
-              <Step
-                number="02"
-                title="Musicians submit takes"
-                body="Real musicians record and upload their own version of the part. Free to try, no cost to submit."
-              />
-              <Step
-                number="03"
-                title="Pick your favorite"
-                body="Listen to every take, choose the one that fits, and that musician gets paid instantly."
-              />
-            </div>
+          <div className="mx-auto max-w-5xl space-y-16 px-5 py-16 sm:space-y-24 sm:px-6 sm:py-24">
+            <HowItWorks
+              eyebrow="How it works for producers"
+              steps={[
+                {
+                  number: "01",
+                  title: "Post the part",
+                  body: "Upload a demo of the part you need retracked, describe the gig, set a price, and your payment is held until you choose a take.",
+                },
+                {
+                  number: "02",
+                  title: "Review submissions",
+                  body: "Working musicians send takes for free. Listen to everyone who submitted and compare options on your job.",
+                },
+                {
+                  number: "03",
+                  title: "Pick who to pay",
+                  body: "Choose the take that fits. That musician gets paid. You can cancel anytime before awarding for a full release of the hold.",
+                },
+              ]}
+            />
+
+            <HowItWorks
+              eyebrow="How it works for musicians"
+              steps={[
+                {
+                  number: "01",
+                  title: "Select the instruments you play",
+                  body: "Tell us what you record live in Settings. That powers job alerts and helps producers find the right players.",
+                },
+                {
+                  number: "02",
+                  title: "Browse open gigs",
+                  body: "Find jobs for your instruments. Listen to the reference tracks and decide if the part is right for you.",
+                },
+                {
+                  number: "03",
+                  title: "Submit your takes",
+                  body: "One submission per job, with up to three takes inside it. Free to submit. The producer picks who to pay.",
+                },
+              ]}
+            />
           </div>
         </section>
 
@@ -75,6 +98,25 @@ export default function LandingPage() {
       </main>
 
       <MarketingFooter />
+    </div>
+  );
+}
+
+function HowItWorks({
+  eyebrow,
+  steps,
+}: {
+  eyebrow: string;
+  steps: Array<{ number: string; title: string; body: string }>;
+}) {
+  return (
+    <div>
+      <h2 className="text-sm font-medium uppercase tracking-wider text-gray-400">{eyebrow}</h2>
+      <div className="mt-10 grid grid-cols-1 gap-12 sm:mt-12 sm:grid-cols-3 sm:gap-16">
+        {steps.map((step) => (
+          <Step key={step.number} {...step} />
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { notifyCreatorTakeSubmitted } from "@/lib/notify";
+import { getConnectReadiness } from "@/lib/stripeConnect";
 import { getSessionUserId } from "@/lib/supabaseServer";
 import {
   MAX_AUDIO_TAKES,
@@ -39,6 +40,32 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   const musicianId = await getSessionUserId();
   if (!musicianId) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+
+  const musician = await db.user.findUnique({
+    where: { id: musicianId },
+    select: { stripeAccountId: true },
+  });
+  if (!musician?.stripeAccountId) {
+    return NextResponse.json(
+      { error: "Set up payouts before submitting a take.", code: "PAYOUTS_REQUIRED" },
+      { status: 403 }
+    );
+  }
+  try {
+    const { ready } = await getConnectReadiness(musician.stripeAccountId);
+    if (!ready) {
+      return NextResponse.json(
+        { error: "Finish Stripe payout setup before submitting a take.", code: "PAYOUTS_PENDING" },
+        { status: 403 }
+      );
+    }
+  } catch (err) {
+    console.error("[takes] connect readiness", err);
+    return NextResponse.json(
+      { error: "Could not verify payout setup. Try again in a moment.", code: "PAYOUTS_UNVERIFIED" },
+      { status: 503 }
+    );
   }
 
   const body = await req.json();

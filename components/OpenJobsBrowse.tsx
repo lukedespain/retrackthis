@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -14,11 +15,13 @@ import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 
 type SortKey = "pay" | "posted";
 type SortDir = "asc" | "desc";
+type ConnectStatus = "none" | "pending" | "ready";
 type MyTakeSummary = { jobId: string; audioFileUrl: string; files?: import("@/lib/takeFiles").TakeFileRecord[] };
 
 /**
  * Shared open-jobs marketplace.
  * `signedIn` false = public browse; submit is gated behind sign-up.
+ * Signed-in musicians must finish Stripe payouts before opening a job to submit.
  */
 export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
@@ -28,6 +31,10 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [sortKey, setSortKey] = useState<SortKey>("posted");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [myTakesByJob, setMyTakesByJob] = useState<Record<string, MyTakeSummary>>({});
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(null);
+  const [payoutModalOpen, setPayoutModalOpen] = useState(false);
+  const [onboardLoading, setOnboardLoading] = useState(false);
+  const [onboardError, setOnboardError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +66,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   useEffect(() => {
     if (!signedIn) {
       setMyTakesByJob({});
+      setConnectStatus(null);
       return;
     }
     fetch("/api/takes/mine")
@@ -75,7 +83,82 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
         setMyTakesByJob(map);
       })
       .catch(() => {});
+
+    let cancelled = false;
+    fetch("/api/stripe/connect/status")
+      .then(async (res) => {
+        const body = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(body?.error ?? "Could not load payout status");
+        if (!cancelled) setConnectStatus((body.status as ConnectStatus) ?? "none");
+      })
+      .catch(() => {
+        if (!cancelled) setConnectStatus("none");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [signedIn]);
+
+  async function refreshConnectStatus(): Promise<ConnectStatus> {
+    try {
+      const res = await fetch("/api/stripe/connect/status");
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Could not load payout status");
+      const status = (body.status as ConnectStatus) ?? "none";
+      setConnectStatus(status);
+      return status;
+    } catch {
+      setConnectStatus("none");
+      return "none";
+    }
+  }
+
+  async function handleToggleJob(jobId: string) {
+    if (expandedJobId === jobId) {
+      setExpandedJobId(null);
+      return;
+    }
+
+    // Signed-out users can preview the full job + see sign-up CTA.
+    if (!signedIn) {
+      setExpandedJobId(jobId);
+      return;
+    }
+
+    let status = connectStatus;
+    if (status === null) {
+      status = await refreshConnectStatus();
+    }
+
+    if (status !== "ready") {
+      setOnboardError(null);
+      setPayoutModalOpen(true);
+      return;
+    }
+
+    setExpandedJobId(jobId);
+  }
+
+  async function startPayoutOnboarding() {
+    setOnboardLoading(true);
+    setOnboardError(null);
+    try {
+      const res = await fetch("/api/stripe/connect/onboard", { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Could not start payout setup");
+
+      if (body.status === "ready") {
+        setConnectStatus("ready");
+        setPayoutModalOpen(false);
+        return;
+      }
+      if (!body.url) throw new Error("Stripe did not return an onboarding link");
+      window.location.href = body.url;
+    } catch (err) {
+      setOnboardError(err instanceof Error ? err.message : "Could not start payout setup");
+      setOnboardLoading(false);
+    }
+  }
 
   function handleTakeSubmitted(take: MyTakeSummary) {
     setMyTakesByJob((prev) => {
@@ -267,11 +350,86 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
               expanded={expandedJobId === job.id}
               myTake={myTakesByJob[job.id]}
               onTakeSubmitted={handleTakeSubmitted}
-              onToggle={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
+              onToggle={() => void handleToggleJob(job.id)}
             />
           ))}
         </div>
       )}
+
+      {payoutModalOpen && (
+        <PayoutRequiredModal
+          status={connectStatus === "pending" ? "pending" : "none"}
+          loading={onboardLoading}
+          error={onboardError}
+          onClose={() => setPayoutModalOpen(false)}
+          onSetup={() => void startPayoutOnboarding()}
+        />
+      )}
+    </div>
+  );
+}
+
+function PayoutRequiredModal({
+  status,
+  loading,
+  error,
+  onClose,
+  onSetup,
+}: {
+  status: "none" | "pending";
+  loading: boolean;
+  error: string | null;
+  onClose: () => void;
+  onSetup: () => void;
+}) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      role="presentation"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="payout-required-title"
+        className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="payout-required-title" className="text-lg font-semibold text-gray-900">
+          {status === "pending" ? "Finish payout setup" : "Set up payouts to submit"}
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-gray-600">
+          {status === "pending"
+            ? "Stripe still needs a bit more info before you can submit takes. Finish setup, then come back and open any job."
+            : "You can browse open jobs anytime. To open one and submit a take, connect a Stripe Express account so you can get paid if a producer picks you."}
+        </p>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" size="sm" onClick={onClose} disabled={loading}>
+            Not now
+          </Button>
+          <Button type="button" size="sm" onClick={onSetup} disabled={loading}>
+            {loading ? "Opening Stripe…" : status === "pending" ? "Continue setup" : "Set up payouts"}
+          </Button>
+        </div>
+        {error && (
+          <div className="mt-4">
+            <Alert variant="error">{error}</Alert>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -84,6 +84,7 @@ export function SiteHeader({ className = "" }: { className?: string }) {
         ) : signedIn ? (
           <UserMenu
             name={profile?.name ?? "Account"}
+            hasStripeAccount={Boolean(profile?.stripeAccountId)}
             isAdmin={Boolean(profile?.isAdmin)}
             onSignOut={signOut}
           />

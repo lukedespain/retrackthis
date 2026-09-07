@@ -23,14 +23,18 @@ function Divider() {
 
 export function UserMenu({
   name,
+  hasStripeAccount = false,
   isAdmin = false,
   onSignOut,
 }: {
   name: string;
+  hasStripeAccount?: boolean;
   isAdmin?: boolean;
   onSignOut: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [openingExpress, setOpeningExpress] = useState(false);
+  const [expressError, setExpressError] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,6 +62,27 @@ export function UserMenu({
 
   function close() {
     setOpen(false);
+  }
+
+  async function openExpressDashboard() {
+    setOpeningExpress(true);
+    setExpressError(null);
+    try {
+      const res = await fetch("/api/stripe/connect/dashboard", { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Could not open Stripe Express");
+      if (!body?.url) throw new Error("Stripe did not return a dashboard link");
+      const opened = window.open(body.url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        window.location.href = body.url;
+        return;
+      }
+      close();
+      setOpeningExpress(false);
+    } catch (err) {
+      setExpressError(err instanceof Error ? err.message : "Could not open Stripe Express");
+      setOpeningExpress(false);
+    }
   }
 
   return (
@@ -111,6 +136,26 @@ export function UserMenu({
           >
             My submissions
           </Link>
+          {hasStripeAccount ? (
+            <button
+              type="button"
+              role="menuitem"
+              disabled={openingExpress}
+              onClick={openExpressDashboard}
+              className={`${menuItemClass} disabled:opacity-60`}
+            >
+              {openingExpress ? "Opening…" : "Payouts"}
+            </button>
+          ) : (
+            <Link
+              href="/musicians?tab=submissions"
+              role="menuitem"
+              onClick={close}
+              className={menuItemClass}
+            >
+              Payouts
+            </Link>
+          )}
 
           <Divider />
 
@@ -122,6 +167,15 @@ export function UserMenu({
               Admin
             </Link>
           ) : null}
+
+          {expressError && (
+            <p className="px-3 pb-2 text-xs text-red-600 dark:text-red-400" role="alert">
+              {expressError}
+            </p>
+          )}
+
+          <Divider />
+
           <button
             type="button"
             role="menuitem"

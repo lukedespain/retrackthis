@@ -14,6 +14,13 @@ type Profile = {
   isAdmin?: boolean;
 };
 
+async function fetchProfile(): Promise<Profile | null> {
+  const res = await fetch("/api/auth/me");
+  if (!res.ok) return null;
+  const body = await res.json().catch(() => null);
+  return (body?.profile as Profile | null) ?? null;
+}
+
 /**
  * Site-wide header - same shell on marketing, jobs, and account pages.
  * Signed out: Sign in. Signed in: hamburger (Producers / Musicians / Settings).
@@ -41,11 +48,14 @@ export function SiteHeader({ className = "" }: { className?: string }) {
 
       setSignedIn(true);
       try {
-        const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          const body = await res.json();
-          if (!cancelled) setProfile(body.profile ?? null);
+        let next = await fetchProfile();
+        // Cookie/session can lag the client session briefly after auth events.
+        if (!next) {
+          await new Promise((r) => setTimeout(r, 200));
+          if (cancelled) return;
+          next = await fetchProfile();
         }
+        if (!cancelled) setProfile(next);
       } catch {
         if (!cancelled) setProfile(null);
       } finally {

@@ -103,7 +103,7 @@ export function UserMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-xl border border-gray-100 bg-white p-1.5 shadow-card-hover dark:border-gray-800 dark:bg-gray-900"
+          className="absolute right-0 top-full z-50 mt-2 max-h-[min(28rem,calc(100dvh-5.5rem))] w-56 origin-top-right overflow-y-auto overscroll-contain rounded-xl border border-gray-100 bg-white p-1.5 shadow-card-hover dark:border-gray-800 dark:bg-gray-900"
         >
           <p
             className="truncate px-3 py-2 text-sm font-medium text-gray-900 dark:text-white"

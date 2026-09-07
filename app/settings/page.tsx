@@ -70,7 +70,7 @@ export default function SettingsPage() {
     <div className="min-h-screen">
       <SiteHeader />
 
-      <main className="mx-auto max-w-5xl px-5 pb-16 sm:px-6 sm:pb-24">
+      <main className="mx-auto max-w-5xl px-5 pb-16 pt-2 sm:px-6 sm:pb-24 sm:pt-4">
         <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl dark:text-white">
           Settings
         </h1>
@@ -80,13 +80,13 @@ export default function SettingsPage() {
 
         <nav
           aria-label="Settings sections"
-          className="mt-5 flex gap-2 overflow-x-auto pb-1 sm:mt-6"
+          className="mt-5 -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:mt-6 sm:px-0"
         >
           {SECTIONS.map((section) => (
             <a
               key={section.id}
               href={`#${section.id}`}
-              className="shrink-0 rounded-full bg-gray-100 px-3.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+              className="inline-flex min-h-10 shrink-0 items-center rounded-full bg-gray-100 px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
             >
               {section.label}
             </a>

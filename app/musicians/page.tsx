@@ -156,10 +156,10 @@ function MusiciansPageInner() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto max-w-5xl px-5 pb-16 sm:px-6 sm:pb-24">
+      <main className="mx-auto max-w-5xl px-5 pb-16 pt-2 sm:px-6 sm:pb-24 sm:pt-4">
         <RoleHubHeader
           title="Musicians"
-          description="Browse open gigs, submit takes for free, and track what you’ve sent. Multiple musicians can submit. The producer picks who to pay."
+          description="Browse open gigs, submit takes for free, and track what you’ve sent. The producer picks who to pay."
           options={[
             { value: "browse" as const, label: "Browse jobs" },
             { value: "submissions" as const, label: "My submissions" },

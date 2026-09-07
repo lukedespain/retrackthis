@@ -184,14 +184,14 @@ function CreatorJobCard({
             />
           </div>
         </button>
-        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:shrink-0">
           {job.status === "OPEN" && (
             <>
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={startEdit}
-                className="flex-1 sm:flex-none"
+                className="w-full sm:w-auto"
               >
                 {editing ? "Editing…" : "Edit job"}
               </Button>
@@ -200,9 +200,17 @@ function CreatorJobCard({
                 size="sm"
                 onClick={cancelJob}
                 disabled={cancelling || editing}
-                className="flex-1 sm:flex-none"
+                className="w-full sm:w-auto"
+                aria-label="Cancel and refund"
               >
-                {cancelling ? "Cancelling…" : "Cancel & refund"}
+                {cancelling ? (
+                  "Cancelling…"
+                ) : (
+                  <>
+                    <span className="sm:hidden">Cancel</span>
+                    <span className="hidden sm:inline">Cancel & refund</span>
+                  </>
+                )}
               </Button>
             </>
           )}
@@ -211,7 +219,7 @@ function CreatorJobCard({
             size="sm"
             onClick={onToggle}
             disabled={editing}
-            className="flex-1 sm:flex-none"
+            className="w-full sm:w-auto"
           >
             {expanded ? "Hide takes" : "View takes"}
           </Button>

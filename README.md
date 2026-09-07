@@ -70,7 +70,11 @@ email sender is rate-limited and will block repeated sign-ups otherwise.
 - **Supabase Storage**: demo + take audio files, direct-to-browser upload
   via signed URLs (`app/api/uploads/sign`), 20MB server-enforced cap
 - **Supabase Auth**: email/password via `@supabase/ssr`, session cookies
-  refreshed in `middleware.ts`
+  refreshed in `middleware.ts`. Password reset: `/forgot-password` → email
+  link → `/auth/callback` → `/reset-password`. Add
+  `https://retrackthis.com/auth/callback` (and local
+  `http://localhost:3000/auth/callback`) under Supabase → Authentication →
+  URL Configuration → Redirect URLs.
 - **Stripe**: escrow via manual-capture PaymentIntents, payouts via Connect
   transfers. Musicians onboard from **Dashboard → My submissions → Set up payouts**
   (Express Account Link; Accounts v2 with v1 fallback).

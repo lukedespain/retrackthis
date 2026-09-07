@@ -64,7 +64,18 @@ function SignInForm() {
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         <Input label="Email" name="email" type="email" required autoComplete="email" />
-        <Input label="Password" name="password" type="password" required autoComplete="current-password" />
+        <div>
+          <Input
+            label="Password"
+            name="password"
+            type="password"
+            required
+            autoComplete="current-password"
+          />
+          <div className="mt-2 text-right">
+            <AuthFooterLink href="/forgot-password">Forgot password?</AuthFooterLink>
+          </div>
+        </div>
         {error && <Alert variant="error">{error}</Alert>}
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? "Signing in…" : "Sign in"}

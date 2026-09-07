@@ -24,18 +24,18 @@ const PRODUCER_STEPS = [
 const MUSICIAN_STEPS = [
   {
     number: "01",
-    title: "Select the instruments you play",
-    body: "Tell us what you record live in Settings. That powers job alerts and helps producers find the right players.",
-  },
-  {
-    number: "02",
     title: "Browse open gigs",
     body: "Find jobs for your instruments. Listen to the reference tracks and decide if the part is right for you.",
   },
   {
-    number: "03",
+    number: "02",
     title: "Submit your takes",
     body: "One submission per job, with up to three takes inside it. Free to submit. The producer picks who to pay.",
+  },
+  {
+    number: "03",
+    title: "Earn when you win",
+    body: "If your take gets picked, you get paid. Set up payouts once, then cash out whenever a producer awards you.",
   },
 ] as const;
 
@@ -67,9 +67,9 @@ export default function LandingPage() {
         <section className="relative border-t border-gray-100">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(91,75,255,0.04),transparent_55%)]" />
 
-          <div className="relative mx-auto max-w-5xl px-5 py-16 sm:px-6 sm:py-20">
+          <div className="relative mx-auto max-w-5xl px-5 pb-8 pt-12 sm:px-6 sm:pb-12 sm:pt-20">
             <p className="text-sm font-medium text-gray-400">Two sides of the same session</p>
-            <h2 className="mt-2 max-w-md text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+            <h2 className="mt-2 max-w-md text-xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
               How the marketplace actually runs
             </h2>
           </div>
@@ -82,15 +82,15 @@ export default function LandingPage() {
           />
           <RoleTrack
             role="Musicians"
-            kicker="Set up · browse · submit"
+            kicker="Browse · submit · earn"
             tone="soft"
             steps={MUSICIAN_STEPS}
             align="end"
           />
         </section>
 
-        <section className="mx-auto max-w-5xl px-5 py-16 sm:px-6 sm:py-24">
-          <div className="rounded-2xl bg-accent-muted px-6 py-12 sm:rounded-3xl sm:px-16 sm:py-16">
+        <section className="mx-auto max-w-5xl px-5 py-12 sm:px-6 sm:py-24">
+          <div className="rounded-2xl bg-accent-muted px-5 py-10 sm:rounded-3xl sm:px-16 sm:py-16">
             <p className="text-sm font-medium text-accent">Why Retrack This exists</p>
             <h2 className="mt-3 max-w-xl text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
               Music is losing its humanism. We&apos;re building a place to get it back.
@@ -137,15 +137,15 @@ function RoleTrack({
         tone === "soft" ? "bg-[var(--panel-soft)]" : "bg-white"
       }`}
     >
-      <div className="mx-auto max-w-5xl px-5 py-14 sm:px-6 sm:py-20">
+      <div className="mx-auto max-w-5xl px-5 py-10 sm:px-6 sm:py-20">
         <div
-          className={`flex flex-col gap-10 lg:gap-14 ${
+          className={`flex flex-col gap-8 sm:gap-10 lg:gap-14 ${
             align === "end" ? "lg:flex-row-reverse" : "lg:flex-row"
           }`}
         >
           <div className={`shrink-0 lg:w-56 ${align === "end" ? "lg:text-right" : ""}`}>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-accent">{kicker}</p>
-            <h3 className="mt-3 text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
+            <h3 className="mt-2 text-3xl font-semibold tracking-tight text-gray-900 sm:mt-3 sm:text-5xl">
               {role}
             </h3>
           </div>

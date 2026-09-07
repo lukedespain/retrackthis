@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} overflow-x-hidden font-sans antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

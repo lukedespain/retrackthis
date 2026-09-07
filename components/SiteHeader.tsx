@@ -80,7 +80,7 @@ export function SiteHeader({ className = "" }: { className?: string }) {
       <Logo href="/" />
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         {!ready ? (
-          <div className="h-9 w-9" aria-hidden />
+          <div className="h-10 w-10" aria-hidden />
         ) : signedIn ? (
           <UserMenu
             name={profile?.name ?? "Account"}

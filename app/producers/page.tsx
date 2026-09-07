@@ -90,7 +90,7 @@ function ProducersPageInner() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto max-w-5xl px-5 pb-16 sm:px-6 sm:pb-24">
+      <main className="mx-auto max-w-5xl px-5 pb-16 pt-2 sm:px-6 sm:pb-24 sm:pt-4">
         <RoleHubHeader
           title="Producers"
           description="Post a gig, hold payment until you pick a take, then pay the musician you choose. Review submissions on each job."

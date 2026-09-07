@@ -289,7 +289,7 @@ export function SubmitTakeForm({
       <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         <div>
           <p className="text-sm font-medium text-gray-900">What are you uploading?</p>
-          <div className="mt-2 grid gap-2 sm:grid-cols-3">
+          <div className="mt-2 grid grid-cols-3 gap-2">
             {MODE_OPTIONS.map((option) => {
               const selected = mode === option.value;
               return (
@@ -297,7 +297,7 @@ export function SubmitTakeForm({
                   key={option.value}
                   type="button"
                   onClick={() => chooseMode(option.value)}
-                  className={`rounded-2xl border px-4 py-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 ${
+                  className={`min-h-[4.5rem] rounded-2xl border px-2.5 py-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 sm:min-h-0 sm:px-4 ${
                     selected
                       ? "border-accent bg-accent-muted shadow-sm"
                       : "border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-950"
@@ -306,7 +306,9 @@ export function SubmitTakeForm({
                   <span className="block text-sm font-semibold text-gray-900 dark:text-white">
                     {option.label}
                   </span>
-                  <span className="mt-0.5 block text-xs text-gray-500">{option.hint}</span>
+                  <span className="mt-0.5 block text-[11px] leading-snug text-gray-500 sm:text-xs">
+                    {option.hint}
+                  </span>
                 </button>
               );
             })}

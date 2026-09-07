@@ -178,12 +178,12 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   return (
     <div className="space-y-5">
       <div className="space-y-3">
-        <div className="flex flex-wrap gap-2">
+        <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
           <button
             type="button"
             onClick={() => setSelectedInstruments(new Set())}
             aria-pressed={selectedInstruments.size === 0}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
+            className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
               selectedInstruments.size === 0
                 ? "bg-gray-900 text-white"
                 : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"
@@ -199,7 +199,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
                 type="button"
                 onClick={() => toggleInstrument(name)}
                 aria-pressed={selected}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
                   selected
                     ? "bg-gray-900 text-white"
                     : "bg-white text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
@@ -218,7 +218,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
             type="button"
             onClick={() => cycleSort("pay")}
             aria-pressed={sortKey === "pay"}
-            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
+            className={`inline-flex min-h-10 items-center gap-1 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
               sortKey === "pay"
                 ? "bg-accent text-white"
                 : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"
@@ -230,7 +230,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
             type="button"
             onClick={() => cycleSort("posted")}
             aria-pressed={sortKey === "posted"}
-            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
+            className={`inline-flex min-h-10 items-center gap-1 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
               sortKey === "posted"
                 ? "bg-accent text-white"
                 : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"

@@ -357,7 +357,7 @@ export function ReferenceTracksPlayer({
       ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Reference</p>
           <p className="mt-0.5 text-sm font-semibold text-gray-900 dark:text-white">
             {MODE_LABELS[mode]}
@@ -371,7 +371,7 @@ export function ReferenceTracksPlayer({
 
         {hasAb && (
           <div
-            className="inline-flex max-w-full rounded-full bg-gray-100 p-0.5 dark:bg-gray-800"
+            className="inline-flex w-full max-w-full rounded-full bg-gray-100 p-0.5 dark:bg-gray-800 sm:w-auto"
             role="tablist"
             aria-label="Reference track"
           >
@@ -382,7 +382,7 @@ export function ReferenceTracksPlayer({
                 role="tab"
                 aria-selected={mode === id}
                 onClick={() => void switchMode(id)}
-                className={tabClass(mode === id)}
+                className={`${tabClass(mode === id)} min-h-10 flex-1 sm:min-h-0 sm:flex-none`}
               >
                 {id === "part" ? "Part" : id === "backing" ? "Bed" : "Both"}
               </button>
@@ -485,13 +485,13 @@ export function ReferenceTracksPlayer({
           <div className="mt-3 space-y-2.5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Part</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                 <a
                   href={partSrc}
                   download={partName}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={downloadBtnClass}
+                  className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
                 >
                   <DownloadIcon className="h-3.5 w-3.5" />
                   {hasFixedTempo ? "Download · no click" : "Download"}
@@ -501,7 +501,7 @@ export function ReferenceTracksPlayer({
                     type="button"
                     disabled={mixingKey !== null}
                     onClick={() => void downloadTrackWithClick(partSrc, partName, "part")}
-                    className={downloadBtnClass}
+                    className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
                   >
                     <DownloadIcon className="h-3.5 w-3.5" />
                     {mixingKey === "part" ? "Mixing…" : "Download · with click"}
@@ -512,13 +512,13 @@ export function ReferenceTracksPlayer({
             {backingSrc && (
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Bed</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                   <a
                     href={backingSrc}
                     download={bedName}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={downloadBtnClass}
+                    className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
                   >
                     <DownloadIcon className="h-3.5 w-3.5" />
                     {hasFixedTempo ? "Download · no click" : "Download"}
@@ -528,7 +528,7 @@ export function ReferenceTracksPlayer({
                       type="button"
                       disabled={mixingKey !== null}
                       onClick={() => void downloadTrackWithClick(backingSrc, bedName, "bed")}
-                      className={downloadBtnClass}
+                      className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
                     >
                       <DownloadIcon className="h-3.5 w-3.5" />
                       {mixingKey === "bed" ? "Mixing…" : "Download · with click"}

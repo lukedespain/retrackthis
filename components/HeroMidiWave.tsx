@@ -9,7 +9,7 @@ import {
 /**
  * Three-stage hero matching How it works:
  * 1) MIDI demo → 2) three stacked takes → 3) the chosen take.
- * Mobile stacks stages so each strip stays readable; desktop keeps the side-by-side flow.
+ * Always flows left-to-right (including mobile).
  */
 export function HeroMidiWave() {
   const selected = TAKES[SELECTED_TAKE_INDEX];
@@ -21,21 +21,21 @@ export function HeroMidiWave() {
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(91,75,255,0.05),transparent_70%)]" />
 
-      <div className="relative mx-auto flex max-w-6xl flex-col items-stretch sm:h-52 sm:flex-row">
+      <div className="relative mx-auto flex h-40 max-w-6xl flex-row items-stretch sm:h-52">
         {/* 01 - Post the part (MIDI) */}
-        <div className="relative h-28 min-w-0 overflow-hidden sm:h-auto sm:min-h-0 sm:flex-[1.05]">
+        <div className="relative min-h-0 min-w-0 flex-[1.05] overflow-hidden">
           <div className="hero-midi-track">
             <MidiStrip />
             <MidiStrip />
           </div>
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-10 bg-gradient-to-l from-[var(--fade)] to-transparent sm:w-12" />
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-10 bg-gradient-to-r from-[var(--fade)] to-transparent sm:hidden" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-[var(--fade)] to-transparent sm:w-12" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-6 bg-gradient-to-r from-[var(--fade)] to-transparent sm:w-12" />
         </div>
 
         <StageDivider />
 
         {/* 02 - Musicians submit takes (3 stacked waveforms) */}
-        <div className="relative flex h-36 min-w-0 flex-col justify-center gap-1.5 px-0 py-2.5 sm:h-auto sm:flex-1 sm:gap-2 sm:py-3">
+        <div className="relative flex min-h-0 min-w-0 flex-1 flex-col justify-center gap-1 py-2 sm:gap-2 sm:py-3">
           {TAKES.map((take) => (
             <div
               key={take.id}
@@ -43,8 +43,8 @@ export function HeroMidiWave() {
                 take.selected ? "ring-1 ring-accent/25" : ""
               }`}
             >
-              <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-8 bg-gradient-to-r from-[var(--fade)] to-transparent sm:w-6" />
-              <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-[var(--fade)] to-transparent sm:w-6" />
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-4 bg-gradient-to-r from-[var(--fade)] to-transparent sm:w-6" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-4 bg-gradient-to-l from-[var(--fade)] to-transparent sm:w-6" />
               <div className="hero-wave-track h-full">
                 <WaveStrip
                   samples={take.samples}
@@ -64,9 +64,9 @@ export function HeroMidiWave() {
         <StageDivider />
 
         {/* 03 - Pick your favorite (same shape as selected take) */}
-        <div className="relative h-28 min-w-0 overflow-hidden sm:h-auto sm:min-h-0 sm:flex-[1.05]">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-10 bg-gradient-to-r from-[var(--fade)] to-transparent sm:w-12" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-10 bg-gradient-to-l from-[var(--fade)] to-transparent sm:hidden" />
+        <div className="relative min-h-0 min-w-0 flex-[1.05] overflow-hidden">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-8 bg-gradient-to-r from-[var(--fade)] to-transparent sm:w-12" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-6 bg-gradient-to-l from-[var(--fade)] to-transparent sm:w-12" />
           <div className="hero-wave-track h-full items-center">
             <WaveStrip samples={selected.samples} tone="accent" />
             <WaveStrip samples={selected.samples} tone="accent" />
@@ -79,23 +79,17 @@ export function HeroMidiWave() {
 
 function StageDivider() {
   return (
-    <>
-      <div className="relative z-10 flex h-px w-full shrink-0 items-center px-10 sm:hidden">
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-90" />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-6 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/15 blur-lg" />
-      </div>
-      <div className="relative z-10 hidden w-px shrink-0 items-stretch self-stretch py-5 sm:flex">
-        <div className="hero-divider w-px flex-1 bg-gradient-to-b from-transparent via-accent to-transparent" />
-        <div className="hero-divider-glow pointer-events-none absolute left-1/2 top-1/2 h-32 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/15 blur-lg" />
-      </div>
-    </>
+    <div className="relative z-10 flex w-px shrink-0 items-stretch self-stretch py-4 sm:py-5">
+      <div className="hero-divider w-px flex-1 bg-gradient-to-b from-transparent via-accent to-transparent" />
+      <div className="hero-divider-glow pointer-events-none absolute left-1/2 top-1/2 h-24 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/15 blur-lg sm:h-32 sm:w-6" />
+    </div>
   );
 }
 
 function MidiStrip() {
   return (
     <div
-      className="hero-midi-strip relative h-28 shrink-0 sm:h-52"
+      className="hero-midi-strip relative h-40 shrink-0 sm:h-52"
       style={{ width: STRIP_WIDTH }}
     >
       {MIDI_LANES.map((top) => (

@@ -21,7 +21,7 @@ export function HeroMidiWave() {
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(91,75,255,0.05),transparent_70%)]" />
 
-      <div className="relative mx-auto flex h-40 max-w-6xl flex-row items-stretch sm:h-52">
+      <div className="relative flex h-40 w-full flex-row items-stretch sm:h-52">
         {/* 01 - Post the part (MIDI) */}
         <div className="relative min-h-0 min-w-0 flex-[1.05] overflow-hidden">
           <div className="hero-midi-track">
@@ -127,29 +127,12 @@ function WaveStrip({
 }) {
   const viewH = compact ? 56 : 160;
   const mid = viewH / 2;
-  // Scale amplitudes to fit compact lanes
-  const scale = compact ? 0.32 : 1;
-  const last = samples.length - 1;
+  const maxAmp = compact ? mid - 3 : mid - 8;
+  const n = samples.length;
+  const step = STRIP_WIDTH / n;
+  const barW = Math.max(1.1, step * 0.72);
   const colorClass = tone === "accent" ? "text-accent" : "text-gray-300 dark:text-gray-600";
-
-  const amps = samples.map((a) => a * scale);
-
-  const upper = amps
-    .map((amp, i) => `${(i / last) * STRIP_WIDTH},${mid - amp}`)
-    .join(" ");
-  const lower = amps
-    .map((amp, i) => `${(i / last) * STRIP_WIDTH},${mid + amp}`)
-    .join(" ");
-
-  const area = [
-    `M 0,${mid}`,
-    ...amps.map((amp, i) => `L ${(i / last) * STRIP_WIDTH},${mid - amp}`),
-    `L ${STRIP_WIDTH},${mid}`,
-    ...[...amps]
-      .reverse()
-      .map((amp, i) => `L ${((last - i) / last) * STRIP_WIDTH},${mid + amp}`),
-    "Z",
-  ].join(" ");
+  const fillOpacity = tone === "accent" ? 0.88 : 0.7;
 
   return (
     <svg
@@ -164,25 +147,27 @@ function WaveStrip({
         x2={STRIP_WIDTH}
         y2={mid}
         stroke="currentColor"
-        strokeOpacity={tone === "accent" ? 0.12 : 0.2}
+        strokeOpacity={tone === "accent" ? 0.1 : 0.16}
         strokeWidth="1"
       />
-      <path d={area} fill="currentColor" fillOpacity={tone === "accent" ? 0.2 : 0.35} />
-      <polyline
-        points={upper}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={compact ? 1.25 : 1.6}
-        strokeLinejoin="round"
-      />
-      <polyline
-        points={lower}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={compact ? 1.25 : 1.6}
-        strokeLinejoin="round"
-        opacity="0.9"
-      />
+      {samples.map((amp, i) => {
+        // Slight top/bottom asymmetry reads more like real audio, not a perfect mirror.
+        const jitter = ((i * 17 + (tone === "accent" ? 3 : 9)) % 11) / 11;
+        const top = Math.max(1.2, amp * maxAmp * (0.88 + jitter * 0.22));
+        const bot = Math.max(1.2, amp * maxAmp * (0.78 + (1 - jitter) * 0.28));
+        return (
+          <rect
+            key={i}
+            x={i * step + (step - barW) / 2}
+            y={mid - top}
+            width={barW}
+            height={top + bot}
+            fill="currentColor"
+            fillOpacity={fillOpacity}
+            rx={0.6}
+          />
+        );
+      })}
     </svg>
   );
 }

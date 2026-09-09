@@ -33,35 +33,92 @@ export const MIDI_NOTES: MidiNote[] = [
   { id: "n17", x: 760, lane: 44, w: 22, opacity: 0.82 },
 ];
 
-/** Take A - denser, punchier peaks (gray / not selected) */
-export const WAVE_TAKE_A: number[] = [
-  6, 8, 10, 14, 22, 38, 55, 48, 28, 12, 8, 6, 9, 16, 30, 50, 64, 42, 18, 9, 7, 11, 20, 34, 28, 14,
-  8, 6, 10, 18, 40, 58, 52, 26, 12, 8, 7, 12, 24, 44, 60, 46, 22, 10, 7, 6, 9, 15, 26, 36, 30, 16,
-  9, 7, 8, 14, 28, 48, 62, 50, 24, 11, 8, 6, 10, 19, 32, 42, 35, 18, 10, 7, 9, 17, 36, 54, 44, 20,
-  10, 7, 6, 11, 21, 33, 27, 13, 8, 6, 9, 16, 29, 46, 56, 38, 16, 9, 7, 8, 14, 25, 40, 52, 34, 14,
-  8, 6, 10, 18, 31, 45, 38, 18, 9, 7, 8, 13, 22, 8,
-];
+/** Deterministic 0–1 noise (seamless-friendly). */
+function hash01(i: number, seed: number) {
+  const x = Math.sin(i * 127.1 + seed * 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
 
 /**
- * Take B - selected winner (purple). Same shape used on the right “pick” column.
- * Smoother, more sustained peaks.
+ * Build a denser DAW-style peak train: irregular transients, quieter gaps,
+ * slight phrase shape — not a smooth sine blob.
  */
-export const WAVE_TAKE_B: number[] = [
-  8, 10, 12, 9, 14, 18, 22, 16, 11, 8, 6, 9, 28, 46, 58, 52, 36, 20, 12, 8, 7, 10, 15, 24, 40, 62,
-  70, 54, 30, 14, 9, 7, 8, 12, 19, 34, 48, 44, 26, 13, 8, 6, 5, 8, 14, 21, 18, 12, 9, 11, 32, 55,
-  66, 50, 28, 15, 10, 8, 7, 9, 16, 27, 42, 38, 22, 12, 8, 6, 10, 17, 25, 20, 13, 9, 7, 11, 36, 60,
-  68, 48, 24, 12, 8, 6, 7, 13, 23, 31, 26, 15, 10, 8, 9, 14, 29, 50, 64, 56, 33, 16, 10, 7, 6, 8,
-  12, 18, 15, 10, 8, 11, 20, 35, 45, 40, 22, 12, 8, 6, 9, 15, 8, 10, 14, 22, 38, 52, 44, 24, 12, 8,
-];
+function makeWavePeaks(
+  seed: number,
+  {
+    count = 220,
+    density = 0.72,
+    punch = 0.55,
+    sustain = 0.35,
+    floor = 0.04,
+  }: {
+    count?: number;
+    density?: number;
+    punch?: number;
+    sustain?: number;
+    floor?: number;
+  } = {}
+): number[] {
+  const peaks: number[] = [];
+  let energy = 0.2;
 
-/** Take C - sparser, quieter with occasional spikes (gray / not selected) */
-export const WAVE_TAKE_C: number[] = [
-  5, 6, 7, 6, 8, 10, 9, 7, 6, 5, 12, 28, 44, 36, 14, 7, 5, 6, 8, 11, 10, 7, 5, 6, 18, 40, 52, 30,
-  12, 6, 5, 7, 9, 8, 6, 5, 7, 14, 32, 48, 58, 34, 13, 6, 5, 6, 8, 10, 9, 6, 5, 11, 26, 42, 38, 16,
-  7, 5, 6, 8, 12, 20, 16, 8, 5, 6, 7, 9, 22, 46, 54, 28, 10, 6, 5, 7, 10, 14, 11, 7, 5, 6, 15, 34,
-  50, 40, 15, 7, 5, 6, 8, 9, 7, 5, 6, 10, 24, 38, 32, 12, 6, 5, 7, 11, 18, 14, 8, 5, 6, 9, 16, 30,
-  44, 36, 14, 7, 5, 6, 8, 10, 7,
-];
+  for (let i = 0; i < count; i++) {
+    const t = i / count;
+    // Soft phrase lobes so the strip feels musical, not flat noise.
+    const phrase =
+      0.45 +
+      0.35 * Math.sin(t * Math.PI * 2.2 + seed) +
+      0.2 * Math.sin(t * Math.PI * 5.1 + seed * 1.7);
+
+    const n1 = hash01(i, seed);
+    const n2 = hash01(i, seed + 17);
+    const n3 = hash01(i, seed + 41);
+
+    // Occasional hits / rests like a real take.
+    const hit = n1 < density * (0.55 + 0.45 * phrase);
+    if (hit) {
+      energy = Math.min(1, energy * (0.4 + sustain) + n2 * punch + 0.15);
+    } else {
+      energy *= 0.72 + n3 * 0.12;
+    }
+
+    // High-frequency jitter so bars don’t look stepped-smooth.
+    const grain = (n2 - 0.5) * 0.22;
+    const amp = Math.max(floor, Math.min(1, energy * phrase + grain));
+    peaks.push(amp);
+  }
+
+  // Blend ends so the scrolling loop doesn’t pop.
+  const blend = Math.min(18, Math.floor(count / 10));
+  for (let i = 0; i < blend; i++) {
+    const w = i / blend;
+    peaks[i] = peaks[i] * w + peaks[count - blend + i] * (1 - w);
+  }
+
+  return peaks;
+}
+
+/** Peak heights 0–1. Drawn as vertical DAW bars in the hero. */
+export const WAVE_TAKE_A = makeWavePeaks(3.1, {
+  density: 0.78,
+  punch: 0.72,
+  sustain: 0.28,
+  floor: 0.03,
+});
+
+export const WAVE_TAKE_B = makeWavePeaks(7.4, {
+  density: 0.7,
+  punch: 0.58,
+  sustain: 0.42,
+  floor: 0.045,
+});
+
+export const WAVE_TAKE_C = makeWavePeaks(11.9, {
+  density: 0.58,
+  punch: 0.8,
+  sustain: 0.22,
+  floor: 0.025,
+});
 
 /** Index in TAKES that is the purple “chosen” take (middle of the stack). */
 export const SELECTED_TAKE_INDEX = 1;

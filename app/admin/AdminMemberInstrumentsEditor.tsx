@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { InstrumentMultiSelect } from "@/components/InstrumentMultiSelect";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -33,6 +33,19 @@ export function AdminMemberInstrumentsEditor({ member, onSaved, onClose }: Props
 
   const dirty = !sameIds(draft, initialIds);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !saving) onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose, saving]);
+
   async function save() {
     setSaving(true);
     setError(null);
@@ -53,51 +66,60 @@ export function AdminMemberInstrumentsEditor({ member, onSaved, onClose }: Props
   }
 
   return (
-    <div className="rounded-2xl border border-accent/20 bg-accent-muted/40 p-4 dark:bg-accent/10">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            Edit instruments · {member.name}
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      role="presentation"
+      onClick={() => {
+        if (!saving) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-edit-instruments-title"
+        className="flex max-h-[min(40rem,calc(100dvh-2rem))] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="shrink-0 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <h2
+            id="admin-edit-instruments-title"
+            className="text-lg font-semibold text-gray-900 dark:text-white"
+          >
+            Edit instruments
+          </h2>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+            {member.name} · {member.email}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{member.email}</p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            These are profile instruments. Job alert emails use this list when alerts are on.
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            Profile instruments drive job-alert emails when alerts are on.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white"
-        >
-          Close
-        </button>
-      </div>
 
-      <div className="mt-4">
-        <InstrumentMultiSelect
-          label="Instruments they play"
-          hint="Expand a category and pick each part they can record."
-          selectedIds={draft}
-          onChange={setDraft}
-          disabled={saving}
-          allowCustom
-          triggerLabel="Select instruments"
-        />
-      </div>
-
-      {error && (
-        <div className="mt-3">
-          <Alert variant="error">{error}</Alert>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          <InstrumentMultiSelect
+            label="Instruments they play"
+            hint="Expand a category and pick each part they can record."
+            selectedIds={draft}
+            onChange={setDraft}
+            disabled={saving}
+            allowCustom
+            triggerLabel="Select instruments"
+          />
+          {error && (
+            <div className="mt-3">
+              <Alert variant="error">{error}</Alert>
+            </div>
+          )}
         </div>
-      )}
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button type="button" size="sm" disabled={!dirty || saving} onClick={() => void save()}>
-          {saving ? "Saving…" : "Save instruments"}
-        </Button>
-        <Button type="button" size="sm" variant="ghost" disabled={saving} onClick={onClose}>
-          Cancel
-        </Button>
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 px-5 py-4 sm:flex-row sm:justify-end dark:border-gray-800">
+          <Button type="button" size="sm" variant="ghost" disabled={saving} onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" size="sm" disabled={!dirty || saving} onClick={() => void save()}>
+            {saving ? "Saving…" : "Save instruments"}
+          </Button>
+        </div>
       </div>
     </div>
   );

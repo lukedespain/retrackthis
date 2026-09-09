@@ -365,7 +365,7 @@ function AdminPageInner() {
                           }
                           className="mt-1.5 text-xs font-medium text-accent hover:underline"
                         >
-                          {editingMemberId === m.id ? "Hide" : "Edit instruments"}
+                          {editingMemberId === m.id ? "Editing…" : "Edit instruments"}
                         </button>
                       </td>
                     </tr>

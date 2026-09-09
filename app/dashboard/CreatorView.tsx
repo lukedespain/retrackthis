@@ -343,6 +343,8 @@ function CreatorJobCard({
                 <TakesList
                   jobId={job.id}
                   jobOpen={job.status === "OPEN"}
+                  jobBpm={job.bpm}
+                  jobBackingUrl={job.backingFileUrl}
                   onAwarded={onChanged}
                   readOnly={readOnly}
                 />
@@ -358,11 +360,15 @@ function CreatorJobCard({
 function TakesList({
   jobId,
   jobOpen,
+  jobBpm = null,
+  jobBackingUrl = null,
   onAwarded,
   readOnly = false,
 }: {
   jobId: string;
   jobOpen: boolean;
+  jobBpm?: number | null;
+  jobBackingUrl?: string | null;
   onAwarded: () => void;
   readOnly?: boolean;
 }) {
@@ -435,7 +441,7 @@ function TakesList({
     <div className="space-y-3">
       {jobOpen && (
         <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
-          {takes.length} {takes.length === 1 ? "take" : "takes"}
+          {takes.length} {takes.length === 1 ? "submission" : "submissions"}
         </p>
       )}
       {visibleTakes.map((take) => (
@@ -443,6 +449,8 @@ function TakesList({
           key={take.id}
           take={take}
           jobOpen={jobOpen}
+          jobBpm={jobBpm}
+          jobBackingUrl={jobBackingUrl}
           selecting={selectingId === take.id}
           disabled={selectingId !== null || readOnly}
           readOnly={readOnly}
@@ -457,6 +465,8 @@ function TakesList({
 function TakeCard({
   take,
   jobOpen,
+  jobBpm = null,
+  jobBackingUrl = null,
   selecting,
   disabled,
   readOnly = false,
@@ -464,6 +474,8 @@ function TakeCard({
 }: {
   take: Take;
   jobOpen: boolean;
+  jobBpm?: number | null;
+  jobBackingUrl?: string | null;
   selecting: boolean;
   disabled: boolean;
   readOnly?: boolean;
@@ -480,45 +492,52 @@ function TakeCard({
         isWinner ? "ring-2 ring-accent/20 bg-accent-muted/30" : ""
       }`}
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-gray-900">{take.musician.name}</span>
-            {isWinner && <Badge status="AWARDED" />}
-            {audioCount > 1 && (
-              <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-                {audioCount} takes
-              </span>
-            )}
-            {hasMidi && (
-              <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700 ring-1 ring-inset ring-violet-100">
-                MIDI included
-              </span>
-            )}
-          </div>
-          {take.note && (
-            <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{take.note}</p>
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-gray-900">{take.musician.name}</span>
+          {isWinner && <Badge status="AWARDED" />}
+          {audioCount > 1 && (
+            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+              {audioCount} takes
+            </span>
           )}
-          <div className="mt-3">
-            <TakeSubmissionFiles
-              files={take.files}
-              fallbackAudioUrl={take.audioFileUrl}
-              allowDownload={isWinner}
-              collapsible={audioCount > 1}
-            />
-          </div>
+          {hasMidi && (
+            <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700 ring-1 ring-inset ring-violet-100">
+              MIDI included
+            </span>
+          )}
         </div>
+        {take.note && (
+          <p className="text-sm leading-relaxed text-gray-500">{take.note}</p>
+        )}
+        <TakeSubmissionFiles
+          files={take.files}
+          fallbackAudioUrl={take.audioFileUrl}
+          allowDownload={isWinner}
+          collapsible={audioCount > 1}
+          bpm={jobBpm}
+          backingSrc={jobBackingUrl}
+        />
         {jobOpen && !isWinner && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onSelect}
-            disabled={disabled}
-            title={readOnly ? "Preview only — awarding stays with the producer" : undefined}
-            className="w-full shrink-0 sm:w-auto"
-          >
-            {readOnly ? "Choose this one" : selecting ? "Selecting…" : "Choose this one"}
-          </Button>
+          <div className="flex flex-col items-center gap-2 border-t border-gray-100 pt-4">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onSelect}
+              disabled={disabled}
+              title={readOnly ? "Preview only — awarding stays with the producer" : undefined}
+              className="w-full sm:w-auto"
+            >
+              {readOnly
+                ? "Choose this submission"
+                : selecting
+                  ? "Selecting…"
+                  : "Choose this submission"}
+            </Button>
+            <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
+              You get every take the submission included.
+            </p>
+          </div>
         )}
       </div>
     </Card>

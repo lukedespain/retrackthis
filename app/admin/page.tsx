@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminJobsPanel, type AdminJobRow } from "./AdminJobsPanel";
+import { AdminMemberNotifyEditor, alertSummary } from "./AdminMemberNotifyEditor";
 
 type Tab = "members" | "jobs" | "instruments" | "income";
 type Period = "7d" | "30d" | "90d" | "all";
@@ -30,6 +31,10 @@ type Member = {
   takesSubmitted: number;
   jobsWon: number;
   instruments: Array<{ id: string; label: string }>;
+  notifyJobAlerts: boolean;
+  notifyInstruments: string[];
+  notifyTakeSubmitted: boolean;
+  notifyTakeOutcome: boolean;
 };
 
 type InstrumentRow = {
@@ -103,6 +108,7 @@ function AdminPageInner() {
   const [period, setPeriod] = useState<Period>("30d");
   const [members, setMembers] = useState<Member[] | null>(null);
   const [memberQuery, setMemberQuery] = useState("");
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [adminJobs, setAdminJobs] = useState<AdminJobRow[] | null>(null);
   const [jobsReloadToken, setJobsReloadToken] = useState(0);
   const [instruments, setInstruments] = useState<{
@@ -311,7 +317,8 @@ function AdminPageInner() {
                     <th className="px-4 py-3 font-medium">Posted</th>
                     <th className="px-4 py-3 font-medium">Submitted</th>
                     <th className="px-4 py-3 font-medium">Won</th>
-                    <th className="px-4 py-3 font-medium">Instruments</th>
+                    <th className="px-4 py-3 font-medium">Profile instruments</th>
+                    <th className="px-4 py-3 font-medium">Job alerts</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -357,11 +364,48 @@ function AdminPageInner() {
                           </div>
                         )}
                       </td>
+                      <td className="px-4 py-3">
+                        <div className="text-xs text-gray-700 dark:text-gray-300">
+                          {alertSummary(m)}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditingMemberId((id) => (id === m.id ? null : m.id))
+                          }
+                          className="mt-1.5 text-xs font-medium text-accent hover:underline"
+                        >
+                          {editingMemberId === m.id ? "Hide" : "Edit alerts"}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            {editingMemberId &&
+              (() => {
+                const editing = members.find((m) => m.id === editingMemberId);
+                if (!editing) return null;
+                return (
+                  <AdminMemberNotifyEditor
+                    key={editing.id}
+                    member={editing}
+                    onClose={() => setEditingMemberId(null)}
+                    onSaved={(next) => {
+                      setMembers((prev) =>
+                        prev
+                          ? prev.map((m) =>
+                              m.id === editing.id ? { ...m, ...next } : m
+                            )
+                          : prev
+                      );
+                      setEditingMemberId(null);
+                    }}
+                  />
+                );
+              })()}
           </section>
         )}
 

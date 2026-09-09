@@ -73,7 +73,7 @@ export function NotificationSettings() {
         <div className="mt-4 space-y-4">
           <PrefRow
             title="New job alerts"
-            description="Email me when a creator posts a gig that matches my selected instruments."
+            description="Email me when a creator posts a gig that matches my selected instruments. If I haven’t selected any instruments, I won’t get job alerts."
             checked={prefs.notifyJobAlerts}
             disabled={saving}
             onChange={(checked) => void save({ ...prefs, notifyJobAlerts: checked })}

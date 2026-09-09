@@ -22,6 +22,9 @@ type InstrumentMultiSelectProps = {
   triggerLabel?: string;
   chipLabel?: (id: string) => string;
   allowCustom?: boolean;
+  /** Inline expandable panel (modals) instead of a dropdown. */
+  variant?: "dropdown" | "panel";
+  className?: string;
 };
 
 export function InstrumentMultiSelect({
@@ -37,8 +40,11 @@ export function InstrumentMultiSelect({
   triggerLabel = "Select instrument(s)",
   chipLabel = displayLabelForInstrumentId,
   allowCustom = true,
+  variant = "dropdown",
+  className = "",
 }: InstrumentMultiSelectProps) {
-  const [open, setOpen] = useState(false);
+  const panel = variant === "panel";
+  const [open, setOpen] = useState(panel);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -59,7 +65,7 @@ export function InstrumentMultiSelect({
   }, [selectedIds]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || panel) return;
 
     function onPointerDown(event: PointerEvent) {
       if (!containerRef.current?.contains(event.target as Node)) {
@@ -80,7 +86,7 @@ export function InstrumentMultiSelect({
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, panel]);
 
   useEffect(() => {
     if (!open) return;
@@ -136,29 +142,31 @@ export function InstrumentMultiSelect({
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={`relative ${panel ? "flex min-h-0 flex-1 flex-col" : ""} ${className}`}>
       <label id={`${listId}-label`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
         {label}
       </label>
       {hint && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
 
-      <button
-        ref={triggerRef}
-        type="button"
-        disabled={disabled}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-labelledby={`${listId}-label`}
-        onClick={() => setOpen((value) => !value)}
-        className={`mt-1.5 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border bg-white px-3.5 py-2.5 text-left text-sm transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:bg-gray-950 dark:disabled:bg-gray-900 ${
-          open
-            ? "border-accent ring-2 ring-accent/10"
-            : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
-        }`}
-      >
-        <span className="text-gray-400 dark:text-gray-500">{triggerLabel}</span>
-        <Chevron open={open} />
-      </button>
+      {!panel && (
+        <button
+          ref={triggerRef}
+          type="button"
+          disabled={disabled}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-labelledby={`${listId}-label`}
+          onClick={() => setOpen((value) => !value)}
+          className={`mt-1.5 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border bg-white px-3.5 py-2.5 text-left text-sm transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:bg-gray-950 dark:disabled:bg-gray-900 ${
+            open
+              ? "border-accent ring-2 ring-accent/10"
+              : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+          }`}
+        >
+          <span className="text-gray-400 dark:text-gray-500">{triggerLabel}</span>
+          <Chevron open={open} />
+        </button>
+      )}
 
       {mode === "multi" && selectedIds.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -195,7 +203,11 @@ export function InstrumentMultiSelect({
           id={listId}
           aria-labelledby={`${listId}-label`}
           aria-multiselectable={mode === "multi"}
-          className="absolute z-50 mt-1.5 max-h-[min(420px,70vh)] w-full overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg shadow-gray-900/10 dark:border-gray-700 dark:bg-gray-900 dark:shadow-black/40"
+          className={
+            panel
+              ? "mt-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 dark:border-gray-700 dark:bg-gray-950"
+              : "absolute z-50 mt-1.5 max-h-[min(420px,70vh)] w-full overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg shadow-gray-900/10 dark:border-gray-700 dark:bg-gray-900 dark:shadow-black/40"
+          }
         >
           {INSTRUMENT_GROUPS.map((group) => {
             const expanded = expandedGroups.has(group.id);

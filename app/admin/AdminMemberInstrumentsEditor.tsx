@@ -67,7 +67,7 @@ export function AdminMemberInstrumentsEditor({ member, onSaved, onClose }: Props
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center sm:p-6"
       role="presentation"
       onClick={() => {
         if (!saving) onClose();
@@ -77,10 +77,10 @@ export function AdminMemberInstrumentsEditor({ member, onSaved, onClose }: Props
         role="dialog"
         aria-modal="true"
         aria-labelledby="admin-edit-instruments-title"
-        className="flex max-h-[min(40rem,calc(100dvh-2rem))] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900"
+        className="flex h-[min(44rem,calc(100dvh-1.5rem))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+        <div className="shrink-0 border-b border-gray-100 px-5 py-4 sm:px-6 dark:border-gray-800">
           <h2
             id="admin-edit-instruments-title"
             className="text-lg font-semibold text-gray-900 dark:text-white"
@@ -91,28 +91,29 @@ export function AdminMemberInstrumentsEditor({ member, onSaved, onClose }: Props
             {member.name} · {member.email}
           </p>
           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Profile instruments drive job-alert emails when alerts are on.
+            Job-alert emails only go out when alerts are on and at least one instrument is selected.
+            Leave empty for producer-only members.
           </p>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex min-h-0 flex-1 flex-col px-5 py-4 sm:px-6">
           <InstrumentMultiSelect
+            variant="panel"
             label="Instruments they play"
             hint="Expand a category and pick each part they can record."
             selectedIds={draft}
             onChange={setDraft}
             disabled={saving}
             allowCustom
-            triggerLabel="Select instruments"
           />
           {error && (
-            <div className="mt-3">
+            <div className="mt-3 shrink-0">
               <Alert variant="error">{error}</Alert>
             </div>
           )}
         </div>
 
-        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 px-5 py-4 sm:flex-row sm:justify-end dark:border-gray-800">
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6 dark:border-gray-800">
           <Button type="button" size="sm" variant="ghost" disabled={saving} onClick={onClose}>
             Cancel
           </Button>

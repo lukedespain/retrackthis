@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { EditJobForm } from "@/app/dashboard/EditJobForm";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { Badge } from "@/components/ui/Badge";
@@ -183,6 +184,12 @@ export function AdminJobsPanel({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap justify-end gap-2">
+                        <Link
+                          href={`/admin/preview/producer/${job.creator.id}?job=${job.id}`}
+                          className="inline-flex min-h-10 items-center justify-center rounded-full px-3.5 py-2 text-sm font-medium text-gray-600 transition-all duration-150 ease-out hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:py-1.5 sm:text-xs dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                        >
+                          Preview as producer
+                        </Link>
                         <Button
                           size="sm"
                           variant={listeningId === job.id ? "secondary" : "ghost"}

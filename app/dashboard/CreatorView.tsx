@@ -20,29 +20,47 @@ export function CreatorView({
   hideHeading = false,
   hidePostButton = false,
   onPostClosed,
+  readOnly = false,
+  jobsUrl = "/api/jobs?mine=true",
+  initialExpandedJobId = null,
 }: {
   initialShowPost?: boolean;
   hideHeading?: boolean;
   /** When the hub toggle already has Post a job, hide the inline button. */
   hidePostButton?: boolean;
   onPostClosed?: () => void;
+  /** Admin preview: same UI, no edit/cancel/award. */
+  readOnly?: boolean;
+  /** Fetch URL for jobs. Admin preview returns `{ jobs }`; mine=true returns an array. */
+  jobsUrl?: string;
+  initialExpandedJobId?: string | null;
 }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
-  const [showPostForm, setShowPostForm] = useState(initialShowPost);
-  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [showPostForm, setShowPostForm] = useState(initialShowPost && !readOnly);
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(initialExpandedJobId);
 
   async function loadJobs() {
-    const res = await fetch(`/api/jobs?mine=true`);
-    setJobs(await res.json());
+    const res = await fetch(jobsUrl);
+    const body = await res.json().catch(() => null);
+    if (!res.ok) {
+      setJobs([]);
+      return;
+    }
+    const list = Array.isArray(body) ? body : Array.isArray(body?.jobs) ? body.jobs : [];
+    setJobs(list);
   }
 
   useEffect(() => {
     loadJobs();
-  }, []);
+  }, [jobsUrl]);
 
   useEffect(() => {
-    if (initialShowPost) setShowPostForm(true);
-  }, [initialShowPost]);
+    if (initialExpandedJobId) setExpandedJobId(initialExpandedJobId);
+  }, [initialExpandedJobId]);
+
+  useEffect(() => {
+    if (initialShowPost && !readOnly) setShowPostForm(true);
+  }, [initialShowPost, readOnly]);
 
   function closePostForm() {
     setShowPostForm(false);
@@ -57,7 +75,7 @@ export function CreatorView({
             <h2 className="text-lg font-semibold text-gray-900">My jobs</h2>
             <p className="mt-0.5 text-sm text-gray-500">Manage your posted gigs and review takes</p>
           </div>
-          {!showPostForm && !hidePostButton && (
+          {!showPostForm && !hidePostButton && !readOnly && (
             <Button onClick={() => setShowPostForm(true)} size="sm" className="w-full sm:w-auto">
               Post a job
             </Button>
@@ -65,7 +83,7 @@ export function CreatorView({
         </div>
       )}
 
-      {hideHeading && !showPostForm && !hidePostButton && (
+      {hideHeading && !showPostForm && !hidePostButton && !readOnly && (
         <div className="mb-6 flex justify-end sm:mb-8">
           <Button onClick={() => setShowPostForm(true)} size="sm" className="w-full sm:w-auto">
             Post a job
@@ -73,7 +91,7 @@ export function CreatorView({
         </div>
       )}
 
-      {showPostForm && (
+      {showPostForm && !readOnly && (
         <div className={hideHeading ? "mb-6 sm:mb-8" : "mt-6 sm:mt-8"}>
           <PostJobForm
             onCancel={closePostForm}
@@ -96,9 +114,11 @@ export function CreatorView({
             title="No jobs yet"
             description="Post your first gig to start receiving takes from musicians."
             action={
-              <Button onClick={() => setShowPostForm(true)} size="sm">
-                Post a job
-              </Button>
+              readOnly ? undefined : (
+                <Button onClick={() => setShowPostForm(true)} size="sm">
+                  Post a job
+                </Button>
+              )
             }
           />
         )}
@@ -109,6 +129,7 @@ export function CreatorView({
             expanded={expandedJobId === job.id}
             onToggle={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
             onChanged={loadJobs}
+            readOnly={readOnly}
           />
         ))}
       </div>
@@ -121,11 +142,13 @@ function CreatorJobCard({
   expanded,
   onToggle,
   onChanged,
+  readOnly = false,
 }: {
   job: Job;
   expanded: boolean;
   onToggle: () => void;
   onChanged: () => void;
+  readOnly?: boolean;
 }) {
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
@@ -136,6 +159,7 @@ function CreatorJobCard({
 
   async function cancelJob(e: React.MouseEvent) {
     e.stopPropagation();
+    if (readOnly) return;
     setCancelling(true);
     setCancelError(null);
     try {
@@ -154,6 +178,7 @@ function CreatorJobCard({
 
   function startEdit(e?: React.MouseEvent) {
     e?.stopPropagation();
+    if (readOnly) return;
     setEditing(true);
     if (!expanded) onToggle();
   }
@@ -185,7 +210,7 @@ function CreatorJobCard({
           </div>
         </button>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:shrink-0">
-          {job.status === "OPEN" && (
+          {job.status === "OPEN" && !readOnly && (
             <>
               <Button
                 variant="secondary"
@@ -245,11 +270,13 @@ function CreatorJobCard({
                 : null}
               .
             </p>
-            <div className="mt-3">
-              <Button size="sm" onClick={() => startEdit()}>
-                Edit job
-              </Button>
-            </div>
+            {!readOnly && (
+              <div className="mt-3">
+                <Button size="sm" onClick={() => startEdit()}>
+                  Edit job
+                </Button>
+              </div>
+            )}
           </Alert>
         </div>
       )}
@@ -276,7 +303,7 @@ function CreatorJobCard({
       >
         <div className="overflow-hidden">
           <div className="border-t border-gray-100 bg-surface px-4 py-4 sm:px-6 sm:py-5">
-            {editing ? (
+            {editing && !readOnly ? (
               <EditJobForm
                 job={job}
                 onCancel={() => setEditing(false)}
@@ -300,7 +327,7 @@ function CreatorJobCard({
                     bpm={job.bpm}
                     allowDownload
                   />
-                  {!job.backingFileUrl && job.status === "OPEN" ? (
+                  {!job.backingFileUrl && job.status === "OPEN" && !readOnly ? (
                     <p className="text-sm text-amber-700 dark:text-amber-400">
                       No background track yet.{" "}
                       <button
@@ -313,7 +340,12 @@ function CreatorJobCard({
                     </p>
                   ) : null}
                 </div>
-                <TakesList jobId={job.id} jobOpen={job.status === "OPEN"} onAwarded={onChanged} />
+                <TakesList
+                  jobId={job.id}
+                  jobOpen={job.status === "OPEN"}
+                  onAwarded={onChanged}
+                  readOnly={readOnly}
+                />
               </>
             )}
           </div>
@@ -327,10 +359,12 @@ function TakesList({
   jobId,
   jobOpen,
   onAwarded,
+  readOnly = false,
 }: {
   jobId: string;
   jobOpen: boolean;
   onAwarded: () => void;
+  readOnly?: boolean;
 }) {
   const [takes, setTakes] = useState<Take[] | null>(null);
   const [selectingId, setSelectingId] = useState<string | null>(null);
@@ -346,6 +380,7 @@ function TakesList({
   }, [jobId]);
 
   async function selectWinner(takeId: string) {
+    if (readOnly) return;
     setSelectingId(takeId);
     setError(null);
     try {
@@ -409,7 +444,8 @@ function TakesList({
           take={take}
           jobOpen={jobOpen}
           selecting={selectingId === take.id}
-          disabled={selectingId !== null}
+          disabled={selectingId !== null || readOnly}
+          readOnly={readOnly}
           onSelect={() => selectWinner(take.id)}
         />
       ))}
@@ -423,12 +459,14 @@ function TakeCard({
   jobOpen,
   selecting,
   disabled,
+  readOnly = false,
   onSelect,
 }: {
   take: Take;
   jobOpen: boolean;
   selecting: boolean;
   disabled: boolean;
+  readOnly?: boolean;
   onSelect: () => void;
 }) {
   const isWinner = take.isWinner;
@@ -476,9 +514,10 @@ function TakeCard({
             size="sm"
             onClick={onSelect}
             disabled={disabled}
+            title={readOnly ? "Preview only — awarding stays with the producer" : undefined}
             className="w-full shrink-0 sm:w-auto"
           >
-            {selecting ? "Selecting…" : "Choose this one"}
+            {readOnly ? "Choose this one" : selecting ? "Selecting…" : "Choose this one"}
           </Button>
         )}
       </div>

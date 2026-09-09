@@ -13,8 +13,6 @@ import { emojiForInstrument } from "@/lib/instruments";
 import type { Job } from "@/lib/types";
 import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 
-type SortKey = "pay" | "posted";
-type SortDir = "asc" | "desc";
 type ConnectStatus = "none" | "pending" | "ready";
 type MyTakeSummary = { jobId: string; audioFileUrl: string; files?: import("@/lib/takeFiles").TakeFileRecord[] };
 
@@ -28,8 +26,6 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [selectedInstruments, setSelectedInstruments] = useState<Set<string>>(new Set());
-  const [sortKey, setSortKey] = useState<SortKey>("posted");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [myTakesByJob, setMyTakesByJob] = useState<Record<string, MyTakeSummary>>({});
   const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(null);
   const [payoutModalOpen, setPayoutModalOpen] = useState(false);
@@ -191,14 +187,11 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
         ? [...jobs]
         : jobs.filter((job) => selectedInstruments.has(job.instrument));
 
-    filtered.sort((a, b) => {
-      const aVal = sortKey === "pay" ? a.priceCents : new Date(a.createdAt).getTime();
-      const bVal = sortKey === "pay" ? b.priceCents : new Date(b.createdAt).getTime();
-      return sortDir === "desc" ? bVal - aVal : aVal - bVal;
-    });
+    // Newest first until sort UI returns.
+    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return filtered;
-  }, [jobs, selectedInstruments, sortKey, sortDir]);
+  }, [jobs, selectedInstruments]);
 
   function toggleInstrument(name: string) {
     setSelectedInstruments((prev) => {
@@ -207,15 +200,6 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
       else next.add(name);
       return next;
     });
-  }
-
-  function cycleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((dir) => (dir === "desc" ? "asc" : "desc"));
-      return;
-    }
-    setSortKey(key);
-    setSortDir("desc");
   }
 
   if (jobs === null) {
@@ -249,79 +233,40 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
     );
   }
 
-  const payLabel =
-    sortKey === "pay"
-      ? sortDir === "desc"
-        ? "Pay · high → low"
-        : "Pay · low → high"
-      : "Pay";
-  const dateLabel =
-    sortKey === "posted" ? (sortDir === "desc" ? "Newest" : "Oldest") : "Date";
-
   return (
     <div className="space-y-5">
-      <div className="space-y-3">
-        <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-          <button
-            type="button"
-            onClick={() => setSelectedInstruments(new Set())}
-            aria-pressed={selectedInstruments.size === 0}
-            className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
-              selectedInstruments.size === 0
-                ? "bg-gray-900 text-white"
-                : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"
-            }`}
-          >
-            All
-          </button>
-          {instruments.map((name) => {
-            const selected = selectedInstruments.has(name);
-            return (
-              <button
-                key={name}
-                type="button"
-                onClick={() => toggleInstrument(name)}
-                aria-pressed={selected}
-                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
-                  selected
-                    ? "bg-gray-900 text-white"
-                    : "bg-white text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <span aria-hidden="true">{emojiForInstrument(name)}</span>
-                <span>{name}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium uppercase tracking-wider text-gray-400">Sort</span>
-          <button
-            type="button"
-            onClick={() => cycleSort("pay")}
-            aria-pressed={sortKey === "pay"}
-            className={`inline-flex min-h-10 items-center gap-1 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
-              sortKey === "pay"
-                ? "bg-accent text-white"
-                : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"
-            }`}
-          >
-            {payLabel}
-          </button>
-          <button
-            type="button"
-            onClick={() => cycleSort("posted")}
-            aria-pressed={sortKey === "posted"}
-            className={`inline-flex min-h-10 items-center gap-1 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
-              sortKey === "posted"
-                ? "bg-accent text-white"
-                : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"
-            }`}
-          >
-            {dateLabel}
-          </button>
-        </div>
+      <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+        <button
+          type="button"
+          onClick={() => setSelectedInstruments(new Set())}
+          aria-pressed={selectedInstruments.size === 0}
+          className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
+            selectedInstruments.size === 0
+              ? "bg-gray-900 text-white"
+              : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"
+          }`}
+        >
+          All
+        </button>
+        {instruments.map((name) => {
+          const selected = selectedInstruments.has(name);
+          return (
+            <button
+              key={name}
+              type="button"
+              onClick={() => toggleInstrument(name)}
+              aria-pressed={selected}
+              className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
+                selected
+                  ? "bg-gray-900 text-white"
+                  : "bg-white text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              <span aria-hidden="true">{emojiForInstrument(name)}</span>
+              <span>{name}</span>
+            </button>
+          );
+        })}
       </div>
 
       {filteredJobs.length === 0 ? (

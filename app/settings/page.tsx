@@ -13,7 +13,7 @@ type Profile = { id: string; name: string; stripeAccountId?: string | null; isAd
 
 const SECTIONS = [
   { id: "instruments", label: "Instruments" },
-  { id: "notifications", label: "Notifications" },
+  { id: "notifications", label: "Email" },
   { id: "account", label: "Account" },
   { id: "theme", label: "Theme" },
 ] as const;
@@ -75,7 +75,7 @@ export default function SettingsPage() {
           Settings
         </h1>
         <p className="mt-1.5 text-sm text-gray-500 sm:text-base dark:text-gray-400">
-          Instruments, alerts, account, and appearance.
+          Instruments, email alerts, account, and appearance.
         </p>
 
         <nav
@@ -109,7 +109,7 @@ export default function SettingsPage() {
               id="notifications-heading"
               className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
             >
-              Notifications
+              Email notifications
             </h3>
             <div id="notifications">
               <NotificationSettings />

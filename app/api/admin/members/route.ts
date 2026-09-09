@@ -19,10 +19,6 @@ export async function GET() {
       isAdmin: true,
       createdAt: true,
       stripeAccountId: true,
-      notifyJobAlerts: true,
-      notifyInstruments: true,
-      notifyTakeSubmitted: true,
-      notifyTakeOutcome: true,
       _count: {
         select: {
           jobsPosted: true,
@@ -54,10 +50,6 @@ export async function GET() {
       id,
       label: labelForInstrumentId(id),
     })),
-    notifyJobAlerts: u.notifyJobAlerts,
-    notifyInstruments: u.notifyInstruments,
-    notifyTakeSubmitted: u.notifyTakeSubmitted,
-    notifyTakeOutcome: u.notifyTakeOutcome,
   }));
 
   return NextResponse.json({ members, total: members.length });

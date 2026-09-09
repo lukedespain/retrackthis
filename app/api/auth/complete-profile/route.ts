@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ALL_INSTRUMENTS_ID, sanitizeInstrumentIds } from "@/lib/instruments";
+import { sanitizeInstrumentIds } from "@/lib/instruments";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 
 // POST /api/auth/complete-profile { name, instruments? } - creates (or updates) the
@@ -37,9 +37,9 @@ export async function POST(req: NextRequest) {
       name,
       role: roles,
       instruments,
-      // Job alerts on by default; narrow to instruments they picked, or all.
+      // Job alerts on by default; matching uses profile instruments only.
       notifyJobAlerts: true,
-      notifyInstruments: instruments.length > 0 ? instruments : [ALL_INSTRUMENTS_ID],
+      notifyInstruments: [],
     },
   });
 

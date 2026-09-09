@@ -89,12 +89,12 @@ function JobAlertNudge() {
         <div>
           <p className="text-sm font-medium text-gray-900">Get emailed about new gigs</p>
           <p className="mt-0.5 text-sm text-gray-500">
-            Pick the instruments you play and we&apos;ll ping you when a matching job opens.
+            Turn on job alerts in Settings. Emails only go out for instruments you play.
           </p>
         </div>
-        <Link href="/settings" className="shrink-0">
+        <Link href="/settings#notifications" className="shrink-0">
           <Button size="sm" variant="secondary" className="w-full sm:w-auto">
-            Choose instruments
+            Email settings
           </Button>
         </Link>
       </div>

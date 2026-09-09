@@ -48,12 +48,14 @@ export async function notifyNewJobPosted(job: JobLite) {
     where: {
       notifyJobAlerts: true,
       id: { not: job.creatorId },
+      // Must have at least one profile instrument to receive matching alerts.
+      NOT: { instruments: { isEmpty: true } },
     },
-    select: { id: true, email: true, name: true, notifyInstruments: true },
+    select: { id: true, email: true, name: true, instruments: true },
   });
 
   const recipients = users.filter((user) =>
-    jobMatchesAlertFilters(job.instrument, job.instrumentId, user.notifyInstruments)
+    jobMatchesAlertFilters(job.instrument, job.instrumentId, user.instruments)
   );
 
   await Promise.all(
@@ -62,7 +64,7 @@ export async function notifyNewJobPosted(job: JobLite) {
         sendEmail({
           to: user.email,
           subject: `New ${job.instrument} gig: ${job.title}`,
-          heading: "A new job matches your alerts",
+          heading: "A new job matches your instruments",
           bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(user.name.split(" ")[0] || "there")},</p>
             <p style="margin:0 0 10px;"><strong>${escape(job.title)}</strong> · ${escape(job.instrument)} · ${escape(formatCents(job.priceCents))} · ${escape(formatDeadline(job.deadline))}</p>
             <p style="margin:0;">${escape(snippet(job.description))}</p>`,

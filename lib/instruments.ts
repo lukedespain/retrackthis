@@ -342,12 +342,15 @@ export function jobMatchesAlertFilters(
   instrumentId: string | null | undefined,
   selectedIds: string[]
 ): boolean {
-  if (selectedIds.includes(ALL_INSTRUMENTS_ID)) return true;
-  if (selectedIds.length === 0) return false;
+  // Never broadcast to "all" — alerts only match concrete profile instruments.
+  const concrete = selectedIds
+    .map(normalizeInstrumentId)
+    .filter((id) => id && id !== ALL_INSTRUMENTS_ID);
+  if (concrete.length === 0) return false;
   const jobId = normalizeInstrumentId(instrumentId ?? categoryForInstrument(instrument).id);
+  // Custom write-in jobs don't fan out via email alerts.
   if (isCustomInstrumentId(jobId)) return false;
-  const normalizedSelected = selectedIds.map(normalizeInstrumentId);
-  return normalizedSelected.includes(jobId);
+  return concrete.includes(jobId);
 }
 
 export type NetworkInstrument = InstrumentCategory & {

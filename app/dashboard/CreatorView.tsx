@@ -343,6 +343,8 @@ function CreatorJobCard({
                 <TakesList
                   jobId={job.id}
                   jobOpen={job.status === "OPEN"}
+                  jobBpm={job.bpm}
+                  jobBackingUrl={job.backingFileUrl}
                   onAwarded={onChanged}
                   readOnly={readOnly}
                 />
@@ -358,11 +360,15 @@ function CreatorJobCard({
 function TakesList({
   jobId,
   jobOpen,
+  jobBpm = null,
+  jobBackingUrl = null,
   onAwarded,
   readOnly = false,
 }: {
   jobId: string;
   jobOpen: boolean;
+  jobBpm?: number | null;
+  jobBackingUrl?: string | null;
   onAwarded: () => void;
   readOnly?: boolean;
 }) {
@@ -443,6 +449,8 @@ function TakesList({
           key={take.id}
           take={take}
           jobOpen={jobOpen}
+          jobBpm={jobBpm}
+          jobBackingUrl={jobBackingUrl}
           selecting={selectingId === take.id}
           disabled={selectingId !== null || readOnly}
           readOnly={readOnly}
@@ -457,6 +465,8 @@ function TakesList({
 function TakeCard({
   take,
   jobOpen,
+  jobBpm = null,
+  jobBackingUrl = null,
   selecting,
   disabled,
   readOnly = false,
@@ -464,6 +474,8 @@ function TakeCard({
 }: {
   take: Take;
   jobOpen: boolean;
+  jobBpm?: number | null;
+  jobBackingUrl?: string | null;
   selecting: boolean;
   disabled: boolean;
   readOnly?: boolean;
@@ -505,6 +517,8 @@ function TakeCard({
               fallbackAudioUrl={take.audioFileUrl}
               allowDownload={isWinner}
               collapsible={audioCount > 1}
+              bpm={jobBpm}
+              backingSrc={jobBackingUrl}
             />
           </div>
         </div>

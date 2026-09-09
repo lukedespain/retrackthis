@@ -43,12 +43,15 @@ export function ReferenceTracksPlayer({
   bpm = null,
   allowDownload = false,
   className = "",
+  partTabLabel = "Part",
 }: {
   partSrc: string;
   backingSrc?: string | null;
   bpm?: number | null;
   allowDownload?: boolean;
   className?: string;
+  /** Label for the lead/take tab (default Part). Use "Take" when reviewing submissions. */
+  partTabLabel?: string;
 }) {
   const hasAb = Boolean(backingSrc);
   const hasFixedTempo = typeof bpm === "number" && bpm > 0;
@@ -384,7 +387,7 @@ export function ReferenceTracksPlayer({
                 onClick={() => void switchMode(id)}
                 className={`${tabClass(mode === id)} min-h-10 flex-1 sm:min-h-0 sm:flex-none`}
               >
-                {id === "part" ? "Part" : id === "backing" ? "Bed" : "Both"}
+                {id === "part" ? partTabLabel : id === "backing" ? "Bed" : "Both"}
               </button>
             ))}
           </div>

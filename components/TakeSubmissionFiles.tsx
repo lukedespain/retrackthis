@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import {
   audioFiles,
   midiFiles,
@@ -83,21 +82,20 @@ function MidiSlot({
   placeholder?: string;
 }) {
   if (!fileUrl) {
-    if (shared) {
-      return (
-        <div className="flex min-h-[4.5rem] flex-col justify-center rounded-xl border border-dashed border-emerald-200 bg-emerald-50/30 px-3 py-3">
-          <p className="text-xs font-medium text-emerald-900">Shared MIDI</p>
-          <p className="mt-0.5 text-xs text-emerald-800/80">{placeholder ?? "Same file for every take."}</p>
-        </div>
-      );
-    }
-    return null;
+    return (
+      <div className="flex min-h-[4.5rem] flex-col justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/80 px-3 py-3">
+        <p className="text-xs font-medium text-gray-500">No MIDI for this take</p>
+        {placeholder ? <p className="mt-0.5 text-xs text-gray-400">{placeholder}</p> : null}
+      </div>
+    );
   }
 
   return (
     <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 px-3 py-3">
-      <p className="text-xs font-medium text-emerald-900">{shared ? "Shared MIDI" : "Paired MIDI"}</p>
-      <p className="mt-0.5 text-xs text-gray-600">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-wider text-emerald-900">
+        {shared ? "Shared MIDI" : "MIDI"}
+        {label ? ` · ${label}` : ""}
+      </p>
       {allowDownload ? (
         <div className="mt-2">
           <FileDownloadLink
@@ -113,24 +111,22 @@ function MidiSlot({
   );
 }
 
+/**
+ * Take audio players stay solo for now (no bed mix / click).
+ * In-context take+bed playback needs alignment before we re-enable it.
+ */
 export function TakeSubmissionFiles({
   files,
   fallbackAudioUrl,
   allowDownload = false,
   collapsible = false,
   defaultExpanded = false,
-  bpm = null,
-  backingSrc = null,
 }: {
   files?: TakeFileRecord[];
   fallbackAudioUrl?: string;
   allowDownload?: boolean;
   collapsible?: boolean;
   defaultExpanded?: boolean;
-  /** Job BPM so metronome / click works on takes the same as the reference. */
-  bpm?: number | null;
-  /** Job bed track — enables Part / Bed / Both on each take. */
-  backingSrc?: string | null;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
@@ -138,7 +134,6 @@ export function TakeSubmissionFiles({
   const allMidi = files?.length ? midiFiles(files) : [];
   const shared = files?.length ? sharedMidiFile(files) : null;
   const hasPairing = allMidi.some((f) => f.audioIndex != null) || shared != null;
-  const hasBed = Boolean(backingSrc);
 
   const audioItems =
     audio.length > 0
@@ -147,7 +142,6 @@ export function TakeSubmissionFiles({
         ? [{ id: "legacy", kind: "AUDIO" as const, label: "Take 1", fileUrl: fallbackAudioUrl, sortOrder: 0 }]
         : [];
 
-  // MIDI-only submissions: no audio rows, just downloadable MIDI files.
   if (audioItems.length === 0) {
     if (allMidi.length === 0) return null;
     return (
@@ -188,94 +182,61 @@ export function TakeSubmissionFiles({
       {rows.map(({ audio: audioFile, midi }, index) => (
         <div key={audioFile.id} className="rounded-xl border border-gray-200 bg-white p-3">
           <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-start">
-            <div className={hasBed ? "md:col-span-3" : undefined}>
+            <div>
               <p className="mb-1.5 text-xs font-medium text-blue-900">{audioFile.label}</p>
-              {hasBed && backingSrc ? (
-                <ReferenceTracksPlayer
-                  partSrc={audioFile.fileUrl}
-                  backingSrc={backingSrc}
-                  bpm={bpm}
-                  allowDownload={allowDownload}
-                  partTabLabel="Take"
-                />
-              ) : (
-                <AudioPlayer
-                  src={audioFile.fileUrl}
-                  label={audioFile.label}
-                  filename={guessFilename(audioFile.fileUrl, `${audioFile.label}.mp3`)}
-                  allowDownload={allowDownload}
-                  bpm={bpm}
-                />
-              )}
+              <AudioPlayer
+                src={audioFile.fileUrl}
+                label={audioFile.label}
+                filename={guessFilename(audioFile.fileUrl, `${audioFile.label}.mp3`)}
+                allowDownload={allowDownload}
+              />
             </div>
 
-            {!hasBed && (hasPairing || allMidi.length > 0) && <PairArrow />}
+            {(hasPairing || allMidi.length > 0) && <PairArrow />}
 
-            {!hasBed &&
-              (hasPairing ? (
-                shared ? (
-                  index === 0 ? (
-                    <MidiSlot
-                      label={shared.label}
-                      fileUrl={shared.fileUrl}
-                      allowDownload={allowDownload}
-                      shared
-                      placeholder="Applies to all takes."
-                    />
-                  ) : (
-                    <div className="flex min-h-[4.5rem] flex-col justify-center rounded-xl border border-dashed border-emerald-200 bg-emerald-50/20 px-3 py-3">
-                      <p className="text-xs font-medium text-emerald-900">Same shared MIDI</p>
-                      <p className="mt-0.5 text-xs text-emerald-800/80">Linked to {shared.label}.</p>
-                    </div>
-                  )
-                ) : (
-                  <MidiSlot label={midi?.label} fileUrl={midi?.fileUrl} allowDownload={allowDownload} />
-                )
-              ) : allMidi.length > 0 ? (
+            {hasPairing ? (
+              shared ? (
                 index === 0 ? (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 px-3 py-3">
-                    <p className="text-xs font-medium uppercase tracking-wider text-emerald-900">MIDI</p>
-                    {allowDownload ? (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {allMidi.map((file) => (
-                          <FileDownloadLink
-                            key={file.id}
-                            href={file.fileUrl}
-                            label={file.label}
-                            filename={guessFilename(file.fileUrl, `${file.label}.mid`)}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-1.5 text-xs text-emerald-800/80">
-                        MIDI included. Download after you choose this musician.
-                      </p>
-                    )}
+                  <MidiSlot
+                    label={shared.label}
+                    fileUrl={shared.fileUrl}
+                    allowDownload={allowDownload}
+                    shared
+                    placeholder="Applies to all takes."
+                  />
+                ) : (
+                  <div className="flex min-h-[4.5rem] flex-col justify-center rounded-xl border border-dashed border-emerald-200 bg-emerald-50/20 px-3 py-3">
+                    <p className="text-xs font-medium text-emerald-900">Same shared MIDI</p>
+                    <p className="mt-0.5 text-xs text-emerald-800/80">Linked to {shared.label}.</p>
                   </div>
-                ) : null
-              ) : null)}
-          </div>
-          {hasBed && allMidi.length > 0 && index === 0 && (
-            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/40 px-3 py-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-emerald-900">MIDI</p>
-              {allowDownload ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {allMidi.map((file) => (
-                    <FileDownloadLink
-                      key={file.id}
-                      href={file.fileUrl}
-                      label={file.label}
-                      filename={guessFilename(file.fileUrl, `${file.label}.mid`)}
-                    />
-                  ))}
-                </div>
+                )
               ) : (
-                <p className="mt-1.5 text-xs text-emerald-800/80">
-                  MIDI included. Download after you choose this musician.
-                </p>
-              )}
-            </div>
-          )}
+                <MidiSlot label={midi?.label} fileUrl={midi?.fileUrl} allowDownload={allowDownload} />
+              )
+            ) : allMidi.length > 0 ? (
+              index === 0 ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 px-3 py-3">
+                  <p className="text-xs font-medium uppercase tracking-wider text-emerald-900">MIDI</p>
+                  {allowDownload ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {allMidi.map((file) => (
+                        <FileDownloadLink
+                          key={file.id}
+                          href={file.fileUrl}
+                          label={file.label}
+                          filename={guessFilename(file.fileUrl, `${file.label}.mid`)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1.5 text-xs text-emerald-800/80">
+                      MIDI included. Download after you choose this musician.
+                    </p>
+                  )}
+                </div>
+              ) : null
+            ) : null}
+          </div>
         </div>
       ))}
     </div>

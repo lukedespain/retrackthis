@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ConnectCountrySelect } from "@/components/ConnectCountrySelect";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Alert } from "@/components/ui/Alert";
@@ -31,6 +32,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [payoutModalOpen, setPayoutModalOpen] = useState(false);
   const [onboardLoading, setOnboardLoading] = useState(false);
   const [onboardError, setOnboardError] = useState<string | null>(null);
+  const [onboardCountry, setOnboardCountry] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -135,11 +137,24 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
     setExpandedJobId(jobId);
   }
 
-  async function startPayoutOnboarding() {
+  async function startPayoutOnboarding(opts?: { reset?: boolean }) {
     setOnboardLoading(true);
     setOnboardError(null);
     try {
-      const res = await fetch("/api/stripe/connect/onboard", { method: "POST" });
+      const status = connectStatus === "pending" ? "pending" : "none";
+      const needsCountry = status === "none" || opts?.reset;
+      if (needsCountry && !onboardCountry) {
+        throw new Error("Choose your payout country first.");
+      }
+
+      const res = await fetch("/api/stripe/connect/onboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country: needsCountry ? onboardCountry : undefined,
+          reset: opts?.reset === true,
+        }),
+      });
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.error ?? "Could not start payout setup");
 
@@ -306,8 +321,11 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
           status={connectStatus === "pending" ? "pending" : "none"}
           loading={onboardLoading}
           error={onboardError}
+          country={onboardCountry}
+          onCountryChange={setOnboardCountry}
           onClose={() => setPayoutModalOpen(false)}
           onSetup={() => void startPayoutOnboarding()}
+          onReset={() => void startPayoutOnboarding({ reset: true })}
         />
       )}
     </div>
@@ -318,14 +336,20 @@ function PayoutRequiredModal({
   status,
   loading,
   error,
+  country,
+  onCountryChange,
   onClose,
   onSetup,
+  onReset,
 }: {
   status: "none" | "pending";
   loading: boolean;
   error: string | null;
+  country: string;
+  onCountryChange: (code: string) => void;
   onClose: () => void;
   onSetup: () => void;
+  onReset: () => void;
 }) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -361,12 +385,42 @@ function PayoutRequiredModal({
             ? "Stripe still needs a bit more info before you can submit takes. Finish setup, then come back and open any job."
             : "You can browse open jobs anytime. To open one and submit a take, connect a Stripe Express account so you can get paid if a producer picks you."}
         </p>
-        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+
+        <div className="mt-4">
+          <ConnectCountrySelect
+            value={country}
+            onChange={onCountryChange}
+            disabled={loading}
+            id="job-payout-country"
+          />
+        </div>
+
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
           <Button type="button" variant="ghost" size="sm" onClick={onClose} disabled={loading}>
             Not now
           </Button>
-          <Button type="button" size="sm" onClick={onSetup} disabled={loading}>
-            {loading ? "Opening Stripe…" : status === "pending" ? "Continue setup" : "Set up payouts"}
+          {status === "pending" && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={onReset}
+              disabled={loading || !country}
+            >
+              Start over with this country
+            </Button>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            onClick={onSetup}
+            disabled={loading || (status === "none" && !country)}
+          >
+            {loading
+              ? "Opening Stripe…"
+              : status === "pending"
+                ? "Continue setup"
+                : "Set up payouts"}
           </Button>
         </div>
         {error && (

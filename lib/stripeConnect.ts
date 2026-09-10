@@ -80,6 +80,7 @@ async function createAccountV2(opts: {
   userId: string;
   email: string;
   name: string;
+  country: string;
 }): Promise<{ id: string }> {
   return stripeV2<V2Account>("POST", "/v2/core/accounts", {
     contact_email: opts.email,
@@ -93,7 +94,7 @@ async function createAccountV2(opts: {
       },
     },
     identity: {
-      country: "us",
+      country: opts.country.toLowerCase(),
       entity_type: "individual",
     },
     configuration: {
@@ -133,9 +134,10 @@ async function retrieveAccountV2(accountId: string): Promise<V2Account> {
 async function createAccountV1(opts: {
   userId: string;
   email: string;
+  country: string;
 }): Promise<{ id: string }> {
   const account = await stripe.accounts.create({
-    country: "US",
+    country: opts.country.toUpperCase(),
     email: opts.email,
     metadata: { userId: opts.userId },
     controller: {
@@ -174,11 +176,13 @@ function isV2Unavailable(err: unknown): boolean {
 /**
  * Create a Connect Express account for receiving transfers (musician payouts).
  * Prefers Accounts v2 (current marketplace path); falls back to v1 Express.
+ * `country` is ISO 3166-1 alpha-2 (e.g. US, CL) — locked at create time by Stripe.
  */
 export async function createConnectAccount(opts: {
   userId: string;
   email: string;
   name: string;
+  country: string;
 }): Promise<{ id: string; api: "v2" | "v1" }> {
   try {
     const account = await createAccountV2(opts);

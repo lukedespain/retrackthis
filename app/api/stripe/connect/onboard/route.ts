@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSupportedConnectCountry, normalizeConnectCountry } from "@/lib/connectCountries";
 import { db } from "@/lib/db";
 import {
   createConnectAccount,
@@ -9,7 +10,10 @@ import { getSessionUserId } from "@/lib/supabaseServer";
 
 // POST /api/stripe/connect/onboard
 // Creates (or resumes) Connect Express onboarding for the signed-in musician.
-export async function POST() {
+// Body: { country?: string, reset?: boolean }
+// - New account: `country` required (ISO alpha-2). Stripe locks country at create.
+// - Pending account: omit country to continue; or reset:true + country to start over.
+export async function POST(req: Request) {
   const userId = await getSessionUserId();
   if (!userId) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
@@ -20,8 +24,28 @@ export async function POST() {
     return NextResponse.json({ error: "Complete your profile first" }, { status: 400 });
   }
 
+  const body = (await req.json().catch(() => ({}))) as {
+    country?: string;
+    reset?: boolean;
+  };
+
   try {
     let accountId = user.stripeAccountId;
+
+    if (accountId && body.reset) {
+      const { ready } = await getConnectReadiness(accountId);
+      if (ready) {
+        return NextResponse.json(
+          { error: "Payouts are already ready. Contact support to change country." },
+          { status: 400 }
+        );
+      }
+      await db.user.update({
+        where: { id: user.id },
+        data: { stripeAccountId: null },
+      });
+      accountId = null;
+    }
 
     if (accountId) {
       const { ready } = await getConnectReadiness(accountId);
@@ -33,10 +57,26 @@ export async function POST() {
         });
       }
     } else {
+      const countryRaw = typeof body.country === "string" ? body.country : "";
+      if (!countryRaw.trim()) {
+        return NextResponse.json(
+          { error: "Choose the country where your bank / business is based." },
+          { status: 400 }
+        );
+      }
+      const country = normalizeConnectCountry(countryRaw);
+      if (!isSupportedConnectCountry(country)) {
+        return NextResponse.json(
+          { error: "That country isn’t supported for payouts yet. Pick another, or contact us." },
+          { status: 400 }
+        );
+      }
+
       const created = await createConnectAccount({
         userId: user.id,
         email: user.email,
         name: user.name,
+        country,
       });
       accountId = created.id;
       await db.user.update({

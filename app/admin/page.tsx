@@ -214,6 +214,28 @@ function AdminPageInner() {
     );
   }, [members, memberQuery]);
 
+  async function resetMemberPayouts(m: Member) {
+    const ok = window.confirm(
+      `Unlink Stripe for ${m.name} (${m.email})?\n\nThey’ll need to set up payouts again and choose their country. Only do this for stuck / wrong-country accounts.`
+    );
+    if (!ok) return;
+    try {
+      const res = await fetch(`/api/admin/members/${m.id}/reset-payouts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Could not reset payouts");
+      setMembers((prev) =>
+        prev ? prev.map((row) => (row.id === m.id ? { ...row, hasPayouts: false } : row)) : prev
+      );
+      window.alert(body?.message ?? "Payout link cleared.");
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Could not reset payouts");
+    }
+  }
+
   function changeTab(next: Tab) {
     setTab(next);
     const params = new URLSearchParams(searchParams.toString());
@@ -331,8 +353,17 @@ function AdminPageInner() {
                         <div className="text-xs text-gray-500 dark:text-gray-400">{m.email}</div>
                         <div className="mt-1 text-[11px] text-gray-400">
                           Joined {formatDate(m.createdAt)}
-                          {m.hasPayouts ? " · Payouts connected" : ""}
+                          {m.hasPayouts ? " · Stripe linked" : ""}
                         </div>
+                        {m.hasPayouts ? (
+                          <button
+                            type="button"
+                            onClick={() => void resetMemberPayouts(m)}
+                            className="mt-1.5 text-xs font-medium text-amber-700 hover:underline dark:text-amber-400"
+                          >
+                            Reset payout link
+                          </button>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3 tabular-nums text-gray-700 dark:text-gray-300">
                         {m.jobsPosted}

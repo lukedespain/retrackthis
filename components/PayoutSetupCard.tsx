@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ConnectCountrySelect } from "@/components/ConnectCountrySelect";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -12,6 +13,7 @@ export function PayoutSetupCard({ highlightReturn = false }: { highlightReturn?:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justReturned, setJustReturned] = useState(highlightReturn);
+  const [country, setCountry] = useState("");
 
   async function loadStatus() {
     try {
@@ -37,11 +39,23 @@ export function PayoutSetupCard({ highlightReturn = false }: { highlightReturn?:
     return () => window.clearTimeout(t);
   }, [highlightReturn]);
 
-  async function startOnboarding() {
+  async function startOnboarding(opts?: { reset?: boolean }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/stripe/connect/onboard", { method: "POST" });
+      const needsCountry = status === "none" || opts?.reset;
+      if (needsCountry && !country) {
+        throw new Error("Choose your payout country first.");
+      }
+
+      const res = await fetch("/api/stripe/connect/onboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country: needsCountry ? country : undefined,
+          reset: opts?.reset === true,
+        }),
+      });
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.error ?? "Could not start payout setup");
 
@@ -90,8 +104,8 @@ export function PayoutSetupCard({ highlightReturn = false }: { highlightReturn?:
 
   return (
     <Card padding="md">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
+      <div className="space-y-4">
+        <div>
           <p className="text-sm font-medium text-gray-900">
             {status === "pending" ? "Finish payout setup" : "Set up payouts"}
           </p>
@@ -105,15 +119,52 @@ export function PayoutSetupCard({ highlightReturn = false }: { highlightReturn?:
             </p>
           )}
         </div>
-        <Button
-          type="button"
-          size="sm"
-          onClick={startOnboarding}
-          disabled={loading}
-          className="w-full shrink-0 sm:w-auto"
-        >
-          {loading ? "Opening Stripe…" : status === "pending" ? "Continue setup" : "Set up payouts"}
-        </Button>
+
+        {(status === "none" || status === "pending") && (
+          <ConnectCountrySelect
+            value={country}
+            onChange={setCountry}
+            disabled={loading}
+            id="payout-setup-country"
+          />
+        )}
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          {status === "pending" ? (
+            <>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void startOnboarding()}
+                disabled={loading}
+                className="w-full sm:w-auto"
+              >
+                {loading ? "Opening Stripe…" : "Continue setup"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void startOnboarding({ reset: true })}
+                disabled={loading || !country}
+                className="w-full sm:w-auto"
+                title="Unlinks the current Stripe account and creates a new one in the country you select"
+              >
+                Start over with this country
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void startOnboarding()}
+              disabled={loading || !country}
+              className="w-full sm:w-auto"
+            >
+              {loading ? "Opening Stripe…" : "Set up payouts"}
+            </Button>
+          )}
+        </div>
       </div>
       {error && (
         <div className="mt-4">

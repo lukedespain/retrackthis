@@ -116,9 +116,6 @@ export function UserMenu({
 
           <Divider />
 
-          <Link href="/settings#payouts" role="menuitem" onClick={close} className={menuItemClass}>
-            Payouts
-          </Link>
           <Link href="/settings" role="menuitem" onClick={close} className={menuItemClass}>
             Settings
           </Link>

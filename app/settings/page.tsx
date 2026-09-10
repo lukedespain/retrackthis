@@ -1,8 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PayoutSetupCard } from "@/components/PayoutSetupCard";
 import { Spinner } from "@/components/ui/Spinner";
 import { AccountSettings } from "@/app/dashboard/AccountSettings";
 import { MusicianInstrumentsSettings } from "@/app/dashboard/MusicianInstrumentsSettings";
@@ -12,15 +13,18 @@ import { ThemeSettings } from "@/app/dashboard/ThemeSettings";
 type Profile = { id: string; name: string; stripeAccountId?: string | null; isAdmin?: boolean };
 
 const SECTIONS = [
+  { id: "payouts", label: "Payouts" },
   { id: "instruments", label: "Instruments" },
   { id: "notifications", label: "Email" },
   { id: "account", label: "Account" },
   { id: "theme", label: "Theme" },
 ] as const;
 
-export default function SettingsPage() {
+function SettingsPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+  const [payoutsHighlight, setPayoutsHighlight] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me").then(async (res) => {
@@ -36,6 +40,17 @@ export default function SettingsPage() {
       setProfile(body.profile);
     });
   }, [router]);
+
+  useEffect(() => {
+    const payouts = searchParams.get("payouts");
+    if (payouts === "return" || payouts === "refresh") {
+      setPayoutsHighlight(true);
+      window.requestAnimationFrame(() => {
+        document.getElementById("payouts")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      router.replace("/settings#payouts", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     function scrollToHash() {
@@ -75,7 +90,7 @@ export default function SettingsPage() {
           Settings
         </h1>
         <p className="mt-1.5 text-sm text-gray-500 sm:text-base dark:text-gray-400">
-          Instruments, email alerts, account, and appearance.
+          Payouts, instruments, email alerts, account, and appearance.
         </p>
 
         <nav
@@ -94,6 +109,18 @@ export default function SettingsPage() {
         </nav>
 
         <div className="mt-6 space-y-10 sm:mt-8">
+          <section aria-labelledby="payouts-heading" className="scroll-mt-8">
+            <h3
+              id="payouts-heading"
+              className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
+            >
+              Payouts
+            </h3>
+            <div id="payouts">
+              <PayoutSetupCard highlightReturn={payoutsHighlight} allowManage />
+            </div>
+          </section>
+
           <section aria-labelledby="instruments-heading" className="scroll-mt-8">
             <h3
               id="instruments-heading"
@@ -101,7 +128,9 @@ export default function SettingsPage() {
             >
               Instruments
             </h3>
-            <MusicianInstrumentsSettings />
+            <div id="instruments">
+              <MusicianInstrumentsSettings />
+            </div>
           </section>
 
           <section aria-labelledby="notifications-heading" className="scroll-mt-8">
@@ -123,9 +152,11 @@ export default function SettingsPage() {
             >
               Account
             </h3>
-            <AccountSettings
-              onNameSaved={(name) => setProfile((prev) => (prev ? { ...prev, name } : prev))}
-            />
+            <div id="account">
+              <AccountSettings
+                onNameSaved={(name) => setProfile((prev) => (prev ? { ...prev, name } : prev))}
+              />
+            </div>
           </section>
 
           <section aria-labelledby="theme-heading" className="scroll-mt-8">
@@ -135,10 +166,31 @@ export default function SettingsPage() {
             >
               Theme
             </h3>
-            <ThemeSettings />
+            <div id="theme">
+              <ThemeSettings />
+            </div>
           </section>
         </div>
       </main>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen">
+          <SiteHeader />
+          <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
+            <div className="flex items-center justify-center py-24">
+              <Spinner />
+            </div>
+          </main>
+        </div>
+      }
+    >
+      <SettingsPageInner />
+    </Suspense>
   );
 }

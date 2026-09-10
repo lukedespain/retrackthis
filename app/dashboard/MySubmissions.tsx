@@ -40,7 +40,7 @@ export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?:
 
   return (
     <div className="space-y-5">
-      <PayoutSetupCard highlightReturn={payoutsHighlight} />
+      <PayoutSetupCard highlightReturn={payoutsHighlight} allowManage />
       <JobAlertNudge />
 
       {takes.length === 0 ? (

@@ -27,6 +27,8 @@ type Props = {
   loading?: boolean;
   error?: string | null;
   justReturned?: boolean;
+  /** When ready, show summary + edit / open Stripe controls. */
+  allowManage?: boolean;
   onRefresh: () => Promise<void> | void;
   onError: (message: string | null) => void;
   onReady: (snapshot: PayoutSnapshot) => void;
@@ -38,12 +40,14 @@ export function PayoutSetupPanel({
   loading = false,
   error = null,
   justReturned = false,
+  allowManage = false,
   onRefresh,
   onError,
   onReady,
   idPrefix = "payout",
 }: Props) {
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [country, setCountry] = useState("");
   const [provider, setProvider] = useState<PayoutProvider | "">("");
   const [altEmail, setAltEmail] = useState("");
@@ -153,6 +157,7 @@ export function PayoutSetupPanel({
         payoutEmail: altEmail.trim(),
         payoutAccountName: altName.trim(),
       });
+      setEditing(false);
       await onRefresh();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Could not save payout details");
@@ -161,27 +166,90 @@ export function PayoutSetupPanel({
     }
   }
 
+  async function openStripeDashboard() {
+    setBusy(true);
+    onError(null);
+    try {
+      const res = await fetch("/api/stripe/connect/dashboard", { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Could not open Stripe");
+      if (!body?.url) throw new Error("Stripe did not return a dashboard link");
+      const opened = window.open(body.url, "_blank", "noopener,noreferrer");
+      if (!opened) window.location.href = body.url;
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Could not open Stripe");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function startEditing() {
+    setEditing(true);
+    setFeeAck(false);
+    onError(null);
+  }
+
+  function cancelEditing() {
+    setEditing(false);
+    setFeeAck(false);
+    onError(null);
+    if (snapshot?.country) setCountry(snapshot.country);
+    if (snapshot?.provider) setProvider(snapshot.provider);
+    if (snapshot?.payoutEmail) setAltEmail(snapshot.payoutEmail);
+    if (snapshot?.payoutAccountName) setAltName(snapshot.payoutAccountName);
+  }
+
   if (snapshot === null) {
     return <p className="text-sm text-gray-500">Checking payout setup…</p>;
   }
 
-  if (snapshot.ready) {
+  if (snapshot.ready && !(allowManage && editing)) {
     const providerLabel = formatPayoutProviderLabel(snapshot.provider);
     return (
-      <div>
-        <p className="text-sm font-medium text-emerald-900">Payouts ready</p>
-        <p className="mt-0.5 text-sm text-emerald-800/80">
-          {snapshot.provider === "stripe"
-            ? "When a creator picks your take, payment goes to your Stripe Express account."
-            : `When a creator picks your take, we’ll pay you via ${providerLabel}${
-                snapshot.payoutEmail ? ` (${snapshot.payoutEmail})` : ""
-              }.`}
-        </p>
-        {justReturned && (
-          <p className="mt-2 text-xs font-medium uppercase tracking-wider text-emerald-700">
-            Setup complete
+      <div className="space-y-3">
+        <div>
+          <p className="text-sm font-medium text-emerald-900">Payouts ready</p>
+          <p className="mt-0.5 text-sm text-emerald-800/80">
+            {snapshot.provider === "stripe"
+              ? "When a creator picks your take, payment goes to your Stripe Express account."
+              : `Paid via ${providerLabel}${
+                  snapshot.payoutEmail ? ` · ${snapshot.payoutEmail}` : ""
+                }${snapshot.payoutAccountName ? ` · ${snapshot.payoutAccountName}` : ""}${
+                  snapshot.country ? ` · ${snapshot.country}` : ""
+                }`}
           </p>
-        )}
+          {justReturned && (
+            <p className="mt-2 text-xs font-medium uppercase tracking-wider text-emerald-700">
+              Setup complete
+            </p>
+          )}
+        </div>
+        {allowManage ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            {snapshot.provider === "stripe" ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void openStripeDashboard()}
+                disabled={busy || loading}
+                className="w-full sm:w-auto"
+              >
+                {busy ? "Opening…" : "Manage in Stripe"}
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={startEditing}
+              disabled={busy || loading}
+              className="w-full sm:w-auto"
+            >
+              {snapshot.provider === "stripe" ? "Change payout method" : "Edit details"}
+            </Button>
+          </div>
+        ) : null}
+        {error ? <Alert variant="error">{error}</Alert> : null}
       </div>
     );
   }
@@ -201,10 +269,16 @@ export function PayoutSetupPanel({
     <div className="space-y-4">
       <div>
         <p className="text-sm font-medium text-gray-900">
-          {status === "pending" ? "Finish payout setup" : "Set up payouts"}
+          {status === "pending"
+            ? "Finish payout setup"
+            : editing
+              ? "Update payout details"
+              : "Set up payouts"}
         </p>
         <p className="mt-1 text-sm text-gray-500">
-          Pick your country, then choose how you want to get paid if a producer selects your take.
+          {editing
+            ? "Change your country or payout method. Saving PayPal/Wise replaces your current details."
+            : "Pick your country, then choose how you want to get paid if a producer selects your take."}
         </p>
         {justReturned && status === "pending" && (
           <p className="mt-2 text-sm text-amber-700">
@@ -336,16 +410,43 @@ export function PayoutSetupPanel({
                 </span>
               </label>
 
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => void saveAltPayout()}
-                disabled={disabled || !altEmail.trim() || !altName.trim() || !feeAck}
-                className="w-full sm:w-auto"
-              >
-                {busy ? "Saving…" : "Save payout details"}
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => void saveAltPayout()}
+                  disabled={disabled || !altEmail.trim() || !altName.trim() || !feeAck}
+                  className="w-full sm:w-auto"
+                >
+                  {busy ? "Saving…" : "Save payout details"}
+                </Button>
+                {editing ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={cancelEditing}
+                    disabled={disabled}
+                    className="w-full sm:w-auto"
+                  >
+                    Cancel
+                  </Button>
+                ) : null}
+              </div>
             </div>
+          ) : null}
+
+          {editing && provider === "stripe" ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={cancelEditing}
+              disabled={disabled}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
           ) : null}
         </div>
       ) : null}

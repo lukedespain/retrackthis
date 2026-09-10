@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import { PayoutSetupPanel, type PayoutSnapshot } from "@/components/PayoutSetupPanel";
 import { Card } from "@/components/ui/Card";
 
-export function PayoutSetupCard({ highlightReturn = false }: { highlightReturn?: boolean }) {
+export function PayoutSetupCard({
+  highlightReturn = false,
+  allowManage = false,
+}: {
+  highlightReturn?: boolean;
+  allowManage?: boolean;
+}) {
   const [snapshot, setSnapshot] = useState<PayoutSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [justReturned, setJustReturned] = useState(highlightReturn);
@@ -52,20 +58,19 @@ export function PayoutSetupCard({ highlightReturn = false }: { highlightReturn?:
   return (
     <Card
       padding="md"
-      className={
-        snapshot.ready ? "border border-emerald-100 bg-emerald-50/60" : undefined
-      }
+      className={snapshot.ready ? "border border-emerald-100 bg-emerald-50/60" : undefined}
     >
       <PayoutSetupPanel
         snapshot={snapshot}
         error={error}
         justReturned={justReturned}
+        allowManage={allowManage}
         onRefresh={loadStatus}
         onError={setError}
         onReady={setSnapshot}
         idPrefix="payout-setup"
       />
-      {snapshot.ready && snapshot.provider === "stripe" ? (
+      {snapshot.ready && snapshot.provider === "stripe" && !allowManage ? (
         <p className="mt-3 text-xs text-emerald-800/70">
           Manage bank details anytime from the menu → Payouts.
         </p>

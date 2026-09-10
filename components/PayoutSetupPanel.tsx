@@ -192,7 +192,7 @@ export function PayoutSetupPanel({
     label: string;
     available: boolean;
   }> = [
-    { id: "stripe", label: "Stripe", available: stripeAvailable },
+    { id: "stripe", label: "Stripe (recommended)", available: stripeAvailable },
     { id: "paypal", label: "PayPal", available: true },
     { id: "wise", label: "Wise", available: true },
   ];
@@ -272,10 +272,9 @@ export function PayoutSetupPanel({
 
           {provider === "stripe" ? (
             <div className="space-y-3 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
-              <p className="text-sm font-medium text-emerald-900">Recommended</p>
               <p className="text-sm leading-relaxed text-emerald-900/80">
-                Stripe is usually faster and more reliable for payouts. You’ll finish identity and bank
-                details on Stripe’s secure form.
+                Lower fees — payment goes straight from the producer to you. You’ll finish identity
+                and bank details on Stripe’s secure form.
               </p>
               <Button
                 type="button"

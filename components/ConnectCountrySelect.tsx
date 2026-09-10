@@ -1,13 +1,12 @@
 "use client";
 
-import { PAYOUT_COUNTRIES, supportsStripeConnect } from "@/lib/connectCountries";
+import { PAYOUT_COUNTRIES } from "@/lib/connectCountries";
 
 export function PayoutCountrySelect({
   value,
   onChange,
   disabled = false,
   id = "payout-country",
-  hint,
 }: {
   value: string;
   onChange: (code: string) => void;
@@ -15,8 +14,6 @@ export function PayoutCountrySelect({
   id?: string;
   hint?: string;
 }) {
-  const stripeOk = value ? supportsStripeConnect(value) : null;
-
   return (
     <div>
       <label htmlFor={id} className="block text-xs font-medium text-gray-700">
@@ -33,18 +30,11 @@ export function PayoutCountrySelect({
         {PAYOUT_COUNTRIES.map((c) => (
           <option key={c.code} value={c.code}>
             {c.label}
-            {supportsStripeConnect(c.code) ? "" : " · PayPal / Wise"}
           </option>
         ))}
       </select>
       <p className="mt-1.5 text-[11px] leading-relaxed text-gray-500">
-        {hint
-          ? hint
-          : stripeOk === null
-            ? "Choose the country where you receive payments."
-            : stripeOk
-              ? "Stripe is available here. You’ll finish bank details on Stripe’s form."
-              : "Stripe can’t pay out to this country yet. We’ll use PayPal or Wise instead."}
+        Choose the country where you receive payments.
       </p>
     </div>
   );

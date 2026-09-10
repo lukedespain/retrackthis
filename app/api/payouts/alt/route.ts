@@ -3,7 +3,6 @@ import {
   isAltPayoutProvider,
   isPayoutCountry,
   normalizeConnectCountry,
-  supportsStripeConnect,
 } from "@/lib/connectCountries";
 import { db } from "@/lib/db";
 import { getSessionUserId } from "@/lib/supabaseServer";
@@ -13,7 +12,7 @@ function looksLikeEmail(value: string): boolean {
 }
 
 // POST /api/payouts/alt
-// Save PayPal or Wise payout details for countries without Stripe Connect transfers.
+// Save PayPal or Wise payout details (available in every payout country).
 export async function POST(req: Request) {
   const userId = await getSessionUserId();
   if (!userId) {
@@ -37,15 +36,7 @@ export async function POST(req: Request) {
   }
   const country = normalizeConnectCountry(countryRaw);
 
-  if (supportsStripeConnect(country)) {
-    return NextResponse.json(
-      {
-        error:
-          "Stripe payouts are available in your country. Use Stripe setup instead of PayPal or Wise.",
-      },
-      { status: 400 }
-    );
-  }
+  // PayPal / Wise are allowed in every payout country, including Stripe-supported ones.
 
   if (!isAltPayoutProvider(providerRaw)) {
     return NextResponse.json({ error: "Choose PayPal or Wise." }, { status: 400 });

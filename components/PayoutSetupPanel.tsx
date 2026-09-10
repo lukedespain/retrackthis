@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/Input";
 import {
   supportsStripeConnect,
   formatPayoutProviderLabel,
-  type AltPayoutProvider,
   type PayoutProvider,
 } from "@/lib/connectCountries";
 
@@ -46,22 +45,36 @@ export function PayoutSetupPanel({
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [country, setCountry] = useState("");
-  const [altProvider, setAltProvider] = useState<AltPayoutProvider>("paypal");
+  const [provider, setProvider] = useState<PayoutProvider | "">("");
   const [altEmail, setAltEmail] = useState("");
   const [altName, setAltName] = useState("");
+  const [feeAck, setFeeAck] = useState(false);
 
   useEffect(() => {
     if (!snapshot) return;
     if (snapshot.country) setCountry(snapshot.country);
-    if (snapshot.provider === "paypal" || snapshot.provider === "wise") {
-      setAltProvider(snapshot.provider);
-    }
+    if (snapshot.provider) setProvider(snapshot.provider);
     if (snapshot.payoutEmail) setAltEmail(snapshot.payoutEmail);
     if (snapshot.payoutAccountName) setAltName(snapshot.payoutAccountName);
   }, [snapshot]);
 
   const status = snapshot?.status ?? "none";
-  const useStripe = country ? supportsStripeConnect(country) : null;
+  const stripeAvailable = country ? supportsStripeConnect(country) : false;
+  const showMethods = Boolean(country) && status !== "pending";
+
+  function handleCountryChange(code: string) {
+    setCountry(code);
+    setProvider("");
+    setFeeAck(false);
+    onError(null);
+  }
+
+  function handleProviderChange(next: PayoutProvider) {
+    if (next === "stripe" && country && !supportsStripeConnect(country)) return;
+    setProvider(next);
+    setFeeAck(false);
+    onError(null);
+  }
 
   async function startStripe(opts?: { reset?: boolean }) {
     setBusy(true);
@@ -72,7 +85,7 @@ export function PayoutSetupPanel({
         throw new Error("Choose your payout country first.");
       }
       if (needsCountry && country && !supportsStripeConnect(country)) {
-        throw new Error("Stripe isn’t available for that country. Choose PayPal or Wise below.");
+        throw new Error("Stripe isn’t available for that country. Choose PayPal or Wise.");
       }
 
       const res = await fetch("/api/stripe/connect/onboard", {
@@ -110,18 +123,21 @@ export function PayoutSetupPanel({
     onError(null);
     try {
       if (!country) throw new Error("Choose your payout country first.");
-      if (supportsStripeConnect(country)) {
-        throw new Error("Stripe is available in your country — use Stripe setup instead.");
+      if (provider !== "paypal" && provider !== "wise") {
+        throw new Error("Choose PayPal or Wise.");
       }
       if (!altEmail.trim()) throw new Error("Enter your PayPal or Wise email.");
       if (!altName.trim()) throw new Error("Enter the name on that account.");
+      if (!feeAck) {
+        throw new Error("Please confirm you understand PayPal/Wise fees may reduce your payout.");
+      }
 
       const res = await fetch("/api/payouts/alt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           country,
-          provider: altProvider,
+          provider,
           email: altEmail,
           accountName: altName,
         }),
@@ -132,7 +148,7 @@ export function PayoutSetupPanel({
       onReady({
         ready: true,
         status: "ready",
-        provider: altProvider,
+        provider,
         country,
         payoutEmail: altEmail.trim(),
         payoutAccountName: altName.trim(),
@@ -171,6 +187,15 @@ export function PayoutSetupPanel({
   }
 
   const disabled = busy || loading;
+  const methodOptions: Array<{
+    id: PayoutProvider;
+    label: string;
+    available: boolean;
+  }> = [
+    { id: "stripe", label: "Stripe", available: stripeAvailable },
+    { id: "paypal", label: "PayPal", available: true },
+    { id: "wise", label: "Wise", available: true },
+  ];
 
   return (
     <div className="space-y-4">
@@ -179,8 +204,7 @@ export function PayoutSetupPanel({
           {status === "pending" ? "Finish payout setup" : "Set up payouts"}
         </p>
         <p className="mt-1 text-sm text-gray-500">
-          Choose where you get paid. Stripe is fastest where it’s available; otherwise use PayPal or
-          Wise.
+          Pick your country, then choose how you want to get paid if a producer selects your take.
         </p>
         {justReturned && status === "pending" && (
           <p className="mt-2 text-sm text-amber-700">
@@ -191,7 +215,7 @@ export function PayoutSetupPanel({
 
       <PayoutCountrySelect
         value={country}
-        onChange={setCountry}
+        onChange={handleCountryChange}
         disabled={disabled}
         id={`${idPrefix}-country`}
       />
@@ -220,82 +244,121 @@ export function PayoutSetupPanel({
         </div>
       ) : null}
 
-      {status !== "pending" && useStripe === true ? (
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => void startStripe()}
-          disabled={disabled || !country}
-          className="w-full sm:w-auto"
-        >
-          {busy ? "Opening Stripe…" : "Continue with Stripe"}
-        </Button>
-      ) : null}
-
-      {status !== "pending" && useStripe === false ? (
-        <div className="space-y-4 rounded-xl border border-dashed border-amber-200 bg-amber-50/40 p-4">
-          <p className="text-sm text-gray-700">
-            Stripe can’t send Connect payouts to this country yet. Add PayPal or Wise so you can
-            submit takes — we’ll pay that way if you win.
-          </p>
-
-          <div className="flex gap-2">
-            {(["paypal", "wise"] as const).map((p) => {
-              const selected = altProvider === p;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => setAltProvider(p)}
-                  className={`min-h-10 flex-1 rounded-full px-3 py-2 text-sm font-medium transition-all ${
-                    selected
-                      ? "bg-gray-900 text-white"
-                      : "bg-white text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  {p === "paypal" ? "PayPal" : "Wise"}
-                </button>
-              );
-            })}
+      {showMethods ? (
+        <div className="space-y-3">
+          <p className="text-xs font-medium text-gray-700">How do you want to get paid?</p>
+          <div className={`grid gap-2 ${stripeAvailable ? "grid-cols-3" : "grid-cols-2"}`}>
+            {methodOptions
+              .filter((m) => m.available)
+              .map((m) => {
+                const selected = provider === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => handleProviderChange(m.id)}
+                    className={`min-h-11 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                      selected
+                        ? "bg-gray-900 text-white"
+                        : "bg-white text-gray-800 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                );
+              })}
           </div>
 
-          <Input
-            id={`${idPrefix}-alt-email`}
-            label={`${altProvider === "paypal" ? "PayPal" : "Wise"} email`}
-            type="email"
-            autoComplete="email"
-            value={altEmail}
-            disabled={disabled}
-            onChange={(e) => setAltEmail(e.target.value)}
-            placeholder="you@email.com"
-            hint="Use the email on your PayPal or Wise account."
-          />
-          <Input
-            id={`${idPrefix}-alt-name`}
-            label="Name on that account"
-            value={altName}
-            disabled={disabled}
-            onChange={(e) => setAltName(e.target.value)}
-            placeholder="Full name"
-            hint="Must match the name on PayPal or Wise."
-          />
+          {provider === "stripe" ? (
+            <div className="space-y-3 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+              <p className="text-sm font-medium text-emerald-900">Recommended</p>
+              <p className="text-sm leading-relaxed text-emerald-900/80">
+                Stripe is usually faster and more reliable for payouts. You’ll finish identity and bank
+                details on Stripe’s secure form.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void startStripe()}
+                disabled={disabled}
+                className="w-full sm:w-auto"
+              >
+                {busy ? "Opening Stripe…" : "Continue with Stripe"}
+              </Button>
+            </div>
+          ) : null}
 
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => void saveAltPayout()}
-            disabled={disabled || !altEmail.trim() || !altName.trim()}
-            className="w-full sm:w-auto"
-          >
-            {busy ? "Saving…" : "Save payout details"}
-          </Button>
+          {provider === "paypal" || provider === "wise" ? (
+            <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+              {!stripeAvailable ? (
+                <p className="text-sm text-gray-600">
+                  Stripe isn’t available for payouts in this country yet. PayPal or Wise works instead.
+                </p>
+              ) : (
+                <p className="text-sm text-gray-600">
+                  Prefer not to use Stripe? We can pay you through{" "}
+                  {provider === "paypal" ? "PayPal" : "Wise"} if you win.
+                </p>
+              )}
+
+              <Input
+                id={`${idPrefix}-alt-email`}
+                label={`${provider === "paypal" ? "PayPal" : "Wise"} email`}
+                type="email"
+                autoComplete="email"
+                value={altEmail}
+                disabled={disabled}
+                onChange={(e) => setAltEmail(e.target.value)}
+                placeholder="you@email.com"
+                hint="Use the email on your PayPal or Wise account."
+              />
+              <Input
+                id={`${idPrefix}-alt-name`}
+                label="Name on that account"
+                value={altName}
+                disabled={disabled}
+                onChange={(e) => setAltName(e.target.value)}
+                placeholder="Full name"
+                hint="Must match the name on PayPal or Wise."
+              />
+
+              <div className="rounded-lg bg-amber-50 px-3 py-2.5 text-[12px] leading-relaxed text-amber-900">
+                <p className="font-medium">About fees</p>
+                <p className="mt-1">
+                  PayPal/Wise transfer or currency-conversion fees may reduce what you receive versus
+                  the job price. We’ll deduct those from your payout so you’re not surprised later.
+                </p>
+              </div>
+
+              <label className="flex items-start gap-2.5 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent/30"
+                  checked={feeAck}
+                  disabled={disabled}
+                  onChange={(e) => setFeeAck(e.target.checked)}
+                />
+                <span>
+                  I understand PayPal/Wise fees may reduce my payout amount.
+                </span>
+              </label>
+
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => void saveAltPayout()}
+                disabled={disabled || !altEmail.trim() || !altName.trim() || !feeAck}
+                className="w-full sm:w-auto"
+              >
+                {busy ? "Saving…" : "Save payout details"}
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
-      {error ? (
-        <Alert variant="error">{error}</Alert>
-      ) : null}
+      {error ? <Alert variant="error">{error}</Alert> : null}
     </div>
   );
 }

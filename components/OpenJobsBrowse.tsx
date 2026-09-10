@@ -19,8 +19,8 @@ type MyTakeSummary = { jobId: string; audioFileUrl: string; files?: import("@/li
 
 /**
  * Shared open-jobs marketplace.
- * `signedIn` false = public browse; submit is gated behind sign-up.
- * Signed-in musicians must finish Stripe payouts before opening a job to submit.
+ * Anyone can open a job to read the brief and listen.
+ * Submit is gated: sign-up for guests, Stripe payouts for signed-in musicians.
  */
 export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
@@ -29,7 +29,6 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [selectedInstruments, setSelectedInstruments] = useState<Set<string>>(new Set());
   const [myTakesByJob, setMyTakesByJob] = useState<Record<string, MyTakeSummary>>({});
   const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(null);
-  const [payoutModalOpen, setPayoutModalOpen] = useState(false);
   const [onboardLoading, setOnboardLoading] = useState(false);
   const [onboardError, setOnboardError] = useState<string | null>(null);
   const [onboardCountry, setOnboardCountry] = useState("");
@@ -97,44 +96,8 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
     };
   }, [signedIn]);
 
-  async function refreshConnectStatus(): Promise<ConnectStatus> {
-    try {
-      const res = await fetch("/api/stripe/connect/status");
-      const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error ?? "Could not load payout status");
-      const status = (body.status as ConnectStatus) ?? "none";
-      setConnectStatus(status);
-      return status;
-    } catch {
-      setConnectStatus("none");
-      return "none";
-    }
-  }
-
-  async function handleToggleJob(jobId: string) {
-    if (expandedJobId === jobId) {
-      setExpandedJobId(null);
-      return;
-    }
-
-    // Signed-out users can preview the full job + see sign-up CTA.
-    if (!signedIn) {
-      setExpandedJobId(jobId);
-      return;
-    }
-
-    let status = connectStatus;
-    if (status === null) {
-      status = await refreshConnectStatus();
-    }
-
-    if (status !== "ready") {
-      setOnboardError(null);
-      setPayoutModalOpen(true);
-      return;
-    }
-
-    setExpandedJobId(jobId);
+  function handleToggleJob(jobId: string) {
+    setExpandedJobId((prev) => (prev === jobId ? null : jobId));
   }
 
   async function startPayoutOnboarding(opts?: { reset?: boolean }) {
@@ -160,7 +123,6 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
 
       if (body.status === "ready") {
         setConnectStatus("ready");
-        setPayoutModalOpen(false);
         return;
       }
       if (!body.url) throw new Error("Stripe did not return an onboarding link");
@@ -309,36 +271,29 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
               signedIn={signedIn}
               expanded={expandedJobId === job.id}
               myTake={myTakesByJob[job.id]}
+              connectStatus={signedIn ? connectStatus : null}
+              onboardLoading={onboardLoading}
+              onboardError={onboardError}
+              onboardCountry={onboardCountry}
+              onCountryChange={setOnboardCountry}
+              onSetupPayouts={() => void startPayoutOnboarding()}
+              onResetPayouts={() => void startPayoutOnboarding({ reset: true })}
               onTakeSubmitted={handleTakeSubmitted}
-              onToggle={() => void handleToggleJob(job.id)}
+              onToggle={() => handleToggleJob(job.id)}
             />
           ))}
         </div>
-      )}
-
-      {payoutModalOpen && (
-        <PayoutRequiredModal
-          status={connectStatus === "pending" ? "pending" : "none"}
-          loading={onboardLoading}
-          error={onboardError}
-          country={onboardCountry}
-          onCountryChange={setOnboardCountry}
-          onClose={() => setPayoutModalOpen(false)}
-          onSetup={() => void startPayoutOnboarding()}
-          onReset={() => void startPayoutOnboarding({ reset: true })}
-        />
       )}
     </div>
   );
 }
 
-function PayoutRequiredModal({
+function SubmitPayoutGate({
   status,
   loading,
   error,
   country,
   onCountryChange,
-  onClose,
   onSetup,
   onReset,
 }: {
@@ -347,88 +302,61 @@ function PayoutRequiredModal({
   error: string | null;
   country: string;
   onCountryChange: (code: string) => void;
-  onClose: () => void;
   onSetup: () => void;
   onReset: () => void;
 }) {
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [onClose]);
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
-      role="presentation"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="payout-required-title"
-        className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 id="payout-required-title" className="text-lg font-semibold text-gray-900">
-          {status === "pending" ? "Finish payout setup" : "Set up payouts to submit"}
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-gray-600">
-          {status === "pending"
-            ? "Stripe still needs a bit more info before you can submit takes. Finish setup, then come back and open any job."
-            : "You can browse open jobs anytime. To open one and submit a take, connect a Stripe Express account so you can get paid if a producer picks you."}
-        </p>
+    <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50/50 px-4 py-5 sm:px-6">
+      <p className="text-sm font-medium text-gray-900">
+        {status === "pending" ? "Finish payout setup to submit" : "Set up payouts to submit"}
+      </p>
+      <p className="mt-1.5 text-sm leading-relaxed text-gray-600">
+        {status === "pending"
+          ? "You can keep listening to this job. Stripe still needs a bit more info before you can send a take."
+          : "Listen and learn the part anytime. Before you submit a take, connect Stripe Express so you can get paid if a producer picks you."}
+      </p>
 
-        <div className="mt-4">
-          <ConnectCountrySelect
-            value={country}
-            onChange={onCountryChange}
-            disabled={loading}
-            id="job-payout-country"
-          />
-        </div>
+      <div className="mt-4">
+        <ConnectCountrySelect
+          value={country}
+          onChange={onCountryChange}
+          disabled={loading}
+          id="job-payout-country"
+        />
+      </div>
 
-        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-          <Button type="button" variant="ghost" size="sm" onClick={onClose} disabled={loading}>
-            Not now
-          </Button>
-          {status === "pending" && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={onReset}
-              disabled={loading || !country}
-            >
-              Start over with this country
-            </Button>
-          )}
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        {status === "pending" && (
           <Button
             type="button"
+            variant="secondary"
             size="sm"
-            onClick={onSetup}
-            disabled={loading || (status === "none" && !country)}
+            onClick={onReset}
+            disabled={loading || !country}
+            className="w-full sm:w-auto"
           >
-            {loading
-              ? "Opening Stripe…"
-              : status === "pending"
-                ? "Continue setup"
-                : "Set up payouts"}
+            Start over with this country
           </Button>
-        </div>
-        {error && (
-          <div className="mt-4">
-            <Alert variant="error">{error}</Alert>
-          </div>
         )}
+        <Button
+          type="button"
+          size="sm"
+          onClick={onSetup}
+          disabled={loading || (status === "none" && !country)}
+          className="w-full sm:w-auto"
+        >
+          {loading
+            ? "Opening Stripe…"
+            : status === "pending"
+              ? "Continue setup"
+              : "Set up payouts"}
+        </Button>
       </div>
+      {error && (
+        <div className="mt-4">
+          <Alert variant="error">{error}</Alert>
+        </div>
+      )}
     </div>
   );
 }
@@ -438,6 +366,13 @@ function OpenJobCard({
   signedIn,
   expanded,
   myTake,
+  connectStatus,
+  onboardLoading,
+  onboardError,
+  onboardCountry,
+  onCountryChange,
+  onSetupPayouts,
+  onResetPayouts,
   onTakeSubmitted,
   onToggle,
 }: {
@@ -445,6 +380,13 @@ function OpenJobCard({
   signedIn: boolean;
   expanded: boolean;
   myTake?: MyTakeSummary;
+  connectStatus: ConnectStatus | null;
+  onboardLoading: boolean;
+  onboardError: string | null;
+  onboardCountry: string;
+  onCountryChange: (code: string) => void;
+  onSetupPayouts: () => void;
+  onResetPayouts: () => void;
   onTakeSubmitted: (take: MyTakeSummary) => void;
   onToggle: () => void;
 }) {
@@ -506,15 +448,7 @@ function OpenJobCard({
                 />
               </div>
               <div className="mt-6">
-                {signedIn ? (
-                  <SubmitTakeForm
-                    jobId={job.id}
-                    alreadySubmitted={Boolean(myTake)}
-                    existingTakeUrl={myTake?.audioFileUrl}
-                    existingFiles={myTake?.files}
-                    onSubmitted={onTakeSubmitted}
-                  />
-                ) : (
+                {!signedIn ? (
                   <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 text-center sm:px-6">
                     <p className="text-sm text-gray-600">
                       Like this gig? Create a free account to submit your take.
@@ -532,6 +466,28 @@ function OpenJobCard({
                       </Link>
                     </p>
                   </div>
+                ) : connectStatus === null ? (
+                  <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 sm:px-6">
+                    <p className="text-sm text-gray-500">Checking payout setup…</p>
+                  </div>
+                ) : connectStatus !== "ready" && !myTake ? (
+                  <SubmitPayoutGate
+                    status={connectStatus}
+                    loading={onboardLoading}
+                    error={onboardError}
+                    country={onboardCountry}
+                    onCountryChange={onCountryChange}
+                    onSetup={onSetupPayouts}
+                    onReset={onResetPayouts}
+                  />
+                ) : (
+                  <SubmitTakeForm
+                    jobId={job.id}
+                    alreadySubmitted={Boolean(myTake)}
+                    existingTakeUrl={myTake?.audioFileUrl}
+                    existingFiles={myTake?.files}
+                    onSubmitted={onTakeSubmitted}
+                  />
                 )}
               </div>
             </div>

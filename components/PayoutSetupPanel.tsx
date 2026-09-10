@@ -129,7 +129,7 @@ export function PayoutSetupPanel({
       if (!altEmail.trim()) throw new Error("Enter your PayPal or Wise email.");
       if (!altName.trim()) throw new Error("Enter the name on that account.");
       if (!feeAck) {
-        throw new Error("Please confirm you understand PayPal/Wise fees may reduce your payout.");
+        throw new Error("Please confirm you’ve read the note about PayPal/Wise fees.");
       }
 
       const res = await fetch("/api/payouts/alt", {
@@ -324,10 +324,9 @@ export function PayoutSetupPanel({
               />
 
               <div className="rounded-lg bg-amber-50 px-3 py-2.5 text-[12px] leading-relaxed text-amber-900">
-                <p className="font-medium">About fees</p>
-                <p className="mt-1">
-                  PayPal/Wise transfer or currency-conversion fees may reduce what you receive versus
-                  the job price. We’ll deduct those from your payout so you’re not surprised later.
+                <p>
+                  PayPal and Wise sometimes take a small transfer or currency fee. If they do, it’ll
+                  come out of your payout.
                 </p>
               </div>
 
@@ -339,9 +338,7 @@ export function PayoutSetupPanel({
                   disabled={disabled}
                   onChange={(e) => setFeeAck(e.target.checked)}
                 />
-                <span>
-                  I understand PayPal/Wise fees may reduce my payout amount.
-                </span>
+                <span>Got it — any PayPal/Wise fees come from my payout.</span>
               </label>
 
               <Button

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { isAltPayoutProvider, formatPayoutProviderLabel } from "@/lib/connectCountries";
 import { db } from "@/lib/db";
+import { notifyMusicianAwarded } from "@/lib/notify";
 import { stripe, calcPlatformFeeCents } from "@/lib/stripe";
 import { assertMusicianPayoutsReady } from "@/lib/stripeConnect";
-import { notifyMusicianAwarded } from "@/lib/notify";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
 function stripeMessage(err: unknown): string {
@@ -23,8 +24,8 @@ function chargeIdFromIntent(pi: Stripe.PaymentIntent): string | null {
 }
 
 // POST /api/jobs/:jobId/select-winner  { takeId }
-// Captures the held payment, transfers the musician's cut to their
-// connected Stripe account, marks the job awarded and the take as winner.
+// Captures the held payment, pays the musician (Stripe transfer or manual PayPal/Wise),
+// marks the job awarded and the take as winner.
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const sessionUserId = await getSessionUserId();
   if (!sessionUserId) {
@@ -54,14 +55,22 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   if (job.status !== "OPEN") {
     return NextResponse.json({ error: "Only open jobs can be awarded" }, { status: 400 });
   }
-  if (!take.musician.stripeAccountId) {
-    return NextResponse.json({ error: "Musician hasn't finished Stripe onboarding" }, { status: 400 });
-  }
 
-  try {
-    await assertMusicianPayoutsReady(take.musician.stripeAccountId);
-  } catch {
-    return NextResponse.json({ error: "Musician hasn't finished Stripe onboarding" }, { status: 400 });
+  const musician = take.musician;
+  const altPayout =
+    isAltPayoutProvider(musician.payoutProvider) &&
+    Boolean(musician.payoutEmail?.trim()) &&
+    Boolean(musician.payoutAccountName?.trim());
+
+  if (!altPayout) {
+    if (!musician.stripeAccountId) {
+      return NextResponse.json({ error: "Musician hasn't finished payout setup" }, { status: 400 });
+    }
+    try {
+      await assertMusicianPayoutsReady(musician.stripeAccountId);
+    } catch {
+      return NextResponse.json({ error: "Musician hasn't finished payout setup" }, { status: 400 });
+    }
   }
 
   const platformFeeCents = calcPlatformFeeCents(job.payment.amountCents);
@@ -82,6 +91,33 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
       );
     }
 
+    if (altPayout) {
+      // Funds stay on the platform; ops pays PayPal / Wise manually.
+      await db.$transaction([
+        db.take.update({ where: { id: take.id }, data: { isWinner: true } }),
+        db.job.update({ where: { id: job.id }, data: { status: "AWARDED" } }),
+        db.payment.update({
+          where: { id: job.payment.id },
+          data: { status: "pending_manual_payout", platformFeeCents },
+        }),
+      ]);
+
+      await notifyMusicianAwarded({
+        musicianId: take.musicianId,
+        jobTitle: job.title,
+        payoutProvider: musician.payoutProvider ?? undefined,
+      });
+
+      return NextResponse.json({
+        success: true,
+        payout: "manual",
+        provider: musician.payoutProvider,
+        payoutEmail: musician.payoutEmail,
+        payoutAccountName: musician.payoutAccountName,
+        message: `Awarded. Pay ${formatPayoutProviderLabel(musician.payoutProvider)} manually — funds are captured on the platform.`,
+      });
+    }
+
     const chargeId = chargeIdFromIntent(paymentIntent);
     if (!chargeId) {
       return NextResponse.json(
@@ -95,7 +131,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     await stripe.transfers.create({
       amount: payoutCents,
       currency: "usd",
-      destination: take.musician.stripeAccountId,
+      destination: musician.stripeAccountId!,
       transfer_group: job.id,
       source_transaction: chargeId,
     });
@@ -110,9 +146,13 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
       }),
     ]);
 
-    await notifyMusicianAwarded({ musicianId: take.musicianId, jobTitle: job.title });
+    await notifyMusicianAwarded({
+      musicianId: take.musicianId,
+      jobTitle: job.title,
+      payoutProvider: "stripe",
+    });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, payout: "stripe" });
   } catch (err) {
     console.error("[select-winner]", err);
     return NextResponse.json({ error: stripeMessage(err) }, { status: 502 });

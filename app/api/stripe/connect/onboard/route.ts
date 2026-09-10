@@ -67,7 +67,11 @@ export async function POST(req: Request) {
       const country = normalizeConnectCountry(countryRaw);
       if (!isSupportedConnectCountry(country)) {
         return NextResponse.json(
-          { error: "That country isn’t supported for payouts yet. Pick another, or contact us." },
+          {
+            error:
+              "Stripe can’t pay out to that country. Choose PayPal or Wise for your country instead.",
+            code: "STRIPE_COUNTRY_UNSUPPORTED",
+          },
           { status: 400 }
         );
       }
@@ -81,7 +85,13 @@ export async function POST(req: Request) {
       accountId = created.id;
       await db.user.update({
         where: { id: user.id },
-        data: { stripeAccountId: accountId },
+        data: {
+          stripeAccountId: accountId,
+          payoutProvider: "stripe",
+          payoutCountry: country,
+          payoutEmail: null,
+          payoutAccountName: null,
+        },
       });
     }
 

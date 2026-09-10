@@ -140,6 +140,7 @@ export async function notifyCreatorTakeSubmitted(opts: {
 export async function notifyMusicianAwarded(opts: {
   musicianId: string;
   jobTitle: string;
+  payoutProvider?: string;
 }) {
   if (!emailConfigured()) return;
 
@@ -149,13 +150,19 @@ export async function notifyMusicianAwarded(opts: {
   });
   if (!musician?.notifyTakeOutcome) return;
 
+  const provider = opts.payoutProvider;
+  const payoutLine =
+    provider === "paypal" || provider === "wise"
+      ? `We’ll send your payout to your ${provider === "paypal" ? "PayPal" : "Wise"} account shortly.`
+      : "Payout is on the way to your Stripe Express account.";
+
   await safeSend(`awarded ${opts.musicianId}`, () =>
     sendEmail({
       to: musician.email,
       subject: `You were selected for “${opts.jobTitle}”`,
       heading: "Your take was selected",
       bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(musician.name.split(" ")[0] || "there")},</p>
-        <p style="margin:0;">The creator picked your take on <strong>${escape(opts.jobTitle)}</strong>. Payout is on the way to your Stripe Express account.</p>`,
+        <p style="margin:0;">The creator picked your take on <strong>${escape(opts.jobTitle)}</strong>. ${escape(payoutLine)}</p>`,
       ctaLabel: "See submissions",
       ctaHref: dashboardSubmissionsUrl(),
     })

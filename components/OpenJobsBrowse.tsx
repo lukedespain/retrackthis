@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ConnectCountrySelect } from "@/components/ConnectCountrySelect";
+import { PayoutSetupPanel, type PayoutSnapshot } from "@/components/PayoutSetupPanel";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
-import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -14,13 +13,12 @@ import { emojiForInstrument } from "@/lib/instruments";
 import type { Job } from "@/lib/types";
 import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 
-type ConnectStatus = "none" | "pending" | "ready";
 type MyTakeSummary = { jobId: string; audioFileUrl: string; files?: import("@/lib/takeFiles").TakeFileRecord[] };
 
 /**
  * Shared open-jobs marketplace.
  * Anyone can open a job to read the brief and listen.
- * Submit is gated: sign-up for guests, Stripe payouts for signed-in musicians.
+ * Submit is gated: sign-up for guests; payouts ready (Stripe or PayPal/Wise) for musicians.
  */
 export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
@@ -28,10 +26,8 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [selectedInstruments, setSelectedInstruments] = useState<Set<string>>(new Set());
   const [myTakesByJob, setMyTakesByJob] = useState<Record<string, MyTakeSummary>>({});
-  const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(null);
-  const [onboardLoading, setOnboardLoading] = useState(false);
-  const [onboardError, setOnboardError] = useState<string | null>(null);
-  const [onboardCountry, setOnboardCountry] = useState("");
+  const [payout, setPayout] = useState<PayoutSnapshot | null>(null);
+  const [payoutError, setPayoutError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,10 +56,29 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
     };
   }, []);
 
+  async function loadPayoutStatus() {
+    try {
+      const res = await fetch("/api/payouts/status");
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Could not load payout status");
+      setPayout(body as PayoutSnapshot);
+      setPayoutError(null);
+    } catch {
+      setPayout({
+        ready: false,
+        status: "none",
+        provider: null,
+        country: null,
+        payoutEmail: null,
+        payoutAccountName: null,
+      });
+    }
+  }
+
   useEffect(() => {
     if (!signedIn) {
       setMyTakesByJob({});
-      setConnectStatus(null);
+      setPayout(null);
       return;
     }
     fetch("/api/takes/mine")
@@ -81,56 +96,11 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
       })
       .catch(() => {});
 
-    let cancelled = false;
-    fetch("/api/stripe/connect/status")
-      .then(async (res) => {
-        const body = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(body?.error ?? "Could not load payout status");
-        if (!cancelled) setConnectStatus((body.status as ConnectStatus) ?? "none");
-      })
-      .catch(() => {
-        if (!cancelled) setConnectStatus("none");
-      });
-    return () => {
-      cancelled = true;
-    };
+    void loadPayoutStatus();
   }, [signedIn]);
 
   function handleToggleJob(jobId: string) {
     setExpandedJobId((prev) => (prev === jobId ? null : jobId));
-  }
-
-  async function startPayoutOnboarding(opts?: { reset?: boolean }) {
-    setOnboardLoading(true);
-    setOnboardError(null);
-    try {
-      const status = connectStatus === "pending" ? "pending" : "none";
-      const needsCountry = status === "none" || opts?.reset;
-      if (needsCountry && !onboardCountry) {
-        throw new Error("Choose your payout country first.");
-      }
-
-      const res = await fetch("/api/stripe/connect/onboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          country: needsCountry ? onboardCountry : undefined,
-          reset: opts?.reset === true,
-        }),
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error ?? "Could not start payout setup");
-
-      if (body.status === "ready") {
-        setConnectStatus("ready");
-        return;
-      }
-      if (!body.url) throw new Error("Stripe did not return an onboarding link");
-      window.location.href = body.url;
-    } catch (err) {
-      setOnboardError(err instanceof Error ? err.message : "Could not start payout setup");
-      setOnboardLoading(false);
-    }
   }
 
   function handleTakeSubmitted(take: MyTakeSummary) {
@@ -164,7 +134,6 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
         ? [...jobs]
         : jobs.filter((job) => selectedInstruments.has(job.instrument));
 
-    // Newest first until sort UI returns.
     filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return filtered;
@@ -271,90 +240,15 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
               signedIn={signedIn}
               expanded={expandedJobId === job.id}
               myTake={myTakesByJob[job.id]}
-              connectStatus={signedIn ? connectStatus : null}
-              onboardLoading={onboardLoading}
-              onboardError={onboardError}
-              onboardCountry={onboardCountry}
-              onCountryChange={setOnboardCountry}
-              onSetupPayouts={() => void startPayoutOnboarding()}
-              onResetPayouts={() => void startPayoutOnboarding({ reset: true })}
+              payout={signedIn ? payout : null}
+              payoutError={payoutError}
+              onPayoutError={setPayoutError}
+              onPayoutReady={setPayout}
+              onPayoutRefresh={loadPayoutStatus}
               onTakeSubmitted={handleTakeSubmitted}
               onToggle={() => handleToggleJob(job.id)}
             />
           ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SubmitPayoutGate({
-  status,
-  loading,
-  error,
-  country,
-  onCountryChange,
-  onSetup,
-  onReset,
-}: {
-  status: "none" | "pending";
-  loading: boolean;
-  error: string | null;
-  country: string;
-  onCountryChange: (code: string) => void;
-  onSetup: () => void;
-  onReset: () => void;
-}) {
-  return (
-    <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50/50 px-4 py-5 sm:px-6">
-      <p className="text-sm font-medium text-gray-900">
-        {status === "pending" ? "Finish payout setup to submit" : "Set up payouts to submit"}
-      </p>
-      <p className="mt-1.5 text-sm leading-relaxed text-gray-600">
-        {status === "pending"
-          ? "You can keep listening to this job. Stripe still needs a bit more info before you can send a take."
-          : "Listen and learn the part anytime. Before you submit a take, connect Stripe Express so you can get paid if a producer picks you."}
-      </p>
-
-      <div className="mt-4">
-        <ConnectCountrySelect
-          value={country}
-          onChange={onCountryChange}
-          disabled={loading}
-          id="job-payout-country"
-        />
-      </div>
-
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        {status === "pending" && (
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={onReset}
-            disabled={loading || !country}
-            className="w-full sm:w-auto"
-          >
-            Start over with this country
-          </Button>
-        )}
-        <Button
-          type="button"
-          size="sm"
-          onClick={onSetup}
-          disabled={loading || (status === "none" && !country)}
-          className="w-full sm:w-auto"
-        >
-          {loading
-            ? "Opening Stripe…"
-            : status === "pending"
-              ? "Continue setup"
-              : "Set up payouts"}
-        </Button>
-      </div>
-      {error && (
-        <div className="mt-4">
-          <Alert variant="error">{error}</Alert>
         </div>
       )}
     </div>
@@ -366,13 +260,11 @@ function OpenJobCard({
   signedIn,
   expanded,
   myTake,
-  connectStatus,
-  onboardLoading,
-  onboardError,
-  onboardCountry,
-  onCountryChange,
-  onSetupPayouts,
-  onResetPayouts,
+  payout,
+  payoutError,
+  onPayoutError,
+  onPayoutReady,
+  onPayoutRefresh,
   onTakeSubmitted,
   onToggle,
 }: {
@@ -380,13 +272,11 @@ function OpenJobCard({
   signedIn: boolean;
   expanded: boolean;
   myTake?: MyTakeSummary;
-  connectStatus: ConnectStatus | null;
-  onboardLoading: boolean;
-  onboardError: string | null;
-  onboardCountry: string;
-  onCountryChange: (code: string) => void;
-  onSetupPayouts: () => void;
-  onResetPayouts: () => void;
+  payout: PayoutSnapshot | null;
+  payoutError: string | null;
+  onPayoutError: (message: string | null) => void;
+  onPayoutReady: (snapshot: PayoutSnapshot) => void;
+  onPayoutRefresh: () => Promise<void> | void;
   onTakeSubmitted: (take: MyTakeSummary) => void;
   onToggle: () => void;
 }) {
@@ -466,20 +356,21 @@ function OpenJobCard({
                       </Link>
                     </p>
                   </div>
-                ) : connectStatus === null ? (
+                ) : payout === null ? (
                   <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 sm:px-6">
                     <p className="text-sm text-gray-500">Checking payout setup…</p>
                   </div>
-                ) : connectStatus !== "ready" && !myTake ? (
-                  <SubmitPayoutGate
-                    status={connectStatus}
-                    loading={onboardLoading}
-                    error={onboardError}
-                    country={onboardCountry}
-                    onCountryChange={onCountryChange}
-                    onSetup={onSetupPayouts}
-                    onReset={onResetPayouts}
-                  />
+                ) : !payout.ready && !myTake ? (
+                  <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50/50 px-4 py-5 sm:px-6">
+                    <PayoutSetupPanel
+                      snapshot={payout}
+                      error={payoutError}
+                      onRefresh={onPayoutRefresh}
+                      onError={onPayoutError}
+                      onReady={onPayoutReady}
+                      idPrefix={`job-${job.id}-payout`}
+                    />
+                  </div>
                 ) : (
                   <SubmitTakeForm
                     jobId={job.id}

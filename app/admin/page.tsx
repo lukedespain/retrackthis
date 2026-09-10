@@ -27,6 +27,13 @@ type Member = {
   isAdmin: boolean;
   createdAt: string;
   hasPayouts: boolean;
+  payoutProvider?: string | null;
+  payoutProviderLabel?: string;
+  payoutEmail?: string | null;
+  payoutAccountName?: string | null;
+  payoutCountry?: string | null;
+  hasStripe?: boolean;
+  hasAltPayout?: boolean;
   jobsPosted: number;
   takesSubmitted: number;
   jobsWon: number;
@@ -216,7 +223,7 @@ function AdminPageInner() {
 
   async function resetMemberPayouts(m: Member) {
     const ok = window.confirm(
-      `Unlink Stripe for ${m.name} (${m.email})?\n\nThey’ll need to set up payouts again and choose their country. Only do this for stuck / wrong-country accounts.`
+      `Clear payout setup for ${m.name} (${m.email})?\n\nThis unlinks Stripe and any PayPal/Wise details. They’ll need to set up payouts again.`
     );
     if (!ok) return;
     try {
@@ -228,9 +235,25 @@ function AdminPageInner() {
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.error ?? "Could not reset payouts");
       setMembers((prev) =>
-        prev ? prev.map((row) => (row.id === m.id ? { ...row, hasPayouts: false } : row)) : prev
+        prev
+          ? prev.map((row) =>
+              row.id === m.id
+                ? {
+                    ...row,
+                    hasPayouts: false,
+                    hasStripe: false,
+                    hasAltPayout: false,
+                    payoutProvider: null,
+                    payoutProviderLabel: "Not set",
+                    payoutEmail: null,
+                    payoutAccountName: null,
+                    payoutCountry: null,
+                  }
+                : row
+            )
+          : prev
       );
-      window.alert(body?.message ?? "Payout link cleared.");
+      window.alert(body?.message ?? "Payout setup cleared.");
     } catch (err) {
       window.alert(err instanceof Error ? err.message : "Could not reset payouts");
     }
@@ -353,7 +376,13 @@ function AdminPageInner() {
                         <div className="text-xs text-gray-500 dark:text-gray-400">{m.email}</div>
                         <div className="mt-1 text-[11px] text-gray-400">
                           Joined {formatDate(m.createdAt)}
-                          {m.hasPayouts ? " · Stripe linked" : ""}
+                          {m.hasPayouts
+                            ? m.hasAltPayout
+                              ? ` · ${m.payoutProviderLabel ?? "PayPal/Wise"}${
+                                  m.payoutEmail ? ` · ${m.payoutEmail}` : ""
+                                }`
+                              : " · Stripe linked"
+                            : ""}
                         </div>
                         {m.hasPayouts ? (
                           <button
@@ -361,7 +390,7 @@ function AdminPageInner() {
                             onClick={() => void resetMemberPayouts(m)}
                             className="mt-1.5 text-xs font-medium text-amber-700 hover:underline dark:text-amber-400"
                           >
-                            Reset payout link
+                            Reset payout setup
                           </button>
                         ) : null}
                       </td>

@@ -1,20 +1,18 @@
-/** Countries we allow when creating a musician Connect Express account. */
+/** Countries musicians can declare for payouts. */
 
-export type ConnectCountry = {
+export type PayoutCountry = {
   code: string; // ISO 3166-1 alpha-2, uppercase
   label: string;
 };
 
 /**
- * US platform → connected accounts in these countries (Stripe Connect recipient list).
- * Keep focused on places musicians actually play from for Retrack This.
+ * Stripe Connect transfers from a US platform only work in these regions
+ * (US, CA, UK, EEA, CH). Other countries use PayPal / Wise instead.
  */
-export const CONNECT_COUNTRIES: ConnectCountry[] = [
+export const STRIPE_CONNECT_COUNTRIES: PayoutCountry[] = [
   { code: "US", label: "United States" },
   { code: "CA", label: "Canada" },
   { code: "GB", label: "United Kingdom" },
-  { code: "AU", label: "Australia" },
-  { code: "NZ", label: "New Zealand" },
   { code: "IE", label: "Ireland" },
   { code: "DE", label: "Germany" },
   { code: "FR", label: "France" },
@@ -29,6 +27,13 @@ export const CONNECT_COUNTRIES: ConnectCountry[] = [
   { code: "FI", label: "Finland" },
   { code: "CH", label: "Switzerland" },
   { code: "AT", label: "Austria" },
+];
+
+/** Full country list shown during payout setup (Stripe + PayPal/Wise). */
+export const PAYOUT_COUNTRIES: PayoutCountry[] = [
+  ...STRIPE_CONNECT_COUNTRIES,
+  { code: "AU", label: "Australia" },
+  { code: "NZ", label: "New Zealand" },
   { code: "MX", label: "Mexico" },
   { code: "BR", label: "Brazil" },
   { code: "AR", label: "Argentina" },
@@ -45,23 +50,49 @@ export const CONNECT_COUNTRIES: ConnectCountry[] = [
   { code: "PH", label: "Philippines" },
   { code: "TH", label: "Thailand" },
   { code: "ZA", label: "South Africa" },
-];
+].sort((a, b) => a.label.localeCompare(b.label));
 
-export function isSupportedConnectCountry(code: string): boolean {
-  const normalized = code.trim().toUpperCase();
-  return CONNECT_COUNTRIES.some((c) => c.code === normalized);
-}
+/** @deprecated Use STRIPE_CONNECT_COUNTRIES — kept for older imports. */
+export const CONNECT_COUNTRIES = STRIPE_CONNECT_COUNTRIES;
+
+export type AltPayoutProvider = "paypal" | "wise";
+export type PayoutProvider = "stripe" | AltPayoutProvider;
 
 export function normalizeConnectCountry(code: string): string {
   return code.trim().toUpperCase();
 }
 
+export function isSupportedConnectCountry(code: string): boolean {
+  const normalized = normalizeConnectCountry(code);
+  return STRIPE_CONNECT_COUNTRIES.some((c) => c.code === normalized);
+}
+
+export function isPayoutCountry(code: string): boolean {
+  const normalized = normalizeConnectCountry(code);
+  return PAYOUT_COUNTRIES.some((c) => c.code === normalized);
+}
+
+export function supportsStripeConnect(country: string): boolean {
+  return isSupportedConnectCountry(country);
+}
+
 /**
  * Countries where Stripe rejects recipient stripe_transfers unless merchant
- * card_payments is also requested (e.g. Chile).
+ * card_payments is also requested. Only relevant for Stripe Connect countries.
  */
-const COUNTRIES_REQUIRING_MERCHANT_CARD_PAYMENTS = new Set(["CL"]);
+const COUNTRIES_REQUIRING_MERCHANT_CARD_PAYMENTS = new Set<string>([]);
 
 export function requiresMerchantCardPayments(country: string): boolean {
   return COUNTRIES_REQUIRING_MERCHANT_CARD_PAYMENTS.has(normalizeConnectCountry(country));
+}
+
+export function isAltPayoutProvider(value: string | null | undefined): value is AltPayoutProvider {
+  return value === "paypal" || value === "wise";
+}
+
+export function formatPayoutProviderLabel(provider: string | null | undefined): string {
+  if (provider === "paypal") return "PayPal";
+  if (provider === "wise") return "Wise";
+  if (provider === "stripe") return "Stripe";
+  return "Not set";
 }

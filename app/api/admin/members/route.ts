@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
+import { formatPayoutProviderLabel, isAltPayoutProvider } from "@/lib/connectCountries";
 import { labelForInstrumentId } from "@/lib/instruments";
+import { hasPayoutSetup } from "@/lib/musicianPayouts";
 
 // GET /api/admin/members - all users with job/take counts and instruments
 export async function GET() {
@@ -19,6 +21,10 @@ export async function GET() {
       isAdmin: true,
       createdAt: true,
       stripeAccountId: true,
+      payoutProvider: true,
+      payoutEmail: true,
+      payoutAccountName: true,
+      payoutCountry: true,
       _count: {
         select: {
           jobsPosted: true,
@@ -35,22 +41,32 @@ export async function GET() {
   });
   const winsByUser = new Map(wins.map((w) => [w.musicianId, w._count._all]));
 
-  const members = users.map((u) => ({
-    id: u.id,
-    email: u.email,
-    name: u.name,
-    role: u.role,
-    isAdmin: u.isAdmin,
-    createdAt: u.createdAt.toISOString(),
-    hasPayouts: Boolean(u.stripeAccountId),
-    jobsPosted: u._count.jobsPosted,
-    takesSubmitted: u._count.takesSubmitted,
-    jobsWon: winsByUser.get(u.id) ?? 0,
-    instruments: u.instruments.map((id) => ({
-      id,
-      label: labelForInstrumentId(id),
-    })),
-  }));
+  const members = users.map((u) => {
+    const alt = isAltPayoutProvider(u.payoutProvider);
+    return {
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role,
+      isAdmin: u.isAdmin,
+      createdAt: u.createdAt.toISOString(),
+      hasPayouts: hasPayoutSetup(u),
+      payoutProvider: u.payoutProvider,
+      payoutProviderLabel: formatPayoutProviderLabel(u.payoutProvider),
+      payoutEmail: u.payoutEmail,
+      payoutAccountName: u.payoutAccountName,
+      payoutCountry: u.payoutCountry,
+      hasStripe: Boolean(u.stripeAccountId),
+      hasAltPayout: alt && Boolean(u.payoutEmail),
+      jobsPosted: u._count.jobsPosted,
+      takesSubmitted: u._count.takesSubmitted,
+      jobsWon: winsByUser.get(u.id) ?? 0,
+      instruments: u.instruments.map((id) => ({
+        id,
+        label: labelForInstrumentId(id),
+      })),
+    };
+  });
 
   return NextResponse.json({ members, total: members.length });
 }

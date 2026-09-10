@@ -24,6 +24,11 @@ model User {
   name            String
   role            Role[]   // a person can be both a creator and a musician
   stripeAccountId String?  // Stripe Connect account, musicians only
+  // Alt payouts (PayPal / Wise) when Stripe Connect transfers aren't available
+  payoutCountry     String? // ISO 3166-1 alpha-2
+  payoutProvider    String? // "stripe" | "paypal" | "wise"
+  payoutEmail       String? // PayPal or Wise account email
+  payoutAccountName String? // Name on the PayPal / Wise account
   createdAt       DateTime @default(now())
 
   // Email notification prefs (job alerts on by default; match profile instruments)
@@ -107,6 +112,6 @@ model Payment {
   stripePaymentIntentId String
   amountCents           Int
   platformFeeCents      Int
-  status                String   // "authorized" | "captured" | "transferred" | "cancelled" | "failed"
+  status                String   // "authorized" | "captured" | "transferred" | "pending_manual_payout" | "cancelled" | "failed"
   createdAt             DateTime @default(now())
 }

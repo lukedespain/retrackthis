@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { getMusicianPayoutSnapshot } from "@/lib/musicianPayouts";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
-// GET /api/stripe/connect/status
-// Kept for older clients; prefer /api/payouts/status.
+// GET /api/payouts/status
 export async function GET() {
   const userId = await getSessionUserId();
   if (!userId) {
@@ -11,13 +10,5 @@ export async function GET() {
   }
 
   const snapshot = await getMusicianPayoutSnapshot(userId);
-  return NextResponse.json({
-    status: snapshot.status,
-    ready: snapshot.ready,
-    accountId: snapshot.stripeAccountId,
-    provider: snapshot.provider,
-    country: snapshot.country,
-    payoutEmail: snapshot.payoutEmail,
-    payoutAccountName: snapshot.payoutAccountName,
-  });
+  return NextResponse.json(snapshot);
 }

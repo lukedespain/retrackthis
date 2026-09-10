@@ -48,8 +48,7 @@ export default function LandingPage() {
         <section className="pt-12 sm:pt-24">
           <div className="mx-auto max-w-5xl px-5 sm:px-6">
             <div className="max-w-2xl">
-              <p className="text-sm font-medium text-accent">The bridge between producers and musicians</p>
-              <h1 className="mt-3 text-4xl font-semibold leading-[1.1] tracking-tight text-gray-900 sm:mt-4 sm:text-5xl lg:text-6xl">
+              <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
                 Retrack your demo with real musicians.
               </h1>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-gray-500 sm:mt-6 sm:text-lg">

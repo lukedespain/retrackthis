@@ -5,9 +5,9 @@ import { getConnectReadiness } from "@/lib/stripeConnect";
 
 /**
  * POST /api/admin/members/:userId/reset-payouts
- * Clears stripeAccountId so the musician can onboard again with the correct country.
- * Blocked if Connect is already fully ready (avoid wiping live payout destinations).
- * Body: { force?: boolean } — force=true clears even when ready (admin override).
+ * Clears Stripe Connect + PayPal/Wise payout fields so the musician can set up again.
+ * Blocked if Stripe Connect is already fully ready (avoid wiping live destinations),
+ * unless force:true.
  */
 export async function POST(
   req: Request,
@@ -26,28 +26,36 @@ export async function POST(
 
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, email: true, stripeAccountId: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      stripeAccountId: true,
+      payoutProvider: true,
+      payoutEmail: true,
+    },
   });
   if (!user) {
     return NextResponse.json({ error: "Member not found" }, { status: 404 });
   }
 
-  if (!user.stripeAccountId) {
+  const hadAnything = Boolean(user.stripeAccountId || user.payoutProvider || user.payoutEmail);
+  if (!hadAnything) {
     return NextResponse.json({
       ok: true,
       cleared: false,
-      message: "No Stripe account linked.",
+      message: "No payout setup on this member.",
     });
   }
 
-  if (!force) {
+  if (user.stripeAccountId && !force) {
     try {
       const { ready } = await getConnectReadiness(user.stripeAccountId);
       if (ready) {
         return NextResponse.json(
           {
             error:
-              "Payouts are already ready. Pass force:true only if you’re sure you need to unlink.",
+              "Stripe payouts are already ready. Pass force:true only if you’re sure you need to unlink.",
           },
           { status: 400 }
         );
@@ -60,7 +68,13 @@ export async function POST(
   const previousAccountId = user.stripeAccountId;
   await db.user.update({
     where: { id: user.id },
-    data: { stripeAccountId: null },
+    data: {
+      stripeAccountId: null,
+      payoutProvider: null,
+      payoutEmail: null,
+      payoutAccountName: null,
+      payoutCountry: null,
+    },
   });
 
   return NextResponse.json({
@@ -70,6 +84,6 @@ export async function POST(
     name: user.name,
     email: user.email,
     message:
-      "Unlinked Stripe account. Musician can set up payouts again and choose their country. Reject/delete the old Express account in Stripe Dashboard if needed.",
+      "Cleared payout setup. Musician can set up Stripe or PayPal/Wise again.",
   });
 }

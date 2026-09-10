@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "payoutCountry" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "payoutProvider" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "payoutEmail" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "payoutAccountName" TEXT;

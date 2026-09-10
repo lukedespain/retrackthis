@@ -322,22 +322,18 @@ export function PayoutSetupPanel({
                 hint="Must match the name on PayPal or Wise."
               />
 
-              <div className="rounded-lg bg-amber-50 px-3 py-2.5 text-[12px] leading-relaxed text-amber-900">
-                <p>
-                  PayPal and Wise sometimes take a small transfer or currency fee. If they do, it’ll
-                  come out of your payout.
-                </p>
-              </div>
-
-              <label className="flex items-start gap-2.5 text-sm text-gray-700">
+              <label className="flex items-start gap-2.5 rounded-lg bg-amber-50 px-3 py-2.5 text-[12px] leading-relaxed text-amber-900">
                 <input
                   type="checkbox"
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent/30"
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-amber-300 text-accent focus:ring-accent/30"
                   checked={feeAck}
                   disabled={disabled}
                   onChange={(e) => setFeeAck(e.target.checked)}
                 />
-                <span>Got it — any PayPal/Wise fees come from my payout.</span>
+                <span>
+                  I understand that PayPal and Wise sometimes take a small transfer or currency fee.
+                  If they do, it’ll come out of my payout.
+                </span>
               </label>
 
               <Button

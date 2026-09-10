@@ -42,7 +42,7 @@ export function MarketingHeroCtas() {
         </Link>
       )}
       <Link href={FIND_WORK_HREF} className="w-full sm:w-auto">
-        <Button variant="secondary" className="w-full sm:w-auto">
+        <Button variant="outline" className="w-full sm:w-auto">
           Find work
         </Button>
       </Link>

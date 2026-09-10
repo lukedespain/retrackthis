@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes } from "react";
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
   size?: "sm" | "md";
 };
 
@@ -10,6 +10,8 @@ const variants = {
     "bg-accent text-white shadow-sm hover:bg-accent-hover active:bg-accent-hover disabled:hover:bg-accent",
   secondary:
     "bg-gray-900 text-white shadow-sm hover:bg-gray-800 active:bg-gray-950 disabled:hover:bg-gray-900 dark:bg-[#f3f4f6] dark:text-[#111827] dark:hover:bg-white dark:active:bg-white dark:disabled:hover:bg-[#f3f4f6]",
+  outline:
+    "border border-gray-900 bg-white text-gray-900 shadow-none hover:bg-gray-50 active:bg-gray-100 disabled:hover:bg-white",
   ghost:
     "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200 disabled:hover:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white dark:active:bg-gray-700",
   danger:

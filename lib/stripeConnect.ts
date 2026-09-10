@@ -1,4 +1,5 @@
 import { stripe } from "@/lib/stripe";
+import { requiresMerchantCardPayments } from "@/lib/connectCountries";
 
 const STRIPE_V2_VERSION = "2026-07-29.dahlia";
 
@@ -22,6 +23,7 @@ export function connectRefreshUrl() {
 type V2Account = {
   id: string;
   metadata?: Record<string, string> | null;
+  identity?: { country?: string | null } | null;
   configuration?: {
     recipient?: {
       capabilities?: {
@@ -29,6 +31,11 @@ type V2Account = {
           stripe_transfers?: { status?: string };
           payouts?: { status?: string };
         };
+      };
+    };
+    merchant?: {
+      capabilities?: {
+        card_payments?: { status?: string; requested?: boolean };
       };
     };
   };
@@ -76,12 +83,42 @@ function transfersActive(account: V2Account): boolean {
   return status === "active";
 }
 
+function accountNeedsMerchantOnboarding(account: V2Account): boolean {
+  const country = account.identity?.country;
+  if (country && requiresMerchantCardPayments(country)) return true;
+  const card = account.configuration?.merchant?.capabilities?.card_payments;
+  return Boolean(card && (card.requested || card.status));
+}
+
 async function createAccountV2(opts: {
   userId: string;
   email: string;
   name: string;
   country: string;
 }): Promise<{ id: string }> {
+  const needsMerchant = requiresMerchantCardPayments(opts.country);
+  const include = ["configuration.recipient", "identity", "requirements"];
+  if (needsMerchant) include.push("configuration.merchant");
+
+  const configuration: Record<string, unknown> = {
+    recipient: {
+      capabilities: {
+        stripe_balance: {
+          stripe_transfers: { requested: true },
+        },
+      },
+    },
+  };
+
+  // Chile (and similar) require merchant.card_payments alongside recipient transfers.
+  if (needsMerchant) {
+    configuration.merchant = {
+      capabilities: {
+        card_payments: { requested: true },
+      },
+    };
+  }
+
   return stripeV2<V2Account>("POST", "/v2/core/accounts", {
     contact_email: opts.email,
     display_name: opts.name,
@@ -97,26 +134,23 @@ async function createAccountV2(opts: {
       country: opts.country.toLowerCase(),
       entity_type: "individual",
     },
-    configuration: {
-      recipient: {
-        capabilities: {
-          stripe_balance: {
-            stripe_transfers: { requested: true },
-          },
-        },
-      },
-    },
-    include: ["configuration.recipient", "identity", "requirements"],
+    configuration,
+    include,
   });
 }
 
 async function createAccountLinkV2(accountId: string): Promise<{ url: string }> {
+  const account = await retrieveAccountV2(accountId);
+  const configurations = accountNeedsMerchantOnboarding(account)
+    ? (["recipient", "merchant"] as const)
+    : (["recipient"] as const);
+
   return stripeV2<{ url: string }>("POST", "/v2/core/account_links", {
     account: accountId,
     use_case: {
       type: "account_onboarding",
       account_onboarding: {
-        configurations: ["recipient"],
+        configurations: [...configurations],
         refresh_url: connectRefreshUrl(),
         return_url: connectReturnUrl(),
       },
@@ -127,6 +161,7 @@ async function createAccountLinkV2(accountId: string): Promise<{ url: string }> 
 async function retrieveAccountV2(accountId: string): Promise<V2Account> {
   const params = new URLSearchParams();
   params.append("include", "configuration.recipient");
+  params.append("include", "configuration.merchant");
   params.append("include", "identity");
   return stripeV2<V2Account>("GET", `/v2/core/accounts/${accountId}?${params.toString()}`);
 }
@@ -136,6 +171,7 @@ async function createAccountV1(opts: {
   email: string;
   country: string;
 }): Promise<{ id: string }> {
+  const needsMerchant = requiresMerchantCardPayments(opts.country);
   const account = await stripe.accounts.create({
     country: opts.country.toUpperCase(),
     email: opts.email,
@@ -145,9 +181,14 @@ async function createAccountV1(opts: {
       losses: { payments: "application" },
       stripe_dashboard: { type: "express" },
     },
-    capabilities: {
-      transfers: { requested: true },
-    },
+    capabilities: needsMerchant
+      ? {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        }
+      : {
+          transfers: { requested: true },
+        },
   });
   return { id: account.id };
 }

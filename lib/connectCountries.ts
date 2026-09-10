@@ -55,3 +55,13 @@ export function isSupportedConnectCountry(code: string): boolean {
 export function normalizeConnectCountry(code: string): string {
   return code.trim().toUpperCase();
 }
+
+/**
+ * Countries where Stripe rejects recipient stripe_transfers unless merchant
+ * card_payments is also requested (e.g. Chile).
+ */
+const COUNTRIES_REQUIRING_MERCHANT_CARD_PAYMENTS = new Set(["CL"]);
+
+export function requiresMerchantCardPayments(country: string): boolean {
+  return COUNTRIES_REQUIRING_MERCHANT_CARD_PAYMENTS.has(normalizeConnectCountry(country));
+}

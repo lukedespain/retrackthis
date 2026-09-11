@@ -6,6 +6,7 @@ export type TakeFileKind = "AUDIO" | "MIDI";
 export type TakeFileInput = {
   label: string;
   fileUrl: string;
+  previewUrl?: string | null;
   audioIndex?: number | null;
 };
 
@@ -13,10 +14,21 @@ export type TakeFileRecord = {
   id: string;
   kind: TakeFileKind;
   label: string;
-  fileUrl: string;
+  fileUrl: string | null;
+  previewUrl?: string | null;
   sortOrder: number;
   audioIndex?: number | null;
 };
+
+/** URL to stream/scrub in the player (preview MP3 when present). */
+export function listenUrl(file: Pick<TakeFileRecord, "fileUrl" | "previewUrl">): string | null {
+  return file.previewUrl || file.fileUrl || null;
+}
+
+/** Master download URL when the API exposed it. */
+export function masterUrl(file: Pick<TakeFileRecord, "fileUrl">): string | null {
+  return file.fileUrl || null;
+}
 
 export function parseTakeFileInputs(value: unknown, kind: TakeFileKind, max: number): TakeFileInput[] {
   if (!Array.isArray(value)) return [];
@@ -26,6 +38,9 @@ export function parseTakeFileInputs(value: unknown, kind: TakeFileKind, max: num
     const label = String((entry as { label?: unknown }).label ?? "").trim();
     const fileUrl = String((entry as { fileUrl?: unknown }).fileUrl ?? "").trim();
     if (!label || !fileUrl) continue;
+    const rawPreview = (entry as { previewUrl?: unknown }).previewUrl;
+    const previewUrl =
+      typeof rawPreview === "string" && rawPreview.trim() ? rawPreview.trim() : null;
     const rawIndex = (entry as { audioIndex?: unknown }).audioIndex;
     const audioIndex =
       rawIndex === null || rawIndex === undefined
@@ -36,6 +51,7 @@ export function parseTakeFileInputs(value: unknown, kind: TakeFileKind, max: num
     items.push({
       label,
       fileUrl,
+      ...(kind === "AUDIO" ? { previewUrl } : {}),
       ...(kind === "MIDI" ? { audioIndex: Number.isFinite(audioIndex) ? audioIndex : null } : {}),
     });
     if (items.length >= max) break;

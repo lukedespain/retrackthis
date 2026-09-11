@@ -15,6 +15,7 @@ type SubmitMode = "audio" | "midi" | "both";
 type TakeRow = {
   audioLabel: string;
   audioFileUrl: string | null;
+  audioPreviewUrl: string | null;
   midiLabel: string;
   midiFileUrl: string | null;
 };
@@ -23,6 +24,7 @@ function emptyRow(index: number): TakeRow {
   return {
     audioLabel: `Take ${index + 1}`,
     audioFileUrl: null,
+    audioPreviewUrl: null,
     midiLabel: `MIDI ${index + 1}`,
     midiFileUrl: null,
   };
@@ -166,9 +168,10 @@ export function SubmitTakeForm({
     const audioTakes =
       mode === "midi"
         ? []
-        : readyAudioRows.map(({ audioLabel, audioFileUrl }) => ({
+        : readyAudioRows.map(({ audioLabel, audioFileUrl, audioPreviewUrl }) => ({
             label: audioLabel.trim(),
             fileUrl: audioFileUrl as string,
+            previewUrl: audioPreviewUrl,
           }));
 
     const midiFiles =
@@ -344,7 +347,12 @@ export function SubmitTakeForm({
                       accept={AUDIO_FILE_ACCEPT}
                       compact
                       hint={index === 0 ? AUDIO_UPLOAD_HINT : undefined}
-                      onUploaded={(url) => updateRow(index, { audioFileUrl: url })}
+                      onUploaded={(url, meta) =>
+                        updateRow(index, {
+                          audioFileUrl: url,
+                          audioPreviewUrl: meta?.previewUrl ?? null,
+                        })
+                      }
                     />
                   </div>
                 )}

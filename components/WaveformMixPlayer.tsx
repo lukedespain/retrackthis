@@ -38,6 +38,7 @@ function formatOffset(ms: number) {
  */
 export function WaveformMixPlayer({
   partSrc,
+  partDownloadSrc = null,
   backingSrc = null,
   bpm = null,
   allowDownload = false,
@@ -48,6 +49,8 @@ export function WaveformMixPlayer({
   initialMode = "part",
 }: {
   partSrc: string;
+  /** Master download URL when streaming a lighter preview. */
+  partDownloadSrc?: string | null;
   backingSrc?: string | null;
   bpm?: number | null;
   allowDownload?: boolean;
@@ -58,6 +61,7 @@ export function WaveformMixPlayer({
   showNudge?: boolean;
   initialMode?: ModeId;
 }) {
+  const partFileForDownload = partDownloadSrc || partSrc;
   const hasAb = Boolean(backingSrc);
   const hasFixedTempo = typeof bpm === "number" && bpm > 0;
   const modes: ModeId[] = hasAb ? ["part", "backing", "both"] : ["part"];
@@ -507,7 +511,10 @@ export function WaveformMixPlayer({
     return () => window.removeEventListener("resize", onResize);
   }, [partPeaks, bedPeaks, showNudge]);
 
-  const partName = guessFilename(partSrc, partTabLabel === "Take" ? "take.mp3" : "part.mp3");
+  const partName = guessFilename(
+    partFileForDownload,
+    partTabLabel === "Take" ? "take.wav" : "part.mp3"
+  );
   const bedName = backingSrc ? guessFilename(backingSrc, "bed.mp3") : "";
 
   const tabClass = (selected: boolean) =>
@@ -685,7 +692,7 @@ export function WaveformMixPlayer({
               <p className="text-sm font-medium text-gray-800">{partTabLabel}</p>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                 <a
-                  href={partSrc}
+                  href={partFileForDownload}
                   download={partName}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -697,7 +704,7 @@ export function WaveformMixPlayer({
                   <button
                     type="button"
                     disabled={mixingKey !== null}
-                    onClick={() => void downloadTrackWithClick(partSrc, partName, "part")}
+                    onClick={() => void downloadTrackWithClick(partFileForDownload, partName, "part")}
                     className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
                   >
                     {mixingKey === "part" ? "Mixing…" : "Download · with click"}

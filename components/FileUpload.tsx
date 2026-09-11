@@ -1,18 +1,17 @@
-"use client";
-
-import { useRef, useState } from "react";
-import { Alert } from "@/components/ui/Alert";
-import {
-  AUDIO_FILE_ACCEPT,
-  AUDIO_UPLOAD_HINT,
-  MAX_AUDIO_UPLOAD_BYTES,
-  MAX_AUDIO_UPLOAD_MB,
-} from "@/lib/constants";
+import { AUDIO_FILE_ACCEPT, AUDIO_UPLOAD_HINT, MAX_AUDIO_UPLOAD_BYTES, MAX_AUDIO_UPLOAD_MB } from "@/lib/constants";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { Alert } from "@/components/ui/Alert";
+import { useRef, useState } from "react";
 
-type Status = "idle" | "uploading" | "done" | "error";
+type Status = "idle" | "uploading" | "processing" | "done" | "error";
 
 export type UploadKind = "demo" | "demo-backing" | "take" | "take-midi";
+
+export type UploadedAudio = {
+  publicUrl: string;
+  previewUrl: string | null;
+  path: string;
+};
 
 function fileMatchesAccept(file: File, accept: string) {
   if (!accept || accept === "*") return true;
@@ -32,6 +31,10 @@ function fileMatchesAccept(file: File, accept: string) {
   });
 }
 
+function wantsPreview(kind: UploadKind) {
+  return kind === "take" || kind === "demo" || kind === "demo-backing";
+}
+
 export function FileUpload({
   label,
   kind,
@@ -42,7 +45,7 @@ export function FileUpload({
 }: {
   label: string;
   kind: UploadKind;
-  onUploaded: (publicUrl: string) => void;
+  onUploaded: (publicUrl: string, meta?: UploadedAudio) => void;
   accept?: string;
   hint?: string;
   compact?: boolean;
@@ -95,8 +98,26 @@ export function FileUpload({
         throw uploadError;
       }
 
+      let previewUrl: string | null = null;
+      if (wantsPreview(kind)) {
+        setStatus("processing");
+        try {
+          const previewRes = await fetch("/api/uploads/preview", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path, publicUrl, fileName: file.name }),
+          });
+          const previewBody = await previewRes.json().catch(() => null);
+          if (previewRes.ok && typeof previewBody?.previewUrl === "string") {
+            previewUrl = previewBody.previewUrl;
+          }
+        } catch {
+          // Preview is best-effort; listening can fall back for the uploader.
+        }
+      }
+
       setStatus("done");
-      onUploaded(publicUrl);
+      onUploaded(publicUrl, { publicUrl, previewUrl, path });
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -147,11 +168,12 @@ export function FileUpload({
   const statusMessages = {
     idle: "Drop a file here or click to choose",
     uploading: "Uploading…",
+    processing: "Making a streaming preview…",
     done: fileName ? `Uploaded: ${fileName}` : "Uploaded",
     error: "Upload failed. Drop or click to retry",
   };
 
-  const busy = status === "uploading";
+  const busy = status === "uploading" || status === "processing";
 
   return (
     <div>
@@ -185,7 +207,7 @@ export function FileUpload({
                 ? "border-emerald-200 bg-emerald-50/50 text-emerald-700"
                 : status === "error"
                   ? "border-red-200 bg-red-50/50 text-red-600 hover:border-red-300"
-                  : status === "uploading"
+                  : busy
                     ? "border-accent/30 bg-accent-muted/50 text-accent"
                     : "border-gray-200 text-gray-500 hover:border-accent/40 hover:bg-accent-muted/30 hover:text-accent"
           }`}
@@ -198,7 +220,7 @@ export function FileUpload({
             onChange={handleFileChange}
             disabled={busy}
           />
-          {status === "uploading" && (
+          {busy && (
             <div className="mb-2 h-4 w-4 animate-spin rounded-full border-2 border-accent/20 border-t-accent" />
           )}
           {status === "done" && !dragging && (
@@ -219,7 +241,7 @@ export function FileUpload({
           <span className="text-sm font-medium">
             {dragging
               ? "Drop to upload"
-              : compact && status !== "done" && status !== "uploading"
+              : compact && status !== "done" && !busy
                 ? label
                 : statusMessages[status]}
           </span>

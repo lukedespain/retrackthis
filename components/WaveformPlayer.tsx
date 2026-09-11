@@ -27,6 +27,7 @@ function guessFilename(src: string, fallback: string) {
  */
 export function WaveformPlayer({
   src,
+  downloadSrc = null,
   label = "Audio",
   filename,
   allowDownload = false,
@@ -35,6 +36,8 @@ export function WaveformPlayer({
   compact = false,
 }: {
   src: string;
+  /** Master file when `src` is a streaming preview. */
+  downloadSrc?: string | null;
   label?: string;
   filename?: string;
   allowDownload?: boolean;
@@ -43,7 +46,9 @@ export function WaveformPlayer({
   /** Tighter chrome when nested in a take row. */
   compact?: boolean;
 }) {
-  const downloadName = filename ?? guessFilename(src, `${label.toLowerCase().replace(/\s+/g, "-")}.mp3`);
+  const fileForDownload = downloadSrc || src;
+  const downloadName =
+    filename ?? guessFilename(fileForDownload, `${label.toLowerCase().replace(/\s+/g, "-")}.mp3`);
   const hasFixedTempo = typeof bpm === "number" && bpm > 0;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -277,7 +282,7 @@ export function WaveformPlayer({
     setMixing(true);
     setMixError(null);
     try {
-      const blob = await mixAudioUrlWithClick(src, bpm);
+      const blob = await mixAudioUrlWithClick(fileForDownload, bpm);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -416,7 +421,7 @@ export function WaveformPlayer({
         {allowDownload && (
           <div className="flex flex-wrap gap-1.5">
             <a
-              href={src}
+              href={fileForDownload}
               download={downloadName}
               target="_blank"
               rel="noopener noreferrer"

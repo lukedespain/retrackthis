@@ -27,6 +27,7 @@ export async function GET() {
         kind: f.kind,
         label: f.label,
         fileUrl: f.fileUrl,
+        previewUrl: f.previewUrl,
         sortOrder: f.sortOrder,
         audioIndex: f.audioIndex,
       })),

@@ -98,6 +98,8 @@ model TakeFile {
   kind       TakeFileKind
   label      String
   fileUrl    String
+  // Stream/scrub preview (usually MP3). Masters stay in fileUrl.
+  previewUrl String?
   sortOrder  Int          @default(0)
   // Pairs MIDI with an audio take (0-based). Null = shared across all takes.
   audioIndex Int?

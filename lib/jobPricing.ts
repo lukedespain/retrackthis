@@ -15,13 +15,13 @@ export const MAX_DEADLINE_DAYS = 7;
 
 export type PricingBandId = "aux" | "core" | "session-heavy" | "specialist" | "topline";
 
-/** Beginner → pro USD bands at the 3:00 reference length. */
+/** Beginner → pro USD bands at the 3:00 reference length (softened for newer producers). */
 export const BANDS_AT_3_MIN: Record<PricingBandId, { min: number; max: number }> = {
-  aux: { min: 60, max: 140 },
-  core: { min: 100, max: 260 },
-  "session-heavy": { min: 150, max: 400 },
-  specialist: { min: 180, max: 450 },
-  topline: { min: 220, max: 500 },
+  aux: { min: 40, max: 130 },
+  core: { min: 70, max: 230 },
+  "session-heavy": { min: 100, max: 360 },
+  specialist: { min: 120, max: 400 },
+  topline: { min: 150, max: 450 },
 };
 
 const INSTRUMENT_BAND: Record<string, PricingBandId> = {
@@ -236,7 +236,7 @@ export function suggestJobPrice(opts: {
   const displayRecommendedMax = Math.min(recommendedMax, sliderMax);
 
   // When the band is wide, default toward the middle-high of the range.
-  const rawDefault = roundToTen(recommendedMin + 0.55 * (recommendedMax - recommendedMin));
+  const rawDefault = roundToTen(recommendedMin + 0.45 * (recommendedMax - recommendedMin));
   const defaultPrice = Math.max(recommendedMin, Math.min(recommendedMax, rawDefault));
 
   const instrumentLabel = opts.instrumentId ? labelForInstrumentId(opts.instrumentId) : "this part";

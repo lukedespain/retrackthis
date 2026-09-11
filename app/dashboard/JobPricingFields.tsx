@@ -170,8 +170,9 @@ export function JobPricingFields({
         <p className="inline-flex items-center text-sm font-medium text-gray-900">
           Part length
           <FieldInfo>
-            How long the musician will actually play. If you already uploaded the Part, we try to
-            fill this from the file. A close guess is fine.
+            How long the musician will actually play (not the full song length if the Part has
+            silence). When we can tell from the Part file, we fill this in; otherwise enter a close
+            guess.
           </FieldInfo>
         </p>
         <div className="grid grid-cols-2 gap-3">

@@ -11,7 +11,7 @@ export type UploadedAudio = {
   publicUrl: string;
   previewUrl: string | null;
   path: string;
-  /** Seconds from browser metadata when readable (local File). */
+  /** Seconds of sounding audio when measurable (Part uploads; skips silence). */
   durationSeconds?: number | null;
 };
 
@@ -37,26 +37,64 @@ function wantsPreview(kind: UploadKind) {
   return kind === "take" || kind === "demo" || kind === "demo-backing";
 }
 
-async function readAudioDurationSeconds(file: File): Promise<number | null> {
+/** Max file size we will decode to estimate non-silent "playing" time. */
+const ACTIVE_DURATION_ANALYZE_MAX_BYTES = 40 * 1024 * 1024;
+
+/**
+ * Estimate how long audio is actually sounding (skips silence gaps in full-length stems).
+ * Returns null when decode is too heavy or analysis fails — callers should not guess full file length.
+ */
+async function readActiveAudioDurationSeconds(file: File): Promise<number | null> {
   if (!file.type.startsWith("audio/") && !/\.(wav|mp3|m4a|aac|flac|ogg)$/i.test(file.name)) {
     return null;
   }
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const audio = document.createElement("audio");
-    audio.preload = "metadata";
-    const done = (value: number | null) => {
-      URL.revokeObjectURL(url);
-      resolve(value);
-    };
-    audio.onloadedmetadata = () => {
-      const d = audio.duration;
-      if (Number.isFinite(d) && d > 0 && d !== Infinity) done(Math.round(d));
-      else done(null);
-    };
-    audio.onerror = () => done(null);
-    audio.src = url;
-  });
+  if (file.size > ACTIVE_DURATION_ANALYZE_MAX_BYTES) return null;
+
+  let ctx: AudioContext | null = null;
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return null;
+
+    ctx = new AudioCtx();
+    const buffer = await ctx.decodeAudioData(await file.arrayBuffer());
+    await ctx.close();
+    ctx = null;
+
+    const channel = buffer.getChannelData(0);
+    const { sampleRate, duration } = buffer;
+    if (!Number.isFinite(duration) || duration <= 0) return null;
+
+    const windowSize = Math.max(1, Math.floor(sampleRate * 0.02)); // 20ms
+    const threshold = 0.012;
+    let activeWindows = 0;
+
+    for (let i = 0; i < channel.length; i += windowSize) {
+      let peak = 0;
+      const end = Math.min(channel.length, i + windowSize);
+      for (let j = i; j < end; j++) {
+        const a = Math.abs(channel[j]);
+        if (a > peak) peak = a;
+      }
+      if (peak >= threshold) activeWindows += 1;
+    }
+
+    const activeSeconds = (activeWindows * windowSize) / sampleRate;
+    if (!Number.isFinite(activeSeconds) || activeSeconds < 5) return null;
+
+    // If almost everything is "active", full length is fine.
+    // If much quieter overall, prefer the active estimate (what the musician actually plays).
+    const rounded = Math.round(activeSeconds);
+    return Math.min(Math.round(duration), rounded);
+  } catch {
+    try {
+      await ctx?.close();
+    } catch {
+      // ignore
+    }
+    return null;
+  }
 }
 
 export function FileUpload({
@@ -101,7 +139,10 @@ export function FileUpload({
     setFileName(file.name);
 
     try {
-      const measuredDuration = await readAudioDurationSeconds(file);
+      // Part uploads: estimate sounding time (not full stem length with silence).
+      // Other kinds leave duration unset here.
+      const measuredDuration =
+        kind === "demo" ? await readActiveAudioDurationSeconds(file) : null;
 
       const signRes = await fetch("/api/uploads/sign", {
         method: "POST",

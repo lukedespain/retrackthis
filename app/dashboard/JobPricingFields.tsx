@@ -4,12 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FieldInfo } from "@/components/ui/FieldInfo";
 import { Input } from "@/components/ui/Input";
 import {
-  clampJobPriceUsd,
-  formatPartDuration,
   MAX_DEADLINE_DAYS,
   MAX_DURATION_SECONDS,
   MIN_DURATION_SECONDS,
-  SLIDER_MAX_USD,
+  roundToTen,
   SLIDER_MIN_USD,
   suggestJobPrice,
 } from "@/lib/jobPricing";
@@ -131,7 +129,11 @@ export function JobPricingFields({
   function setPriceFromSlider(raw: number) {
     priceDirtyRef.current = true;
     if (!Number.isFinite(raw)) return;
-    onPriceChange(Math.max(SLIDER_MIN_USD, Math.round(raw)));
+    onPriceChange(roundToTen(raw));
+  }
+
+  function snapOfferToRange(n: number, min: number, max: number) {
+    return Math.min(max, Math.max(min, roundToTen(n)));
   }
 
   const priceBelowMin =
@@ -139,33 +141,28 @@ export function JobPricingFields({
     !Number.isFinite(priceDollars) ||
     priceDollars < SLIDER_MIN_USD;
 
-  const sliderMin = suggestion?.sliderMin ?? SLIDER_MIN_USD;
-  const sliderMax = suggestion?.sliderMax ?? SLIDER_MAX_USD;
-  const recMin = suggestion?.displayRecommendedMin ?? 100;
-  const recMax = suggestion?.displayRecommendedMax ?? 260;
-  const span = Math.max(1, sliderMax - sliderMin);
-  const leftPct = ((recMin - sliderMin) / span) * 100;
-  const rightPct = ((recMax - sliderMin) / span) * 100;
-  const sliderValue = clampJobPriceUsd(
-    Math.max(SLIDER_MIN_USD, priceDollars || SLIDER_MIN_USD),
-    sliderMin,
-    sliderMax
-  );
+  const recMin = suggestion?.recommendedMin ?? null;
+  const recMax = suggestion?.recommendedMax ?? null;
+  const sliderValue =
+    recMin != null && recMax != null
+      ? snapOfferToRange(
+          Number.isFinite(priceDollars) && priceDollars > 0 ? priceDollars : recMin,
+          recMin,
+          recMax
+        )
+      : 0;
 
   const tip =
-    suggestion && suggestion.exceedsSlider && priceDollars >= SLIDER_MAX_USD
-      ? "This offer is at the top of the slider. You can type a higher amount above $500."
+    suggestion &&
+    Number.isFinite(priceDollars) &&
+    priceDollars >= SLIDER_MIN_USD &&
+    priceDollars < suggestion.recommendedMin
+      ? "Below the typical range, so you may get fewer takes."
       : suggestion &&
           Number.isFinite(priceDollars) &&
-          priceDollars >= SLIDER_MIN_USD &&
-          priceDollars < suggestion.recommendedMin
-        ? "Below the typical range, so you may get fewer takes."
-        : suggestion &&
-            !suggestion.exceedsSlider &&
-            Number.isFinite(priceDollars) &&
-            priceDollars > suggestion.recommendedMax
-          ? "Above the typical range, which usually means a stronger incentive."
-          : null;
+          priceDollars > suggestion.recommendedMax
+        ? "Above the typical range, which usually means a stronger incentive."
+        : null;
 
   return (
     <div className="sm:col-span-2 space-y-5">
@@ -208,17 +205,12 @@ export function JobPricingFields({
             }}
             onBlur={commitMmSs}
           />
+          </div>
         </div>
-        {durationSeconds != null && (
-          <p className="text-xs text-gray-400">
-            Using {formatPartDuration(durationSeconds)} for pricing.
-          </p>
-        )}
-      </div>
 
-      <div className="sm:max-w-[8rem]">
+      <div className="max-w-xs">
         <Input
-          label="Deadline"
+          label="Days until submission closes"
           name="deadlineDays"
           type="text"
           inputMode="numeric"
@@ -253,7 +245,6 @@ export function JobPricingFields({
             }
             onDeadlineTextChange(String(Math.min(MAX_DEADLINE_DAYS, Math.round(n))));
           }}
-          hint="Days until submissions close"
         />
         {deadlineOutOfRange && (
           <p className="mt-1.5 text-xs leading-relaxed text-amber-700">
@@ -268,8 +259,8 @@ export function JobPricingFields({
             Your offer
             <FieldInfo>
               Suggested from instrument, part length, and deadline. Tighter deadlines and longer or
-              rarer parts nudge the range up. Minimum ${SLIDER_MIN_USD}. Slider tops out at $500; type
-              higher if needed.
+              rarer parts nudge the range up. Minimum ${SLIDER_MIN_USD}. The range slider moves in $10
+              steps; you can still type any amount.
             </FieldInfo>
           </p>
           {suggestion ? (
@@ -281,81 +272,93 @@ export function JobPricingFields({
           )}
         </div>
 
-        <div className="max-w-[8rem]">
-          <Input
-            label="USD"
-            name="price"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            value={priceText}
-            disabled={disabled}
-            required
-            onFocus={() => setPriceFocused(true)}
-            onChange={(e) => {
-              const next = e.target.value.replace(/[^\d]/g, "");
-              setPriceText(next);
-              priceDirtyRef.current = true;
-              if (next === "") {
-                onPriceChange(0);
-                return;
-              }
-              const n = Number(next);
-              if (Number.isFinite(n)) setPriceFromUser(n);
-            }}
-            onBlur={() => {
-              setPriceFocused(false);
-              if (priceText.trim() === "") {
-                setPriceText("");
-                return;
-              }
-              const n = Number(priceText);
-              if (Number.isFinite(n)) {
-                const rounded = Math.round(n);
-                setPriceText(String(rounded));
-                onPriceChange(rounded);
-              }
-            }}
-          />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <div className="w-full max-w-[8rem] shrink-0">
+            <label htmlFor="price" className="sr-only">
+              Offer in USD
+            </label>
+            <div className="relative">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-500"
+              >
+                $
+              </span>
+              <input
+                id="price"
+                name="price"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="off"
+                value={priceText}
+                disabled={disabled}
+                required
+                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-7 pr-3.5 text-sm text-gray-900 outline-none transition-all duration-150 ease-out hover:border-gray-300 focus:border-accent focus:ring-2 focus:ring-accent/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-600 dark:disabled:bg-gray-900"
+                onFocus={() => setPriceFocused(true)}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/[^\d]/g, "");
+                  setPriceText(next);
+                  priceDirtyRef.current = true;
+                  if (next === "") {
+                    onPriceChange(0);
+                    return;
+                  }
+                  const n = Number(next);
+                  if (Number.isFinite(n)) setPriceFromUser(n);
+                }}
+                onBlur={() => {
+                  setPriceFocused(false);
+                  if (priceText.trim() === "") {
+                    setPriceText("");
+                    return;
+                  }
+                  const n = Number(priceText);
+                  if (Number.isFinite(n)) {
+                    const rounded = Math.round(n);
+                    setPriceText(String(rounded));
+                    onPriceChange(rounded);
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {suggestion && recMin != null && recMax != null && (
+            <div className="relative min-w-0 flex-1 py-4">
+              <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-between">
+                <span className="text-[10px] font-medium tracking-wide text-violet-400">
+                  Beginning
+                </span>
+                <span className="text-[10px] font-medium tracking-wide text-accent">Expert</span>
+              </div>
+              <input
+                type="range"
+                min={recMin}
+                max={recMax}
+                step={10}
+                value={sliderValue}
+                disabled={disabled}
+                onChange={(e) => setPriceFromSlider(Number(e.target.value))}
+                className="job-price-slider w-full cursor-pointer appearance-none disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label={`Suggested range $${recMin} to $${recMax}`}
+              />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-between text-[11px] text-gray-400">
+                <span>${recMin}</span>
+                <span>
+                  ${recMax}
+                  {suggestion.exceedsSlider ? "+" : ""}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
+
         {priceBelowMin && (
           <p className="text-xs leading-relaxed text-amber-700">
             Minimum offer is ${SLIDER_MIN_USD}.
           </p>
         )}
-
-        <input
-          type="range"
-          min={sliderMin}
-          max={sliderMax}
-          step={1}
-          value={sliderValue}
-          disabled={disabled || !suggestion}
-          onChange={(e) => setPriceFromSlider(Number(e.target.value))}
-          className="job-price-slider h-2 w-full cursor-pointer appearance-none rounded-full disabled:cursor-not-allowed disabled:opacity-50"
-          style={{
-            background: `linear-gradient(to right,
-                #e5e7eb 0%,
-                #e5e7eb ${leftPct}%,
-                #c4b5fd ${leftPct}%,
-                #3b2db8 ${rightPct}%,
-                #e5e7eb ${rightPct}%,
-                #e5e7eb 100%)`,
-          }}
-          aria-label="Job price"
-        />
-        <div className="flex justify-between text-[11px] text-gray-400">
-          <span>${sliderMin}</span>
-          {suggestion && (
-            <span className="text-accent">
-              {suggestion.exceedsSlider
-                ? "Suggested $500+"
-                : `Suggested $${suggestion.recommendedMin}-$${suggestion.recommendedMax}`}
-            </span>
-          )}
-          <span>$500+</span>
-        </div>
 
         {tip && <p className="text-xs leading-relaxed text-amber-700">{tip}</p>}
       </div>

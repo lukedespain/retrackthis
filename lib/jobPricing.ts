@@ -118,6 +118,10 @@ export function roundToFive(n: number): number {
   return Math.round(n / 5) * 5;
 }
 
+export function roundToTen(n: number): number {
+  return Math.round(n / 10) * 10;
+}
+
 /**
  * Duration multiplier vs 180s reference.
  * Under 3:00 we ease in with the short-part curve. Past 3:00 we scale with length
@@ -218,11 +222,11 @@ export function suggestJobPrice(opts: {
   const base = BANDS_AT_3_MIN[bandId];
   const mult = durationMultiplier(durationSeconds) * deadlineMultiplier(days);
 
-  let recommendedMin = roundToFive(base.min * mult);
-  let recommendedMax = roundToFive(base.max * mult);
+  let recommendedMin = roundToTen(base.min * mult);
+  let recommendedMax = roundToTen(base.max * mult);
   if (recommendedMax < recommendedMin) recommendedMax = recommendedMin;
-  recommendedMin = Math.max(SLIDER_MIN_USD, recommendedMin);
-  recommendedMax = Math.max(recommendedMin, recommendedMax);
+  recommendedMin = Math.max(30, recommendedMin);
+  recommendedMax = Math.max(recommendedMin + 10, recommendedMax);
 
   const sliderMin = SLIDER_MIN_USD;
   const sliderMax = SLIDER_MAX_USD;
@@ -231,16 +235,17 @@ export function suggestJobPrice(opts: {
   const displayRecommendedMin = Math.min(recommendedMin, sliderMax);
   const displayRecommendedMax = Math.min(recommendedMax, sliderMax);
 
-  const rawDefault = roundToFive(recommendedMin + 0.55 * (recommendedMax - recommendedMin));
-  const defaultPrice = Math.min(sliderMax, Math.max(sliderMin, rawDefault));
+  // When the band is wide, default toward the middle-high of the range.
+  const rawDefault = roundToTen(recommendedMin + 0.55 * (recommendedMax - recommendedMin));
+  const defaultPrice = Math.max(recommendedMin, Math.min(recommendedMax, rawDefault));
 
   const instrumentLabel = opts.instrumentId ? labelForInstrumentId(opts.instrumentId) : "this part";
   const durationLabel = formatPartDuration(durationSeconds);
   const deadlineLabel = days === 1 ? "1 day" : `${days} days`;
 
   const suggestedCopy = exceedsSlider
-    ? `For ${instrumentLabel} at ${durationLabel} with a ${deadlineLabel} deadline, a typical range is about $${recommendedMin} to $${recommendedMax}, which sits above the $500 slider. Start at $500 or type a higher offer if that fits your budget.`
-    : `For ${instrumentLabel} at ${durationLabel} with a ${deadlineLabel} deadline, a typical range is about $${recommendedMin} to $${recommendedMax}. The lighter end of the highlighted band is more beginner-friendly, and the darker end is closer to a pro rate.`;
+    ? `For ${instrumentLabel} at ${durationLabel} with a ${deadlineLabel} deadline, a typical range is about $${recommendedMin} to $${recommendedMax}.`
+    : `For ${instrumentLabel} at ${durationLabel} with a ${deadlineLabel} deadline, a typical range is about $${recommendedMin} to $${recommendedMax}.`;
 
   return {
     bandId,

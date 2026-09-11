@@ -67,13 +67,13 @@ const faqItems: FaqItem[] = [
           <li>Project deadline: tighter windows nudge the suggested range up</li>
         </ol>
         <p>
-          The highlighted band on the slider is a typical beginner-to-pro range for that combination.
-          You can stay inside it, go lower (though you may get fewer takes), or go higher if the
-          project warrants it.
+          The highlighted band is a typical beginner-to-pro range for that combination. You can stay
+          inside it, go lower (though you may get fewer takes), or go higher if the project warrants
+          it.
         </p>
         <p>
-          The minimum amount you can offer is ${SLIDER_MIN_USD}. The slider tops out at $500 so the
-          scale stays readable; if the calculator suggests more, you can type a higher amount.
+          The minimum amount you can offer is ${SLIDER_MIN_USD}. Type any amount at or above the
+          minimum.
         </p>
       </>
     ),
@@ -105,17 +105,10 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          Awarding captures the held payment, marks that take as the winner, and starts payout to
-          the musician (minus the platform fee).
+          After picking a submission, the job closes and the musician gets paid. You&apos;re then able
+          to download the WAV files for each take from that submission.
         </p>
-        <p>
-          After award, you get access to the master WAV files for the winning take. Until then,
-          listening uses streaming MP3 files so masters stay protected.
-        </p>
-        <p>
-          Only one take wins per job. Other submissions are not paid. Make sure you have compared
-          takes in context before you award.
-        </p>
+        <p>Make sure you have compared every take in each submission before you award.</p>
       </>
     ),
   },

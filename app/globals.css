@@ -309,4 +309,26 @@ html.dark .hero-midi-wave .bg-gray-100\/90 {
       animation: none !important;
     }
   }
+
+  .job-price-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #5b4bff;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px rgba(91, 75, 255, 0.35);
+    cursor: pointer;
+  }
+
+  .job-price-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #5b4bff;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px rgba(91, 75, 255, 0.35);
+    cursor: pointer;
+  }
 }

@@ -11,6 +11,8 @@ export type UploadedAudio = {
   publicUrl: string;
   previewUrl: string | null;
   path: string;
+  /** Seconds from browser metadata when readable (local File). */
+  durationSeconds?: number | null;
 };
 
 function fileMatchesAccept(file: File, accept: string) {
@@ -33,6 +35,28 @@ function fileMatchesAccept(file: File, accept: string) {
 
 function wantsPreview(kind: UploadKind) {
   return kind === "take" || kind === "demo" || kind === "demo-backing";
+}
+
+async function readAudioDurationSeconds(file: File): Promise<number | null> {
+  if (!file.type.startsWith("audio/") && !/\.(wav|mp3|m4a|aac|flac|ogg)$/i.test(file.name)) {
+    return null;
+  }
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const audio = document.createElement("audio");
+    audio.preload = "metadata";
+    const done = (value: number | null) => {
+      URL.revokeObjectURL(url);
+      resolve(value);
+    };
+    audio.onloadedmetadata = () => {
+      const d = audio.duration;
+      if (Number.isFinite(d) && d > 0 && d !== Infinity) done(Math.round(d));
+      else done(null);
+    };
+    audio.onerror = () => done(null);
+    audio.src = url;
+  });
 }
 
 export function FileUpload({
@@ -77,6 +101,8 @@ export function FileUpload({
     setFileName(file.name);
 
     try {
+      const measuredDuration = await readAudioDurationSeconds(file);
+
       const signRes = await fetch("/api/uploads/sign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -117,7 +143,12 @@ export function FileUpload({
       }
 
       setStatus("done");
-      onUploaded(publicUrl, { publicUrl, previewUrl, path });
+      onUploaded(publicUrl, {
+        publicUrl,
+        previewUrl,
+        path,
+        durationSeconds: measuredDuration,
+      });
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Upload failed");

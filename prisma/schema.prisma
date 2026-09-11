@@ -58,6 +58,10 @@ model Job {
   demoFileUrl    String    // part being retracked (e.g. vocal demo only)
   backingFileUrl String?   // background without that part (e.g. instrumental)
   priceCents     Int
+  // How long the musician will play (part length), not the bed/song file.
+  durationSeconds Int?
+  // Optional key for the part, e.g. "A minor" or "Bb major"
+  musicalKey     String?
   // null = flexible/relative tempo; set = fixed BPM the take should match
   bpm            Int?
   deadline       DateTime

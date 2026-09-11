@@ -1,5 +1,6 @@
 import { formatCents, formatDeadline } from "@/lib/format";
 import { emojiForInstrument } from "@/lib/instruments";
+import { formatPartDuration } from "@/lib/jobPricing";
 
 function MetaTag({
   emoji,
@@ -25,12 +26,14 @@ export function JobMetaTags({
   priceCents,
   deadline,
   takeCount,
+  durationSeconds,
   showDeadline = true,
 }: {
   instrument: string;
   priceCents: number;
   deadline?: string | Date;
   takeCount?: number;
+  durationSeconds?: number | null;
   showDeadline?: boolean;
 }) {
   return (
@@ -44,6 +47,11 @@ export function JobMetaTags({
       <MetaTag emoji="💵" className="bg-emerald-50 text-emerald-800 ring-emerald-600/10">
         {formatCents(priceCents)}
       </MetaTag>
+      {typeof durationSeconds === "number" && durationSeconds > 0 && (
+        <MetaTag className="bg-sky-50 text-sky-800 ring-sky-600/10">
+          Part {formatPartDuration(durationSeconds)}
+        </MetaTag>
+      )}
       {showDeadline && deadline && (
         <MetaTag emoji="📅" className="bg-blue-50 text-blue-800 ring-blue-600/10">
           {formatDeadline(deadline)}

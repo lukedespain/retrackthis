@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Elements,
   PaymentElement,
@@ -8,6 +8,7 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { FileUpload } from "@/components/FileUpload";
+import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -16,7 +17,16 @@ import { Textarea } from "@/components/ui/Textarea";
 import { useTheme } from "@/components/ThemeProvider";
 import { AUDIO_FILE_ACCEPT } from "@/lib/constants";
 import { displayLabelForInstrumentId, labelForInstrumentId } from "@/lib/instruments";
+import { MUSICAL_KEYS } from "@/lib/musicalKeys";
+import {
+  MAX_DEADLINE_DAYS,
+  MAX_DURATION_SECONDS,
+  MIN_DURATION_SECONDS,
+  MIN_PRICE_CENTS,
+  SLIDER_MIN_USD,
+} from "@/lib/jobPricing";
 import { getStripe, hasStripePublishableKey } from "@/lib/stripeClient";
+import { JobPricingFields } from "./JobPricingFields";
 import { PostJobInstrumentPicker } from "./MusicianInstrumentsSettings";
 
 function StripeAmountSync({ amount }: { amount: number }) {
@@ -29,8 +39,11 @@ function StripeAmountSync({ amount }: { amount: number }) {
 }
 
 export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCancel: () => void }) {
-  const [priceDollars, setPriceDollars] = useState(75);
-  const priceCents = Math.max(100, Math.round((Number.isFinite(priceDollars) ? priceDollars : 0) * 100));
+  const [priceDollars, setPriceDollars] = useState(SLIDER_MIN_USD);
+  const priceCents = Math.max(
+    MIN_PRICE_CENTS,
+    Math.round((Number.isFinite(priceDollars) ? priceDollars : 0) * 100)
+  );
   const { theme } = useTheme();
 
   const stripePromise = useMemo(() => getStripe(), []);
@@ -129,9 +142,31 @@ function PostJobFormInner({
   const [backingFileUrl, setBackingFileUrl] = useState<string | null>(null);
   const [fixedTempo, setFixedTempo] = useState(true);
   const [instrumentId, setInstrumentId] = useState<string | null>(null);
+  const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
+  const durationUserSetRef = useRef(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [deadlineText, setDeadlineText] = useState(String(MAX_DEADLINE_DAYS));
   const [availableIds, setAvailableIds] = useState<Set<string>>(new Set());
   const [networkLoaded, setNetworkLoaded] = useState(false);
+
+  const deadlineDaysParsed = Number(deadlineText);
+  const deadlineOutOfRange =
+    deadlineText.trim() !== "" &&
+    (!Number.isFinite(deadlineDaysParsed) ||
+      deadlineDaysParsed < 1 ||
+      deadlineDaysParsed > MAX_DEADLINE_DAYS);
+
+  const handlePriceChange = useCallback(
+    (n: number) => {
+      onPriceChange(n);
+    },
+    [onPriceChange]
+  );
+
+  const handleDurationChange = useCallback((seconds: number) => {
+    durationUserSetRef.current = true;
+    setDurationSeconds(seconds);
+  }, []);
 
   useEffect(() => {
     if (!stripeReady) return;
@@ -185,6 +220,30 @@ function PostJobFormInner({
       return;
     }
 
+    if (
+      durationSeconds == null ||
+      durationSeconds < MIN_DURATION_SECONDS ||
+      durationSeconds > MAX_DURATION_SECONDS
+    ) {
+      setError("Set how long the musician will play (part length).");
+      return;
+    }
+
+    if (!Number.isFinite(priceDollars) || priceDollars < SLIDER_MIN_USD) {
+      setError(`Price must be at least $${SLIDER_MIN_USD}.`);
+      return;
+    }
+
+    const deadlineCheck = Number(deadlineText);
+    if (
+      !Number.isFinite(deadlineCheck) ||
+      deadlineCheck < 1 ||
+      deadlineCheck > MAX_DEADLINE_DAYS
+    ) {
+      setError(`Deadline must be between 1 and ${MAX_DEADLINE_DAYS} days.`);
+      return;
+    }
+
     if (stripeReady && (!stripe || !elements)) {
       setError("Payment form is still loading. Try again in a moment.");
       return;
@@ -204,8 +263,12 @@ function PostJobFormInner({
 
       const form = new FormData(e.currentTarget);
       const price = Number(form.get("price"));
-      const deadlineDays = Number(form.get("deadlineDays"));
+      const deadlineDays = Math.min(
+        MAX_DEADLINE_DAYS,
+        Math.max(1, Math.round(Number(deadlineText)))
+      );
       const bpmRaw = form.get("bpm");
+      const musicalKeyRaw = String(form.get("musicalKey") ?? "").trim();
       const invites = collectInviteEmails();
 
       const { error: submitError } = await elements.submit();
@@ -231,6 +294,8 @@ function PostJobFormInner({
           demoFileUrl,
           backingFileUrl,
           priceCents: Math.round(price * 100),
+          durationSeconds,
+          musicalKey: musicalKeyRaw || null,
           bpm: fixedTempo ? Number(bpmRaw) : null,
           deadline: new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000).toISOString(),
           paymentMethodId: paymentMethod.id,
@@ -261,6 +326,59 @@ function PostJobFormInner({
           required
           className="sm:col-span-2"
         />
+
+        <div className="sm:col-span-2 space-y-4">
+          <div>
+            <p className="text-sm font-medium text-gray-900">Reference tracks</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
+              Upload the isolated part you want retracked, and ideally the bed without that part so
+              musicians can play along. After they land, you can scrub the same waveform player
+              musicians will see, which makes it easier to check alignment and how long the part is
+              compared with the full arrangement.
+            </p>
+          </div>
+          <FileUpload
+            label="1 · Part being retracked"
+            kind="demo"
+            accept={AUDIO_FILE_ACCEPT}
+            hint="Required. Just the part to replace, like a vocal demo, guide guitar, or scratch bass. MP3 or WAV is fine."
+            onUploaded={(url, meta) => {
+              setDemoFileUrl(url);
+              const measured = meta?.durationSeconds;
+              if (
+                !durationUserSetRef.current &&
+                typeof measured === "number" &&
+                measured >= MIN_DURATION_SECONDS &&
+                measured <= MAX_DURATION_SECONDS
+              ) {
+                setDurationSeconds(Math.round(measured));
+              }
+            }}
+          />
+          <FileUpload
+            label="2 · Background / instrumental"
+            kind="demo-backing"
+            accept={AUDIO_FILE_ACCEPT}
+            hint="Recommended. The rest of the song without that part, like an instrumental without the vocal."
+            onUploaded={setBackingFileUrl}
+          />
+          {demoFileUrl && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-900">Preview</p>
+              <p className="text-xs leading-relaxed text-gray-500">
+                This is the player musicians get on the job. Scrub through Part, Bed, and Both to make
+                sure things line up before you post.
+              </p>
+              <ReferenceTracksPlayer
+                partSrc={demoFileUrl}
+                backingSrc={backingFileUrl}
+                bpm={null}
+                allowDownload={false}
+              />
+            </div>
+          )}
+        </div>
+
         <PostJobInstrumentPicker
           selectedId={instrumentId}
           onChange={setInstrumentId}
@@ -281,16 +399,15 @@ function PostJobFormInner({
           </Alert>
         )}
 
-        <Input
-          label="Price (USD)"
-          name="price"
-          type="number"
-          min="1"
-          step="1"
-          value={priceDollars}
-          onChange={(e) => onPriceChange(Number(e.target.value))}
-          required
+        <JobPricingFields
+          instrumentId={instrumentId}
+          durationSeconds={durationSeconds}
+          onDurationChange={handleDurationChange}
+          priceDollars={priceDollars}
+          onPriceChange={handlePriceChange}
+          disabled={submitting}
         />
+
         <Textarea
           label="Description"
           name="description"
@@ -304,8 +421,9 @@ function PostJobFormInner({
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-gray-900">Fixed tempo</p>
-              <p className="mt-0.5 text-xs text-gray-500">
-                Turn off if the part should follow the demo freely (flexible tempo).
+              <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
+                Leave this on if the take should lock to a BPM. Turn it off if the part should follow
+                the demo freely.
               </p>
             </div>
             <button
@@ -339,38 +457,72 @@ function PostJobFormInner({
           )}
         </div>
 
-        <div className="sm:col-span-2 space-y-4">
-          <div>
-            <p className="text-sm font-medium text-gray-900">Reference tracks</p>
-            <p className="mt-0.5 text-xs text-gray-500">
-              Upload the isolated part you want retracked, plus the bed without that part. Full
-              songs and WAV files are fine.
-            </p>
-          </div>
-          <FileUpload
-            label="1 · Part being retracked"
-            kind="demo"
-            accept={AUDIO_FILE_ACCEPT}
-            hint="Required. Just the part to replace, e.g. vocal demo only, guide guitar, scratch bass. MP3 or WAV."
-            onUploaded={setDemoFileUrl}
-          />
-          <FileUpload
-            label="2 · Background / instrumental"
-            kind="demo-backing"
-            accept={AUDIO_FILE_ACCEPT}
-            hint="Recommended. The rest of the song without that part, e.g. instrumental without the vocal. MP3 or WAV."
-            onUploaded={setBackingFileUrl}
-          />
+        <div className="sm:col-span-2">
+          <label htmlFor="musicalKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Key (optional)
+          </label>
+          <select
+            id="musicalKey"
+            name="musicalKey"
+            defaultValue=""
+            disabled={submitting}
+            className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-all duration-150 ease-out hover:border-gray-300 focus:border-accent focus:ring-2 focus:ring-accent/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-600"
+          >
+            <option value="">No key / not sure</option>
+            {MUSICAL_KEYS.map((key) => (
+              <option key={key.id} value={key.id}>
+                {key.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+            If the part stays in one key, pick it so musicians can prepare.
+          </p>
         </div>
-        <Input
-          label="Deadline"
-          name="deadlineDays"
-          type="number"
-          min="1"
-          defaultValue="7"
-          required
-          hint="Days from today"
-        />
+
+        <div className="sm:col-span-2">
+          <Input
+            label="Deadline"
+            name="deadlineDays"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            value={deadlineText}
+            required
+            onChange={(e) => {
+              const next = e.target.value.replace(/[^\d]/g, "");
+              if (next === "") {
+                setDeadlineText("");
+                return;
+              }
+              const n = Number(next);
+              if (Number.isFinite(n) && n > MAX_DEADLINE_DAYS) {
+                setDeadlineText(String(MAX_DEADLINE_DAYS));
+                return;
+              }
+              setDeadlineText(next);
+            }}
+            onBlur={() => {
+              if (deadlineText.trim() === "") {
+                setDeadlineText("1");
+                return;
+              }
+              const n = Number(deadlineText);
+              if (!Number.isFinite(n) || n < 1) {
+                setDeadlineText("1");
+                return;
+              }
+              setDeadlineText(String(Math.min(MAX_DEADLINE_DAYS, Math.round(n))));
+            }}
+            hint={`Maximum ${MAX_DEADLINE_DAYS} days. Stripe holds can only stay authorized for a limited time, so we cap jobs at a week. If you do not pick a winner by then, the job closes, the hold is released, and you would need to post again to restart.`}
+          />
+          {deadlineOutOfRange && (
+            <p className="mt-1.5 text-xs leading-relaxed text-amber-700">
+              Deadline must be between 1 and {MAX_DEADLINE_DAYS} days.
+            </p>
+          )}
+        </div>
 
         <div className="sm:col-span-2">
           <Input
@@ -382,14 +534,15 @@ function PostJobFormInner({
             placeholder="musician@email.com"
             autoComplete="email"
             disabled={submitting}
-            hint="We’ll email them a link to submit a take on this job."
+            hint="We'll email them a link to submit a take on this job."
           />
         </div>
 
         <div className="sm:col-span-2 space-y-2">
           <p className="text-sm font-medium text-gray-700">Payment</p>
-          <p className="text-xs text-gray-500">
-            Card is authorized for ${priceDollars || "-"} and only charged when you pick a winner.
+          <p className="text-xs leading-relaxed text-gray-500">
+            Your card is authorized for ${priceDollars || "-"} now and only charged when you pick a
+            winner.
           </p>
           <div className="rounded-xl border border-gray-200 bg-white px-3.5 py-3 min-h-[48px]">
             {!stripeReady ? (

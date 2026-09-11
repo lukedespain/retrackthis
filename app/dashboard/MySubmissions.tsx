@@ -142,6 +142,7 @@ function SubmissionCard({
               <JobMetaTags
                 instrument={liveTake.job.instrument}
                 priceCents={liveTake.job.priceCents}
+                durationSeconds={liveTake.job.durationSeconds}
                 showDeadline={false}
               />
             </div>

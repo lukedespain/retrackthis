@@ -5,6 +5,14 @@ import { notifyJobInvites, notifyNewJobPosted } from "@/lib/notify";
 import { stripe } from "@/lib/stripe";
 import { getSessionUserId } from "@/lib/supabaseServer";
 import { isAllowedInstrumentId, labelForInstrumentId } from "@/lib/instruments";
+import { sanitizeMusicalKey } from "@/lib/musicalKeys";
+import {
+  MAX_DEADLINE_DAYS,
+  MAX_DURATION_SECONDS,
+  MIN_DURATION_SECONDS,
+  MIN_PRICE_CENTS,
+  SLIDER_MIN_USD,
+} from "@/lib/jobPricing";
 
 function sanitizeInviteEmails(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -34,6 +42,8 @@ export async function POST(req: NextRequest) {
     demoFileUrl,
     backingFileUrl,
     priceCents,
+    durationSeconds,
+    musicalKey,
     deadline,
     paymentMethodId,
     bpm,
@@ -74,8 +84,42 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payment method" }, { status: 400 });
   }
 
-  if (!Number.isFinite(priceCents) || priceCents < 100) {
-    return NextResponse.json({ error: "Price must be at least $1" }, { status: 400 });
+  if (!Number.isFinite(priceCents) || priceCents < MIN_PRICE_CENTS) {
+    return NextResponse.json(
+      { error: `Price must be at least $${SLIDER_MIN_USD}` },
+      { status: 400 }
+    );
+  }
+
+  const durationValue = Number(durationSeconds);
+  if (
+    !Number.isFinite(durationValue) ||
+    durationValue < MIN_DURATION_SECONDS ||
+    durationValue > MAX_DURATION_SECONDS
+  ) {
+    return NextResponse.json(
+      {
+        error: `Part length must be between ${MIN_DURATION_SECONDS} seconds and ${
+          MAX_DURATION_SECONDS / 60
+        } minutes.`,
+      },
+      { status: 400 }
+    );
+  }
+  const durationSecondsInt = Math.round(durationValue);
+
+  const musicalKeyValue = sanitizeMusicalKey(musicalKey);
+
+  const deadlineDate = new Date(deadline);
+  if (Number.isNaN(deadlineDate.getTime())) {
+    return NextResponse.json({ error: "Invalid deadline" }, { status: 400 });
+  }
+  const maxDeadlineMs = Date.now() + MAX_DEADLINE_DAYS * 24 * 60 * 60 * 1000 + 60_000;
+  if (deadlineDate.getTime() > maxDeadlineMs) {
+    return NextResponse.json(
+      { error: `Deadline must be within ${MAX_DEADLINE_DAYS} days so the escrow hold stays valid.` },
+      { status: 400 }
+    );
   }
 
   // bpm: number = fixed tempo; null/undefined/empty = flexible
@@ -120,8 +164,10 @@ export async function POST(req: NextRequest) {
       demoFileUrl: demoFileUrl.trim(),
       backingFileUrl: backing,
       priceCents,
+      durationSeconds: durationSecondsInt,
+      musicalKey: musicalKeyValue,
       bpm: bpmValue,
-      deadline: new Date(deadline),
+      deadline: deadlineDate,
       payment: {
         create: {
           stripePaymentIntentId: paymentIntent.id,

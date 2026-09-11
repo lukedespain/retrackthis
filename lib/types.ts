@@ -11,6 +11,8 @@ export type Job = {
   /** Background / instrumental without the part being retracked */
   backingFileUrl?: string | null;
   priceCents: number;
+  /** Part length in seconds (how long the musician will play). */
+  durationSeconds?: number | null;
   /** null = flexible tempo; number = fixed BPM */
   bpm: number | null;
   deadline: string;
@@ -45,6 +47,7 @@ export type MyTake = {
     title: string;
     instrument: string;
     priceCents: number;
+    durationSeconds?: number | null;
     bpm: number | null;
     status: "OPEN" | "AWARDED" | "CANCELLED";
   };

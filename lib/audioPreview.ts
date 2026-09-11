@@ -1,9 +1,23 @@
 import { spawn } from "child_process";
-import { promises as fs } from "fs";
+import { existsSync, promises as fs } from "fs";
 import os from "os";
 import path from "path";
-import ffmpegPath from "ffmpeg-static";
 import { AUDIO_BUCKET, supabaseAdmin } from "@/lib/supabaseAdmin";
+
+/**
+ * Resolve the ffmpeg binary from node_modules by path.
+ * Do not import/require ffmpeg-static: Next rewrites that path into .next/vendor-chunks.
+ */
+function getFfmpegPath(): string | null {
+  const candidates = [
+    path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg"),
+    path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg.exe"),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
 
 const PREVIEW_BITRATE = "192k";
 
@@ -29,6 +43,7 @@ export function storagePathFromPublicUrl(publicUrl: string): string | null {
 }
 
 async function runFfmpegToMp3(inputPath: string, outputPath: string): Promise<void> {
+  const ffmpegPath = getFfmpegPath();
   if (!ffmpegPath) {
     throw new Error("ffmpeg binary is not available on this server");
   }
@@ -49,7 +64,7 @@ async function runFfmpegToMp3(inputPath: string, outputPath: string): Promise<vo
       "2",
       outputPath,
     ];
-    const child = spawn(ffmpegPath as string, args, { stdio: ["ignore", "ignore", "pipe"] });
+    const child = spawn(ffmpegPath, args, { stdio: ["ignore", "ignore", "pipe"] });
     let stderr = "";
     child.stderr?.on("data", (chunk: Buffer) => {
       stderr += chunk.toString();

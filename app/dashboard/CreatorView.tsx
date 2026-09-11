@@ -204,6 +204,7 @@ function CreatorJobCard({
             <JobMetaTags
               instrument={job.instrument}
               priceCents={job.priceCents}
+              durationSeconds={job.durationSeconds}
               deadline={job.deadline}
               takeCount={job.takeCount}
             />

@@ -140,6 +140,18 @@ export function durationMultiplier(durationSeconds: number): number {
   return 1;
 }
 
+/**
+ * Deadline multiplier vs a full 7-day window.
+ * Tighter deadlines nudge the suggested range up (rush). Longer windows stay at baseline.
+ * 7 days → 1.0×, 1 day → 1.3×.
+ */
+export function deadlineMultiplier(deadlineDays: number): number {
+  const d = Math.min(MAX_DEADLINE_DAYS, Math.max(1, Math.round(deadlineDays)));
+  if (MAX_DEADLINE_DAYS <= 1) return 1;
+  const rush = (MAX_DEADLINE_DAYS - d) / (MAX_DEADLINE_DAYS - 1);
+  return 1 + rush * 0.3;
+}
+
 export function pricingBandForInstrumentId(instrumentId: string | null | undefined): PricingBandId {
   if (!instrumentId) return "core";
   const id = normalizeInstrumentId(instrumentId);
@@ -188,17 +200,23 @@ export type JobPriceSuggestion = {
   sliderMax: number;
   instrumentLabel: string;
   durationLabel: string;
+  deadlineDays: number;
   suggestedCopy: string;
 };
 
 export function suggestJobPrice(opts: {
   instrumentId: string | null | undefined;
   durationSeconds: number;
+  deadlineDays?: number | null;
 }): JobPriceSuggestion {
   const durationSeconds = Math.max(MIN_DURATION_SECONDS, Math.min(MAX_DURATION_SECONDS, opts.durationSeconds));
+  const days =
+    opts.deadlineDays != null && Number.isFinite(opts.deadlineDays)
+      ? Math.min(MAX_DEADLINE_DAYS, Math.max(1, Math.round(opts.deadlineDays)))
+      : MAX_DEADLINE_DAYS;
   const bandId = pricingBandForInstrumentId(opts.instrumentId);
   const base = BANDS_AT_3_MIN[bandId];
-  const mult = durationMultiplier(durationSeconds);
+  const mult = durationMultiplier(durationSeconds) * deadlineMultiplier(days);
 
   let recommendedMin = roundToFive(base.min * mult);
   let recommendedMax = roundToFive(base.max * mult);
@@ -218,10 +236,11 @@ export function suggestJobPrice(opts: {
 
   const instrumentLabel = opts.instrumentId ? labelForInstrumentId(opts.instrumentId) : "this part";
   const durationLabel = formatPartDuration(durationSeconds);
+  const deadlineLabel = days === 1 ? "1 day" : `${days} days`;
 
   const suggestedCopy = exceedsSlider
-    ? `For ${instrumentLabel} at ${durationLabel}, a typical range is about $${recommendedMin} to $${recommendedMax}, which sits above the $500 slider. Start at $500 or type a higher offer if that fits your budget.`
-    : `For ${instrumentLabel} at ${durationLabel}, a typical range is about $${recommendedMin} to $${recommendedMax}. The lighter end of the highlighted band is more beginner-friendly, and the darker end is closer to a pro rate.`;
+    ? `For ${instrumentLabel} at ${durationLabel} with a ${deadlineLabel} deadline, a typical range is about $${recommendedMin} to $${recommendedMax}, which sits above the $500 slider. Start at $500 or type a higher offer if that fits your budget.`
+    : `For ${instrumentLabel} at ${durationLabel} with a ${deadlineLabel} deadline, a typical range is about $${recommendedMin} to $${recommendedMax}. The lighter end of the highlighted band is more beginner-friendly, and the darker end is closer to a pro rate.`;
 
   return {
     bandId,
@@ -235,6 +254,7 @@ export function suggestJobPrice(opts: {
     sliderMax,
     instrumentLabel,
     durationLabel,
+    deadlineDays: days,
     suggestedCopy,
   };
 }

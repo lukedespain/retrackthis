@@ -1,20 +1,26 @@
-import { InputHTMLAttributes, forwardRef } from "react";
+import { InputHTMLAttributes, forwardRef, type ReactNode } from "react";
+import { FieldInfo } from "@/components/ui/FieldInfo";
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   hint?: string;
+  info?: ReactNode;
 };
 
 export const Input = forwardRef<HTMLInputElement, Props>(function Input(
-  { label, hint, className = "", id, ...props },
+  { label, hint, info, className = "", id, ...props },
   ref
 ) {
   const inputId = id ?? props.name;
 
   return (
     <div className={className}>
-      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label
+        htmlFor={inputId}
+        className="inline-flex items-center text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
         {label}
+        {info ? <FieldInfo>{info}</FieldInfo> : null}
       </label>
       <input
         ref={ref}

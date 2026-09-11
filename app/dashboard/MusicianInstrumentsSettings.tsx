@@ -136,7 +136,7 @@ export function PostJobInstrumentPicker({
       onChange={onChange}
       disabled={disabled}
       label="Instrument needed"
-      hint="Start typing the part you need. Pick from the suggestions."
+      hint="Start typing to pick from suggestions."
     />
   );
 }

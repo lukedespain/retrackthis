@@ -117,10 +117,6 @@ export default function TermsOfServicePage() {
           </a>
           .
         </p>
-        <p className="text-sm text-gray-400">
-          These Terms are a practical starting point for a small marketplace, not a substitute for
-          advice from your own lawyer.
-        </p>
       </LegalSection>
     </LegalPage>
   );

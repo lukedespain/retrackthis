@@ -525,7 +525,7 @@ function TakeCard({
               size="sm"
               onClick={onSelect}
               disabled={disabled}
-              title={readOnly ? "Preview only — awarding stays with the producer" : undefined}
+              title={readOnly ? "Preview only. Awarding stays with the producer." : undefined}
               className="w-full sm:w-auto"
             >
               {readOnly
@@ -535,7 +535,7 @@ function TakeCard({
                   : "Choose this submission"}
             </Button>
             <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
-              You get every take the submission included.
+              You get every take in this submission, including full files.
             </p>
           </div>
         )}

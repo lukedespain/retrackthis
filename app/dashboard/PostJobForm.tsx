@@ -61,7 +61,7 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
     <Card padding="md">
       <h3 className="text-base font-semibold text-gray-900">Post a new job</h3>
       <p className="mt-1 text-sm text-gray-500">
-        Your payment will be held in escrow until you pick a winner.
+        Your payment is held until you pick a winner.
       </p>
 
       {keyConfigured ? (

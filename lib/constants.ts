@@ -3,7 +3,7 @@
 export const MAX_AUDIO_UPLOAD_MB = 500;
 export const MAX_AUDIO_UPLOAD_BYTES = MAX_AUDIO_UPLOAD_MB * 1024 * 1024;
 
-export const AUDIO_UPLOAD_HINT = `Upload MP3 or WAV (max ${MAX_AUDIO_UPLOAD_MB}MB)`;
+export const AUDIO_UPLOAD_HINT = `WAV preferred (max ${MAX_AUDIO_UPLOAD_MB}MB). MP3 is fine too.`;
 
 /** Explicit extensions + MIME types so WAV works across browsers. */
 export const AUDIO_FILE_ACCEPT =

@@ -347,8 +347,8 @@ export function PayoutSetupPanel({
           {provider === "stripe" ? (
             <div className="space-y-3 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
               <p className="text-sm leading-relaxed text-emerald-900/80">
-                Lower fees — payment goes straight from the producer to you. You’ll finish identity
-                and bank details on Stripe’s secure form.
+                Lower fees. Payment goes straight from the producer to you. You’ll finish identity
+                and bank details on Stripe’s form.
               </p>
               <Button
                 type="button"

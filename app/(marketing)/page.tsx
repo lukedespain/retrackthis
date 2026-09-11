@@ -7,17 +7,17 @@ const PRODUCER_STEPS = [
   {
     number: "01",
     title: "Post the part",
-    body: "Upload a demo of the part you need retracked, describe the gig, set a price, and your payment is held until you choose a take.",
+    body: "Upload a demo of the part you need retracked, describe the gig, set a price. Payment is held until you choose a take.",
   },
   {
     number: "02",
     title: "Review submissions",
-    body: "Working musicians send takes for free. Listen to everyone who submitted and compare options on your job.",
+    body: "Musicians send takes for free. Listen and compare. Full files download when you pick someone.",
   },
   {
     number: "03",
     title: "Pick who to pay",
-    body: "Choose the take that fits. That musician gets paid. You can cancel anytime before awarding for a full release of the hold.",
+    body: "Choose the take that fits. That musician gets paid. Cancel anytime before awarding and the hold is released.",
   },
 ] as const;
 
@@ -25,17 +25,17 @@ const MUSICIAN_STEPS = [
   {
     number: "01",
     title: "Browse open gigs",
-    body: "Find jobs for your instruments. Listen to the reference tracks and decide if the part is right for you.",
+    body: "Find jobs for your instruments. Listen to the reference and see if the part is right for you.",
   },
   {
     number: "02",
     title: "Submit your takes",
-    body: "One submission per job, with up to three takes inside it. Free to submit. The producer picks who to pay.",
+    body: "One submission per job, up to three takes. Free to submit. The producer picks who to pay.",
   },
   {
     number: "03",
     title: "Earn when you win",
-    body: "If your take gets picked, you get paid. Set up payouts once, then cash out whenever a producer awards you.",
+    body: "If your take gets picked, you get paid. Set up payouts once, then cash out when a producer awards you.",
   },
 ] as const;
 

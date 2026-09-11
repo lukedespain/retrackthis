@@ -33,8 +33,8 @@ export function JobsMarketplace() {
           </h1>
           <p className="mt-1.5 max-w-lg text-sm text-gray-500 sm:text-base">
             {signedIn
-              ? "Browse real gigs from producers and songwriters. Open a card to listen — set up payouts when you’re ready to submit."
-              : "Browse real gigs from producers and songwriters. Create a free account when you're ready to submit a take."}
+              ? "Browse gigs from producers and songwriters. Open a card to listen. Set up payouts when you’re ready to submit."
+              : "Browse gigs from producers and songwriters. Create a free account when you're ready to submit."}
           </p>
         </div>
         <Link

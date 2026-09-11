@@ -131,7 +131,7 @@ function MidiSlot({
 
 function AudioPreviewNote({ allowDownload, hasPreview }: { allowDownload: boolean; hasPreview: boolean }) {
   if (allowDownload || !hasPreview) return null;
-  return <p className="mt-1.5 text-[11px] text-gray-400">Preview · full WAV after purchase</p>;
+  return <p className="mt-1.5 text-[11px] text-gray-400">Preview only. Full file after you choose.</p>;
 }
 
 /**

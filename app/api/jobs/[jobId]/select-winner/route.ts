@@ -114,7 +114,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         provider: musician.payoutProvider,
         payoutEmail: musician.payoutEmail,
         payoutAccountName: musician.payoutAccountName,
-        message: `Awarded. Pay ${formatPayoutProviderLabel(musician.payoutProvider)} manually — funds are captured on the platform.`,
+        message: `Awarded. Pay ${formatPayoutProviderLabel(musician.payoutProvider)} manually. Funds are captured on the platform.`,
       });
     }
 

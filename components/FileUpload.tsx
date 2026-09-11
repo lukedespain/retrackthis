@@ -168,7 +168,7 @@ export function FileUpload({
   const statusMessages = {
     idle: "Drop a file here or click to choose",
     uploading: "Uploading…",
-    processing: "Making a streaming preview…",
+    processing: "Making a preview…",
     done: fileName ? `Uploaded: ${fileName}` : "Uploaded",
     error: "Upload failed. Drop or click to retry",
   };

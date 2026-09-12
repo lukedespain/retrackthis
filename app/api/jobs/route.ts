@@ -236,10 +236,13 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Background: one-time "3 days left" emails for matching musicians.
-  void sendDueThreeDayReminders().catch((err) => {
+  // One-time "3 days left" emails for matching musicians who have not submitted.
+  // Await so Vercel does not freeze the function before Resend finishes.
+  try {
+    await sendDueThreeDayReminders();
+  } catch (err) {
     console.error("[jobs three-day sweep]", err);
-  });
+  }
 
   const expiredIds = new Set(expired.map((job) => job.id));
   const visible =

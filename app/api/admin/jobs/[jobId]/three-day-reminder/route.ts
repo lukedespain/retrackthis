@@ -3,17 +3,14 @@ import { requireAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { notifyJobThreeDaysLeft } from "@/lib/notify";
 
-type Params = { params: Promise<{ jobId: string }> };
-
-/**
- * POST /api/admin/jobs/:jobId/three-day-reminder
- * Force-send the "3 days left" email for one OPEN job (skips people who already submitted).
- */
-export async function POST(_req: Request, { params }: Params) {
+export async function POST(
+  _req: Request,
+  { params }: { params: { jobId: string } }
+) {
   const { error } = await requireAdmin();
   if (error) return error;
 
-  const { jobId } = await params;
+  const { jobId } = params;
   const job = await db.job.findUnique({
     where: { id: jobId },
     select: {

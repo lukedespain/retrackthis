@@ -76,6 +76,53 @@ export async function notifyNewJobPosted(job: JobLite) {
   );
 }
 
+/** Email matching musicians who have not submitted yet that a job has ~3 days left. */
+export async function notifyJobThreeDaysLeft(job: JobLite): Promise<number> {
+  if (!emailConfigured()) return 0;
+
+  const [users, takes] = await Promise.all([
+    db.user.findMany({
+      where: {
+        notifyJobAlerts: true,
+        id: { not: job.creatorId },
+        NOT: { instruments: { isEmpty: true } },
+      },
+      select: { id: true, email: true, name: true, instruments: true },
+    }),
+    db.take.findMany({
+      where: { jobId: job.id },
+      select: { musicianId: true },
+    }),
+  ]);
+
+  const submitted = new Set(takes.map((t) => t.musicianId));
+  const recipients = users.filter(
+    (user) =>
+      !submitted.has(user.id) &&
+      jobMatchesAlertFilters(job.instrument, job.instrumentId, user.instruments)
+  );
+
+  await Promise.all(
+    recipients.map((user) =>
+      safeSend(`three-day ${job.id} → ${user.email}`, () =>
+        sendEmail({
+          to: user.email,
+          subject: `Only 3 days left to submit: ${job.instrument} job`,
+          heading: "Only 3 days left to submit",
+          bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(user.name.split(" ")[0] || "there")},</p>
+            <p style="margin:0 0 10px;">Only 3 days left to submit to this <strong>${escape(job.instrument)}</strong> job:</p>
+            <p style="margin:0 0 10px;"><strong>${escape(job.title)}</strong> · ${escape(formatCents(job.priceCents))} · ${escape(formatDeadline(job.deadline))}</p>
+            <p style="margin:0;">${escape(snippet(job.description))}</p>`,
+          ctaLabel: "View open jobs",
+          ctaHref: jobUrl(),
+        })
+      )
+    )
+  );
+
+  return recipients.length;
+}
+
 export async function notifyJobInvites(opts: {
   job: JobLite;
   creatorName: string;

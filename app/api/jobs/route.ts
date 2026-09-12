@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { CANCEL_GRACE_PERIOD_MS, cancelJobAndRefund } from "@/lib/jobActions";
+import { CANCEL_GRACE_PERIOD_MS, cancelJobAndRefund, sendDueThreeDayReminders } from "@/lib/jobActions";
 import { notifyJobInvites, notifyNewJobPosted } from "@/lib/notify";
 import { stripe } from "@/lib/stripe";
 import { getSessionUserId } from "@/lib/supabaseServer";
@@ -204,6 +204,7 @@ export async function POST(req: NextRequest) {
 // Also does a lazy sweep: any OPEN job whose deadline passed more than
 // CANCEL_GRACE_PERIOD_MS ago with no winner gets auto-cancelled (refunded)
 // right here before we respond, instead of needing a real cron job.
+// Separately, OPEN jobs with ≤3 days left get a one-time reminder email.
 export async function GET(req: NextRequest) {
   let where: { creatorId: string } | { status: "OPEN" } = { status: "OPEN" };
   if (req.nextUrl.searchParams.get("mine") === "true") {
@@ -234,6 +235,11 @@ export async function GET(req: NextRequest) {
       });
     }
   }
+
+  // Background: one-time "3 days left" emails for matching musicians.
+  void sendDueThreeDayReminders().catch((err) => {
+    console.error("[jobs three-day sweep]", err);
+  });
 
   const expiredIds = new Set(expired.map((job) => job.id));
   const visible =

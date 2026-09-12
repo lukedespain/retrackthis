@@ -65,6 +65,8 @@ model Job {
   // null = flexible/relative tempo; set = fixed BPM the take should match
   bpm            Int?
   deadline       DateTime
+  // Set when we emailed matching musicians that this job has ~3 days left.
+  threeDayReminderSentAt DateTime?
   status         JobStatus @default(OPEN)
   createdAt      DateTime  @default(now())
 

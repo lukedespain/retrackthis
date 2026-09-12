@@ -294,26 +294,29 @@ export function displayLabelForInstrumentId(id: string): string {
 }
 
 /**
- * Map a free-text job instrument to one category. More specific aliases
- * are checked before generic ones.
+ * Map a free-text job instrument to one category. Exact id/label/alias matches
+ * win first; then longer alias substrings (so "chinese violin" → erhu, not violin).
  */
 export function categoryForInstrument(instrument: string): InstrumentCategory {
   const key = instrument.trim().toLowerCase();
   if (!key) return fallbackCategory();
 
-  const ranked = [...INSTRUMENT_CATALOG].sort((a, b) => longestAlias(b) - longestAlias(a));
-
-  for (const category of ranked) {
-    if (category.aliases.some((alias) => key.includes(alias) || alias.includes(key))) {
-      return category;
-    }
-    if (category.label.toLowerCase() === key || category.id === key) {
-      return category;
-    }
+  for (const category of INSTRUMENT_CATALOG) {
+    if (category.id === key || category.label.toLowerCase() === key) return category;
+    if (category.aliases.some((alias) => alias === key)) return category;
   }
 
   const legacy = LEGACY_INSTRUMENT_IDS[key];
   if (legacy) return BY_ID.get(legacy) ?? fallbackCategory();
+
+  const ranked = [...INSTRUMENT_CATALOG].sort((a, b) => longestAlias(b) - longestAlias(a));
+  for (const category of ranked) {
+    // Only match when the instrument text contains the alias — not the reverse,
+    // or "violin" would hit Erhu via alias "chinese violin".
+    if (category.aliases.some((alias) => alias.length >= 3 && key.includes(alias))) {
+      return category;
+    }
+  }
 
   return fallbackCategory();
 }

@@ -110,7 +110,8 @@ async function createAccountV2(opts: {
     },
   };
 
-  // Chile (and similar) require merchant.card_payments alongside recipient transfers.
+  // Stripe Accounts v2 requires merchant.card_payments with recipient transfers
+  // in Connect countries (GB/EEA/US/etc.), even for payout-only musicians.
   if (needsMerchant) {
     configuration.merchant = {
       capabilities: {

@@ -78,12 +78,11 @@ export function supportsStripeConnect(country: string): boolean {
 
 /**
  * Countries where Stripe rejects recipient stripe_transfers unless merchant
- * card_payments is also requested. Only relevant for Stripe Connect countries.
+ * card_payments is also requested on Accounts v2. That used to be Chile-only;
+ * GB (and other Connect countries) now hit the same requirement.
  */
-const COUNTRIES_REQUIRING_MERCHANT_CARD_PAYMENTS = new Set<string>([]);
-
 export function requiresMerchantCardPayments(country: string): boolean {
-  return COUNTRIES_REQUIRING_MERCHANT_CARD_PAYMENTS.has(normalizeConnectCountry(country));
+  return isSupportedConnectCountry(country);
 }
 
 export function isAltPayoutProvider(value: string | null | undefined): value is AltPayoutProvider {

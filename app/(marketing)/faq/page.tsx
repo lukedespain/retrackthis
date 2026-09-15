@@ -29,8 +29,8 @@ const faqItems: FaqItem[] = [
         </p>
         <p>
           As the submissions come in, the producer can listen to the takes and compare the
-          submissions. Once the producer picks a winner, their payment is captured and the musician
-          gets awarded.
+          submissions. Picking a winner before the deadline keeps the job open for more takes;
+          payment and downloads wait until the deadline ends.
         </p>
       </>
     ),
@@ -48,7 +48,10 @@ const faqItems: FaqItem[] = [
           If you cancel an open job, or if the job expires without a winner, the hold is released and
           you are not charged.
         </p>
-        <p>The charge only goes through when you award a winning take.</p>
+        <p>
+          The charge goes through when the deadline ends with a selected winner (or when you award
+          after the deadline during the grace window).
+        </p>
       </>
     ),
   },
@@ -89,12 +92,13 @@ const faqItems: FaqItem[] = [
           you room to listen.
         </p>
         <p>
-          You can cancel an open job anytime before awarding. That releases the hold in full.
+          You can cancel an open job anytime before it is finalized. That releases the hold in full.
         </p>
         <p>
-          If the deadline passes with no winner, you still have a short grace window (about 72
-          hours) to award or cancel. After that, the job closes automatically and the hold is
-          released.
+          Jobs stay open for submissions until the deadline. If you select a take early, you can
+          change it until time is up. If the deadline passes with no winner, you still have a short
+          grace window (about 72 hours) to award or cancel. After that, the job closes automatically
+          and the hold is released.
         </p>
       </>
     ),
@@ -105,10 +109,16 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          After picking a submission, the job closes and the musician gets paid. You&apos;re then able
-          to download the WAV files for each take from that submission.
+          You can pick a submission anytime while the job is open. Until the deadline, that pick is
+          provisional: the job stays open for more takes, you can switch your selection, and payment
+          plus WAV downloads wait until the deadline ends.
         </p>
-        <p>Make sure you have compared every take in each submission before you award.</p>
+        <p>
+          When the deadline hits with a selection in place, the musician gets paid and you can
+          download the master files. If you award after the deadline (during the grace window), it
+          finalizes immediately.
+        </p>
+        <p>Make sure you have compared every take in each submission before you lock in a winner.</p>
       </>
     ),
   },
@@ -230,8 +240,8 @@ const faqItems: FaqItem[] = [
         </p>
         <p>
           For listening on the site, Retrack This automatically creates an MP3 version of the
-          musician&apos;s submissions for lighter streaming previews. Once awarded, the master files
-          become available for download.
+          musician&apos;s submissions for lighter streaming previews. Once the job is awarded at the
+          deadline, the master files become available for download.
         </p>
       </>
     ),

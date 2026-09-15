@@ -136,6 +136,12 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   if (!job || job.status !== "OPEN") {
     return NextResponse.json({ error: "Job is not open for submissions" }, { status: 400 });
   }
+  if (new Date(job.deadline).getTime() <= Date.now()) {
+    return NextResponse.json(
+      { error: "Submissions are closed — this job’s deadline has passed" },
+      { status: 400 }
+    );
+  }
 
   // Best-effort: ensure MP3 previews exist before persisting (covers client timeout / skip).
   audioTakes = await Promise.all(audioTakes.map((f) => ensurePreviewForAudio(f)));
@@ -234,7 +240,7 @@ export async function GET(_req: NextRequest, { params }: { params: { jobId: stri
 
   const job = await db.job.findUnique({
     where: { id: params.jobId },
-    select: { id: true, creatorId: true },
+    select: { id: true, creatorId: true, status: true },
   });
   if (!job) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
@@ -257,9 +263,13 @@ export async function GET(_req: NextRequest, { params }: { params: { jobId: stri
     orderBy: { submittedAt: "asc" },
   });
 
+  // Masters unlock only after the job is fully awarded (deadline passed + paid),
+  // not when a producer makes a provisional selection while the job is still open.
+  const jobAwarded = job.status === "AWARDED";
+
   return NextResponse.json(
     takes.map((take) => {
-      const exposeMasters = isAdmin || take.isWinner;
+      const exposeMasters = isAdmin || (jobAwarded && take.isWinner);
       return {
         ...take,
         audioFileUrl: serializeTakeAudioFileUrl(take, exposeMasters),

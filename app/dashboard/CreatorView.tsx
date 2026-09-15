@@ -156,6 +156,11 @@ function CreatorJobCard({
   const isPastDeadline = job.status === "OPEN" && new Date(job.deadline).getTime() < Date.now();
   const missingBacking = job.status === "OPEN" && !job.backingFileUrl;
   const flexibleTempo = job.status === "OPEN" && job.bpm == null;
+  const [hasProvisionalWinner, setHasProvisionalWinner] = useState(!!job.hasSelectedWinner);
+
+  useEffect(() => {
+    setHasProvisionalWinner(!!job.hasSelectedWinner);
+  }, [job.hasSelectedWinner, job.id]);
 
   async function cancelJob(e: React.MouseEvent) {
     e.stopPropagation();
@@ -282,11 +287,28 @@ function CreatorJobCard({
         </div>
       )}
 
-      {isPastDeadline && (
+      {job.status === "OPEN" && hasProvisionalWinner && !isPastDeadline && (
+        <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
+          <Alert variant="info">
+            Selection saved. Payment and WAV downloads unlock when the deadline ends, so musicians
+            still planning to submit have time to compete. You can change your selection until then.
+          </Alert>
+        </div>
+      )}
+
+      {isPastDeadline && !hasProvisionalWinner && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
             Deadline passed with no winner picked yet. Choose a take below, or cancel for a full
             refund. This job will cancel itself automatically if left unattended.
+          </Alert>
+        </div>
+      )}
+
+      {isPastDeadline && hasProvisionalWinner && (
+        <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
+          <Alert variant="info">
+            Deadline ended. Finalizing payment and unlocking downloads for your selected take…
           </Alert>
         </div>
       )}
@@ -344,9 +366,11 @@ function CreatorJobCard({
                 <TakesList
                   jobId={job.id}
                   jobOpen={job.status === "OPEN"}
+                  jobAwarded={job.status === "AWARDED"}
                   jobBpm={job.bpm}
                   jobBackingUrl={job.backingFileUrl}
                   onAwarded={onChanged}
+                  onSelectionChange={setHasProvisionalWinner}
                   readOnly={readOnly}
                 />
               </>
@@ -361,25 +385,33 @@ function CreatorJobCard({
 function TakesList({
   jobId,
   jobOpen,
+  jobAwarded,
   jobBpm = null,
   jobBackingUrl = null,
   onAwarded,
+  onSelectionChange,
   readOnly = false,
 }: {
   jobId: string;
   jobOpen: boolean;
+  jobAwarded: boolean;
   jobBpm?: number | null;
   jobBackingUrl?: string | null;
   onAwarded: () => void;
+  onSelectionChange?: (hasSelection: boolean) => void;
   readOnly?: boolean;
 }) {
   const [takes, setTakes] = useState<Take[] | null>(null);
   const [selectingId, setSelectingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   async function loadTakes() {
     const res = await fetch(`/api/jobs/${jobId}/takes`);
-    setTakes(await res.json());
+    const body = await res.json();
+    const list = Array.isArray(body) ? body : [];
+    setTakes(list);
+    onSelectionChange?.(list.some((t: Take) => t.isWinner));
   }
 
   useEffect(() => {
@@ -390,15 +422,19 @@ function TakesList({
     if (readOnly) return;
     setSelectingId(takeId);
     setError(null);
+    setInfo(null);
     try {
       const res = await fetch(`/api/jobs/${jobId}/select-winner`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ takeId }),
       });
+      const body = await res.json().catch(() => null);
       if (!res.ok) {
-        const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? `Request failed (${res.status})`);
+      }
+      if (body?.provisional && body?.message) {
+        setInfo(body.message);
       }
       await loadTakes();
       onAwarded();
@@ -426,8 +462,9 @@ function TakesList({
     );
   }
 
-  // After award: only the winning take (no runner-up list). While open: all takes to choose from.
+  // After final award: only the winning take. While open (including provisional): all takes.
   const visibleTakes = jobOpen ? takes : takes.filter((take) => take.isWinner);
+  const hasSelection = takes.some((take) => take.isWinner);
 
   if (visibleTakes.length === 0) {
     return (
@@ -450,6 +487,8 @@ function TakesList({
           key={take.id}
           take={take}
           jobOpen={jobOpen}
+          jobAwarded={jobAwarded}
+          hasOtherSelection={hasSelection && !take.isWinner}
           jobBpm={jobBpm}
           jobBackingUrl={jobBackingUrl}
           selecting={selectingId === take.id}
@@ -458,6 +497,7 @@ function TakesList({
           onSelect={() => selectWinner(take.id)}
         />
       ))}
+      {info && <Alert variant="info">{info}</Alert>}
       {error && <Alert variant="error">{error}</Alert>}
     </div>
   );
@@ -466,6 +506,8 @@ function TakesList({
 function TakeCard({
   take,
   jobOpen,
+  jobAwarded,
+  hasOtherSelection,
   jobBpm = null,
   jobBackingUrl = null,
   selecting,
@@ -475,6 +517,8 @@ function TakeCard({
 }: {
   take: Take;
   jobOpen: boolean;
+  jobAwarded: boolean;
+  hasOtherSelection: boolean;
   jobBpm?: number | null;
   jobBackingUrl?: string | null;
   selecting: boolean;
@@ -485,6 +529,8 @@ function TakeCard({
   const isWinner = take.isWinner;
   const audioCount = take.files?.length ? audioFiles(take.files).length : 1;
   const hasMidi = take.files?.length ? midiFiles(take.files).length > 0 : false;
+  // Full WAV downloads only after the job is finalized (AWARDED), not on provisional select.
+  const allowDownload = jobAwarded && isWinner;
 
   return (
     <Card
@@ -496,7 +542,7 @@ function TakeCard({
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-gray-900">{take.musician.name}</span>
-          {isWinner && <Badge status="AWARDED" />}
+          {isWinner && <Badge status={jobAwarded ? "AWARDED" : "SELECTED"} />}
           {audioCount > 1 && (
             <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
               {audioCount} takes
@@ -514,11 +560,17 @@ function TakeCard({
         <TakeSubmissionFiles
           files={take.files}
           fallbackAudioUrl={take.audioFileUrl}
-          allowDownload={isWinner}
+          allowDownload={allowDownload}
           collapsible={audioCount > 1}
           bpm={jobBpm}
           backingSrc={jobBackingUrl}
         />
+        {jobOpen && isWinner && !jobAwarded && (
+          <p className="border-t border-gray-100 pt-4 text-center text-xs leading-relaxed text-gray-500">
+            Selected. Payment and full downloads unlock when the deadline ends. Pick a different
+            take below if you change your mind.
+          </p>
+        )}
         {jobOpen && !isWinner && (
           <div className="flex flex-col items-center gap-2 border-t border-gray-100 pt-4">
             <Button
@@ -530,13 +582,19 @@ function TakeCard({
               className="w-full sm:w-auto"
             >
               {readOnly
-                ? "Choose this submission"
+                ? hasOtherSelection
+                  ? "Switch to this submission"
+                  : "Choose this submission"
                 : selecting
                   ? "Selecting…"
-                  : "Choose this submission"}
+                  : hasOtherSelection
+                    ? "Switch to this submission"
+                    : "Choose this submission"}
             </Button>
             <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
-              You get every take in this submission, including full files.
+              {hasOtherSelection
+                ? "Replaces your current selection. Still open for more submissions until the deadline."
+                : "Job stays open until the deadline. Payment and full files unlock then."}
             </p>
           </div>
         )}

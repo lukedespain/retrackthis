@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { CANCEL_GRACE_PERIOD_MS, cancelJobAndRefund, sendDueThreeDayReminders } from "@/lib/jobActions";
+import {
+  CANCEL_GRACE_PERIOD_MS,
+  cancelJobAndRefund,
+  finalizeDueAwards,
+  sendDueThreeDayReminders,
+} from "@/lib/jobActions";
 import { notifyJobInvites, notifyNewJobPosted } from "@/lib/notify";
 import { stripe } from "@/lib/stripe";
 import { getSessionUserId } from "@/lib/supabaseServer";
@@ -201,10 +206,10 @@ export async function POST(req: NextRequest) {
 // Pass ?mine=true to instead get the signed-in creator's jobs across all
 // statuses (used by the creator dashboard).
 //
-// Also does a lazy sweep: any OPEN job whose deadline passed more than
-// CANCEL_GRACE_PERIOD_MS ago with no winner gets auto-cancelled (refunded)
-// right here before we respond, instead of needing a real cron job.
-// Separately, OPEN jobs with ≤3 days left get a one-time reminder email.
+// Also does a lazy sweep:
+// 1) OPEN jobs past deadline with a selected winner → finalize (capture + pay)
+// 2) OPEN jobs past deadline + CANCEL_GRACE_PERIOD_MS with no winner → cancel/refund
+// 3) OPEN jobs with ≤3 days left → one-time reminder email
 export async function GET(req: NextRequest) {
   let where: { creatorId: string } | { status: "OPEN" } = { status: "OPEN" };
   if (req.nextUrl.searchParams.get("mine") === "true") {
@@ -215,21 +220,35 @@ export async function GET(req: NextRequest) {
     where = { creatorId };
   }
 
+  // Finalize provisional awards whose deadline just ended (await so Vercel
+  // does not freeze before Stripe capture/transfer finishes).
+  try {
+    await finalizeDueAwards();
+  } catch (err) {
+    console.error("[jobs award sweep]", err);
+  }
+
   const jobs = await db.job.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { takes: true } } },
+    include: {
+      _count: { select: { takes: true } },
+      takes: { where: { isWinner: true }, select: { id: true }, take: 1 },
+    },
   });
 
   const now = Date.now();
-  const expired = jobs.filter(
-    (job) => job.status === "OPEN" && new Date(job.deadline).getTime() + CANCEL_GRACE_PERIOD_MS < now
+  const pastDeadlineNoWinner = jobs.filter(
+    (job) =>
+      job.status === "OPEN" &&
+      job.takes.length === 0 &&
+      new Date(job.deadline).getTime() + CANCEL_GRACE_PERIOD_MS < now
   );
 
   // Don't block the marketplace on Stripe cancels (that was hanging /jobs).
   // Hide past-grace jobs from OPEN browse and sweep in the background.
-  if (expired.length > 0) {
-    for (const job of expired) {
+  if (pastDeadlineNoWinner.length > 0) {
+    for (const job of pastDeadlineNoWinner) {
       void cancelJobAndRefund(job.id).catch((err) => {
         console.error(`[jobs sweep] failed for ${job.id}`, err);
       });
@@ -244,16 +263,29 @@ export async function GET(req: NextRequest) {
     console.error("[jobs three-day sweep]", err);
   }
 
-  const expiredIds = new Set(expired.map((job) => job.id));
+  const hideFromBrowse = new Set(
+    jobs
+      .filter((job) => {
+        if (job.status !== "OPEN") return false;
+        const deadlineMs = new Date(job.deadline).getTime();
+        // Past deadline: no longer accepting submissions.
+        if (deadlineMs <= now) return true;
+        return false;
+      })
+      .map((job) => job.id)
+  );
+  for (const job of pastDeadlineNoWinner) hideFromBrowse.add(job.id);
+
   const visible =
     "status" in where && where.status === "OPEN"
-      ? jobs.filter((job) => !expiredIds.has(job.id))
+      ? jobs.filter((job) => !hideFromBrowse.has(job.id))
       : jobs;
 
   return NextResponse.json(
-    visible.map(({ _count, ...job }) => ({
+    visible.map(({ _count, takes: winningTakes, ...job }) => ({
       ...job,
       takeCount: _count.takes,
+      hasSelectedWinner: winningTakes.length > 0,
     }))
   );
 }

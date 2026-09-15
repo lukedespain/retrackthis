@@ -220,7 +220,7 @@ export function JobPricingFields({
           value={deadlineText}
           disabled={disabled}
           required
-          info={`Maximum ${MAX_DEADLINE_DAYS} days. Card holds can only stay open for a limited time, so jobs cap at a week. If you do not pick a winner by then, the job closes and the hold is released.`}
+          info={`Maximum ${MAX_DEADLINE_DAYS} days. Card holds can only stay open for a limited time, so jobs cap at a week. Submissions stay open until this deadline. If you do not pick a winner by then, the job closes after a short grace period and the hold is released.`}
           onChange={(e) => {
             const next = e.target.value.replace(/[^\d]/g, "");
             if (next === "") {

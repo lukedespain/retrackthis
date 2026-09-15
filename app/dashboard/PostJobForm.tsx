@@ -74,7 +74,7 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
     <Card padding="md">
       <h3 className="text-base font-semibold text-gray-900">Post a new job</h3>
       <p className="mt-1 text-sm text-gray-500">
-        Your payment is held until you pick a winner.
+        Your payment is held until the deadline after you pick a winner.
       </p>
 
       {keyConfigured ? (
@@ -498,7 +498,8 @@ function PostJobFormInner({
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Payment</h2>
           <p className="mt-0.5 text-xs text-gray-500">
-            Places money in escrow. Only charges when you pick a winner. Cancel the hold at any time.
+            Places money in escrow. Charged when the deadline ends with a selected winner. Cancel the
+            hold anytime before then.
           </p>
         </div>
         <div className="rounded-xl border border-gray-200 bg-white px-3.5 py-3 min-h-[48px]">

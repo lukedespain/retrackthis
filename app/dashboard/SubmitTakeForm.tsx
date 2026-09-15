@@ -235,7 +235,7 @@ export function SubmitTakeForm({
             <h3 className="text-base font-semibold text-gray-900">Take submitted</h3>
             <p className="mt-1 text-sm text-gray-500">
               You&apos;re in. Status: <span className="font-medium text-gray-800">Pending</span>. The
-              creator will review takes and pick a winner.
+              creator will review takes and pick a winner. Jobs stay open until the deadline.
             </p>
             {(submittedFiles?.length || submittedUrl) && (
               <div className="mt-4">

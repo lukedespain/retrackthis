@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import type Stripe from "stripe";
-import { isAltPayoutProvider, formatPayoutProviderLabel } from "@/lib/connectCountries";
+import { formatPayoutProviderLabel } from "@/lib/connectCountries";
 import { db } from "@/lib/db";
-import { notifyMusicianAwarded } from "@/lib/notify";
-import { stripe, calcPlatformFeeCents } from "@/lib/stripe";
-import { assertMusicianPayoutsReady } from "@/lib/stripeConnect";
+import { finalizeAward, selectProvisionalWinner } from "@/lib/jobActions";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
 function stripeMessage(err: unknown): string {
@@ -14,18 +11,10 @@ function stripeMessage(err: unknown): string {
   return err instanceof Error ? err.message : "Something went wrong awarding this take";
 }
 
-function chargeIdFromIntent(pi: Stripe.PaymentIntent): string | null {
-  const latest = pi.latest_charge;
-  if (typeof latest === "string" && latest.startsWith("ch_")) return latest;
-  if (latest && typeof latest === "object" && "id" in latest) return latest.id;
-  const legacy = (pi as Stripe.PaymentIntent & { charges?: { data?: Array<{ id: string }> } }).charges
-    ?.data?.[0]?.id;
-  return legacy ?? null;
-}
-
 // POST /api/jobs/:jobId/select-winner  { takeId }
-// Captures the held payment, pays the musician (Stripe transfer or manual PayPal/Wise),
-// marks the job awarded and the take as winner.
+// Before the deadline: marks a provisional selection. Job stays open for more
+// submissions; payment and WAV downloads wait until the deadline.
+// At/after the deadline: captures payment, pays the musician, marks AWARDED.
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const sessionUserId = await getSessionUserId();
   if (!sessionUserId) {
@@ -38,10 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     where: { id: params.jobId },
     include: { payment: true },
   });
-  const take = await db.take.findUnique({
-    where: { id: takeId },
-    include: { musician: true },
-  });
+  const take = await db.take.findUnique({ where: { id: takeId } });
 
   if (!job || !job.payment || !take || take.jobId !== job.id) {
     return NextResponse.json({ error: "Job or take not found" }, { status: 404 });
@@ -56,103 +42,40 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     return NextResponse.json({ error: "Only open jobs can be awarded" }, { status: 400 });
   }
 
-  const musician = take.musician;
-  const altPayout =
-    isAltPayoutProvider(musician.payoutProvider) &&
-    Boolean(musician.payoutEmail?.trim()) &&
-    Boolean(musician.payoutAccountName?.trim());
-
-  if (!altPayout) {
-    if (!musician.stripeAccountId) {
-      return NextResponse.json({ error: "Musician hasn't finished payout setup" }, { status: 400 });
-    }
-    try {
-      await assertMusicianPayoutsReady(musician.stripeAccountId);
-    } catch {
-      return NextResponse.json({ error: "Musician hasn't finished payout setup" }, { status: 400 });
-    }
-  }
-
-  const platformFeeCents = calcPlatformFeeCents(job.payment.amountCents);
-  const payoutCents = job.payment.amountCents - platformFeeCents;
-  if (payoutCents < 1) {
-    return NextResponse.json({ error: "Payout amount is too small after platform fee" }, { status: 400 });
-  }
+  const pastDeadline = new Date(job.deadline).getTime() <= Date.now();
 
   try {
-    // 1. Capture held funds (or reuse if a previous attempt already captured)
-    let paymentIntent = await stripe.paymentIntents.retrieve(job.payment.stripePaymentIntentId);
-    if (paymentIntent.status === "requires_capture") {
-      paymentIntent = await stripe.paymentIntents.capture(job.payment.stripePaymentIntentId);
-    } else if (paymentIntent.status !== "succeeded") {
-      return NextResponse.json(
-        { error: `Payment can’t be captured (status: ${paymentIntent.status})` },
-        { status: 402 }
-      );
-    }
-
-    if (altPayout) {
-      // Funds stay on the platform; ops pays PayPal / Wise manually.
-      await db.$transaction([
-        db.take.update({ where: { id: take.id }, data: { isWinner: true } }),
-        db.job.update({ where: { id: job.id }, data: { status: "AWARDED" } }),
-        db.payment.update({
-          where: { id: job.payment.id },
-          data: { status: "pending_manual_payout", platformFeeCents },
-        }),
-      ]);
-
-      await notifyMusicianAwarded({
-        musicianId: take.musicianId,
-        jobTitle: job.title,
-        payoutProvider: musician.payoutProvider ?? undefined,
-      });
-
+    if (!pastDeadline) {
+      const result = await selectProvisionalWinner(job.id, take.id);
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status });
+      }
       return NextResponse.json({
         success: true,
-        payout: "manual",
-        provider: musician.payoutProvider,
-        payoutEmail: musician.payoutEmail,
-        payoutAccountName: musician.payoutAccountName,
-        message: `Awarded. Pay ${formatPayoutProviderLabel(musician.payoutProvider)} manually. Funds are captured on the platform.`,
+        provisional: true,
+        message:
+          "Selection saved. Payment and downloads unlock when the deadline ends. You can change your selection until then.",
       });
     }
 
-    const chargeId = chargeIdFromIntent(paymentIntent);
-    if (!chargeId) {
-      return NextResponse.json(
-        { error: "Payment captured but no charge id was returned. Try again in a moment." },
-        { status: 502 }
-      );
+    const result = await finalizeAward(job.id, take.id);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    // 2. Transfer musician's cut, tied to this charge so it works before
-    // platform available balance settles (required in live mode).
-    await stripe.transfers.create({
-      amount: payoutCents,
-      currency: "usd",
-      destination: musician.stripeAccountId!,
-      transfer_group: job.id,
-      source_transaction: chargeId,
-    });
+    if (result.payout === "manual") {
+      return NextResponse.json({
+        success: true,
+        provisional: false,
+        payout: "manual",
+        provider: result.provider,
+        payoutEmail: result.payoutEmail,
+        payoutAccountName: result.payoutAccountName,
+        message: `Awarded. Pay ${formatPayoutProviderLabel(result.provider)} manually. Funds are captured on the platform.`,
+      });
+    }
 
-    // 3. Update records
-    await db.$transaction([
-      db.take.update({ where: { id: take.id }, data: { isWinner: true } }),
-      db.job.update({ where: { id: job.id }, data: { status: "AWARDED" } }),
-      db.payment.update({
-        where: { id: job.payment.id },
-        data: { status: "transferred", platformFeeCents },
-      }),
-    ]);
-
-    await notifyMusicianAwarded({
-      musicianId: take.musicianId,
-      jobTitle: job.title,
-      payoutProvider: "stripe",
-    });
-
-    return NextResponse.json({ success: true, payout: "stripe" });
+    return NextResponse.json({ success: true, provisional: false, payout: "stripe" });
   } catch (err) {
     console.error("[select-winner]", err);
     return NextResponse.json({ error: stripeMessage(err) }, { status: 502 });

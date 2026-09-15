@@ -2,7 +2,7 @@ import { LegalPage, LegalSection } from "@/components/LegalPage";
 
 export default function TermsOfServicePage() {
   return (
-    <LegalPage title="Terms of Service" updated="August 12, 2026">
+    <LegalPage title="Terms of Service" updated="September 15, 2026">
       <p>
         These Terms of Service (&quot;Terms&quot;) govern your use of Retrack This
         (retrackthis.com), a marketplace where creators post short demo parts and musicians submit
@@ -12,10 +12,10 @@ export default function TermsOfServicePage() {
       <LegalSection title="The service">
         <p>
           Retrack This lets creators post jobs with a demo file, description, price, and deadline.
-          Payment is authorized (held) when a job is posted and only captured when the creator
-          awards a winning take. Musicians may browse open jobs and submit takes for free. We take
-          a platform fee from awarded jobs; the remainder is transferred to the winning musician
-          through Stripe Connect.
+          Payment is authorized (held) when a job is posted and captured when the deadline ends with
+          a selected winner (or when the creator awards after the deadline). Musicians may browse
+          open jobs and submit takes for free. We take a platform fee from awarded jobs; the
+          remainder is transferred to the winning musician through Stripe Connect.
         </p>
       </LegalSection>
 
@@ -43,9 +43,11 @@ export default function TermsOfServicePage() {
             award after the grace period.
           </li>
           <li>
-            Choosing a winner captures your payment and pays the musician (minus the platform fee).
-            Chargebacks and disputes on creator payments are your responsibility as the purchaser
-            through our platform, subject to Stripe&apos;s and card-network rules.
+            Choosing a winner before the deadline keeps the job open for submissions. Payment is
+            captured and the musician is paid when the deadline ends (minus the platform fee). You
+            may change your selection until then. Chargebacks and disputes on creator payments are
+            your responsibility as the purchaser through our platform, subject to Stripe&apos;s and
+            card-network rules.
           </li>
         </ul>
       </LegalSection>

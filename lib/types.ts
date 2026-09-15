@@ -20,6 +20,8 @@ export type Job = {
   createdAt: string;
   /** Number of musician submissions (public count only - audio stays private). */
   takeCount?: number;
+  /** True when the producer has a provisional or final selection. */
+  hasSelectedWinner?: boolean;
 };
 
 export type Take = {

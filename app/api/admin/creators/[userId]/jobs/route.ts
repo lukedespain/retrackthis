@@ -21,16 +21,20 @@ export async function GET(
   const jobs = await db.job.findMany({
     where: { creatorId: creator.id },
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { takes: true } } },
+    include: {
+      _count: { select: { takes: true } },
+      takes: { where: { isWinner: true }, select: { id: true }, take: 1 },
+    },
   });
 
   return NextResponse.json({
     creator,
-    jobs: jobs.map(({ _count, ...job }) => ({
+    jobs: jobs.map(({ _count, takes: winningTakes, ...job }) => ({
       ...job,
       deadline: job.deadline.toISOString(),
       createdAt: job.createdAt.toISOString(),
       takeCount: _count.takes,
+      hasSelectedWinner: winningTakes.length > 0,
     })),
   });
 }

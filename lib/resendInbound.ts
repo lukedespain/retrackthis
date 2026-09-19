@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
-const FORWARD_TO = process.env.RESEND_REPLY_TO?.trim() || "music@lukedespain.com";
+const FORWARD_TO = process.env.RESEND_REPLY_TO?.trim() || "hello@retrackthis.com";
 const FORWARD_FROM = process.env.RESEND_FROM?.trim() || "Retrack This <hello@retrackthis.com>";
 
 type ReceivedEmail = {

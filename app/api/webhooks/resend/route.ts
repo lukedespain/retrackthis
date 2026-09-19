@@ -5,7 +5,8 @@ import { forwardReceivedEmail, verifyResendWebhook } from "@/lib/resendInbound";
  * Resend inbound webhook.
  * Dashboard: https://retrackthis.com/api/webhooks/resend
  * Event: email.received
- * Forwards mail sent to hello@retrackthis.com → music@lukedespain.com
+ * Legacy inbound forward (MX now points at Google Workspace for hello@).
+ * If Resend still receives on a subdomain, forwards to RESEND_REPLY_TO (hello@).
  */
 export async function POST(req: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;

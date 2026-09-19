@@ -31,7 +31,7 @@ export async function sendEmail({
   }
 
   const from = process.env.RESEND_FROM?.trim() || "Retrack This <hello@retrackthis.com>";
-  const replyTo = process.env.RESEND_REPLY_TO?.trim() || "music@lukedespain.com";
+  const replyTo = process.env.RESEND_REPLY_TO?.trim() || "hello@retrackthis.com";
   const settingsUrl = `${appBaseUrl()}/settings`;
 
   const footer = includeSettingsFooter

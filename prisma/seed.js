@@ -9,6 +9,9 @@ for (const line of fs.readFileSync(envLocalPath, "utf8").split("\n")) {
   if (m) process.env[m[1]] = m[2];
 }
 
+const { assertSafeDatabaseTarget } = require("./scriptGuard");
+assertSafeDatabaseTarget("seed.js");
+
 const { PrismaClient } = require("@prisma/client");
 const { createClient } = require("@supabase/supabase-js");
 const Stripe = require("stripe");
@@ -17,7 +20,8 @@ const db = new PrismaClient();
 const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
 
-const TEST_PASSWORD = "testpass123";
+// Local-dev only. Never print this in the public README.
+const TEST_PASSWORD = process.env.SEED_TEST_PASSWORD || "testpass123";
 
 // Creates (or recreates) a real, pre-confirmed Supabase Auth account so the
 // seed data can be logged into directly: no email confirmation needed.

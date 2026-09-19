@@ -136,11 +136,28 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   if (!job || job.status !== "OPEN") {
     return NextResponse.json({ error: "Job is not open for submissions" }, { status: 400 });
   }
+  if (job.creatorId === musicianId) {
+    return NextResponse.json(
+      { error: "You can’t submit a take on your own job." },
+      { status: 400 }
+    );
+  }
   if (new Date(job.deadline).getTime() <= Date.now()) {
     return NextResponse.json(
       { error: "Submissions are closed — this job’s deadline has passed" },
       { status: 400 }
     );
+  }
+
+  const { assertAppStorageUrls } = await import("@/lib/storageUrls");
+  const storageError = assertAppStorageUrls([
+    legacyAudioUrl ? String(legacyAudioUrl) : null,
+    ...audioTakes.map((f) => f.fileUrl),
+    ...midiFiles.map((f) => f.fileUrl),
+    ...audioTakes.map((f) => f.previewUrl ?? null),
+  ]);
+  if (storageError) {
+    return NextResponse.json({ error: storageError }, { status: 400 });
   }
 
   // Best-effort: ensure MP3 previews exist before persisting (covers client timeout / skip).

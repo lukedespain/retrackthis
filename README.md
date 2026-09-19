@@ -51,17 +51,17 @@ session (`lib/supabaseServer.ts`): never from a client-supplied id.
 npm install
 cp .env.example .env.local   # fill in Supabase + Stripe keys
 npx prisma migrate dev
-node prisma/seed.js          # creates 3 real, pre-confirmed test accounts
+# Optional local-only seed (refuses production DB unless ALLOW_PROD_SCRIPTS=1):
+# node prisma/seed.js
 npm run dev
 ```
 
-Test accounts (password `testpass123` for all): `alex@example.com`
-(creator + musician, owns the seeded demo jobs), `jamie@example.com` and
-`sam@example.com` (musicians with takes submitted on Alex's jobs).
-
+For local seeding, set a password via `SEED_TEST_PASSWORD` in `.env.local` (do not commit it).
 Supabase email confirmation should be **off** for local dev (Dashboard →
 Authentication → Providers → Email → "Confirm email"): Supabase's test
 email sender is rate-limited and will block repeated sign-ups otherwise.
+
+In production, keep **Confirm email** ON so admin allowlisting cannot be claimed by an unverified address.
 
 ## Stack
 

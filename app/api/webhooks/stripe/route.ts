@@ -122,7 +122,16 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
     return;
   }
 
-  if (user.stripeAccountId === account.id) return;
+  // Only fill when empty — never overwrite an existing Connect account id
+  // (avoids a webhook race clobbering a valid account).
+  if (user.stripeAccountId) {
+    if (user.stripeAccountId !== account.id) {
+      console.warn(
+        `[stripe webhook] user ${userId} already has stripeAccountId=${user.stripeAccountId}; ignoring ${account.id}`
+      );
+    }
+    return;
+  }
 
   await db.user.update({
     where: { id: userId },

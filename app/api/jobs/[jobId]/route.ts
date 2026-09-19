@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/admin";
 import { db } from "@/lib/db";
+import { assertAppStorageUrls } from "@/lib/storageUrls";
 import { getSessionUserId } from "@/lib/supabaseServer";
-
-function isHttpUrl(value: unknown): value is string {
-  return typeof value === "string" && /^https?:\/\//i.test(value.trim());
-}
 
 // PATCH /api/jobs/:jobId - creator or admin updates an OPEN job.
 // Title, description, reference audio, and tempo only - never price or payment.
@@ -73,19 +70,24 @@ export async function PATCH(req: NextRequest, { params }: { params: { jobId: str
   }
 
   if (body.demoFileUrl !== undefined) {
-    if (!isHttpUrl(body.demoFileUrl)) {
+    if (typeof body.demoFileUrl !== "string" || !body.demoFileUrl.trim()) {
       return NextResponse.json({ error: "Invalid part-being-retracked file" }, { status: 400 });
     }
+    const err = assertAppStorageUrls([body.demoFileUrl.trim()]);
+    if (err) return NextResponse.json({ error: err }, { status: 400 });
     data.demoFileUrl = body.demoFileUrl.trim();
   }
 
   if (body.backingFileUrl !== undefined) {
     if (body.backingFileUrl === null || body.backingFileUrl === "") {
       data.backingFileUrl = null;
-    } else if (!isHttpUrl(body.backingFileUrl)) {
+    } else if (typeof body.backingFileUrl !== "string") {
       return NextResponse.json({ error: "Invalid background file" }, { status: 400 });
     } else {
-      data.backingFileUrl = body.backingFileUrl.trim();
+      const trimmed = body.backingFileUrl.trim();
+      const err = assertAppStorageUrls([trimmed]);
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
+      data.backingFileUrl = trimmed;
     }
   }
 

@@ -34,16 +34,21 @@ export async function getAdminUser() {
   let profile = await db.user.findUnique({ where: { id: userId } });
   if (!profile) return null;
 
-  const allowlisted = emailIsAdmin(authUser?.email ?? profile.email);
-  if (allowlisted && !profile.isAdmin) {
+  const email = authUser?.email ?? profile.email;
+  const allowlisted = emailIsAdmin(email);
+  // Require a confirmed email before bootstrapping admin from the allowlist
+  // (stops signup-as-allowlisted-address before owning the inbox).
+  const emailConfirmed = Boolean(authUser?.email_confirmed_at);
+  if (allowlisted && emailConfirmed && !profile.isAdmin) {
     profile = await db.user.update({
       where: { id: userId },
       data: { isAdmin: true },
     });
   }
 
-  if (!profile.isAdmin && !allowlisted) return null;
-  return profile;
+  if (profile.isAdmin) return profile;
+  if (allowlisted && emailConfirmed) return profile;
+  return null;
 }
 
 export async function requireAdmin() {

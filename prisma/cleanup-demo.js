@@ -15,6 +15,9 @@ for (const line of fs.readFileSync(envLocalPath, "utf8").split("\n")) {
   if (m) process.env[m[1]] = m[2];
 }
 
+const { assertSafeDatabaseTarget } = require("./scriptGuard");
+assertSafeDatabaseTarget("cleanup-demo.js");
+
 const { createClient } = require("@supabase/supabase-js");
 const { PrismaClient } = require("@prisma/client");
 const Stripe = require("stripe");

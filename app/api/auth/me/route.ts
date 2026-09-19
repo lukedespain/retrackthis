@@ -19,7 +19,7 @@ export async function GET() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (emailIsAdmin(user?.email ?? profile.email)) {
+    if (emailIsAdmin(user?.email ?? profile.email) && user?.email_confirmed_at) {
       profile = await db.user.update({
         where: { id: userId },
         data: { isAdmin: true },

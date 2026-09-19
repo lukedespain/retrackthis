@@ -85,7 +85,5 @@ pass `creatorId`/`musicianId` anywhere in a request body.
 
 ## Local setup
 
-See `README.md`. Test accounts: `alex@example.com` / `jamie@example.com` /
-`sam@example.com`, password `testpass123` for all three. Alex has both
-roles and owns the seeded demo jobs; Jamie and Sam are musicians with takes
-already submitted on those jobs.
+See `README.md`. Optional local seed creates demo accounts — set `SEED_TEST_PASSWORD`
+in `.env.local` and never point those scripts at production without `ALLOW_PROD_SCRIPTS=1`.

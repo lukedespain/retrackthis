@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
+import { safeInternalPath } from "@/lib/safeRedirect";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 export default function SignInPage() {
@@ -48,7 +49,7 @@ function SignInForm() {
       return;
     }
 
-    router.push(searchParams.get("next") ?? "/producers");
+    router.push(safeInternalPath(searchParams.get("next"), "/producers"));
     router.refresh();
   }
 

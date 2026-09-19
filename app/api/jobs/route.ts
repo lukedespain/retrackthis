@@ -119,12 +119,33 @@ export async function POST(req: NextRequest) {
   if (Number.isNaN(deadlineDate.getTime())) {
     return NextResponse.json({ error: "Invalid deadline" }, { status: 400 });
   }
+  if (deadlineDate.getTime() <= Date.now()) {
+    return NextResponse.json({ error: "Deadline must be in the future" }, { status: 400 });
+  }
+  // Stopgap until charge-upfront: keep deadline + grace under ~6 days so the
+  // Stripe authorize hold (≈7 days) is still valid when we capture or cancel.
+  const maxWindowMs = 6 * 24 * 60 * 60 * 1000;
+  if (deadlineDate.getTime() + CANCEL_GRACE_PERIOD_MS > Date.now() + maxWindowMs) {
+    return NextResponse.json(
+      {
+        error:
+          "Deadline is too far out for the current card-hold escrow. Shorten it, or wait for charge-upfront.",
+      },
+      { status: 400 }
+    );
+  }
   const maxDeadlineMs = Date.now() + MAX_DEADLINE_DAYS * 24 * 60 * 60 * 1000 + 60_000;
   if (deadlineDate.getTime() > maxDeadlineMs) {
     return NextResponse.json(
       { error: `Deadline must be within ${MAX_DEADLINE_DAYS} days so the escrow hold stays valid.` },
       { status: 400 }
     );
+  }
+
+  const { assertAppStorageUrls } = await import("@/lib/storageUrls");
+  const storageError = assertAppStorageUrls([demoFileUrl, backing]);
+  if (storageError) {
+    return NextResponse.json({ error: storageError }, { status: 400 });
   }
 
   // bpm: number = fixed tempo; null/undefined/empty = flexible

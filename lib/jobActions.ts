@@ -62,6 +62,9 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
   if (!take || take.jobId !== job.id) {
     return { ok: false, error: "Winning take not found", status: 404 };
   }
+  if (take.musicianId === job.creatorId) {
+    return { ok: false, error: "You can’t award your own take on your own job", status: 400 };
+  }
 
   const musician = take.musician;
   const altPayout =
@@ -198,6 +201,9 @@ export async function selectProvisionalWinner(jobId: string, takeId: string): Pr
   }
   if (job.status !== "OPEN") {
     return { ok: false, error: "Only open jobs can be awarded", status: 400 };
+  }
+  if (take.musicianId === job.creatorId) {
+    return { ok: false, error: "You can’t award your own take on your own job", status: 400 };
   }
 
   const musician = take.musician;

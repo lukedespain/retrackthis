@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
+import { safeInternalPath } from "@/lib/safeRedirect";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 export default function SignUpPage() {
@@ -48,7 +49,7 @@ function SignUpForm() {
     }
 
     if (data.session) {
-      router.push(searchParams.get("next") ?? "/producers");
+      router.push(safeInternalPath(searchParams.get("next"), "/producers"));
     } else {
       setNeedsConfirmation(true);
       setSubmitting(false);
@@ -65,8 +66,9 @@ function SignUpForm() {
     );
   }
 
-  const signInHref = searchParams.get("next")
-    ? `/sign-in?next=${encodeURIComponent(searchParams.get("next")!)}`
+  const safeNext = safeInternalPath(searchParams.get("next"), "");
+  const signInHref = safeNext
+    ? `/sign-in?next=${encodeURIComponent(safeNext)}`
     : "/sign-in";
 
   return (

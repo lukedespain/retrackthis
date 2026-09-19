@@ -27,6 +27,9 @@ const config: Config = {
           DEFAULT: "var(--line)",
           strong: "var(--line-strong)",
         },
+        rust: {
+          DEFAULT: "#A6452E",
+        },
       },
       fontFamily: {
         sans: [
@@ -36,6 +39,7 @@ const config: Config = {
           "Segoe UI",
           "sans-serif",
         ],
+        serif: ["var(--font-lora)", "Georgia", "serif"],
       },
       boxShadow: {
         card: "0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.04)",

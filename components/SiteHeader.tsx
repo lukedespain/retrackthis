@@ -100,7 +100,7 @@ export function SiteHeader({ className = "" }: { className?: string }) {
           />
         ) : (
           <Link href="/sign-in">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="md">
               Sign in
             </Button>
           </Link>

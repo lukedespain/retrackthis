@@ -29,8 +29,8 @@ export function Logo({ href = "/" }: { href?: string }) {
       href={href}
       className="group inline-flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950"
     >
-      <RetrackMark className="h-7 w-7 text-gray-900 transition-transform duration-150 ease-out group-hover:scale-105 group-active:scale-95 dark:text-white" />
-      <span className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">Retrack This</span>
+      <RetrackMark className="h-9 w-9 text-gray-900 transition-transform duration-150 ease-out group-hover:scale-105 group-active:scale-95 dark:text-white" />
+      <span className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">Retrack This</span>
     </Link>
   );
 }

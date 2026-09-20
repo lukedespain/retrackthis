@@ -67,6 +67,8 @@ model Job {
   deadline       DateTime
   // Set when we emailed matching musicians that this job has ~3 days left.
   threeDayReminderSentAt DateTime?
+  // Set when we emailed the producer that the deadline hit and finalize grace started.
+  finalizeReminderSentAt DateTime?
   status         JobStatus @default(OPEN)
   createdAt      DateTime  @default(now())
 

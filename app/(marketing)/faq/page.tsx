@@ -110,13 +110,13 @@ const faqItems: FaqItem[] = [
       <>
         <p>
           You can pick a submission anytime while the job is open. Until the deadline, that pick is
-          provisional: the job stays open for more takes, you can switch your selection, and payment
-          plus WAV downloads wait until the deadline ends.
+          provisional (“Picked”): the job stays open for more takes, you can switch, and payment plus
+          WAV downloads wait.
         </p>
         <p>
-          When the deadline hits with a selection in place, the musician gets paid and you can
-          download the master files. If you award after the deadline (during the grace window), it
-          finalizes immediately.
+          When the deadline hits, we email you with your current pick. You then have about 24 hours
+          to finalize payment, switch takes, or keep listening. If you don’t act, we finalize your
+          current pick automatically. Choosing a take after the deadline finalizes immediately.
         </p>
         <p>Make sure you have compared every take in each submission before you lock in a winner.</p>
       </>

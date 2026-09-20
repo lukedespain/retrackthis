@@ -14,7 +14,8 @@ function stripeMessage(err: unknown): string {
 // POST /api/jobs/:jobId/select-winner  { takeId }
 // Before the deadline: marks a provisional selection. Job stays open for more
 // submissions; payment and WAV downloads wait until the deadline.
-// At/after the deadline: captures payment, pays the musician, marks AWARDED.
+// At/after the deadline: captures payment, pays the musician, marks AWARDED
+// (producers can finalize early during the post-deadline grace window).
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const sessionUserId = await getSessionUserId();
   if (!sessionUserId) {
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         success: true,
         provisional: true,
         message:
-          "Selection saved. Payment and downloads unlock when the deadline ends. You can change your selection until then.",
+          "Selection saved. Payment and downloads unlock after the deadline. You can change your pick until then, or finalize within 24 hours after it ends.",
       });
     }
 

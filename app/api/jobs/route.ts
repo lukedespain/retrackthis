@@ -4,6 +4,7 @@ import {
   CANCEL_GRACE_PERIOD_MS,
   cancelJobAndRefund,
   finalizeDueAwards,
+  sendDueFinalizeReminders,
   sendDueThreeDayReminders,
 } from "@/lib/jobActions";
 import { notifyJobInvites, notifyNewJobPosted } from "@/lib/notify";
@@ -228,9 +229,10 @@ export async function POST(req: NextRequest) {
 // statuses (used by the creator dashboard).
 //
 // Also does a lazy sweep:
-// 1) OPEN jobs past deadline with a selected winner → finalize (capture + pay)
-// 2) OPEN jobs past deadline + CANCEL_GRACE_PERIOD_MS with no winner → cancel/refund
-// 3) OPEN jobs with ≤3 days left → one-time reminder email
+// 1) OPEN jobs past deadline + FINALIZE_GRACE with a selected winner → finalize
+// 2) OPEN jobs past deadline with a selection → one-time producer finalize email
+// 3) OPEN jobs past deadline + CANCEL_GRACE_PERIOD_MS with no winner → cancel/refund
+// 4) OPEN jobs with ≤3 days left → one-time reminder email
 export async function GET(req: NextRequest) {
   let where: { creatorId: string } | { status: "OPEN" } = { status: "OPEN" };
   if (req.nextUrl.searchParams.get("mine") === "true") {
@@ -241,12 +243,18 @@ export async function GET(req: NextRequest) {
     where = { creatorId };
   }
 
-  // Finalize provisional awards whose deadline just ended (await so Vercel
+  // Finalize provisional awards whose grace window ended (await so Vercel
   // does not freeze before Stripe capture/transfer finishes).
   try {
     await finalizeDueAwards();
   } catch (err) {
     console.error("[jobs award sweep]", err);
+  }
+
+  try {
+    await sendDueFinalizeReminders();
+  } catch (err) {
+    console.error("[jobs finalize reminder sweep]", err);
   }
 
   const jobs = await db.job.findMany({

@@ -184,6 +184,36 @@ export async function notifyCreatorTakeSubmitted(opts: {
   );
 }
 
+/** Deadline hit with a provisional pick — ask the producer to finalize or keep reviewing. */
+export async function notifyProducerDeadlineReached(opts: {
+  creatorId: string;
+  jobId: string;
+  jobTitle: string;
+  musicianName: string;
+  finalizeBy: Date;
+}) {
+  if (!emailConfigured()) return;
+
+  const creator = await db.user.findUnique({
+    where: { id: opts.creatorId },
+    select: { email: true, name: true },
+  });
+  if (!creator) return;
+
+  await safeSend(`deadline-finalize ${opts.jobId}`, () =>
+    sendEmail({
+      to: creator.email,
+      subject: `Deadline reached: finalize “${opts.jobTitle}”?`,
+      heading: "Your job deadline just ended",
+      bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(creator.name.split(" ")[0] || "there")},</p>
+        <p style="margin:0 0 10px;">Submissions are closed for <strong>${escape(opts.jobTitle)}</strong>. You’ve currently selected <strong>${escape(opts.musicianName)}</strong>.</p>
+        <p style="margin:0;">Finalize payment now, switch to another take, or keep listening until <strong>${escape(formatDeadline(opts.finalizeBy))}</strong> — we’ll finalize your current pick automatically then.</p>`,
+      ctaLabel: "Review & finalize",
+      ctaHref: dashboardJobsUrl(),
+    })
+  );
+}
+
 export async function notifyMusicianAwarded(opts: {
   musicianId: string;
   jobTitle: string;

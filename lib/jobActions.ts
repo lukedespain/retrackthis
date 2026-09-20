@@ -1,7 +1,12 @@
 import type Stripe from "stripe";
 import { isAltPayoutProvider } from "@/lib/connectCountries";
 import { db } from "@/lib/db";
-import { notifyJobThreeDaysLeft, notifyMusicianAwarded, notifyMusiciansJobCancelled } from "@/lib/notify";
+import {
+  notifyJobThreeDaysLeft,
+  notifyMusicianAwarded,
+  notifyMusiciansJobCancelled,
+  notifyProducerDeadlineReached,
+} from "@/lib/notify";
 import { calcPlatformFeeCents, stripe } from "@/lib/stripe";
 import { assertMusicianPayoutsReady } from "@/lib/stripeConnect";
 
@@ -9,6 +14,10 @@ import { assertMusicianPayoutsReady } from "@/lib/stripeConnect";
 // lazy sweep (see GET /api/jobs) auto-cancels it. Gives the creator a window
 // to notice and act instead of an abrupt cancellation the instant time's up.
 export const CANCEL_GRACE_PERIOD_MS = 72 * 60 * 60 * 1000;
+
+// After the deadline, producers with a provisional pick get this window to
+// finalize early, switch takes, or keep listening before auto-finalize.
+export const FINALIZE_GRACE_PERIOD_MS = 24 * 60 * 60 * 1000;
 
 export const THREE_DAY_REMINDER_MS = 3 * 24 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -232,15 +241,15 @@ export async function selectProvisionalWinner(jobId: string, takeId: string): Pr
 }
 
 /**
- * Finalize OPEN jobs past their deadline that already have a selected winner.
- * Returns how many jobs were finalized.
+ * Finalize OPEN jobs whose finalize grace has ended and that already have a
+ * provisional winner. Producers can still finalize earlier via select-winner.
  */
 export async function finalizeDueAwards(): Promise<number> {
-  const now = new Date();
+  const cutoff = new Date(Date.now() - FINALIZE_GRACE_PERIOD_MS);
   const due = await db.job.findMany({
     where: {
       status: "OPEN",
-      deadline: { lte: now },
+      deadline: { lte: cutoff },
       takes: { some: { isWinner: true } },
     },
     select: { id: true },
@@ -261,6 +270,59 @@ export async function finalizeDueAwards(): Promise<number> {
     }
   }
   return done;
+}
+
+/**
+ * Email producers once when the deadline hits with a provisional selection,
+ * so they can finalize now or keep reviewing during the finalize grace.
+ */
+export async function sendDueFinalizeReminders(): Promise<number> {
+  const { emailConfigured } = await import("@/lib/email");
+  if (!emailConfigured()) return 0;
+
+  const now = new Date();
+  const jobs = await db.job.findMany({
+    where: {
+      status: "OPEN",
+      deadline: { lte: now },
+      finalizeReminderSentAt: null,
+      takes: { some: { isWinner: true } },
+    },
+    select: {
+      id: true,
+      title: true,
+      deadline: true,
+      creatorId: true,
+      takes: {
+        where: { isWinner: true },
+        take: 1,
+        select: { musician: { select: { name: true } } },
+      },
+    },
+  });
+
+  let sent = 0;
+  for (const job of jobs) {
+    try {
+      const musicianName = job.takes[0]?.musician.name ?? "your selected musician";
+      await notifyProducerDeadlineReached({
+        creatorId: job.creatorId,
+        jobId: job.id,
+        jobTitle: job.title,
+        musicianName,
+        finalizeBy: new Date(new Date(job.deadline).getTime() + FINALIZE_GRACE_PERIOD_MS),
+      });
+      await db.job.update({
+        where: { id: job.id },
+        data: { finalizeReminderSentAt: new Date() },
+      });
+      sent += 1;
+      console.log(`[finalize reminder] ${job.id}`);
+    } catch (err) {
+      console.error(`[finalize reminder] failed for ${job.id}`, err);
+    }
+  }
+  return sent;
 }
 
 // Releases the escrowed PaymentIntent and marks the job cancelled. Used by

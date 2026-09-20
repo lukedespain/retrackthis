@@ -155,6 +155,9 @@ export function AdminJobsPanel({
                       <div className="font-medium text-gray-900 dark:text-white">{job.title}</div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
                         <Badge status={job.status} />
+                        {job.status === "OPEN" && job.hasSelectedWinner && (
+                          <Badge status="PICKED" />
+                        )}
                         <span className="text-xs text-gray-500">{job.instrument}</span>
                       </div>
                     </td>
@@ -309,7 +312,7 @@ function AdminTakesList({
               <span className="text-sm font-medium text-gray-900 dark:text-white">
                 {take.musician.name}
               </span>
-              {take.isWinner && <Badge status="AWARDED" />}
+              {take.isWinner && <Badge status={jobOpen ? "PICKED" : "AWARDED"} />}
               {audioCount > 1 && (
                 <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                   {audioCount} files

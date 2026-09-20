@@ -290,8 +290,9 @@ function CreatorJobCard({
       {job.status === "OPEN" && hasProvisionalWinner && !isPastDeadline && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="info">
-            Selection saved. Payment and WAV downloads unlock when the deadline ends, so musicians
-            still planning to submit have time to compete. You can change your selection until then.
+            Pick saved. The job stays open for more submissions until the deadline. After it ends,
+            you’ll have 24 hours to finalize payment or switch — or we’ll finalize your pick
+            automatically.
           </Alert>
         </div>
       )}
@@ -299,8 +300,8 @@ function CreatorJobCard({
       {isPastDeadline && !hasProvisionalWinner && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
-            Deadline passed with no winner picked yet. Choose a take below, or cancel for a full
-            refund. This job will cancel itself automatically if left unattended.
+            Deadline passed with no winner picked yet. Choose a take below to pay and close it out,
+            or cancel for a full refund. Left alone, this job cancels automatically after a few days.
           </Alert>
         </div>
       )}
@@ -308,7 +309,8 @@ function CreatorJobCard({
       {isPastDeadline && hasProvisionalWinner && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="info">
-            Deadline ended. Finalizing payment and unlocking downloads for your selected take…
+            Deadline ended. Finalize your pick anytime in the next 24 hours (or switch to another
+            take). If you don’t, we’ll finalize the current selection automatically.
           </Alert>
         </div>
       )}
@@ -367,6 +369,7 @@ function CreatorJobCard({
                   jobId={job.id}
                   jobOpen={job.status === "OPEN"}
                   jobAwarded={job.status === "AWARDED"}
+                  pastDeadline={isPastDeadline}
                   jobBpm={job.bpm}
                   jobBackingUrl={job.backingFileUrl}
                   onAwarded={onChanged}
@@ -386,6 +389,7 @@ function TakesList({
   jobId,
   jobOpen,
   jobAwarded,
+  pastDeadline = false,
   jobBpm = null,
   jobBackingUrl = null,
   onAwarded,
@@ -395,6 +399,7 @@ function TakesList({
   jobId: string;
   jobOpen: boolean;
   jobAwarded: boolean;
+  pastDeadline?: boolean;
   jobBpm?: number | null;
   jobBackingUrl?: string | null;
   onAwarded: () => void;
@@ -488,6 +493,7 @@ function TakesList({
           take={take}
           jobOpen={jobOpen}
           jobAwarded={jobAwarded}
+          pastDeadline={pastDeadline}
           hasOtherSelection={hasSelection && !take.isWinner}
           jobBpm={jobBpm}
           jobBackingUrl={jobBackingUrl}
@@ -507,6 +513,7 @@ function TakeCard({
   take,
   jobOpen,
   jobAwarded,
+  pastDeadline = false,
   hasOtherSelection,
   jobBpm = null,
   jobBackingUrl = null,
@@ -518,6 +525,7 @@ function TakeCard({
   take: Take;
   jobOpen: boolean;
   jobAwarded: boolean;
+  pastDeadline?: boolean;
   hasOtherSelection: boolean;
   jobBpm?: number | null;
   jobBackingUrl?: string | null;
@@ -542,7 +550,7 @@ function TakeCard({
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-gray-900">{take.musician.name}</span>
-          {isWinner && <Badge status={jobAwarded ? "AWARDED" : "SELECTED"} />}
+          {isWinner && <Badge status={jobAwarded ? "AWARDED" : "PICKED"} />}
           {audioCount > 1 && (
             <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
               {audioCount} takes
@@ -565,11 +573,28 @@ function TakeCard({
           bpm={jobBpm}
           backingSrc={jobBackingUrl}
         />
-        {jobOpen && isWinner && !jobAwarded && (
+        {jobOpen && isWinner && !jobAwarded && !pastDeadline && (
           <p className="border-t border-gray-100 pt-4 text-center text-xs leading-relaxed text-gray-500">
-            Selected. Payment and full downloads unlock when the deadline ends. Pick a different
-            take below if you change your mind.
+            Picked for now. Payment and full downloads wait until after the deadline. Switch to
+            another take anytime before then.
           </p>
+        )}
+        {jobOpen && isWinner && !jobAwarded && pastDeadline && (
+          <div className="flex flex-col items-center gap-2 border-t border-gray-100 pt-4">
+            <Button
+              size="sm"
+              onClick={onSelect}
+              disabled={disabled}
+              title={readOnly ? "Preview only. Finalizing stays with the producer." : undefined}
+              className="w-full sm:w-auto"
+            >
+              {readOnly ? "Finalize payment" : selecting ? "Finalizing…" : "Finalize payment now"}
+            </Button>
+            <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
+              Pays the musician and unlocks master downloads. Or switch to another take below —
+              otherwise we’ll finalize this pick automatically within 24 hours.
+            </p>
+          </div>
         )}
         {jobOpen && !isWinner && (
           <div className="flex flex-col items-center gap-2 border-t border-gray-100 pt-4">
@@ -586,15 +611,23 @@ function TakeCard({
                   ? "Switch to this submission"
                   : "Choose this submission"
                 : selecting
-                  ? "Selecting…"
+                  ? pastDeadline
+                    ? "Finalizing…"
+                    : "Selecting…"
                   : hasOtherSelection
                     ? "Switch to this submission"
-                    : "Choose this submission"}
+                    : pastDeadline
+                      ? "Choose & pay this submission"
+                      : "Choose this submission"}
             </Button>
             <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
-              {hasOtherSelection
-                ? "Replaces your current selection. Still open for more submissions until the deadline."
-                : "Job stays open until the deadline. Payment and full files unlock then."}
+              {pastDeadline
+                ? hasOtherSelection
+                  ? "Replaces your current pick and finalizes payment immediately."
+                  : "Finalizes payment and unlocks master downloads right away."
+                : hasOtherSelection
+                  ? "Replaces your current pick. Still open for more submissions until the deadline."
+                  : "Job stays open until the deadline. After it ends, you’ll have 24 hours to finalize."}
             </p>
           </div>
         )}

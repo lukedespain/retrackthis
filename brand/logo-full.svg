@@ -1,14 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 140" fill="none">
-  <!-- Banner lockup: arms frame “Retrack This” (Retrack ink / This accent) -->
   <path
-    d="M28 88V28h72"
+    d="M24 96V40A18 18 0 0 1 42 22h70"
     stroke="#15141A"
     stroke-width="14"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M452 52v60H380"
+    d="M456 44v56A18 18 0 0 1 438 118H368"
     stroke="#5B4BFF"
     stroke-width="14"
     stroke-linecap="round"

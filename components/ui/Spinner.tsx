@@ -1,32 +1,29 @@
-/** Brand loader: arms spin around the center; colors flip each half-turn. */
+import { LOGO_MARK_DARK, LOGO_MARK_LIGHT } from "@/components/Logo";
+
+/** Exact brand mark (light/dark), spinning slowly. */
 export function Spinner({ size = "md", className = "" }: { size?: "sm" | "md"; className?: string }) {
   const sizeClass = size === "sm" ? "h-5 w-5" : "h-7 w-7";
 
   return (
-    <svg
-      className={`retrack-loader ${sizeClass} ${className}`}
-      viewBox="0 0 100 100"
-      fill="none"
-      role="status"
-      aria-label="Loading"
-    >
-      <g className="retrack-loader-arms">
-        <path
-          className="retrack-loader-ink"
-          d="M20 60V20h40"
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          className="retrack-loader-accent"
-          d="M80 40v40H40"
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </g>
-      <circle className="retrack-loader-dot" cx="50" cy="50" r="10" />
-    </svg>
+    <span className={`inline-flex ${sizeClass} ${className}`} role="status" aria-label="Loading">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={LOGO_MARK_LIGHT}
+        alt=""
+        width={512}
+        height={512}
+        className={`retrack-loader-spin h-full w-full dark:hidden`}
+        draggable={false}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={LOGO_MARK_DARK}
+        alt=""
+        width={512}
+        height={512}
+        className={`retrack-loader-spin hidden h-full w-full dark:inline-block`}
+        draggable={false}
+      />
+    </span>
   );
 }

@@ -62,7 +62,7 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
         variables: {
           colorPrimary: "#5B4BFF",
           borderRadius: "12px",
-          fontFamily: "var(--font-inter), system-ui, sans-serif",
+          fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
         },
       },
     }),

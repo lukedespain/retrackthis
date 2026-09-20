@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <!-- Main mark: purple center. Ink #15141A · accent #5B4BFF -->
+  <!-- Main mark: rounded handoff arms + purple center. Accent #5B4BFF -->
   <path
-    d="M20 60V20h40"
+    d="M20 70V34A14 14 0 0 1 34 20h36"
     stroke="#15141A"
     stroke-width="10"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M80 40v40H40"
+    d="M80 30v36A14 14 0 0 1 66 80H30"
     stroke="#5B4BFF"
     stroke-width="10"
     stroke-linecap="round"

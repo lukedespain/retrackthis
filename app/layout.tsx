@@ -7,6 +7,21 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 export const metadata = {
   title: "retrackthis.com",
   description: "Real musicians. Real takes. You pick your favorite.",
+  icons: {
+    icon: [
+      {
+        url: "/brand/retrackthis-icon-light-32.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/brand/retrackthis-icon-dark-32.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+      // Fallback for browsers that ignore media
+      { url: "/brand/retrackthis-icon-light-32.png" },
+    ],
+    apple: "/brand/retrackthis-icon-light-180.png",
+  },
 };
 
 const themeInitScript = `

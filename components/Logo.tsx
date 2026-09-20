@@ -1,72 +1,33 @@
 import Link from "next/link";
 
-const ARM_PROPS = {
-  strokeWidth: 10,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-  fill: "none",
-};
+/** Exact Figma exports — never redraw. */
+export const LOGO_MARK_LIGHT = "/brand/retrackthis-icon-light-512.png";
+export const LOGO_MARK_DARK = "/brand/retrackthis-icon-dark-512.png";
+/** @deprecated use LOGO_MARK_LIGHT — kept for spinner/email default */
+export const LOGO_MARK_SRC = LOGO_MARK_LIGHT;
 
-/** Main mark — purple center (Hazel). Square. */
-export function RetrackMark({
-  className = "h-7 w-7",
-  inkClassName = "stroke-[#15141A] dark:stroke-white",
-  accent = "#5B4BFF",
-  center = "purple",
-}: {
-  className?: string;
-  inkClassName?: string;
-  accent?: string;
-  center?: "purple" | "black";
-}) {
-  const centerFill =
-    center === "purple" ? accent : undefined;
-  const centerClass =
-    center === "black" ? "fill-[#15141A] dark:fill-white" : undefined;
-
+export function RetrackMark({ className = "h-7 w-7" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 100 100" fill="none" aria-hidden="true">
-      <path d="M20 60V20h40" className={inkClassName} {...ARM_PROPS} />
-      <path d="M80 40v40H40" stroke={accent} {...ARM_PROPS} />
-      <circle cx="50" cy="50" r="10" fill={centerFill} className={centerClass} />
-    </svg>
-  );
-}
-
-/** Banner lockup — arms frame the wordmark (special / marketing). */
-export function LogoWordmark({ className = "h-10 w-auto" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 480 140" fill="none" aria-hidden="true">
-      <path
-        d="M28 88V28h72"
-        className="stroke-[#15141A] dark:stroke-white"
-        strokeWidth="14"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={LOGO_MARK_LIGHT}
+        alt=""
+        width={512}
+        height={512}
+        className={`${className} dark:hidden`}
+        draggable={false}
       />
-      <path
-        d="M452 52v60H380"
-        stroke="#5B4BFF"
-        strokeWidth="14"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={LOGO_MARK_DARK}
+        alt=""
+        width={512}
+        height={512}
+        className={`hidden ${className} dark:inline-block`}
+        draggable={false}
       />
-      <text
-        x="240"
-        y="78"
-        textAnchor="middle"
-        className="fill-[#15141A] dark:fill-white"
-        style={{
-          fontFamily:
-            "var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
-          fontSize: 52,
-          fontWeight: 700,
-          letterSpacing: "-1.2px",
-        }}
-      >
-        Retrack <tspan fill="#5B4BFF">This</tspan>
-      </text>
-    </svg>
+    </>
   );
 }
 

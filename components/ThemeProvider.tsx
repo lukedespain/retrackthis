@@ -25,6 +25,21 @@ function applyTheme(theme: ThemeMode) {
   const root = document.documentElement;
   root.classList.toggle("dark", theme === "dark");
   root.style.colorScheme = theme;
+
+  // Swap favicon to match in-app theme (exact light/dark Figma PNGs).
+  const href =
+    theme === "dark"
+      ? "/brand/retrackthis-icon-dark-32.png"
+      : "/brand/retrackthis-icon-light-32.png";
+  let link = document.querySelector<HTMLLinkElement>("link[rel='icon'][data-theme-icon='1']");
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    link.setAttribute("data-theme-icon", "1");
+    document.head.appendChild(link);
+  }
+  link.type = "image/png";
+  link.href = href;
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

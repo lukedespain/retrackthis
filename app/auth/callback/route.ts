@@ -10,9 +10,10 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type");
-  const nextRaw = searchParams.get("next") ?? "/reset-password";
+  // OAuth / magic links should land in the app; password reset always passes next=/reset-password.
+  const nextRaw = searchParams.get("next") ?? "/producers";
   const next =
-    nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/reset-password";
+    nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/producers";
 
   const redirect = NextResponse.redirect(new URL(next, origin));
 

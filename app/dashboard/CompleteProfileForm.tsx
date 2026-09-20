@@ -1,16 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthLayout } from "@/components/AuthLayout";
 import { InstrumentMultiSelect } from "@/components/InstrumentMultiSelect";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { supabaseClient } from "@/lib/supabaseClient";
 
 export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [instruments, setInstruments] = useState<string[]>([]);
+  const [defaultName, setDefaultName] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    supabaseClient.auth.getUser().then(({ data }) => {
+      if (cancelled) return;
+      const meta = data.user?.user_metadata ?? {};
+      const fromGoogle =
+        (typeof meta.full_name === "string" && meta.full_name) ||
+        (typeof meta.name === "string" && meta.name) ||
+        "";
+      setDefaultName(fromGoogle.trim());
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -45,7 +63,15 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
       subtitle="What should we call you, and what do you play?"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Input label="Name" name="name" required autoFocus placeholder="Alex Rivera" />
+        <Input
+          label="Name"
+          name="name"
+          required
+          autoFocus={!defaultName}
+          defaultValue={defaultName}
+          key={defaultName || "empty"}
+          placeholder="Alex Rivera"
+        />
 
         <InstrumentMultiSelect
           label="I play…"

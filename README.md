@@ -69,12 +69,17 @@ In production, keep **Confirm email** ON so admin allowlisting cannot be claimed
 - **Prisma + Postgres** (Supabase): schema/ORM
 - **Supabase Storage**: demo + take audio files, direct-to-browser upload
   via signed URLs (`app/api/uploads/sign`), 20MB server-enforced cap
-- **Supabase Auth**: email/password via `@supabase/ssr`, session cookies
-  refreshed in `middleware.ts`. Password reset: `/forgot-password` → email
-  link → `/auth/callback` → `/reset-password`. Add
-  `https://retrackthis.com/auth/callback` (and local
-  `http://localhost:3000/auth/callback`) under Supabase → Authentication →
-  URL Configuration → Redirect URLs.
+- **Supabase Auth**: email/password + Google OAuth via `@supabase/ssr`,
+  session cookies refreshed in `middleware.ts`. Password reset:
+  `/forgot-password` → email link → `/auth/callback` → `/reset-password`.
+  Google: `/sign-in` or `/sign-up` → Google → `/auth/callback` → app
+  (default `/producers`). Redirect URLs to allow under Supabase →
+  Authentication → URL Configuration:
+  - `https://retrackthis.com/auth/callback`
+  - `http://localhost:3000/auth/callback`
+  Enable Google under Authentication → Providers (Client ID + Secret from
+  Google Cloud OAuth; authorized redirect URI must be
+  `https://<project-ref>.supabase.co/auth/v1/callback`).
 - **Stripe**: escrow via manual-capture PaymentIntents, payouts via Connect
   transfers. Musicians onboard from **Dashboard → My submissions → Set up payouts**
   (Express Account Link; Accounts v2 with v1 fallback).

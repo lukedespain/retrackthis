@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthFooterLink, AuthLayout } from "@/components/AuthLayout";
+import { AuthDivider, GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -82,6 +83,11 @@ function SignUpForm() {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-5">
+        <GoogleAuthButton
+          nextPath={searchParams.get("next")}
+          label="Continue with Google"
+        />
+        <AuthDivider />
         <Input label="Email" name="email" type="email" required autoComplete="email" />
         <Input
           label="Password"

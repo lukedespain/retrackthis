@@ -52,11 +52,15 @@ export function AdminJobsPanel({
   const editingJob = editingId ? jobs.find((j) => j.id === editingId) : null;
   const listeningJob = listeningId ? jobs.find((j) => j.id === listeningId) : null;
 
-  async function completePayout(jobId: string) {
+  async function completePayout(jobId: string, markOnly = false) {
     setPayoutJobId(jobId);
     setPayoutError(null);
     try {
-      const res = await fetch(`/api/admin/jobs/${jobId}/complete-payout`, { method: "POST" });
+      const res = await fetch(`/api/admin/jobs/${jobId}/complete-payout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markOnly }),
+      });
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.error ?? `Request failed (${res.status})`);
       onChanged();

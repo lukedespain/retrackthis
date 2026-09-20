@@ -16,10 +16,14 @@ function chargeIdFromIntent(pi: Stripe.PaymentIntent): string | null {
  * Admin: finish musician payout for an AWARDED job whose payment is captured
  * but not yet transferred (e.g. Payment Link recovery).
  * POST /api/admin/jobs/:jobId/complete-payout
+ * Body optional: { markOnly?: boolean } — skip Stripe transfer (already done in Dashboard).
  */
-export async function POST(_req: NextRequest, { params }: { params: { jobId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const { error } = await requireAdmin();
   if (error) return error;
+
+  const body = await req.json().catch(() => ({}));
+  const markOnly = Boolean(body?.markOnly);
 
   const job = await db.job.findUnique({
     where: { id: params.jobId },
@@ -62,6 +66,19 @@ export async function POST(_req: NextRequest, { params }: { params: { jobId: str
   const payoutCents = job.payment.amountCents - platformFeeCents;
   if (payoutCents < 1) {
     return NextResponse.json({ error: "Payout too small after fee" }, { status: 400 });
+  }
+
+  if (markOnly) {
+    await db.payment.update({
+      where: { id: job.payment.id },
+      data: { status: "transferred", platformFeeCents },
+    });
+    return NextResponse.json({
+      success: true,
+      payout: "marked",
+      payoutCents,
+      platformFeeCents,
+    });
   }
 
   const altPayout =
@@ -120,7 +137,11 @@ export async function POST(_req: NextRequest, { params }: { params: { jobId: str
     });
   } catch (err) {
     console.error("[admin complete-payout]", err);
-    const message = err instanceof Error ? err.message : "Transfer failed";
-    return NextResponse.json({ error: message }, { status: 502 });
+    const raw = err instanceof Error ? err.message : "Transfer failed";
+    const hint =
+      /No such payment_intent/i.test(raw)
+        ? `${raw} — Vercel’s STRIPE_SECRET_KEY likely doesn’t match the mode this charge was made in (Live vs Test). Transfer $90 in the Live Stripe Dashboard to the musician Connect account, then use “Mark transferred”.`
+        : raw;
+    return NextResponse.json({ error: hint }, { status: 502 });
   }
 }

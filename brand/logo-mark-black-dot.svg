@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <!-- Main mark on dark backgrounds -->
+  <!-- Alt mark: black center (loading pair) -->
   <path
     d="M20 60V20h40"
-    stroke="#FFFFFF"
+    stroke="#15141A"
     stroke-width="10"
     stroke-linecap="round"
     stroke-linejoin="round"
@@ -14,5 +14,5 @@
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <circle cx="50" cy="50" r="10" fill="#5B4BFF"/>
+  <circle cx="50" cy="50" r="10" fill="#15141A"/>
 </svg>

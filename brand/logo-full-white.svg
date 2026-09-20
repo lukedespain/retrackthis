@@ -1,29 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 120" fill="none">
-  <svg x="0" y="10" width="164" height="100" viewBox="0 0 408 248" fill="none">
-    <path
-      d="M42.5 220V32.5H210"
-      stroke="#FFFFFF"
-      stroke-width="56"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M366.5 28V216.5H190"
-      stroke="#5B4BFF"
-      stroke-width="56"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <circle cx="203.5" cy="123.5" r="28" fill="#FFFFFF"/>
-  </svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 140" fill="none">
+  <path
+    d="M28 88V28h72"
+    stroke="#FFFFFF"
+    stroke-width="14"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M452 52v60H380"
+    stroke="#5B4BFF"
+    stroke-width="14"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
   <text
-    x="188"
-    y="64"
-    fill="#FFFFFF"
+    x="240"
+    y="78"
+    text-anchor="middle"
     font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif"
-    font-size="56"
-    font-weight="600"
-    letter-spacing="-1.12"
-    dominant-baseline="middle"
-  >Retrack This</text>
+    font-size="52"
+    font-weight="700"
+    letter-spacing="-1.2"
+  >
+    <tspan fill="#FFFFFF">Retrack</tspan><tspan fill="#FFFFFF">&#160;</tspan><tspan fill="#5B4BFF">This</tspan>
+  </text>
 </svg>

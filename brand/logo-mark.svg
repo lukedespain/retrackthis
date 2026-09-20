@@ -1,18 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 408 248" fill="none">
-  <!-- Hazel mark: wider than tall. Coords from master content bbox. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Main mark: purple center. Ink #15141A · accent #5B4BFF -->
   <path
-    d="M42.5 220V32.5H210"
+    d="M20 60V20h40"
     stroke="#15141A"
-    stroke-width="56"
+    stroke-width="10"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M366.5 28V216.5H190"
+    d="M80 40v40H40"
     stroke="#5B4BFF"
-    stroke-width="56"
+    stroke-width="10"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <circle cx="203.5" cy="123.5" r="28" fill="#15141A"/>
+  <circle cx="50" cy="50" r="10" fill="#5B4BFF"/>
 </svg>

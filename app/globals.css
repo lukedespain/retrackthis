@@ -70,6 +70,112 @@
       transform: translate(calc(-50% + var(--dx)), var(--dy)) rotate(var(--rot)) scale(0.6);
     }
   }
+
+  /* Brand mark loader — spinning arms + purple/black flip */
+  .retrack-loader-arms {
+    transform-origin: 50px 50px;
+    transform-box: view-box;
+    animation: retrack-loader-spin 1.15s linear infinite;
+  }
+
+  .retrack-loader-ink {
+    stroke: #15141a;
+    animation: retrack-loader-ink-flip 1.15s steps(1) infinite;
+  }
+
+  .retrack-loader-accent {
+    stroke: #5b4bff;
+    animation: retrack-loader-accent-flip 1.15s steps(1) infinite;
+  }
+
+  .retrack-loader-dot {
+    fill: #5b4bff;
+    animation: retrack-loader-dot-flip 1.15s steps(1) infinite;
+  }
+
+  .dark .retrack-loader-ink {
+    animation-name: retrack-loader-ink-flip-dark;
+  }
+
+  .dark .retrack-loader-accent {
+    animation-name: retrack-loader-accent-flip-dark;
+  }
+
+  .dark .retrack-loader-dot {
+    animation-name: retrack-loader-dot-flip-dark;
+  }
+
+  @keyframes retrack-loader-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes retrack-loader-ink-flip {
+    0%,
+    49.9% {
+      stroke: #15141a;
+    }
+    50%,
+    100% {
+      stroke: #5b4bff;
+    }
+  }
+
+  @keyframes retrack-loader-ink-flip-dark {
+    0%,
+    49.9% {
+      stroke: #ffffff;
+    }
+    50%,
+    100% {
+      stroke: #5b4bff;
+    }
+  }
+
+  @keyframes retrack-loader-accent-flip {
+    0%,
+    49.9% {
+      stroke: #5b4bff;
+    }
+    50%,
+    100% {
+      stroke: #15141a;
+    }
+  }
+
+  @keyframes retrack-loader-accent-flip-dark {
+    0%,
+    49.9% {
+      stroke: #5b4bff;
+    }
+    50%,
+    100% {
+      stroke: #ffffff;
+    }
+  }
+
+  @keyframes retrack-loader-dot-flip {
+    0%,
+    49.9% {
+      fill: #5b4bff;
+    }
+    50%,
+    100% {
+      fill: #15141a;
+    }
+  }
+
+  @keyframes retrack-loader-dot-flip-dark {
+    0%,
+    49.9% {
+      fill: #5b4bff;
+    }
+    50%,
+    100% {
+      fill: #ffffff;
+    }
+  }
 }
 
 /*

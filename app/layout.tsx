@@ -1,9 +1,8 @@
-import { Inter, Lora } from "next/font/google";
+import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const lora = Lora({ subsets: ["latin"], variable: "--font-lora" });
 
 export const metadata = {
   title: "retrackthis.com",
@@ -29,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className={`${inter.variable} ${lora.variable} overflow-x-hidden font-sans antialiased`}>
+      <body className={`${inter.variable} overflow-x-hidden font-sans antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

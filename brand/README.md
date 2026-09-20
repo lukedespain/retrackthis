@@ -1,33 +1,42 @@
 # Retrack This brand assets
 
-Purple: `#5B4BFF`  
-Wordmark text: `#111827` (dark) / `#FFFFFF` (on dark backgrounds)
+**Colors:** ink `#15141A` · accent `#5B4BFF` · white `#FFFFFF`  
+**Mark:** Hazel lockup — black ⌈ + purple ⌋ + center dot on white.
 
-Icon paths match `components/Logo.tsx` exactly.
+Wordmark typography can be refined later; asset sizes below are the source of truth for product + Google surfaces.
 
-## PNG (ready to use)
+## Which file to use
 
-| File | Use |
-|------|-----|
-| `png/retrackthis-icon-512.png` | App icon, social avatar, favicon source |
-| `png/retrackthis-icon-1024.png` | High-res icon |
-| `png/retrackthis-logo-dark-on-white-680.png` | Full logo on white (slides, docs) |
-| `png/retrackthis-logo-dark-on-white-1360.png` | Full logo on white @2x |
-| `png/retrackthis-logo-dark-680.png` | Full logo, transparent background |
-| `png/retrackthis-logo-dark-1360.png` | Full logo @2x, transparent |
-| `png/retrackthis-logo-white-on-dark-680.png` | Full logo on dark background |
-| `png/retrackthis-logo-white-on-dark-1360.png` | Full logo on dark @2x |
-| `png/retrackthis-logo-white-680.png` | White wordmark, transparent |
-| `png/retrackthis-logo-white-1360.png` | White wordmark @2x, transparent |
+| Use | File |
+|-----|------|
+| **Google Auth / OAuth consent logo** (max 120×120) | `png/retrackthis-google-oauth-120.png` |
+| **Google Workspace** profile / shared inbox avatar | `png/retrackthis-workspace-512.png` |
+| **Website favicon / app icon** | `png/retrackthis-icon-512.png` (also `app/icon.png`) |
+| **Apple touch** | `png/retrackthis-apple-touch-180.png` |
+| **Email header** (hosted) | `public/brand/retrackthis-email-64.png` → `https://retrackthis.com/brand/retrackthis-email-64.png` |
+| High-res icon | `png/retrackthis-icon-1024.png` |
+| Full logo on white (slides, docs) | `png/retrackthis-logo-dark-on-white-680.png` (+ `-1360` @2x) |
+| Full logo transparent | `png/retrackthis-logo-dark-680.png` |
+| Full logo on dark | `png/retrackthis-logo-white-on-dark-680.png` |
 
-## SVG (editable source)
+Public copies of icons live in `public/brand/` so Damian/Hazel (and email) can hotlink after deploy.
 
-- `logo-mark.svg`: icon only
-- `logo-full.svg`: icon + wordmark (dark text)
-- `logo-full-white.svg`: icon + wordmark (white text)
+## SVG (editable)
 
-Regenerate PNGs after SVG edits:
+- `logo-mark.svg` — icon only (light)
+- `logo-mark-on-dark.svg` — icon only (dark backgrounds)
+- `logo-full.svg` — icon + “Retrack This” (dark text)
+- `logo-full-white.svg` — icon + wordmark (white text)
+- `source/retrackthis-mark-master.png` — cropped square master from Hazel’s art (raster truth for icons)
+
+Site header uses `components/Logo.tsx` (inline SVG matching the mark).
+
+## Regenerate wordmark PNGs after SVG edits
+
+Icon PNGs are exported from the Hazel master raster (not the SVG). Wordmarks regenerate from SVG:
 
 ```bash
 npm install --no-save sharp && node scripts/export-brand-assets.mjs
 ```
+
+To re-crop icons from a new Hazel export, replace `source/retrackthis-mark-master.png` (square, white bg, ~18% padding) and re-run size exports, or ask Cursor to regenerate from the new file.

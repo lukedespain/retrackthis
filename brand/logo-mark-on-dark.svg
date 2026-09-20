@@ -1,9 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <!-- Retrack This mark (Hazel lockup): black ⌈ + purple ⌋ + center dot -->
-  <!-- Ink #15141A · Accent #5B4BFF · leave gap around center for the dot -->
+  <!-- Mark for dark backgrounds: ink ? white, accent stays -->
   <path
     d="M13 35V13h18"
-    stroke="#15141A"
+    stroke="#FFFFFF"
     stroke-width="6.5"
     stroke-linecap="round"
     stroke-linejoin="round"
@@ -15,5 +14,5 @@
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <circle cx="24" cy="24" r="3.25" fill="#15141A"/>
+  <circle cx="24" cy="24" r="3.25" fill="#FFFFFF"/>
 </svg>

@@ -43,11 +43,14 @@ export async function sendEmail({
         Sent via Retrack This · <a href="${escapeAttr(appBaseUrl())}" style="color:#6b7280;">retrackthis.com</a>
       </p>`;
 
+  const logoUrl = `${appBaseUrl()}/brand/retrackthis-email-64.png`;
   const html = `<!doctype html>
 <html>
   <body style="margin:0;padding:0;background:#f7f7f8;font-family:Inter,system-ui,-apple-system,sans-serif;color:#111827;">
     <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
-      <p style="margin:0 0 24px;font-size:13px;font-weight:600;letter-spacing:0.04em;color:#5B4BFF;">Retrack This</p>
+      <p style="margin:0 0 24px;">
+        <img src="${escapeAttr(logoUrl)}" width="32" height="32" alt="Retrack This" style="display:block;border:0;" />
+      </p>
       <div style="background:#ffffff;border-radius:16px;padding:28px 24px;box-shadow:0 1px 2px rgba(16,24,40,0.04);">
         <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;font-weight:600;">${escapeHtml(heading)}</h1>
         <div style="font-size:15px;line-height:1.6;color:#4b5563;">${bodyHtml}</div>

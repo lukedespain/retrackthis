@@ -1,18 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <!-- Mark for dark backgrounds: ink ? white, accent stays -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 408 248" fill="none">
   <path
-    d="M13 35V13h18"
+    d="M42.5 220V32.5H210"
     stroke="#FFFFFF"
-    stroke-width="6.5"
+    stroke-width="56"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M35 13v22H17"
+    d="M366.5 28V216.5H190"
     stroke="#5B4BFF"
-    stroke-width="6.5"
+    stroke-width="56"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <circle cx="24" cy="24" r="3.25" fill="#FFFFFF"/>
+  <circle cx="203.5" cy="123.5" r="28" fill="#FFFFFF"/>
 </svg>

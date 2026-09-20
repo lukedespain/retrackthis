@@ -1,17 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 112" fill="none">
-  <svg x="0" y="8" width="96" height="96" viewBox="0 0 48 48" fill="none">
-    <path d="M13 35V13h18" stroke="#FFFFFF" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M35 13v22H17" stroke="#5B4BFF" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="24" cy="24" r="3.25" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 120" fill="none">
+  <svg x="0" y="10" width="164" height="100" viewBox="0 0 408 248" fill="none">
+    <path
+      d="M42.5 220V32.5H210"
+      stroke="#FFFFFF"
+      stroke-width="56"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M366.5 28V216.5H190"
+      stroke="#5B4BFF"
+      stroke-width="56"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <circle cx="203.5" cy="123.5" r="28" fill="#FFFFFF"/>
   </svg>
   <text
-    x="120"
-    y="58"
+    x="188"
+    y="64"
     fill="#FFFFFF"
     font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif"
-    font-size="64"
+    font-size="56"
     font-weight="600"
-    letter-spacing="-1.28"
+    letter-spacing="-1.12"
     dominant-baseline="middle"
   >Retrack This</text>
 </svg>

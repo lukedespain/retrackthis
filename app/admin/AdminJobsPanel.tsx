@@ -32,6 +32,8 @@ export function AdminJobsPanel({
   const [statusFilter, setStatusFilter] = useState<"OPEN" | "all">("OPEN");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [listeningId, setListeningId] = useState<string | null>(null);
+  const [payoutJobId, setPayoutJobId] = useState<string | null>(null);
+  const [payoutError, setPayoutError] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -49,6 +51,21 @@ export function AdminJobsPanel({
 
   const editingJob = editingId ? jobs.find((j) => j.id === editingId) : null;
   const listeningJob = listeningId ? jobs.find((j) => j.id === listeningId) : null;
+
+  async function completePayout(jobId: string) {
+    setPayoutJobId(jobId);
+    setPayoutError(null);
+    try {
+      const res = await fetch(`/api/admin/jobs/${jobId}/complete-payout`, { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? `Request failed (${res.status})`);
+      onChanged();
+    } catch (err) {
+      setPayoutError(err instanceof Error ? err.message : "Payout failed");
+    } finally {
+      setPayoutJobId(null);
+    }
+  }
 
   return (
     <section className="space-y-4">
@@ -75,6 +92,10 @@ export function AdminJobsPanel({
           />
         </div>
       </div>
+
+      {payoutError && (
+        <p className="text-sm text-red-600 dark:text-red-400">{payoutError}</p>
+      )}
 
       {editingJob && editingJob.status === "OPEN" && (
         <EditJobForm
@@ -167,7 +188,9 @@ export function AdminJobsPanel({
                     </td>
                     <td className="px-4 py-3 tabular-nums text-gray-700 dark:text-gray-300">
                       {job.priceLabel}
-                      <div className="text-[11px] text-gray-400">Locked</div>
+                      <div className="text-[11px] text-gray-400">
+                        {job.paymentStatus ? `Pay: ${job.paymentStatus}` : "Locked"}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
@@ -213,6 +236,15 @@ export function AdminJobsPanel({
                             onClick={() => setEditingId(editingId === job.id ? null : job.id)}
                           >
                             {editingId === job.id ? "Editing…" : "Edit"}
+                          </Button>
+                        ) : job.status === "AWARDED" && job.paymentStatus === "captured" ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => completePayout(job.id)}
+                            disabled={payoutJobId === job.id}
+                          >
+                            {payoutJobId === job.id ? "Paying out…" : "Complete payout"}
                           </Button>
                         ) : (
                           <span className="self-center text-xs text-gray-400">Closed</span>

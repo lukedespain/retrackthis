@@ -11,24 +11,25 @@ function stripeMessage(err: unknown): string {
   return err instanceof Error ? err.message : "Something went wrong awarding this take";
 }
 
-// POST /api/jobs/:jobId/select-winner  { takeId }
-// Before the deadline: marks a provisional selection. Job stays open for more
-// submissions; payment and WAV downloads wait until the deadline.
-// At/after the deadline: captures payment, pays the musician, marks AWARDED
-// (producers can finalize early during the post-deadline grace window).
+// POST /api/jobs/:jobId/select-winner  { takeId, finalize?: boolean }
+// Default before the deadline: provisional pick (job stays open).
+// finalize: true (or past deadline): capture payment, pay musician, close as AWARDED.
+// Early finalize matters — Stripe auth holds die ~7 days after the job was posted.
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const sessionUserId = await getSessionUserId();
   if (!sessionUserId) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
-  const { takeId } = await req.json();
+  const body = await req.json();
+  const takeId = body?.takeId as string | undefined;
+  const forceFinalize = Boolean(body?.finalize);
 
   const job = await db.job.findUnique({
     where: { id: params.jobId },
     include: { payment: true },
   });
-  const take = await db.take.findUnique({ where: { id: takeId } });
+  const take = takeId ? await db.take.findUnique({ where: { id: takeId } }) : null;
 
   if (!job || !job.payment || !take || take.jobId !== job.id) {
     return NextResponse.json({ error: "Job or take not found" }, { status: 404 });
@@ -44,9 +45,10 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   }
 
   const pastDeadline = new Date(job.deadline).getTime() <= Date.now();
+  const shouldFinalize = forceFinalize || pastDeadline;
 
   try {
-    if (!pastDeadline) {
+    if (!shouldFinalize) {
       const result = await selectProvisionalWinner(job.id, take.id);
       if (!result.ok) {
         return NextResponse.json({ error: result.error }, { status: result.status });
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         success: true,
         provisional: true,
         message:
-          "Selection saved. Payment and downloads unlock after the deadline. You can change your pick until then, or finalize within 24 hours after it ends.",
+          "Pick saved. You can still switch takes, or end the gig anytime to pay and close it — don’t wait past the card hold (~7 days from posting).",
       });
     }
 
@@ -76,7 +78,12 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
       });
     }
 
-    return NextResponse.json({ success: true, provisional: false, payout: "stripe" });
+    return NextResponse.json({
+      success: true,
+      provisional: false,
+      payout: "stripe",
+      message: "Gig closed. Payment captured and the musician is being paid.",
+    });
   } catch (err) {
     console.error("[select-winner]", err);
     return NextResponse.json({ error: stripeMessage(err) }, { status: 502 });

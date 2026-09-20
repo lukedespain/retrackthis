@@ -109,14 +109,14 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          You can pick a submission anytime while the job is open. Until the deadline, that pick is
-          provisional (“Picked”): the job stays open for more takes, you can switch, and payment plus
-          WAV downloads wait.
+          You can pick a submission anytime while the job is open. “Choose” keeps it provisional so
+          more takes can come in. “End gig &amp; pay” captures payment, pays the musician, and closes
+          the job immediately — use that once you’re sure.
         </p>
         <p>
-          When the deadline hits, we email you with your current pick. You then have about 24 hours
-          to finalize payment, switch takes, or keep listening. If you don’t act, we finalize your
-          current pick automatically. Choosing a take after the deadline finalizes immediately.
+          Card authorizations only last about 7 days from when you posted. If you wait past that, the
+          escrow can cancel (even with a pick saved). We’ll email you as the hold closes and
+          auto-finalize a saved pick before it dies when we can.
         </p>
         <p>Make sure you have compared every take in each submission before you lock in a winner.</p>
       </>

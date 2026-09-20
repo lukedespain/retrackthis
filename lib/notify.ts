@@ -184,7 +184,7 @@ export async function notifyCreatorTakeSubmitted(opts: {
   );
 }
 
-/** Deadline hit with a provisional pick — ask the producer to finalize or keep reviewing. */
+/** Deadline / hold closing with a provisional pick — ask the producer to finalize. */
 export async function notifyProducerDeadlineReached(opts: {
   creatorId: string;
   jobId: string;
@@ -203,11 +203,11 @@ export async function notifyProducerDeadlineReached(opts: {
   await safeSend(`deadline-finalize ${opts.jobId}`, () =>
     sendEmail({
       to: creator.email,
-      subject: `Deadline reached: finalize “${opts.jobTitle}”?`,
-      heading: "Your job deadline just ended",
+      subject: `Time to finalize “${opts.jobTitle}”`,
+      heading: "Finalize your pick before the hold expires",
       bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(creator.name.split(" ")[0] || "there")},</p>
-        <p style="margin:0 0 10px;">Submissions are closed for <strong>${escape(opts.jobTitle)}</strong>. You’ve currently selected <strong>${escape(opts.musicianName)}</strong>.</p>
-        <p style="margin:0;">Finalize payment now, switch to another take, or keep listening until <strong>${escape(formatDeadline(opts.finalizeBy))}</strong> — we’ll finalize your current pick automatically then.</p>`,
+        <p style="margin:0 0 10px;"><strong>${escape(opts.jobTitle)}</strong> still has <strong>${escape(opts.musicianName)}</strong> picked. Card holds only last about a week — if you wait too long, the escrow cancels and nobody gets paid.</p>
+        <p style="margin:0;">End the gig and pay now, or switch takes first. We’ll auto-finalize by <strong>${escape(formatDeadline(opts.finalizeBy))}</strong> if you don’t.</p>`,
       ctaLabel: "Review & finalize",
       ctaHref: dashboardJobsUrl(),
     })

@@ -16,11 +16,22 @@ import { assertMusicianPayoutsReady } from "@/lib/stripeConnect";
 export const CANCEL_GRACE_PERIOD_MS = 72 * 60 * 60 * 1000;
 
 // After the deadline, producers with a provisional pick get this window to
-// finalize early, switch takes, or keep listening before auto-finalize.
+// finalize early, switch takes, or keep listening — but never past the card hold.
 export const FINALIZE_GRACE_PERIOD_MS = 24 * 60 * 60 * 1000;
+
+// Stripe manual-capture authorizations typically expire ~7 days after creation.
+// Finalize (or cancel) before then so escrow doesn't silently vanish.
+export const AUTH_HOLD_SAFE_MS = 6 * 24 * 60 * 60 * 1000;
 
 export const THREE_DAY_REMINDER_MS = 3 * 24 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Latest moment we should auto-finalize a picked job (grace capped by hold life). */
+export function finalizeAutoAt(deadline: Date, paymentCreatedAt: Date): Date {
+  const afterGrace = deadline.getTime() + FINALIZE_GRACE_PERIOD_MS;
+  const beforeHoldDies = paymentCreatedAt.getTime() + AUTH_HOLD_SAFE_MS;
+  return new Date(Math.min(afterGrace, beforeHoldDies));
+}
 
 function chargeIdFromIntent(pi: Stripe.PaymentIntent): string | null {
   const latest = pi.latest_charge;
@@ -258,18 +269,29 @@ export async function selectProvisionalWinner(jobId: string, takeId: string): Pr
 }
 
 /**
- * Finalize OPEN jobs whose finalize grace has ended and that already have a
- * provisional winner. Producers can still finalize earlier via select-winner.
+ * Finalize OPEN jobs that already have a provisional winner once either:
+ * - deadline + finalize grace has passed, or
+ * - the card authorization is about to expire (~day 6 of the hold).
+ * Producers can still finalize earlier via select-winner { finalize: true }.
  */
 export async function finalizeDueAwards(): Promise<number> {
-  const cutoff = new Date(Date.now() - FINALIZE_GRACE_PERIOD_MS);
-  const due = await db.job.findMany({
+  const now = Date.now();
+  const candidates = await db.job.findMany({
     where: {
       status: "OPEN",
-      deadline: { lte: cutoff },
       takes: { some: { isWinner: true } },
+      payment: { isNot: null },
     },
-    select: { id: true },
+    select: {
+      id: true,
+      deadline: true,
+      payment: { select: { createdAt: true } },
+    },
+  });
+
+  const due = candidates.filter((job) => {
+    if (!job.payment) return false;
+    return finalizeAutoAt(job.deadline, job.payment.createdAt).getTime() <= now;
   });
 
   let done = 0;
@@ -290,26 +312,28 @@ export async function finalizeDueAwards(): Promise<number> {
 }
 
 /**
- * Email producers once when the deadline hits with a provisional selection,
- * so they can finalize now or keep reviewing during the finalize grace.
+ * Email producers once when they should act on a provisional pick: either the
+ * deadline hit, or the card hold is within 36h of our safe capture cutoff.
  */
 export async function sendDueFinalizeReminders(): Promise<number> {
   const { emailConfigured } = await import("@/lib/email");
   if (!emailConfigured()) return 0;
 
-  const now = new Date();
+  const now = Date.now();
+  const warnWindowMs = 36 * 60 * 60 * 1000;
   const jobs = await db.job.findMany({
     where: {
       status: "OPEN",
-      deadline: { lte: now },
       finalizeReminderSentAt: null,
       takes: { some: { isWinner: true } },
+      payment: { isNot: null },
     },
     select: {
       id: true,
       title: true,
       deadline: true,
       creatorId: true,
+      payment: { select: { createdAt: true } },
       takes: {
         where: { isWinner: true },
         take: 1,
@@ -320,6 +344,12 @@ export async function sendDueFinalizeReminders(): Promise<number> {
 
   let sent = 0;
   for (const job of jobs) {
+    if (!job.payment) continue;
+    const autoAt = finalizeAutoAt(job.deadline, job.payment.createdAt);
+    const deadlinePassed = job.deadline.getTime() <= now;
+    const holdClosingSoon = autoAt.getTime() - now <= warnWindowMs;
+    if (!deadlinePassed && !holdClosingSoon) continue;
+
     try {
       const musicianName = job.takes[0]?.musician.name ?? "your selected musician";
       await notifyProducerDeadlineReached({
@@ -327,7 +357,7 @@ export async function sendDueFinalizeReminders(): Promise<number> {
         jobId: job.id,
         jobTitle: job.title,
         musicianName,
-        finalizeBy: new Date(new Date(job.deadline).getTime() + FINALIZE_GRACE_PERIOD_MS),
+        finalizeBy: autoAt,
       });
       await db.job.update({
         where: { id: job.id },

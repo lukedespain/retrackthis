@@ -99,6 +99,23 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
   }
 
   let paymentIntent = await stripe.paymentIntents.retrieve(job.payment.stripePaymentIntentId);
+  if (paymentIntent.status === "canceled" || job.payment.status === "cancelled") {
+    // Escrow already gone — don't leave an OPEN job with a provisional winner stuck forever.
+    await db.$transaction([
+      db.job.update({ where: { id: job.id }, data: { status: "CANCELLED" } }),
+      db.payment.update({
+        where: { id: job.payment.id },
+        data: { status: "cancelled" },
+      }),
+      db.take.updateMany({ where: { jobId: job.id, isWinner: true }, data: { isWinner: false } }),
+    ]);
+    await notifyMusiciansJobCancelled({ jobId: job.id, jobTitle: job.title });
+    return {
+      ok: false,
+      error: "Payment was cancelled, so this job was closed without an award",
+      status: 402,
+    };
+  }
   if (paymentIntent.status === "requires_capture") {
     paymentIntent = await stripe.paymentIntents.capture(job.payment.stripePaymentIntentId);
   } else if (paymentIntent.status !== "succeeded") {

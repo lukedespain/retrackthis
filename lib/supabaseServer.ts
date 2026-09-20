@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { DEMO_MODE, DEMO_USER_ID } from "@/lib/demoMode";
 
 // Server-side client (Server Components, Route Handlers) using the anon key
 // plus the caller's session cookies - respects RLS as that specific user.
@@ -25,6 +26,7 @@ export function createServerSupabaseClient() {
 // Resolves the signed-in user's id from the session cookie, or null.
 // Route handlers use this instead of trusting a client-supplied user id.
 export async function getSessionUserId() {
+  if (DEMO_MODE) return DEMO_USER_ID;
   const supabase = createServerSupabaseClient();
   const {
     data: { user },

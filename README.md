@@ -63,6 +63,39 @@ Supabase email confirmation should be **off** for local dev (Dashboard →
 Authentication → Providers → Email → "Confirm email"): Supabase's test
 email sender is rate-limited and will block repeated sign-ups otherwise.
 
+## Staging / preview builds (Demo Mode)
+
+Design and copy work happens on branches, previewed via Vercel's automatic
+per-branch deployments — no real Supabase or Stripe needed. **Demo Mode**
+(`lib/demoMode.ts`) is what makes that possible: when `NEXT_PUBLIC_DEMO_MODE`
+is `"true"`, the app skips real auth entirely (middleware, server, and
+client) and treats every visitor as a fixed seeded user. A yellow banner
+renders site-wide whenever it's on, so a preview build is never mistaken for
+production.
+
+**This flag must only ever be set on Vercel's Preview environment, never
+Production.** It's harmless in Production if accidentally left unset there
+(the check just evaluates to `false`), but should never be turned on.
+
+Setup (one-time):
+
+1. Create a small free Postgres just for previews (e.g. [Neon](https://neon.tech)
+   or Vercel Postgres) — separate from the real Supabase database.
+2. In Vercel → Project Settings → Environment Variables, scope these to
+   **Preview only**:
+   - `NEXT_PUBLIC_DEMO_MODE="true"`
+   - `DATABASE_URL` → the preview Postgres connection string
+3. Run the seed once against that database (point `DATABASE_URL` at it
+   locally, then `npm run prisma:migrate` followed by):
+   ```bash
+   npm run prisma:seed:demo
+   ```
+
+After that, every branch pushed to GitHub gets a shareable Vercel preview
+URL with mock data and no sign-in required. Merging to `main` promotes only
+the code — Production keeps its own database and never sees `DEMO_MODE`, so
+none of the mock data or demo login can leak to the live site.
+
 ## Stack
 
 - **Next.js (App Router)**: one codebase, frontend + API routes

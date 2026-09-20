@@ -1,10 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { DEMO_MODE } from "@/lib/demoMode";
 
 // Refreshes the Supabase session cookie on every request (required for
 // @supabase/ssr: session tokens expire and need silent renewal), and
 // gates /producers, /settings, and /admin behind a signed-in session.
 export async function middleware(request: NextRequest) {
+  // Demo Mode (Preview deployments only, see lib/demoMode.ts): skip the real
+  // Supabase session check so protected routes render with seeded mock data.
+  if (DEMO_MODE) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

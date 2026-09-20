@@ -8,7 +8,8 @@
     "start": "next start",
     "postinstall": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "prisma:seed:demo": "node prisma/seed-demo.js"
   },
   "dependencies": {
     "@prisma/client": "^5.17.0",

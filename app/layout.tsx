@@ -1,5 +1,6 @@
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { DEMO_MODE } from "@/lib/demoMode";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -29,6 +30,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className={`${inter.variable} overflow-x-hidden font-sans antialiased`}>
+        {DEMO_MODE ? (
+          <div className="sticky top-0 z-50 bg-amber-400 px-4 py-1.5 text-center text-xs font-semibold text-amber-950">
+            Preview build — mock data, not connected to production
+          </div>
+        ) : null}
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

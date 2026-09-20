@@ -18,18 +18,21 @@ Wordmark typography can be refined later; asset sizes below are the source of tr
 | Full logo on white (slides, docs) | `png/retrackthis-logo-dark-on-white-680.png` (+ `-1360` @2x) |
 | Full logo transparent | `png/retrackthis-logo-dark-680.png` |
 | Full logo on dark | `png/retrackthis-logo-white-on-dark-680.png` |
+| **Site header mark** (wide ~1.54:1 — do not force square) | `png/retrackthis-mark-site-transparent.png` (+ `-on-dark`) |
 
 Public copies of icons live in `public/brand/` so Damian/Hazel (and email) can hotlink after deploy.
 
+**Note:** The mark itself is wider than tall. Square icons (Google OAuth, Workspace, favicon) sit the mark in a square with white padding. The site header uses the wide crop so it isn’t squashed.
+
 ## SVG (editable)
 
-- `logo-mark.svg` — icon only (light)
+- `logo-mark.svg` — icon only (light), correct wide viewBox
 - `logo-mark-on-dark.svg` — icon only (dark backgrounds)
 - `logo-full.svg` — icon + “Retrack This” (dark text)
 - `logo-full-white.svg` — icon + wordmark (white text)
 - `source/retrackthis-mark-master.png` — cropped square master from Hazel’s art (raster truth for icons)
 
-Site header uses `components/Logo.tsx` (inline SVG matching the mark).
+Site header uses `components/Logo.tsx` → wide PNG mark (`h-7 w-auto`), not a square SVG.
 
 ## Regenerate wordmark PNGs after SVG edits
 

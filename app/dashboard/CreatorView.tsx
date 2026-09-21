@@ -162,7 +162,6 @@ function CreatorJobCard({
   const missingBacking = job.status === "OPEN" && !job.backingFileUrl;
   const flexibleTempo = job.status === "OPEN" && job.bpm == null;
   const [hasProvisionalWinner, setHasProvisionalWinner] = useState(!!job.hasSelectedWinner);
-  const escrowHold = job.paymentStatus === "authorized";
   const unpaidCancelled =
     job.status === "CANCELLED" &&
     (job.paymentStatus == null ||
@@ -420,11 +419,9 @@ function CreatorJobCard({
       {job.status === "OPEN" && hasProvisionalWinner && !isPastDeadline && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="info">
-            Pick saved — you can still switch takes. When you’re happy, use{" "}
-            <span className="font-medium">End gig &amp; pay</span> to close it and pay the musician.
-            {escrowHold
-              ? " Don’t wait for the deadline: the card hold expires about 7 days after you posted, and then payment can’t go through."
-              : " You can also wait until the deadline — payment is already captured, and the musician is paid when you finalize."}
+            Favorite saved — you can switch favorites anytime. Submissions stay open until the
+            deadline. After it ends you’ll have 48 hours to{" "}
+            <span className="font-medium">Award</span> a musician and close the job.
           </Alert>
         </div>
       )}
@@ -432,8 +429,8 @@ function CreatorJobCard({
       {isPastDeadline && !hasProvisionalWinner && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
-            Deadline passed with no winner picked yet. Choose a take below to pay and close it out,
-            or cancel for a full refund. Left alone, this job cancels automatically after a few days.
+            Deadline ended — submissions are closed. You have 48 hours to award a musician. If you
+            don’t pick anyone, the job cancels automatically and you’re refunded.
           </Alert>
         </div>
       )}
@@ -441,9 +438,8 @@ function CreatorJobCard({
       {isPastDeadline && hasProvisionalWinner && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
-            {escrowHold
-              ? "Deadline ended. End the gig and pay now (or switch takes first). Waiting risks the card hold cancelling so payment can’t go through."
-              : "Deadline ended. End the gig and pay now (or switch takes first). Payment is already on the platform — finishing pays the musician."}
+            Deadline ended — submissions are closed. Award your favorite (or switch first) within 48
+            hours. Left alone, we’ll auto-award your current favorite.
           </Alert>
         </div>
       )}
@@ -715,92 +711,87 @@ function TakeCard({
           bpm={jobBpm}
           backingSrc={jobBackingUrl}
         />
-        {jobOpen && isWinner && !jobAwarded && (
+        {jobOpen && isWinner && !jobAwarded && pastDeadline && (
           <div className="flex flex-col items-center gap-2 border-t border-gray-100 pt-4">
             <Button
               size="sm"
               onClick={onFinalize}
               disabled={disabled}
-              title={readOnly ? "Preview only. Finalizing stays with the producer." : undefined}
+              title={readOnly ? "Preview only. Awarding stays with the producer." : undefined}
               className="w-full sm:w-auto"
             >
               {readOnly
-                ? "End gig & pay"
+                ? "Award this submission"
                 : selecting
-                  ? "Closing gig…"
+                  ? "Awarding…"
                   : paying
                     ? "Finish payment"
-                    : "End gig & pay now"}
+                    : "Award this submission"}
             </Button>
             <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
-              {pastDeadline
-                ? "Pays the musician, unlocks masters, and closes submissions."
-                : "Closes the gig early, pays the musician, and unlocks masters. Payment was already collected when you posted."}
+              Accepts this musician, pays them, unlocks masters, and closes the job.
+            </p>
+          </div>
+        )}
+        {jobOpen && isWinner && !jobAwarded && !pastDeadline && (
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-center text-xs leading-relaxed text-gray-500">
+              Favorited. You can switch anytime. Awarding opens after the deadline so musicians get
+              the full submission window.
             </p>
           </div>
         )}
         {jobOpen && !isWinner && !paying && (
           <div className="flex flex-col items-center gap-2 border-t border-gray-100 pt-4">
             {pastDeadline ? (
-              <Button
-                size="sm"
-                onClick={onFinalize}
-                disabled={disabled}
-                title={readOnly ? "Preview only. Awarding stays with the producer." : undefined}
-                className="w-full sm:w-auto"
-              >
-                {readOnly
-                  ? hasOtherSelection
-                    ? "Switch & pay this submission"
-                    : "Choose & pay this submission"
-                  : selecting
-                    ? "Closing gig…"
-                    : hasOtherSelection
-                      ? "Switch & pay this submission"
-                      : "Choose & pay this submission"}
-              </Button>
-            ) : (
-              <div className="flex w-full flex-col items-stretch gap-2 sm:flex-row sm:justify-center">
+              <>
                 <Button
-                  variant="secondary"
                   size="sm"
-                  onClick={onPick}
+                  onClick={onFinalize}
                   disabled={disabled}
                   title={readOnly ? "Preview only. Awarding stays with the producer." : undefined}
                   className="w-full sm:w-auto"
                 >
                   {readOnly
                     ? hasOtherSelection
-                      ? "Switch to this submission"
-                      : "Choose this submission"
+                      ? "Award this instead"
+                      : "Award this submission"
                     : selecting
-                      ? "Selecting…"
+                      ? "Awarding…"
                       : hasOtherSelection
-                        ? "Switch to this submission"
-                        : "Choose this submission"}
+                        ? "Award this instead"
+                        : "Award this submission"}
                 </Button>
+                <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
+                  Pays the musician, unlocks masters, and closes the job.
+                </p>
+              </>
+            ) : (
+              <>
                 <Button
+                  variant="secondary"
                   size="sm"
-                  onClick={onFinalize}
+                  onClick={onPick}
                   disabled={disabled}
-                  title={readOnly ? "Preview only. Finalizing stays with the producer." : undefined}
+                  title={readOnly ? "Preview only." : undefined}
                   className="w-full sm:w-auto"
                 >
                   {readOnly
-                    ? "End gig & pay this one"
+                    ? hasOtherSelection
+                      ? "Switch favorite"
+                      : "Favorite this submission"
                     : selecting
-                      ? "Closing gig…"
-                      : "End gig & pay this one"}
+                      ? "Saving…"
+                      : hasOtherSelection
+                        ? "Switch favorite"
+                        : "Favorite this submission"}
                 </Button>
-              </div>
+                <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
+                  Favorites stay private until you award after the deadline. Jobs can’t close early —
+                  musicians keep the full window to submit.
+                </p>
+              </>
             )}
-            <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
-              {pastDeadline
-                ? "Finalizes payment and unlocks master downloads right away."
-                : hasOtherSelection
-                  ? "Choose keeps the job open. End gig pays now and closes submissions."
-                  : "Choose saves a pick while the job stays open. End gig pays now and closes it."}
-            </p>
           </div>
         )}
       </div>

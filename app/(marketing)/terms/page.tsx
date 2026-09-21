@@ -43,11 +43,11 @@ export default function TermsOfServicePage() {
             award after the grace period.
           </li>
           <li>
-            Choosing a winner before the deadline keeps the job open for submissions. The musician
-            is paid when you finalize (or when the deadline ends with a selection), minus the
-            platform fee. You may change your selection until then. Chargebacks and disputes on
-            creator payments are your responsibility as the purchaser through our platform, subject
-            to Stripe&apos;s and card-network rules.
+            Choosing favorites before the deadline keeps the job open for submissions. The musician
+            is paid when you award after the deadline (or when we auto-award a saved favorite after
+            the 48-hour window), minus the platform fee. You may change your favorite until you
+            award. Chargebacks and disputes on creator payments are your responsibility as the
+            purchaser through our platform, subject to Stripe&apos;s and card-network rules.
           </li>
         </ul>
       </LegalSection>

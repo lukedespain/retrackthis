@@ -28,9 +28,9 @@ const faqItems: FaqItem[] = [
           all over the world can submit multiple takes for a chance at winning the job.
         </p>
         <p>
-          As the submissions come in, the producer can listen to the takes and compare the
-          submissions. Picking a winner before the deadline keeps the job open for more takes;
-          payout and downloads wait until you finalize (or the deadline ends with a selection).
+          As submissions come in, the producer can listen and favorite takes. Jobs stay open until
+          the deadline so musicians get the full window. After the deadline, the producer has 48
+          hours to award a musician and close the job.
         </p>
       </>
     ),
@@ -49,8 +49,8 @@ const faqItems: FaqItem[] = [
           If you cancel an open job, or if the job expires without a winner, you get a full refund.
         </p>
         <p>
-          When you finalize a winner (or the deadline ends with a selection), the musician is paid
-          from those funds minus the platform fee.
+          When you award a musician after the deadline (or we auto-award your favorite after 48
+          hours), they are paid from the funds you paid at checkout, minus the platform fee.
         </p>
       </>
     ),
@@ -91,13 +91,13 @@ const faqItems: FaqItem[] = [
           submit and still leaves you room to listen.
         </p>
         <p>
-          You can cancel an open job anytime before it is finalized. That refunds you in full.
+          You can cancel an open job anytime before it is awarded. That refunds you in full.
         </p>
         <p>
-          Jobs stay open for submissions until the deadline. If you select a take early, you can
-          change it until time is up. If the deadline passes with no winner, you still have a short
-          grace window (about 72 hours) to award or cancel. After that, the job closes automatically
-          and you are refunded.
+          Jobs stay open for submissions until the deadline — producers can’t close early. After the
+          deadline, you have about 48 hours to award a musician (you can favorite takes beforehand
+          and switch them). If you have a favorite and don’t award in time, we auto-award that
+          favorite. If you have no favorite, the job cancels and you’re refunded.
         </p>
       </>
     ),
@@ -108,14 +108,14 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          You can pick a submission anytime while the job is open. “Choose” keeps it provisional so
-          more takes can come in. “End gig &amp; pay” pays the musician and closes the job
-          immediately — use that once you’re sure.
+          While the job is open, use <span className="font-medium">Favorite</span> on a submission
+          (you can switch anytime). Favoriting does not close the job or pay anyone — musicians keep
+          the full deadline window.
         </p>
         <p>
-          Payment is already captured when you posted. Finalizing transfers the musician’s share
-          (minus the platform fee). If you still have an older job on a card hold, we’ll email you
-          before that hold expires and auto-finalize a saved pick when we can.
+          After the deadline, submissions close and you have 48 hours to{" "}
+          <span className="font-medium">Award</span> a musician. That pays them and unlocks masters.
+          Payment was already collected when you posted.
         </p>
         <p>Make sure you have compared every take in each submission before you lock in a winner.</p>
       </>

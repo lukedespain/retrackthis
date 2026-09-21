@@ -10,14 +10,13 @@ import {
 import { calcPlatformFeeCents, stripe } from "@/lib/stripe";
 import { assertMusicianPayoutsReady } from "@/lib/stripeConnect";
 
-// How long an OPEN job can sit past its deadline with no winner before the
-// lazy sweep (see GET /api/jobs) auto-cancels it. Gives the creator a window
-// to notice and act instead of an abrupt cancellation the instant time's up.
-export const CANCEL_GRACE_PERIOD_MS = 72 * 60 * 60 * 1000;
+// How long an OPEN job can sit past its deadline with no favorite before the
+// cron sweep auto-cancels and refunds.
+export const CANCEL_GRACE_PERIOD_MS = 48 * 60 * 60 * 1000;
 
-// After the deadline, producers with a provisional pick get this window to
-// finalize early, switch takes, or keep listening — but never past the card hold.
-export const FINALIZE_GRACE_PERIOD_MS = 24 * 60 * 60 * 1000;
+// After the deadline, producers have this window to award a submission
+// (or switch favorites). Cron auto-awards a saved favorite when it expires.
+export const FINALIZE_GRACE_PERIOD_MS = 48 * 60 * 60 * 1000;
 
 // Stripe manual-capture authorizations typically expire ~7 days after creation.
 // Finalize (or cancel) before then so escrow doesn't silently vanish.
@@ -336,7 +335,8 @@ export async function selectProvisionalWinner(jobId: string, takeId: string): Pr
  * Finalize OPEN jobs that already have a provisional winner once either:
  * - deadline + finalize grace has passed, or
  * - the card authorization is about to expire (~day 6 of the hold).
- * Producers can still finalize earlier via select-winner { finalize: true }.
+ * Producers award only after the deadline (no early close). Cron auto-awards
+ * a saved favorite after the 48h grace window.
  */
 export async function finalizeDueAwards(): Promise<number> {
   const now = Date.now();
@@ -377,20 +377,19 @@ export async function finalizeDueAwards(): Promise<number> {
 }
 
 /**
- * Email producers once when they should act on a provisional pick: either the
- * deadline hit, or the card hold is within 36h of our safe capture cutoff.
+ * Email producers once when the deadline hits (48h award window).
+ * Includes jobs with or without a favorite.
  */
 export async function sendDueFinalizeReminders(): Promise<number> {
   const { emailConfigured } = await import("@/lib/email");
   if (!emailConfigured()) return 0;
 
   const now = Date.now();
-  const warnWindowMs = 36 * 60 * 60 * 1000;
   const jobs = await db.job.findMany({
     where: {
       status: "OPEN",
       finalizeReminderSentAt: null,
-      takes: { some: { isWinner: true } },
+      deadline: { lte: new Date(now) },
       payment: { isNot: null },
     },
     select: {
@@ -412,12 +411,9 @@ export async function sendDueFinalizeReminders(): Promise<number> {
     if (!job.payment) continue;
     const escrowHold = job.payment.status === "authorized";
     const autoAt = finalizeAutoAt(job.deadline, job.payment.createdAt, { escrowHold });
-    const deadlinePassed = job.deadline.getTime() <= now;
-    const holdClosingSoon = escrowHold && autoAt.getTime() - now <= warnWindowMs;
-    if (!deadlinePassed && !holdClosingSoon) continue;
 
     try {
-      const musicianName = job.takes[0]?.musician.name ?? "your selected musician";
+      const musicianName = job.takes[0]?.musician.name ?? null;
       await notifyProducerDeadlineReached({
         creatorId: job.creatorId,
         jobId: job.id,

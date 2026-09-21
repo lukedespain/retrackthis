@@ -184,12 +184,12 @@ export async function notifyCreatorTakeSubmitted(opts: {
   );
 }
 
-/** Deadline / hold closing with a provisional pick — ask the producer to finalize. */
+/** Deadline ended — producer has 48h to award (or we auto-award / refund). */
 export async function notifyProducerDeadlineReached(opts: {
   creatorId: string;
   jobId: string;
   jobTitle: string;
-  musicianName: string;
+  musicianName: string | null;
   finalizeBy: Date;
 }) {
   if (!emailConfigured()) return;
@@ -200,15 +200,19 @@ export async function notifyProducerDeadlineReached(opts: {
   });
   if (!creator) return;
 
+  const favoriteLine = opts.musicianName
+    ? `You currently have <strong>${escape(opts.musicianName)}</strong> favorited.`
+    : `You don’t have a favorite yet — pick one before the window ends, or the job cancels and you’re refunded.`;
+
   await safeSend(`deadline-finalize ${opts.jobId}`, () =>
     sendEmail({
       to: creator.email,
-      subject: `Time to finalize “${opts.jobTitle}”`,
-      heading: "Finalize your pick before the hold expires",
+      subject: `48 hours to award “${opts.jobTitle}”`,
+      heading: "Your gig deadline just ended",
       bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(creator.name.split(" ")[0] || "there")},</p>
-        <p style="margin:0 0 10px;"><strong>${escape(opts.jobTitle)}</strong> still has <strong>${escape(opts.musicianName)}</strong> picked. Card holds only last about a week — if you wait too long, the escrow cancels and nobody gets paid.</p>
-        <p style="margin:0;">End the gig and pay now, or switch takes first. We’ll auto-finalize by <strong>${escape(formatDeadline(opts.finalizeBy))}</strong> if you don’t.</p>`,
-      ctaLabel: "Review & finalize",
+        <p style="margin:0 0 10px;">Submissions are closed on <strong>${escape(opts.jobTitle)}</strong>. ${favoriteLine}</p>
+        <p style="margin:0;">You have <strong>48 hours</strong> to award a musician. We’ll auto-award a saved favorite by <strong>${escape(formatDeadline(opts.finalizeBy))}</strong> if you don’t act.</p>`,
+      ctaLabel: "Award a submission",
       ctaHref: dashboardJobsUrl(),
     })
   );

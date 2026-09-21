@@ -20,8 +20,8 @@ const statusLabels: Record<string, string> = {
   AWARDED: "Awarded",
   CANCELLED: "Cancelled",
   PENDING: "Pending",
-  PICKED: "Picked",
-  SELECTED: "Selected",
+  PICKED: "Favorite",
+  SELECTED: "Favorite",
   "NOT SELECTED": "Not selected",
   "JOB CANCELLED": "Job cancelled",
 };

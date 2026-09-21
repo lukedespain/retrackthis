@@ -40,7 +40,7 @@
 </p>
 
 <div class="note">
-<strong>One-sentence version.</strong> Producer fills out a gig → pays the full amount at checkout → musicians submit for free → producer picks a take → “End gig &amp; pay” sends money to the musician (platform keeps ~10%). If nobody wins in time, or the producer cancels, the producer gets a refund.
+<strong>One-sentence version.</strong> Producer fills out a gig → pays up front at checkout → musicians submit until the deadline → producer favorites takes (no early close) → after the deadline they have 48 hours to award a musician. No award in time with a favorite → we auto-award it. No favorite → refund.
 </div>
 
 <h2>1. Status pills (what the producer sees)</h2>
@@ -70,26 +70,24 @@
   │     └─ “Discard draft”
   │           → Cancelled (no charge). Can Restore as draft if never paid.
   │
-  └─ While Open:
+  └─ While Open (until deadline — cannot close early):
         Musicians submit takes (free; need payouts set up)
         │
-        ├─ Producer “Choose this submission” (before deadline)
-        │     → provisional pick; job stays Open; can switch picks
-        │
-        ├─ Producer “End gig &amp; pay”
-        │     → claim AWARDING → transfer to musician (or manual payout) → Awarded
-        │     → winner email; masters unlock for winner
+        ├─ Producer “Favorite this submission”
+        │     → private favorite; job stays Open; can switch favorites
         │
         ├─ Producer “Cancel &amp; refund”
         │     → refund Stripe charge → Cancelled; musicians notified
         │
-        └─ Deadline hits
-              ├─ Has provisional pick?
-              │     → reminder email to producer
-              │     → after ~24h grace (cron): auto End gig &amp; pay that pick
+        └─ Deadline hits → submissions close → email: “48 hours to award”
+              ├─ Producer “Award this submission”
+              │     → claim AWARDING → transfer → Awarded → masters unlock
               │
-              └─ No pick?
-                    → after ~72h grace (cron): auto Cancel &amp; refund
+              ├─ Has favorite, 48h passes with no click?
+              │     → cron auto-awards that favorite
+              │
+              └─ No favorite, 48h passes?
+                    → cron Cancel &amp; refund
 </div>
 
 <h2>3. What gets “pinged” (systems)</h2>
@@ -113,11 +111,13 @@
 <strong>Product cost note.</strong> Stripe keeps ~2.9%+$0.30 on refunds. Founders still need a written cancel/refund policy for the community email.
 </div>
 
-<h2>5. Branch: deadline with / without a pick</h2>
+<h2>5. Branch: deadline with / without a favorite</h2>
 <ul>
-  <li><strong>Pick saved, deadline passed:</strong> Producer gets “finalize soon” email. Cron auto-pays that pick after ~24h grace if they don’t click.</li>
-  <li><strong>No pick, deadline passed:</strong> ~72h grace to choose or cancel. Then cron refunds and cancels.</li>
-  <li><strong>Cron is daily</strong> on Hobby — cleanup may wait until the next daily run (not hourly). Clicks (End gig / Cancel) are instant.</li>
+  <li><strong>Deadline hits:</strong> Submissions close. Producer gets “48 hours to award” email.</li>
+  <li><strong>Favorite saved:</strong> Producer can award (or switch) within 48h. Cron auto-awards the favorite if they don’t.</li>
+  <li><strong>No favorite:</strong> Same 48h to pick someone. Then cron refunds and cancels.</li>
+  <li><strong>No early “End gig &amp; pay”.</strong> Jobs stay open for the full deadline so musicians get an accurate window.</li>
+  <li><strong>Cron is daily</strong> on Hobby — the 48h cleanup may wait until the next daily run. Award clicks are instant.</li>
 </ul>
 
 <h2>6. Branch: award / payout</h2>
@@ -133,7 +133,7 @@
 </div>
 
 <div class="box edit">
-<strong>If they’re not happy with takes?</strong> Before award: Cancel &amp; refund (full). Or wait out deadline with no pick → auto refund. After Awarded: no self-serve “undo” — would be support/admin.
+<strong>If they’re not happy with takes?</strong> Before award: Cancel &amp; refund (full), or wait out the 48h window with no favorite → auto refund. They cannot end the gig early to stop submissions. After Awarded: no self-serve “undo” — would be support/admin.
 </div>
 
 <h2>7. What musicians see</h2>

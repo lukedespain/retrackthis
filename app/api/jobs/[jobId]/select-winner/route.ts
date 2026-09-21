@@ -12,8 +12,8 @@ function stripeMessage(err: unknown): string {
 }
 
 // POST /api/jobs/:jobId/select-winner  { takeId, finalize?: boolean }
-// Default before the deadline: provisional pick (job stays open).
-// finalize: true (or past deadline): pay musician from captured funds, close as AWARDED.
+// Before the deadline: favorite only (job stays open; submissions stay open until deadline).
+// After the deadline (or AWARDING retry): award + pay + close. Early finalize is rejected.
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const sessionUserId = await getSessionUserId();
   if (!sessionUserId) {
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
 
   const body = await req.json();
   const takeId = body?.takeId as string | undefined;
-  const forceFinalize = Boolean(body?.finalize);
+  const wantFinalize = Boolean(body?.finalize);
 
   const job = await db.job.findUnique({
     where: { id: params.jobId },
@@ -45,7 +45,17 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   }
 
   const pastDeadline = new Date(job.deadline).getTime() <= Date.now();
-  const shouldFinalize = forceFinalize || pastDeadline || job.status === "AWARDING";
+  if (wantFinalize && !pastDeadline && job.status !== "AWARDING") {
+    return NextResponse.json(
+      {
+        error:
+          "Jobs stay open until the deadline so musicians get the full window. Favorite takes now, then award after the deadline.",
+      },
+      { status: 400 }
+    );
+  }
+
+  const shouldFinalize = pastDeadline || job.status === "AWARDING";
 
   try {
     if (!shouldFinalize) {
@@ -57,7 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         success: true,
         provisional: true,
         message:
-          "Pick saved. You can still switch takes, or end the gig anytime to pay and close it.",
+          "Favorite saved. You can switch favorites anytime before the deadline. After it ends you’ll have 48 hours to award a musician.",
       });
     }
 
@@ -80,7 +90,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
       success: true,
       provisional: false,
       payout: "stripe",
-      message: "Gig closed. The musician is being paid.",
+      message: "Submission accepted. The musician is being paid and the job is closed.",
     });
   } catch (err) {
     console.error("[select-winner]", err);

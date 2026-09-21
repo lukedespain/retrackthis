@@ -7,10 +7,9 @@ musician gets paid.
 ## Status
 
 The core loop is built and tested end-to-end against real Supabase Postgres,
-Supabase Storage, Supabase Auth, and Stripe test mode: sign up, post a job
-(real escrow hold), submit takes, pick a winner (real capture), cancel for a
-refund. See `HANDOFF.md` for what's intentionally left undone and where to
-pick up next.
+Supabase Storage, Supabase Auth, and Stripe: sign up, post a job (charge
+up front via Stripe Checkout), submit takes, pick a winner (Connect transfer),
+cancel for a refund. See `HANDOFF.md` for what's intentionally left undone.
 
 ## Data model (see `prisma/schema.prisma`)
 
@@ -26,18 +25,16 @@ pick up next.
 
 ## Payment flow (the important part: don't change without flagging it)
 
-1. Creator posts a Job → we create a Stripe **PaymentIntent** for the price
-   and **authorize but don't capture** it (`capture_method: manual`). This
-   is the escrow: the creator's card is verified and the funds are held,
-   but not charged yet.
+1. Creator posts a Job → Embedded Stripe Checkout charges the full amount up
+   front. Job stays `PENDING_PAYMENT` until `checkout.session.completed`
+   (or confirm-checkout fallback) opens it as `OPEN`.
 2. Musicians submit Takes: free to do, no payment involved.
-3. Creator selects a winner → we **capture** the PaymentIntent, then use
-   **Stripe Connect transfers** to pay the winning musician's connected
-   account (minus the platform fee).
-4. Creator can cancel an OPEN job any time for a full refund (releases the
-   PaymentIntent hold). If a deadline passes with no winner chosen, the same
-   thing happens automatically after a 72-hour grace period (see
-   `lib/jobActions.ts`: a lazy sweep on `GET /api/jobs`, not a real cron job).
+3. Creator selects a winner → we **transfer** from platform balance to the
+   musician's Connect account (minus the platform fee). Legacy jobs that still
+   have an authorized hold are captured first, then transferred.
+4. Creator can cancel an OPEN job any time for a full refund. If a deadline
+   passes with no winner, the same thing happens after a grace period via
+   hourly cron (`/api/cron/jobs`), not the public jobs list.
 
 This is what makes it feel like a "real gig" to musicians (the money is
 provably there) without real money moving until a winner is picked.

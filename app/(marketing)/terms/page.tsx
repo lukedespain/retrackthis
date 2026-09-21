@@ -2,7 +2,7 @@ import { LegalPage, LegalSection } from "@/components/LegalPage";
 
 export default function TermsOfServicePage() {
   return (
-    <LegalPage title="Terms of Service" updated="September 15, 2026">
+    <LegalPage title="Terms of Service" updated="September 21, 2026">
       <p>
         These Terms of Service (&quot;Terms&quot;) govern your use of Retrack This
         (retrackthis.com), a marketplace where creators post short demo parts and musicians submit

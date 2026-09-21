@@ -13,8 +13,7 @@ function stripeMessage(err: unknown): string {
 
 // POST /api/jobs/:jobId/select-winner  { takeId, finalize?: boolean }
 // Default before the deadline: provisional pick (job stays open).
-// finalize: true (or past deadline): capture payment, pay musician, close as AWARDED.
-// Early finalize matters — Stripe auth holds die ~7 days after the job was posted.
+// finalize: true (or past deadline): pay musician from captured funds, close as AWARDED.
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const sessionUserId = await getSessionUserId();
   if (!sessionUserId) {

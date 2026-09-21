@@ -12,7 +12,9 @@ import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { audioFiles, midiFiles } from "@/lib/takeFiles";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import type { Job, Take } from "@/lib/types";
+import { formatCents } from "@/lib/format";
 import { EditJobForm } from "./EditJobForm";
+import { JobCheckoutEmbed } from "./JobCheckoutEmbed";
 import { PostJobForm } from "./PostJobForm";
 
 export function CreatorView({
@@ -153,6 +155,7 @@ function CreatorJobCard({
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [resumingCheckout, setResumingCheckout] = useState(false);
+  const [checkoutClientSecret, setCheckoutClientSecret] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const isPastDeadline = job.status === "OPEN" && new Date(job.deadline).getTime() < Date.now();
   const missingBacking = job.status === "OPEN" && !job.backingFileUrl;
@@ -164,8 +167,8 @@ function CreatorJobCard({
     setHasProvisionalWinner(!!job.hasSelectedWinner);
   }, [job.hasSelectedWinner, job.id]);
 
-  async function cancelJob(e: React.MouseEvent) {
-    e.stopPropagation();
+  async function cancelJob(e?: React.MouseEvent) {
+    e?.stopPropagation();
     if (readOnly) return;
     setCancelling(true);
     setCancelError(null);
@@ -175,6 +178,7 @@ function CreatorJobCard({
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? `Request failed (${res.status})`);
       }
+      setCheckoutClientSecret(null);
       onChanged();
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : "Something went wrong.");
@@ -198,11 +202,12 @@ function CreatorJobCard({
         onChanged();
         return;
       }
-      if (body?.checkoutUrl && typeof body.checkoutUrl === "string") {
-        window.location.assign(body.checkoutUrl);
+      if (body?.clientSecret && typeof body.clientSecret === "string") {
+        setCheckoutClientSecret(body.clientSecret);
+        if (!expanded) onToggle();
         return;
       }
-      throw new Error("Checkout link missing.");
+      throw new Error("Checkout could not be opened.");
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -313,13 +318,25 @@ function CreatorJobCard({
           Payment is in progress. If this stays on Paying, open the gig and click Finish payment.
         </Alert>
       )}
-      {job.status === "PENDING_PAYMENT" && (
+      {job.status === "PENDING_PAYMENT" && checkoutClientSecret && (
+        <div className="border-t border-gray-100 px-4 py-4 sm:px-6">
+          <JobCheckoutEmbed
+            clientSecret={checkoutClientSecret}
+            amountLabel={formatCents(job.priceCents)}
+            onDiscard={() => {
+              setCheckoutClientSecret(null);
+              void cancelJob();
+            }}
+          />
+        </div>
+      )}
+      {job.status === "PENDING_PAYMENT" && !checkoutClientSecret && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
             <p className="font-medium">Payment not finished</p>
             <p className="mt-1">
-              This gig stays private until you complete Stripe Checkout. Finish payment, or discard
-              the draft.
+              This gig stays private until you complete checkout. Finish payment, or discard the
+              draft.
             </p>
           </Alert>
         </div>
@@ -672,8 +689,8 @@ function TakeCard({
             </Button>
             <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
               {pastDeadline
-                ? "Pays the musician, unlocks masters, and closes submissions. Do this before the card hold expires."
-                : "Closes the gig early, pays the musician, and unlocks masters. Safer than waiting — card holds die ~7 days after posting."}
+                ? "Pays the musician, unlocks masters, and closes submissions."
+                : "Closes the gig early, pays the musician, and unlocks masters. Payment was already collected when you posted."}
             </p>
           </div>
         )}

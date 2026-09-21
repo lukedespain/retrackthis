@@ -167,9 +167,9 @@ export async function POST(req: NextRequest) {
   try {
     session = await stripe.checkout.sessions.create(
       {
+        ui_mode: "embedded",
         mode: "payment",
-        success_url: `${base}/producers?posted=1&job=${job.id}`,
-        cancel_url: `${base}/producers?checkout=cancelled&job=${job.id}`,
+        return_url: `${base}/producers?posted=1&job=${job.id}&session_id={CHECKOUT_SESSION_ID}`,
         client_reference_id: job.id,
         metadata: {
           jobId: job.id,
@@ -180,6 +180,12 @@ export async function POST(req: NextRequest) {
           metadata: {
             jobId: job.id,
             creatorId,
+          },
+        },
+        custom_text: {
+          submit: {
+            message:
+              "You're charged now. The musician is paid when you pick a winner. Cancel before that for a full refund.",
           },
         },
         line_items: [
@@ -199,7 +205,7 @@ export async function POST(req: NextRequest) {
           },
         ],
       },
-      { idempotencyKey: `job_checkout_${job.id}` }
+      { idempotencyKey: `job_checkout_embed_${job.id}` }
     );
   } catch (err) {
     await db.job.delete({ where: { id: job.id } }).catch(() => {});
@@ -207,9 +213,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Could not start checkout. Try again." }, { status: 502 });
   }
 
-  if (!session.url) {
+  if (!session.client_secret) {
     await db.job.delete({ where: { id: job.id } }).catch(() => {});
-    return NextResponse.json({ error: "Checkout did not return a URL" }, { status: 502 });
+    return NextResponse.json({ error: "Checkout did not return a client secret" }, { status: 502 });
   }
 
   await db.payment.create({
@@ -227,7 +233,7 @@ export async function POST(req: NextRequest) {
     {
       id: job.id,
       status: "PENDING_PAYMENT",
-      checkoutUrl: session.url,
+      clientSecret: session.client_secret,
       checkoutSessionId: session.id,
     },
     { status: 201 }

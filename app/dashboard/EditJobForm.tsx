@@ -99,7 +99,7 @@ export function EditJobForm({
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
           {adminAs
             ? `Editing for ${adminAs.name} (${adminAs.email}). Price and payment stay locked`
-            : "Your escrow and price stay the same"}
+            : "Your payment and price stay the same"}
           {adminAs?.priceLabel ? ` at ${adminAs.priceLabel}` : ""}. Changes show up for musicians
           right away.
         </p>
@@ -110,7 +110,7 @@ export function EditJobForm({
           <p className="font-medium">Price &amp; payment locked</p>
           <p className="mt-1">
             You can change title, description, reference tracks, and tempo only. You cannot change
-            the escrow amount or card on file.
+            the paid amount.
           </p>
         </Alert>
       )}

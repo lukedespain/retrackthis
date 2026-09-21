@@ -7,7 +7,7 @@ const PRODUCER_STEPS = [
   {
     number: "01",
     title: "Post the part",
-    body: "Upload a demo of the part you need retracked, describe the gig, set a price, and your payment is held until you choose a take.",
+    body: "Upload a demo of the part you need retracked, describe the gig, set a price, and pay up front at checkout.",
   },
   {
     number: "02",
@@ -17,7 +17,7 @@ const PRODUCER_STEPS = [
   {
     number: "03",
     title: "Select a submission",
-    body: "Choose the take that fits. That musician gets paid. You can cancel anytime before awarding for a full release of the hold.",
+    body: "Choose the take that fits. That musician gets paid from the funds you already paid. Cancel anytime before awarding for a full refund.",
   },
 ] as const;
 

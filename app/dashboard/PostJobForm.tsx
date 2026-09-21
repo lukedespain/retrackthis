@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { AUDIO_FILE_ACCEPT } from "@/lib/constants";
+import { formatCents } from "@/lib/format";
 import { displayLabelForInstrumentId, labelForInstrumentId } from "@/lib/instruments";
 import { MUSICAL_KEYS } from "@/lib/musicalKeys";
 import {
@@ -18,18 +19,42 @@ import {
   MIN_PRICE_CENTS,
   SLIDER_MIN_USD,
 } from "@/lib/jobPricing";
+import { JobCheckoutEmbed } from "./JobCheckoutEmbed";
 import { JobPricingFields } from "./JobPricingFields";
 import { PostJobInstrumentPicker } from "./MusicianInstrumentsSettings";
 
 export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCancel: () => void }) {
   const [priceDollars, setPriceDollars] = useState(SLIDER_MIN_USD);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [checkoutAmountCents, setCheckoutAmountCents] = useState<number | null>(null);
+  const [pendingJobId, setPendingJobId] = useState<string | null>(null);
+
+  async function discardDraft() {
+    if (pendingJobId) {
+      await fetch(`/api/jobs/${pendingJobId}/cancel`, { method: "POST" }).catch(() => {});
+    }
+    setClientSecret(null);
+    setCheckoutAmountCents(null);
+    setPendingJobId(null);
+    onCancel();
+  }
+
+  if (clientSecret) {
+    return (
+      <JobCheckoutEmbed
+        clientSecret={clientSecret}
+        amountLabel={checkoutAmountCents != null ? formatCents(checkoutAmountCents) : undefined}
+        onDiscard={discardDraft}
+      />
+    );
+  }
 
   return (
     <Card padding="md">
       <h3 className="text-base font-semibold text-gray-900">Post a new job</h3>
       <p className="mt-1 text-sm text-gray-500">
-        You’ll pay the full gig amount up front on Stripe’s checkout page (card, Apple Pay, and
-        more). The musician is paid when you pick a winner.
+        You’ll pay the full gig amount up front (card, Apple Pay, Link, and more). The musician is
+        paid when you pick a winner.
       </p>
 
       <PostJobFormInner
@@ -37,6 +62,11 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
         onPriceChange={setPriceDollars}
         onPosted={onPosted}
         onCancel={onCancel}
+        onCheckoutReady={({ clientSecret: secret, jobId, amountCents }) => {
+          setClientSecret(secret);
+          setPendingJobId(jobId);
+          setCheckoutAmountCents(amountCents);
+        }}
       />
     </Card>
   );
@@ -47,6 +77,7 @@ type PostJobFormInnerProps = {
   onPriceChange: (n: number) => void;
   onPosted: () => void;
   onCancel: () => void;
+  onCheckoutReady: (opts: { clientSecret: string; jobId: string; amountCents: number }) => void;
 };
 
 function PostJobFormInner({
@@ -54,6 +85,7 @@ function PostJobFormInner({
   onPriceChange,
   onPosted,
   onCancel,
+  onCheckoutReady,
 }: PostJobFormInnerProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -178,8 +210,12 @@ function PostJobFormInner({
         throw new Error(body?.error ?? `Request failed (${res.status})`);
       }
 
-      if (body?.checkoutUrl && typeof body.checkoutUrl === "string") {
-        window.location.assign(body.checkoutUrl);
+      if (body?.clientSecret && typeof body.clientSecret === "string" && body.id) {
+        onCheckoutReady({
+          clientSecret: body.clientSecret,
+          jobId: body.id,
+          amountCents: Math.round(price * 100),
+        });
         return;
       }
 
@@ -357,8 +393,9 @@ function PostJobFormInner({
                 {displayLabelForInstrumentId(instrumentId)}.
               </p>
               <p className="mt-1.5">
-                You can still post. Escrow holds until you award or cancel. Invite someone below if
-                you already know a musician for this part.
+                You can still post. Payment is charged up front at checkout; cancel anytime before
+                a winner is paid for a full refund. Invite someone below if you already know a
+                musician for this part.
               </p>
             </Alert>
           )}
@@ -380,8 +417,8 @@ function PostJobFormInner({
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Payment</h2>
           <p className="mt-0.5 text-xs text-gray-500">
-            After you click Post job, Stripe Checkout charges the full amount (card, Apple Pay, and
-            more). Cancel before a winner is paid for a refund.
+            After you click Post job &amp; pay, a secure Stripe checkout opens here on the page
+            (card, Apple Pay, Link, and more). Cancel before a winner is paid for a refund.
           </p>
         </div>
       </section>

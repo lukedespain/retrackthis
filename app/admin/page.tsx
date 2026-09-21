@@ -542,7 +542,7 @@ function AdminPageInner() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="In escrow" value={money(stats.income.escrowAuthorizedCents)} hint="Authorized, not captured" />
+              <StatCard label="Authorized holds" value={money(stats.income.escrowAuthorizedCents)} hint="Legacy card holds still open" />
               <StatCard label="Captured volume" value={money(stats.income.volumeCapturedCents)} hint="Awarded jobs" />
               <StatCard label="Platform fees" value={money(stats.income.platformFeeEarnedCents)} hint="Earned on awards" />
               <StatCard label="Payments" value={`${stats.income.paymentCount}`} hint="In this period" />

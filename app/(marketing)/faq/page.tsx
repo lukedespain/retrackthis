@@ -36,7 +36,7 @@ const faqItems: FaqItem[] = [
     ),
   },
   {
-    id: "escrow",
+    id: "payment",
     question: "How does payment work?",
     answer: (
       <>

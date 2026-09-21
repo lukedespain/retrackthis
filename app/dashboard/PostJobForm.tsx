@@ -14,6 +14,7 @@ import { displayLabelForInstrumentId, labelForInstrumentId } from "@/lib/instrum
 import { MUSICAL_KEYS } from "@/lib/musicalKeys";
 import {
   MAX_DEADLINE_DAYS,
+  DEFAULT_DEADLINE_DAYS,
   MAX_DURATION_SECONDS,
   MIN_DURATION_SECONDS,
   MIN_PRICE_CENTS,
@@ -102,7 +103,7 @@ function PostJobFormInner({
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
   const durationUserSetRef = useRef(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [deadlineText, setDeadlineText] = useState(String(MAX_DEADLINE_DAYS));
+  const [deadlineText, setDeadlineText] = useState(String(DEFAULT_DEADLINE_DAYS));
   const [availableIds, setAvailableIds] = useState<Set<string>>(new Set());
   const [networkLoaded, setNetworkLoaded] = useState(false);
 

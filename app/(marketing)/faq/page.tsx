@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FaqBrowse, type FaqItem } from "@/components/FaqBrowse";
 import { MarketingFooter } from "@/components/MarketingFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { MAX_DEADLINE_DAYS, SLIDER_MIN_USD } from "@/lib/jobPricing";
+import { SLIDER_MIN_USD } from "@/lib/jobPricing";
 import { PLATFORM_FEE_PERCENT } from "@/lib/stripe";
 
 export const metadata: Metadata = {
@@ -87,17 +87,13 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          Deadlines are capped at {MAX_DEADLINE_DAYS} days. Pick a window that gives musicians time to
-          submit and still leaves you room to listen.
+          Pick how many days submissions stay open. The job can’t be awarded early — musicians get
+          that full window. After the deadline, you have about 48 hours to award a musician (you can
+          favorite takes beforehand). If you have a favorite and don’t award in time, we auto-award
+          that favorite. If you have no favorite, the job cancels and you’re refunded.
         </p>
         <p>
           You can cancel an open job anytime before it is awarded. That refunds you in full.
-        </p>
-        <p>
-          Jobs stay open for submissions until the deadline — producers can’t close early. After the
-          deadline, you have about 48 hours to award a musician (you can favorite takes beforehand
-          and switch them). If you have a favorite and don’t award in time, we auto-award that
-          favorite. If you have no favorite, the job cancels and you’re refunded.
         </p>
       </>
     ),

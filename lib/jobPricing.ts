@@ -12,8 +12,15 @@ export const MIN_PRICE_CENTS = SLIDER_MIN_USD * 100;
 export const MAX_PRICE_CENTS = SLIDER_MAX_USD * 100;
 export const MIN_DURATION_SECONDS = 5;
 export const MAX_DURATION_SECONDS = 30 * 60; // 30 minutes
-/** With charge-upfront (no 7-day auth hold), deadlines can use the full product window. */
-export const MAX_DEADLINE_DAYS = 7;
+/** Sensible default on the post-job form (not a hard product rule). */
+export const DEFAULT_DEADLINE_DAYS = 7;
+/**
+ * Absolute ceiling so a typo can’t create a decades-long job.
+ * Charge-upfront means there is no card-hold timer forcing a short window.
+ */
+export const MAX_DEADLINE_DAYS = 365;
+/** Pricing only: shorter than this nudges the suggested range up (rush). */
+const DEADLINE_RUSH_REFERENCE_DAYS = 7;
 
 export type PricingBandId = "aux" | "core" | "session-heavy" | "specialist" | "topline";
 
@@ -147,14 +154,14 @@ export function durationMultiplier(durationSeconds: number): number {
 }
 
 /**
- * Deadline multiplier vs a full 7-day window.
- * Tighter deadlines nudge the suggested range up (rush). Longer windows stay at baseline.
- * 7 days → 1.0×, 1 day → 1.3×.
+ * Deadline multiplier for the suggested price band.
+ * At or above a week → baseline. Tighter windows nudge the range up (rush).
+ * Longer than a week stays at baseline (no discount for long windows).
  */
 export function deadlineMultiplier(deadlineDays: number): number {
-  const d = Math.min(MAX_DEADLINE_DAYS, Math.max(1, Math.round(deadlineDays)));
-  if (MAX_DEADLINE_DAYS <= 1) return 1;
-  const rush = (MAX_DEADLINE_DAYS - d) / (MAX_DEADLINE_DAYS - 1);
+  const d = Math.max(1, Math.round(deadlineDays));
+  if (d >= DEADLINE_RUSH_REFERENCE_DAYS) return 1;
+  const rush = (DEADLINE_RUSH_REFERENCE_DAYS - d) / (DEADLINE_RUSH_REFERENCE_DAYS - 1);
   return 1 + rush * 0.3;
 }
 
@@ -218,8 +225,8 @@ export function suggestJobPrice(opts: {
   const durationSeconds = Math.max(MIN_DURATION_SECONDS, Math.min(MAX_DURATION_SECONDS, opts.durationSeconds));
   const days =
     opts.deadlineDays != null && Number.isFinite(opts.deadlineDays)
-      ? Math.min(MAX_DEADLINE_DAYS, Math.max(1, Math.round(opts.deadlineDays)))
-      : MAX_DEADLINE_DAYS;
+      ? Math.max(1, Math.round(opts.deadlineDays))
+      : DEFAULT_DEADLINE_DAYS;
   const bandId = pricingBandForInstrumentId(opts.instrumentId);
   const base = BANDS_AT_3_MIN[bandId];
   const mult = durationMultiplier(durationSeconds) * deadlineMultiplier(days);

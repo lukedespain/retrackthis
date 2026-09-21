@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FieldInfo } from "@/components/ui/FieldInfo";
 import { Input } from "@/components/ui/Input";
 import {
+  DEFAULT_DEADLINE_DAYS,
   MAX_DEADLINE_DAYS,
   MAX_DURATION_SECONDS,
   MIN_DURATION_SECONDS,
@@ -54,9 +55,9 @@ export function JobPricingFields({
 
   const deadlineDaysParsed = Number(deadlineText);
   const deadlineDays =
-    deadlineText.trim() !== "" && Number.isFinite(deadlineDaysParsed)
-      ? Math.min(MAX_DEADLINE_DAYS, Math.max(1, Math.round(deadlineDaysParsed)))
-      : MAX_DEADLINE_DAYS;
+    deadlineText.trim() !== "" && Number.isFinite(deadlineDaysParsed) && deadlineDaysParsed >= 1
+      ? Math.round(deadlineDaysParsed)
+      : DEFAULT_DEADLINE_DAYS;
   const deadlineOutOfRange =
     deadlineText.trim() !== "" &&
     (!Number.isFinite(deadlineDaysParsed) ||
@@ -220,23 +221,14 @@ export function JobPricingFields({
           value={deadlineText}
           disabled={disabled}
           required
-          info={`Maximum ${MAX_DEADLINE_DAYS} days. You pay upfront at checkout — no card hold that expires after a week.`}
+          info="How long musicians can submit. The gig stays open for this many days — you can’t award or close it early. After the deadline you’ll have 48 hours to pick a winner."
           onChange={(e) => {
             const next = e.target.value.replace(/[^\d]/g, "");
-            if (next === "") {
-              onDeadlineTextChange("");
-              return;
-            }
-            const n = Number(next);
-            if (Number.isFinite(n) && n > MAX_DEADLINE_DAYS) {
-              onDeadlineTextChange(String(MAX_DEADLINE_DAYS));
-              return;
-            }
             onDeadlineTextChange(next);
           }}
           onBlur={() => {
             if (deadlineText.trim() === "") {
-              onDeadlineTextChange("1");
+              onDeadlineTextChange(String(DEFAULT_DEADLINE_DAYS));
               return;
             }
             const n = Number(deadlineText);
@@ -244,12 +236,17 @@ export function JobPricingFields({
               onDeadlineTextChange("1");
               return;
             }
-            onDeadlineTextChange(String(Math.min(MAX_DEADLINE_DAYS, Math.round(n))));
+            const rounded = Math.round(n);
+            if (rounded > MAX_DEADLINE_DAYS) {
+              onDeadlineTextChange(String(MAX_DEADLINE_DAYS));
+              return;
+            }
+            onDeadlineTextChange(String(rounded));
           }}
         />
         {deadlineOutOfRange && (
           <p className="mt-1.5 text-xs leading-relaxed text-amber-700">
-            Deadline must be between 1 and {MAX_DEADLINE_DAYS} days.
+            Enter at least 1 day (up to {MAX_DEADLINE_DAYS} if you need a long window).
           </p>
         )}
       </div>

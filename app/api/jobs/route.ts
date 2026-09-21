@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
   const maxDeadlineMs = Date.now() + MAX_DEADLINE_DAYS * 24 * 60 * 60 * 1000 + 60_000;
   if (deadlineDate.getTime() > maxDeadlineMs) {
     return NextResponse.json(
-      { error: `Deadline must be within ${MAX_DEADLINE_DAYS} days.` },
+      { error: `Deadline can’t be more than ${MAX_DEADLINE_DAYS} days out.` },
       { status: 400 }
     );
   }

@@ -13,7 +13,12 @@ enum Role {
 }
 
 enum JobStatus {
+  PENDING_PAYMENT
   OPEN
+  // Claimed for payout — Stripe in progress. Not a public state.
+  AWARDING
+  // Claimed for cancel/refund — Stripe in progress.
+  CANCELLING
   AWARDED
   CANCELLED
 }
@@ -71,6 +76,8 @@ model Job {
   finalizeReminderSentAt DateTime?
   status         JobStatus @default(OPEN)
   createdAt      DateTime  @default(now())
+  // Set when award or cancel claims the row, so a crash can be retried after 30s.
+  moneyClaimedAt DateTime?
 
   takes          Take[]
   payment        Payment?
@@ -116,12 +123,13 @@ model TakeFile {
 }
 
 model Payment {
-  id                    String   @id @default(cuid())
-  job                   Job      @relation(fields: [jobId], references: [id])
-  jobId                 String   @unique
-  stripePaymentIntentId String
-  amountCents           Int
-  platformFeeCents      Int
-  status                String   // "authorized" | "captured" | "transferred" | "pending_manual_payout" | "cancelled" | "failed"
-  createdAt             DateTime @default(now())
+  id                      String   @id @default(cuid())
+  job                     Job      @relation(fields: [jobId], references: [id])
+  jobId                   String   @unique
+  stripePaymentIntentId   String   @unique
+  stripeCheckoutSessionId String?
+  amountCents             Int
+  platformFeeCents        Int
+  status                  String   // "pending_checkout" | "authorized" | "captured" | "transferred" | "pending_manual_payout" | "cancelled" | "refunded" | "failed"
+  createdAt               DateTime @default(now())
 }

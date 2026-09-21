@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appBaseUrl } from "@/lib/appUrl";
 import { db } from "@/lib/db";
-import {
-  CANCEL_GRACE_PERIOD_MS,
-  cancelJobAndRefund,
-  finalizeDueAwards,
-  sendDueFinalizeReminders,
-  sendDueThreeDayReminders,
-} from "@/lib/jobActions";
+import { CANCEL_GRACE_PERIOD_MS } from "@/lib/jobActions";
 import { notifyJobInvites, notifyNewJobPosted } from "@/lib/notify";
 import { stripe } from "@/lib/stripe";
 import { getSessionUserId } from "@/lib/supabaseServer";
@@ -15,8 +10,10 @@ import { sanitizeMusicalKey } from "@/lib/musicalKeys";
 import {
   MAX_DEADLINE_DAYS,
   MAX_DURATION_SECONDS,
+  MAX_PRICE_CENTS,
   MIN_DURATION_SECONDS,
   MIN_PRICE_CENTS,
+  SLIDER_MAX_USD,
   SLIDER_MIN_USD,
 } from "@/lib/jobPricing";
 
@@ -29,10 +26,8 @@ function sanitizeInviteEmails(value: unknown): string[] {
   return Array.from(new Set(emails)).slice(0, 5);
 }
 
-// POST /api/jobs - creator posts a new job.
-// Creates the Job row AND authorizes (but does not capture) a Stripe
-// PaymentIntent for the price. This is the escrow: funds are held on the
-// creator's card, not charged, until a winner is picked.
+// POST /api/jobs - creator posts a new job and is sent to Stripe Checkout
+// (charge-upfront). Job stays PENDING_PAYMENT until checkout.session.completed.
 export async function POST(req: NextRequest) {
   const creatorId = await getSessionUserId();
   if (!creatorId) {
@@ -51,12 +46,11 @@ export async function POST(req: NextRequest) {
     durationSeconds,
     musicalKey,
     deadline,
-    paymentMethodId,
     bpm,
     inviteEmails,
   } = body;
 
-  if (!title || !description || !demoFileUrl || !priceCents || !deadline || !paymentMethodId) {
+  if (!title || !description || !demoFileUrl || !priceCents || !deadline) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
@@ -86,13 +80,11 @@ export async function POST(req: NextRequest) {
 
   const invites = sanitizeInviteEmails(inviteEmails);
 
-  if (typeof paymentMethodId !== "string" || !paymentMethodId.startsWith("pm_")) {
-    return NextResponse.json({ error: "Invalid payment method" }, { status: 400 });
-  }
-
-  if (!Number.isFinite(priceCents) || priceCents < MIN_PRICE_CENTS) {
+  if (!Number.isInteger(priceCents) || priceCents < MIN_PRICE_CENTS || priceCents > MAX_PRICE_CENTS) {
     return NextResponse.json(
-      { error: `Price must be at least $${SLIDER_MIN_USD}` },
+      {
+        error: `Price must be a whole-dollar amount between $${SLIDER_MIN_USD} and $${SLIDER_MAX_USD}`,
+      },
       { status: 400 }
     );
   }
@@ -123,22 +115,10 @@ export async function POST(req: NextRequest) {
   if (deadlineDate.getTime() <= Date.now()) {
     return NextResponse.json({ error: "Deadline must be in the future" }, { status: 400 });
   }
-  // Stopgap until charge-upfront: keep deadline + grace under ~6 days so the
-  // Stripe authorize hold (≈7 days) is still valid when we capture or cancel.
-  const maxWindowMs = 6 * 24 * 60 * 60 * 1000;
-  if (deadlineDate.getTime() + CANCEL_GRACE_PERIOD_MS > Date.now() + maxWindowMs) {
-    return NextResponse.json(
-      {
-        error:
-          "Deadline is too far out for the current card-hold escrow. Shorten it, or wait for charge-upfront.",
-      },
-      { status: 400 }
-    );
-  }
   const maxDeadlineMs = Date.now() + MAX_DEADLINE_DAYS * 24 * 60 * 60 * 1000 + 60_000;
   if (deadlineDate.getTime() > maxDeadlineMs) {
     return NextResponse.json(
-      { error: `Deadline must be within ${MAX_DEADLINE_DAYS} days so the escrow hold stays valid.` },
+      { error: `Deadline must be within ${MAX_DEADLINE_DAYS} days.` },
       { status: 400 }
     );
   }
@@ -149,7 +129,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: storageError }, { status: 400 });
   }
 
-  // bpm: number = fixed tempo; null/undefined/empty = flexible
   let bpmValue: number | null = null;
   if (bpm !== null && bpm !== undefined && bpm !== "") {
     const parsed = Number(bpm);
@@ -159,35 +138,20 @@ export async function POST(req: NextRequest) {
     bpmValue = Math.round(parsed);
   }
 
-  let paymentIntent;
-  try {
-    paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(priceCents),
-      currency: "usd",
-      payment_method: paymentMethodId,
-      capture_method: "manual",
-      confirm: true,
-      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-    });
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Card authorization failed. Try another card.";
-    return NextResponse.json({ error: message }, { status: 402 });
+  const titleStr = String(title).trim().slice(0, 120);
+  const descriptionStr = String(description).trim().slice(0, 5000);
+  if (!titleStr || !descriptionStr) {
+    return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
   }
 
-  if (paymentIntent.status !== "requires_capture" && paymentIntent.status !== "succeeded") {
-    return NextResponse.json(
-      { error: `Unexpected payment status: ${paymentIntent.status}` },
-      { status: 402 }
-    );
-  }
+  const base = appBaseUrl();
   const job = await db.job.create({
     data: {
       creatorId,
-      title,
+      title: titleStr,
       instrument: instrumentLabel,
       instrumentId: resolvedInstrumentId || null,
-      description,
+      description: descriptionStr,
       demoFileUrl: demoFileUrl.trim(),
       backingFileUrl: backing,
       priceCents,
@@ -195,44 +159,86 @@ export async function POST(req: NextRequest) {
       musicalKey: musicalKeyValue,
       bpm: bpmValue,
       deadline: deadlineDate,
-      payment: {
-        create: {
-          stripePaymentIntentId: paymentIntent.id,
-          amountCents: priceCents,
-          platformFeeCents: 0, // computed at award time, once we know the winner
-          status: "authorized",
-        },
-      },
+      status: "PENDING_PAYMENT",
     },
-    include: { payment: true },
   });
 
-  await notifyNewJobPosted(job);
-
-  if (invites.length > 0) {
-    const creator = await db.user.findUnique({
-      where: { id: creatorId },
-      select: { name: true },
-    });
-    await notifyJobInvites({
-      job,
-      creatorName: creator?.name ?? "A creator",
-      emails: invites,
-    });
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create(
+      {
+        mode: "payment",
+        success_url: `${base}/producers?posted=1&job=${job.id}`,
+        cancel_url: `${base}/producers?checkout=cancelled&job=${job.id}`,
+        client_reference_id: job.id,
+        metadata: {
+          jobId: job.id,
+          creatorId,
+          inviteEmails: invites.join(",").slice(0, 450),
+        },
+        payment_intent_data: {
+          metadata: {
+            jobId: job.id,
+            creatorId,
+          },
+        },
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: "usd",
+              unit_amount: priceCents,
+              product_data: {
+                name: `Retrack This: ${titleStr}`.slice(0, 120),
+                description: `${instrumentLabel} · paid upfront; musician is paid when you pick a winner`.slice(
+                  0,
+                  500
+                ),
+              },
+            },
+          },
+        ],
+      },
+      { idempotencyKey: `job_checkout_${job.id}` }
+    );
+  } catch (err) {
+    await db.job.delete({ where: { id: job.id } }).catch(() => {});
+    console.error("[jobs POST] checkout session", err);
+    return NextResponse.json({ error: "Could not start checkout. Try again." }, { status: 502 });
   }
 
-  return NextResponse.json(job, { status: 201 });
+  if (!session.url) {
+    await db.job.delete({ where: { id: job.id } }).catch(() => {});
+    return NextResponse.json({ error: "Checkout did not return a URL" }, { status: 502 });
+  }
+
+  await db.payment.create({
+    data: {
+      jobId: job.id,
+      stripePaymentIntentId: `pending_${session.id}`,
+      stripeCheckoutSessionId: session.id,
+      amountCents: priceCents,
+      platformFeeCents: 0,
+      status: "pending_checkout",
+    },
+  });
+
+  return NextResponse.json(
+    {
+      id: job.id,
+      status: "PENDING_PAYMENT",
+      checkoutUrl: session.url,
+      checkoutSessionId: session.id,
+    },
+    { status: 201 }
+  );
 }
 
 // GET /api/jobs - list open jobs for musicians to browse.
 // Pass ?mine=true to instead get the signed-in creator's jobs across all
 // statuses (used by the creator dashboard).
 //
-// Also does a lazy sweep:
-// 1) OPEN jobs past deadline + FINALIZE_GRACE with a selected winner → finalize
-// 2) OPEN jobs past deadline with a selection → one-time producer finalize email
-// 3) OPEN jobs past deadline + CANCEL_GRACE_PERIOD_MS with no winner → cancel/refund
-// 4) OPEN jobs with ≤3 days left → one-time reminder email
+// Money sweeps (finalize, refund, reminders) run from /api/cron/jobs — not here.
 export async function GET(req: NextRequest) {
   let where: { creatorId: string } | { status: "OPEN" } = { status: "OPEN" };
   if (req.nextUrl.searchParams.get("mine") === "true") {
@@ -243,26 +249,13 @@ export async function GET(req: NextRequest) {
     where = { creatorId };
   }
 
-  // Finalize provisional awards whose grace window ended (await so Vercel
-  // does not freeze before Stripe capture/transfer finishes).
-  try {
-    await finalizeDueAwards();
-  } catch (err) {
-    console.error("[jobs award sweep]", err);
-  }
-
-  try {
-    await sendDueFinalizeReminders();
-  } catch (err) {
-    console.error("[jobs finalize reminder sweep]", err);
-  }
-
   const jobs = await db.job.findMany({
     where,
     orderBy: { createdAt: "desc" },
     include: {
       _count: { select: { takes: true } },
       takes: { where: { isWinner: true }, select: { id: true }, take: 1 },
+      payment: { select: { status: true } },
     },
   });
 
@@ -274,30 +267,11 @@ export async function GET(req: NextRequest) {
       new Date(job.deadline).getTime() + CANCEL_GRACE_PERIOD_MS < now
   );
 
-  // Don't block the marketplace on Stripe cancels (that was hanging /jobs).
-  // Hide past-grace jobs from OPEN browse and sweep in the background.
-  if (pastDeadlineNoWinner.length > 0) {
-    for (const job of pastDeadlineNoWinner) {
-      void cancelJobAndRefund(job.id).catch((err) => {
-        console.error(`[jobs sweep] failed for ${job.id}`, err);
-      });
-    }
-  }
-
-  // One-time "3 days left" emails for matching musicians who have not submitted.
-  // Await so Vercel does not freeze the function before Resend finishes.
-  try {
-    await sendDueThreeDayReminders();
-  } catch (err) {
-    console.error("[jobs three-day sweep]", err);
-  }
-
   const hideFromBrowse = new Set(
     jobs
       .filter((job) => {
         if (job.status !== "OPEN") return false;
         const deadlineMs = new Date(job.deadline).getTime();
-        // Past deadline: no longer accepting submissions.
         if (deadlineMs <= now) return true;
         return false;
       })
@@ -311,10 +285,11 @@ export async function GET(req: NextRequest) {
       : jobs;
 
   return NextResponse.json(
-    visible.map(({ _count, takes: winningTakes, ...job }) => ({
+    visible.map(({ _count, takes: winningTakes, payment, ...job }) => ({
       ...job,
       takeCount: _count.takes,
       hasSelectedWinner: winningTakes.length > 0,
+      paymentStatus: payment?.status ?? null,
     }))
   );
 }

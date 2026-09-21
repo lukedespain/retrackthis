@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeInternalPath } from "@/lib/safeRedirect";
 
 /**
  * Exchanges the auth code from email links (password reset, confirm signup, etc.)
@@ -11,9 +12,7 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type");
   // OAuth / magic links should land in the app; password reset always passes next=/reset-password.
-  const nextRaw = searchParams.get("next") ?? "/producers";
-  const next =
-    nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/producers";
+  const next = safeInternalPath(searchParams.get("next"), "/producers");
 
   const redirect = NextResponse.redirect(new URL(next, origin));
 

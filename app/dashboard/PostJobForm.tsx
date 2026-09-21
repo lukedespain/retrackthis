@@ -1,12 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Elements,
-  PaymentElement,
-  useElements,
-  useStripe,
-} from "@stripe/react-stripe-js";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Alert } from "@/components/ui/Alert";
@@ -14,7 +8,6 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { useTheme } from "@/components/ThemeProvider";
 import { AUDIO_FILE_ACCEPT } from "@/lib/constants";
 import { displayLabelForInstrumentId, labelForInstrumentId } from "@/lib/instruments";
 import { MUSICAL_KEYS } from "@/lib/musicalKeys";
@@ -25,94 +18,27 @@ import {
   MIN_PRICE_CENTS,
   SLIDER_MIN_USD,
 } from "@/lib/jobPricing";
-import { getStripe, hasStripePublishableKey } from "@/lib/stripeClient";
 import { JobPricingFields } from "./JobPricingFields";
 import { PostJobInstrumentPicker } from "./MusicianInstrumentsSettings";
 
-function StripeAmountSync({ amount }: { amount: number }) {
-  const elements = useElements();
-  useEffect(() => {
-    if (!elements) return;
-    elements.update({ amount });
-  }, [amount, elements]);
-  return null;
-}
-
 export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCancel: () => void }) {
   const [priceDollars, setPriceDollars] = useState(SLIDER_MIN_USD);
-  const priceCents = Math.max(
-    MIN_PRICE_CENTS,
-    Math.round((Number.isFinite(priceDollars) ? priceDollars : 0) * 100)
-  );
-  const { theme } = useTheme();
-
-  const stripePromise = useMemo(() => getStripe(), []);
-  const keyConfigured = hasStripePublishableKey();
-
-  const elementsOptions = useMemo(
-    () => ({
-      mode: "payment" as const,
-      amount: priceCents,
-      currency: "usd",
-      captureMethod: "manual" as const,
-      paymentMethodCreation: "manual" as const,
-      paymentMethodTypes: ["card"] as string[],
-      appearance: {
-        theme: (theme === "dark" ? "night" : "stripe") as "night" | "stripe",
-        variables: {
-          colorPrimary: "#5B4BFF",
-          borderRadius: "12px",
-          fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
-        },
-      },
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- amount synced below; theme remounts via key
-    [theme]
-  );
 
   return (
     <Card padding="md">
       <h3 className="text-base font-semibold text-gray-900">Post a new job</h3>
       <p className="mt-1 text-sm text-gray-500">
-        Your payment is held until the deadline after you pick a winner.
+        You’ll pay the full gig amount up front on Stripe’s checkout page (card, Apple Pay, and
+        more). The musician is paid when you pick a winner.
       </p>
 
-      {keyConfigured ? (
-        <Elements key={theme} stripe={stripePromise} options={elementsOptions}>
-          <StripeAmountSync amount={priceCents} />
-          <PostJobFormWithStripe
-            priceDollars={priceDollars}
-            onPriceChange={setPriceDollars}
-            onPosted={onPosted}
-            onCancel={onCancel}
-          />
-        </Elements>
-      ) : (
-        <>
-          <Alert variant="warning" className="mt-6">
-            Payment form can&apos;t load locally. Add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to
-            .env.local. You can still preview the job form below.
-          </Alert>
-          <PostJobFormInner
-            priceDollars={priceDollars}
-            onPriceChange={setPriceDollars}
-            onPosted={onPosted}
-            onCancel={onCancel}
-            stripeReady={false}
-          />
-        </>
-      )}
+      <PostJobFormInner
+        priceDollars={priceDollars}
+        onPriceChange={setPriceDollars}
+        onPosted={onPosted}
+        onCancel={onCancel}
+      />
     </Card>
-  );
-}
-
-function PostJobFormWithStripe(
-  props: Omit<PostJobFormInnerProps, "stripeReady" | "stripe" | "elements">
-) {
-  const stripe = useStripe();
-  const elements = useElements();
-  return (
-    <PostJobFormInner {...props} stripeReady stripe={stripe} elements={elements} />
   );
 }
 
@@ -121,9 +47,6 @@ type PostJobFormInnerProps = {
   onPriceChange: (n: number) => void;
   onPosted: () => void;
   onCancel: () => void;
-  stripeReady: boolean;
-  stripe?: ReturnType<typeof useStripe>;
-  elements?: ReturnType<typeof useElements>;
 };
 
 function PostJobFormInner({
@@ -131,13 +54,9 @@ function PostJobFormInner({
   onPriceChange,
   onPosted,
   onCancel,
-  stripeReady,
-  stripe = null,
-  elements = null,
 }: PostJobFormInnerProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [elementError, setElementError] = useState<string | null>(null);
   const [demoFileUrl, setDemoFileUrl] = useState<string | null>(null);
   const [backingFileUrl, setBackingFileUrl] = useState<string | null>(null);
   const [fixedTempo, setFixedTempo] = useState(true);
@@ -160,21 +79,6 @@ function PostJobFormInner({
     durationUserSetRef.current = true;
     setDurationSeconds(seconds);
   }, []);
-
-  useEffect(() => {
-    if (!stripeReady) return;
-    let cancelled = false;
-    getStripe().then((s) => {
-      if (!cancelled && !s) {
-        setElementError(
-          "Stripe failed to initialize. Check that NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is a valid pk_live_… key and redeploy."
-        );
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [stripeReady]);
 
   useEffect(() => {
     fetch("/api/instruments")
@@ -237,23 +141,9 @@ function PostJobFormInner({
       return;
     }
 
-    if (stripeReady && (!stripe || !elements)) {
-      setError("Payment form is still loading. Try again in a moment.");
-      return;
-    }
-
-    if (!stripeReady) {
-      setError("Add your Stripe publishable key to .env.local before posting a job.");
-      return;
-    }
-
     setSubmitting(true);
 
     try {
-      if (!stripe || !elements) {
-        throw new Error("Payment form is still loading.");
-      }
-
       const form = new FormData(e.currentTarget);
       const price = Number(form.get("price"));
       const deadlineDays = Math.min(
@@ -263,18 +153,6 @@ function PostJobFormInner({
       const bpmRaw = form.get("bpm");
       const musicalKeyRaw = String(form.get("musicalKey") ?? "").trim();
       const invites = collectInviteEmails();
-
-      const { error: submitError } = await elements.submit();
-      if (submitError) {
-        throw new Error(submitError.message);
-      }
-
-      const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
-        elements,
-      });
-      if (pmError || !paymentMethod) {
-        throw new Error(pmError?.message ?? "Could not collect card details.");
-      }
 
       const res = await fetch("/api/jobs", {
         method: "POST",
@@ -291,14 +169,18 @@ function PostJobFormInner({
           musicalKey: musicalKeyRaw || null,
           bpm: fixedTempo ? Number(bpmRaw) : null,
           deadline: new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000).toISOString(),
-          paymentMethodId: paymentMethod.id,
           inviteEmails: invites,
         }),
       });
 
+      const body = await res.json().catch(() => null);
       if (!res.ok) {
-        const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? `Request failed (${res.status})`);
+      }
+
+      if (body?.checkoutUrl && typeof body.checkoutUrl === "string") {
+        window.location.assign(body.checkoutUrl);
+        return;
       }
 
       onPosted();
@@ -498,31 +380,9 @@ function PostJobFormInner({
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Payment</h2>
           <p className="mt-0.5 text-xs text-gray-500">
-            Places money in escrow. Charged when the deadline ends with a selected winner. Cancel the
-            hold anytime before then.
+            After you click Post job, Stripe Checkout charges the full amount (card, Apple Pay, and
+            more). Cancel before a winner is paid for a refund.
           </p>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white px-3.5 py-3 min-h-[48px]">
-          {!stripeReady ? (
-            <p className="text-sm text-gray-500">Payment fields appear when Stripe is configured.</p>
-          ) : elementError ? (
-            <Alert variant="error">{elementError}</Alert>
-          ) : (
-            <PaymentElement
-              options={{
-                layout: "tabs",
-                paymentMethodOrder: ["card"],
-                wallets: {
-                  applePay: "never",
-                  googlePay: "never",
-                  link: "never",
-                },
-              }}
-              onLoadError={(e) =>
-                setElementError(e.error.message ?? "Payment form failed to load.")
-              }
-            />
-          )}
         </div>
       </section>
 
@@ -543,12 +403,8 @@ function PostJobFormInner({
       {error && <Alert variant="error">{error}</Alert>}
 
       <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:gap-3">
-        <Button
-          type="submit"
-          disabled={submitting || (stripeReady && (!stripe || !elements))}
-          className="w-full sm:w-auto"
-        >
-          {submitting ? "Posting…" : "Post job"}
+        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+          {submitting ? "Starting checkout…" : "Post job & pay"}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel} className="w-full sm:w-auto">
           Cancel

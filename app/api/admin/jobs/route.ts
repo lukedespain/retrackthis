@@ -2,23 +2,11 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { formatCents } from "@/lib/format";
-import { finalizeDueAwards, sendDueFinalizeReminders } from "@/lib/jobActions";
 
 // GET /api/admin/jobs - open (+ recent) jobs for admin editing help
 export async function GET() {
   const { error } = await requireAdmin();
   if (error) return error;
-
-  try {
-    await finalizeDueAwards();
-  } catch (err) {
-    console.error("[admin jobs award sweep]", err);
-  }
-  try {
-    await sendDueFinalizeReminders();
-  } catch (err) {
-    console.error("[admin jobs finalize reminder]", err);
-  }
 
   const jobs = await db.job.findMany({
     orderBy: { createdAt: "desc" },

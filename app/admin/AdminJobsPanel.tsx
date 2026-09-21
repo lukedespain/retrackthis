@@ -242,14 +242,24 @@ export function AdminJobsPanel({
                             {editingId === job.id ? "Editing…" : "Edit"}
                           </Button>
                         ) : job.status === "AWARDED" && job.paymentStatus === "captured" ? (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => completePayout(job.id)}
-                            disabled={payoutJobId === job.id}
-                          >
-                            {payoutJobId === job.id ? "Paying out…" : "Complete payout"}
-                          </Button>
+                          <div className="flex flex-col items-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => completePayout(job.id, false)}
+                              disabled={payoutJobId === job.id}
+                            >
+                              {payoutJobId === job.id ? "Paying out…" : "Complete payout"}
+                            </Button>
+                            <button
+                              type="button"
+                              className="text-[11px] text-gray-500 underline-offset-2 hover:underline"
+                              onClick={() => completePayout(job.id, true)}
+                              disabled={payoutJobId === job.id}
+                            >
+                              Mark transferred
+                            </button>
+                          </div>
                         ) : (
                           <span className="self-center text-xs text-gray-400">Closed</span>
                         )}

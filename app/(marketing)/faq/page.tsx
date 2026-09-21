@@ -9,7 +9,7 @@ import { PLATFORM_FEE_PERCENT } from "@/lib/stripe";
 export const metadata: Metadata = {
   title: "FAQ · Retrack This",
   description:
-    "How escrow, awards, payouts, takes, Part/Bed/Both listening, and the pricing calculator work on Retrack This.",
+    "How payments, awards, payouts, takes, Part/Bed/Both listening, and the pricing calculator work on Retrack This.",
 };
 
 const faqItems: FaqItem[] = [
@@ -30,27 +30,27 @@ const faqItems: FaqItem[] = [
         <p>
           As the submissions come in, the producer can listen to the takes and compare the
           submissions. Picking a winner before the deadline keeps the job open for more takes;
-          payment and downloads wait until the deadline ends.
+          payout and downloads wait until you finalize (or the deadline ends with a selection).
         </p>
       </>
     ),
   },
   {
     id: "escrow",
-    question: "How does payment and escrow work?",
+    question: "How does payment work?",
     answer: (
       <>
         <p>
-          When a producer posts a job, their card authorizes a hold for the amount they set. That
-          money is placed in escrow until a decision is made.
+          When a producer posts a job, they pay the full amount up front on Stripe Checkout (card,
+          Apple Pay, and other methods Stripe enables). Funds sit on the platform until a winner is
+          paid.
         </p>
         <p>
-          If you cancel an open job, or if the job expires without a winner, the hold is released and
-          you are not charged.
+          If you cancel an open job, or if the job expires without a winner, you get a full refund.
         </p>
         <p>
-          The charge goes through when the deadline ends with a selected winner (or when you award
-          after the deadline during the grace window).
+          When you finalize a winner (or the deadline ends with a selection), the musician is paid
+          from those funds minus the platform fee.
         </p>
       </>
     ),
@@ -87,18 +87,17 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          Deadlines are capped at {MAX_DEADLINE_DAYS} days because card authorizations can only stay
-          open for a limited time. Pick a window that gives musicians time to submit and still leaves
-          you room to listen.
+          Deadlines are capped at {MAX_DEADLINE_DAYS} days. Pick a window that gives musicians time to
+          submit and still leaves you room to listen.
         </p>
         <p>
-          You can cancel an open job anytime before it is finalized. That releases the hold in full.
+          You can cancel an open job anytime before it is finalized. That refunds you in full.
         </p>
         <p>
           Jobs stay open for submissions until the deadline. If you select a take early, you can
           change it until time is up. If the deadline passes with no winner, you still have a short
           grace window (about 72 hours) to award or cancel. After that, the job closes automatically
-          and the hold is released.
+          and you are refunded.
         </p>
       </>
     ),
@@ -110,13 +109,13 @@ const faqItems: FaqItem[] = [
       <>
         <p>
           You can pick a submission anytime while the job is open. “Choose” keeps it provisional so
-          more takes can come in. “End gig &amp; pay” captures payment, pays the musician, and closes
-          the job immediately — use that once you’re sure.
+          more takes can come in. “End gig &amp; pay” pays the musician and closes the job
+          immediately — use that once you’re sure.
         </p>
         <p>
-          Card authorizations only last about 7 days from when you posted. If you wait past that, the
-          escrow can cancel (even with a pick saved). We’ll email you as the hold closes and
-          auto-finalize a saved pick before it dies when we can.
+          Payment is already captured when you posted. Finalizing transfers the musician’s share
+          (minus the platform fee). If you still have an older job on a card hold, we’ll email you
+          before that hold expires and auto-finalize a saved pick when we can.
         </p>
         <p>Make sure you have compared every take in each submission before you lock in a winner.</p>
       </>

@@ -12,10 +12,10 @@ export default function TermsOfServicePage() {
       <LegalSection title="The service">
         <p>
           Retrack This lets creators post jobs with a demo file, description, price, and deadline.
-          Payment is authorized (held) when a job is posted and captured when the deadline ends with
-          a selected winner (or when the creator awards after the deadline). Musicians may browse
-          open jobs and submit takes for free. We take a platform fee from awarded jobs; the
-          remainder is transferred to the winning musician through Stripe Connect.
+          Payment is charged up front via Stripe Checkout when a job is posted. Canceling an open
+          job (or expiring with no winner) triggers a refund. When a winner is finalized, the
+          musician is paid through Stripe Connect (or an approved alternate payout) minus the
+          platform fee. Musicians may browse open jobs and submit takes for free.
         </p>
       </LegalSection>
 
@@ -39,15 +39,15 @@ export default function TermsOfServicePage() {
             as described when posting.
           </li>
           <li>
-            Escrow holds are released if you cancel an open job, or if a job expires without an
+            Paid job amounts are refunded if you cancel an open job, or if a job expires without an
             award after the grace period.
           </li>
           <li>
-            Choosing a winner before the deadline keeps the job open for submissions. Payment is
-            captured and the musician is paid when the deadline ends (minus the platform fee). You
-            may change your selection until then. Chargebacks and disputes on creator payments are
-            your responsibility as the purchaser through our platform, subject to Stripe&apos;s and
-            card-network rules.
+            Choosing a winner before the deadline keeps the job open for submissions. The musician
+            is paid when you finalize (or when the deadline ends with a selection), minus the
+            platform fee. You may change your selection until then. Chargebacks and disputes on
+            creator payments are your responsibility as the purchaser through our platform, subject
+            to Stripe&apos;s and card-network rules.
           </li>
         </ul>
       </LegalSection>
@@ -77,17 +77,17 @@ export default function TermsOfServicePage() {
 
       <LegalSection title="Payments">
         <p>
-          Payments are processed by Stripe. Authorization, capture, refunds/cancels, and Connect
-          transfers follow Stripe&apos;s systems and timelines. Platform fees are set by Retrack This
-          and may change with notice for future jobs. Past awarded jobs keep the fee in effect when
-          they were awarded.
+          Payments are processed by Stripe. Checkout charges, refunds, and Connect transfers follow
+          Stripe&apos;s systems and timelines. Platform fees are set by Retrack This and may change
+          with notice for future jobs. Past awarded jobs keep the fee in effect when they were
+          awarded.
         </p>
       </LegalSection>
 
       <LegalSection title="Content and conduct">
         <p>
           Do not upload unlawful, infringing, or abusive content. Do not attempt to circumvent
-          escrow, fees, or security. We may remove content, cancel jobs, withhold payouts that
+          payments, fees, or security. We may remove content, cancel jobs, withhold payouts that
           violate these Terms or law, or suspend accounts when we reasonably believe there is fraud,
           abuse, or IP issues.
         </p>

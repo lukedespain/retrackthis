@@ -152,11 +152,13 @@ function CreatorJobCard({
 }) {
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [resumingCheckout, setResumingCheckout] = useState(false);
   const [editing, setEditing] = useState(false);
   const isPastDeadline = job.status === "OPEN" && new Date(job.deadline).getTime() < Date.now();
   const missingBacking = job.status === "OPEN" && !job.backingFileUrl;
   const flexibleTempo = job.status === "OPEN" && job.bpm == null;
   const [hasProvisionalWinner, setHasProvisionalWinner] = useState(!!job.hasSelectedWinner);
+  const escrowHold = job.paymentStatus === "authorized";
 
   useEffect(() => {
     setHasProvisionalWinner(!!job.hasSelectedWinner);
@@ -178,6 +180,33 @@ function CreatorJobCard({
       setCancelError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setCancelling(false);
+    }
+  }
+
+  async function resumeCheckout(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (readOnly) return;
+    setResumingCheckout(true);
+    setCancelError(null);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/resume-checkout`, { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(body?.error ?? `Request failed (${res.status})`);
+      }
+      if (body?.activated) {
+        onChanged();
+        return;
+      }
+      if (body?.checkoutUrl && typeof body.checkoutUrl === "string") {
+        window.location.assign(body.checkoutUrl);
+        return;
+      }
+      throw new Error("Checkout link missing.");
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setResumingCheckout(false);
     }
   }
 
@@ -216,6 +245,28 @@ function CreatorJobCard({
           </div>
         </button>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:shrink-0">
+          {job.status === "PENDING_PAYMENT" && !readOnly && (
+            <>
+              <Button
+                size="sm"
+                onClick={resumeCheckout}
+                disabled={resumingCheckout || cancelling}
+                className="w-full sm:w-auto"
+              >
+                {resumingCheckout ? "Opening…" : "Finish payment"}
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={cancelJob}
+                disabled={cancelling || resumingCheckout}
+                className="w-full sm:w-auto"
+                aria-label="Cancel unpaid draft"
+              >
+                {cancelling ? "Cancelling…" : "Discard draft"}
+              </Button>
+            </>
+          )}
           {job.status === "OPEN" && !readOnly && (
             <>
               <Button
@@ -249,13 +300,30 @@ function CreatorJobCard({
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            disabled={editing}
+            disabled={editing || job.status === "PENDING_PAYMENT"}
             className="w-full sm:w-auto"
           >
             {expanded ? "Hide takes" : "View takes"}
           </Button>
         </div>
       </div>
+
+      {job.status === "AWARDING" && (
+        <Alert variant="info">
+          Payment is in progress. If this stays on Paying, open the gig and click Finish payment.
+        </Alert>
+      )}
+      {job.status === "PENDING_PAYMENT" && (
+        <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
+          <Alert variant="warning">
+            <p className="font-medium">Payment not finished</p>
+            <p className="mt-1">
+              This gig stays private until you complete Stripe Checkout. Finish payment, or discard
+              the draft.
+            </p>
+          </Alert>
+        </div>
+      )}
 
       {(missingBacking || flexibleTempo) && !editing && job.status === "OPEN" && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
@@ -292,8 +360,9 @@ function CreatorJobCard({
           <Alert variant="info">
             Pick saved — you can still switch takes. When you’re happy, use{" "}
             <span className="font-medium">End gig &amp; pay</span> to close it and pay the musician.
-            Don’t wait for the deadline: the card hold expires about 7 days after you posted, and
-            then payment can’t go through.
+            {escrowHold
+              ? " Don’t wait for the deadline: the card hold expires about 7 days after you posted, and then payment can’t go through."
+              : " You can also wait until the deadline — payment is already captured, and the musician is paid when you finalize."}
           </Alert>
         </div>
       )}
@@ -310,8 +379,9 @@ function CreatorJobCard({
       {isPastDeadline && hasProvisionalWinner && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
-            Deadline ended. End the gig and pay now (or switch takes first). Waiting risks the card
-            hold cancelling so payment can’t go through.
+            {escrowHold
+              ? "Deadline ended. End the gig and pay now (or switch takes first). Waiting risks the card hold cancelling so payment can’t go through."
+              : "Deadline ended. End the gig and pay now (or switch takes first). Payment is already on the platform — finishing pays the musician."}
           </Alert>
         </div>
       )}
@@ -368,9 +438,10 @@ function CreatorJobCard({
                 </div>
                 <TakesList
                   jobId={job.id}
-                  jobOpen={job.status === "OPEN"}
+                  jobOpen={job.status === "OPEN" || job.status === "AWARDING"}
                   jobAwarded={job.status === "AWARDED"}
                   pastDeadline={isPastDeadline}
+                  paying={job.status === "AWARDING"}
                   jobBpm={job.bpm}
                   jobBackingUrl={job.backingFileUrl}
                   onAwarded={onChanged}
@@ -391,6 +462,7 @@ function TakesList({
   jobOpen,
   jobAwarded,
   pastDeadline = false,
+  paying = false,
   jobBpm = null,
   jobBackingUrl = null,
   onAwarded,
@@ -401,6 +473,7 @@ function TakesList({
   jobOpen: boolean;
   jobAwarded: boolean;
   pastDeadline?: boolean;
+  paying?: boolean;
   jobBpm?: number | null;
   jobBackingUrl?: string | null;
   onAwarded: () => void;
@@ -495,6 +568,7 @@ function TakesList({
           jobOpen={jobOpen}
           jobAwarded={jobAwarded}
           pastDeadline={pastDeadline}
+          paying={paying}
           hasOtherSelection={hasSelection && !take.isWinner}
           jobBpm={jobBpm}
           jobBackingUrl={jobBackingUrl}
@@ -516,6 +590,7 @@ function TakeCard({
   jobOpen,
   jobAwarded,
   pastDeadline = false,
+  paying = false,
   hasOtherSelection,
   jobBpm = null,
   jobBackingUrl = null,
@@ -529,6 +604,7 @@ function TakeCard({
   jobOpen: boolean;
   jobAwarded: boolean;
   pastDeadline?: boolean;
+  paying?: boolean;
   hasOtherSelection: boolean;
   jobBpm?: number | null;
   jobBackingUrl?: string | null;
@@ -590,7 +666,9 @@ function TakeCard({
                 ? "End gig & pay"
                 : selecting
                   ? "Closing gig…"
-                  : "End gig & pay now"}
+                  : paying
+                    ? "Finish payment"
+                    : "End gig & pay now"}
             </Button>
             <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
               {pastDeadline
@@ -599,7 +677,7 @@ function TakeCard({
             </p>
           </div>
         )}
-        {jobOpen && !isWinner && (
+        {jobOpen && !isWinner && !paying && (
           <div className="flex flex-col items-center gap-2 border-t border-gray-100 pt-4">
             {pastDeadline ? (
               <Button

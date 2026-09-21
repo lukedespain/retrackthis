@@ -27,18 +27,22 @@ function SettingsPageInner() {
   const [payoutsHighlight, setPayoutsHighlight] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/me").then(async (res) => {
-      if (res.status === 401) {
+    fetch("/api/auth/me")
+      .then(async (res) => {
+        if (res.status === 401) {
+          router.push("/sign-in?next=/settings");
+          return;
+        }
+        const body = await res.json().catch(() => null);
+        if (!body?.profile) {
+          router.push("/producers");
+          return;
+        }
+        setProfile(body.profile);
+      })
+      .catch(() => {
         router.push("/sign-in?next=/settings");
-        return;
-      }
-      const body = await res.json();
-      if (!body.profile) {
-        router.push("/producers");
-        return;
-      }
-      setProfile(body.profile);
-    });
+      });
   }, [router]);
 
   useEffect(() => {

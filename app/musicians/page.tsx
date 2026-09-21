@@ -80,8 +80,8 @@ function MusiciansPageInner() {
           if (!cancelled) setProfile(null);
           return;
         }
-        const body = await res.json();
-        if (!cancelled) setProfile(body.profile ?? null);
+        const body = await res.json().catch(() => null);
+        if (!cancelled) setProfile(body?.profile ?? null);
       })
       .catch(() => {
         if (!cancelled) setProfile(null);
@@ -117,8 +117,8 @@ function MusiciansPageInner() {
       setProfile(null);
       return;
     }
-    const body = await res.json();
-    setProfile(body.profile ?? null);
+    const body = await res.json().catch(() => null);
+    setProfile(body?.profile ?? null);
   }
 
   if (!sessionReady) {

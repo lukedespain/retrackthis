@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RetrackThis: fix list for Luke, September 20</title>
+<style>
+  @page { size: Letter; margin: 0.7in 0.75in; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10.5pt; line-height: 1.45; color: #1a1a1a; margin: 0; }
+  h1 { font-size: 20pt; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: #555; margin: 0 0 18px; font-size: 10pt; }
+  h2 { font-size: 13pt; margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #1a1a1a; page-break-after: avoid; }
+  h3 { font-size: 11pt; margin: 14px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; }
+  .why { background: #f3f4f6; border-left: 4px solid #1a1a1a; padding: 8px 12px; margin: 0 0 12px; }
+  .box { border: 1px solid #cfcfcf; border-radius: 6px; padding: 10px 14px; margin: 0 0 12px; page-break-inside: avoid; }
+  .good { border-color: #2e7d32; background: #f1f8f1; }
+  .today { border-color: #c62828; background: #fdf3f3; }
+  .decide { border-color: #b26a00; background: #fff8ec; }
+  ul.check { list-style: none; padding: 0; margin: 0; }
+  ul.check li { padding: 5px 0 5px 26px; position: relative; page-break-inside: avoid; }
+  ul.check li::before { content: ""; position: absolute; left: 2px; top: 8px; width: 13px; height: 13px; border: 1.5px solid #1a1a1a; border-radius: 2px; }
+  ul.check li.ok::before { content: "✓"; border-color: #2e7d32; color: #2e7d32; font-size: 11px; line-height: 11px; text-align: center; }
+  .fix { border: 1px solid #d8d8e0; border-radius: 6px; padding: 8px 12px 8px 36px; margin: 0 0 8px; position: relative; page-break-inside: avoid; }
+  .fix::before { content: ""; position: absolute; left: 12px; top: 11px; width: 13px; height: 13px; border: 1.5px solid #1a1a1a; border-radius: 2px; }
+  .fix .t { font-weight: 600; }
+  .fix .m { color: #444; font-size: 9.5pt; margin-top: 2px; }
+  .fix .m b { color: #1a1a1a; }
+  code { font-family: Menlo, Monaco, monospace; font-size: 9pt; background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+  .tag { display: inline-block; font-size: 8pt; font-weight: 600; padding: 1px 6px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+  .tag.pf { background: #fde8e8; color: #8a1c1c; }
+  .tag.re { background: #fff1d6; color: #7a4a00; }
+  .tag.new { background: #e8f0fe; color: #1a4d9c; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 12px; font-size: 9.5pt; }
+  th, td { border: 1px solid #d0d0d0; padding: 5px 7px; vertical-align: top; text-align: left; }
+  th { background: #efefef; font-weight: 600; }
+  tr { page-break-inside: avoid; }
+  .small { font-size: 9pt; color: #555; }
+  footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 8.5pt; color: #666; }
+</style>
+</head>
+<body>
+
+<h1>RetrackThis: what to fix next, and in what order</h1>
+<p class="sub">September 20, 2026 &nbsp;·&nbsp; Follows the review of commits <code>7669afe..43732ea</code> &nbsp;·&nbsp; Finding IDs (D-n) point into <em>D-critic-consolidated.md</em>, which has the file, line, and quoted code for each one</p>
+
+<div class="why">
+<p><strong>The short version.</strong> About half the Day-1 list is genuinely closed, and the parts that held were attacked twice and survived. Three things need attention today: the deadline cap shipped as 3 days instead of 7 and rejects the form's own default, the money engine underneath the new "End gig and pay" flow is still the September 4 one (no lock, no refund path) and now runs inside the public jobs page, and the "hide the master until award" feature doesn't hide anything. Section 2 is fourteen one-line changes that close or shrink most of the HIGH items in one sitting. Section 3 is the one real design change, and it should ride on the capture-on-post work you already want to do.</p>
+</div>
+
+<h2>1. What held: leave these alone</h2>
+<div class="box good">
+<ul class="check">
+  <li class="ok"><strong>Takes listing</strong> requires a session and creator-or-admin. Anonymous gets 401, other users get 403. Public job list carries only a count.</li>
+  <li class="ok"><strong>Buyer is not seller</strong> lives in <code>lib/jobActions.ts</code>, so provisional pick, finalize, and the sweep all inherit it. Submit-to-own-job is refused before the replacement branch, so replacement inherits it too.</li>
+  <li class="ok"><strong>Upload signing</strong> requires a session and prefixes the path with the user id.</li>
+  <li class="ok"><strong>RLS migration</strong> covers all five tables and <code>_prisma_migrations</code>, as a migration. Right layer.</li>
+  <li class="ok"><strong>Retry safety:</strong> capture checks the intent status first; transfer checks <code>transfers.list</code> by <code>transfer_group</code> before creating. A lost response no longer double-pays.</li>
+  <li class="ok"><strong>Price and deadline can't be edited</strong> after posting. PATCH rejects payment keys and has no deadline field.</li>
+  <li class="ok"><strong>Webhook signatures, Connect account binding, admin confirmed-email check, PKCE on the Google callback.</strong> All held.</li>
+</ul>
+</div>
+
+<h2>2. Today: fourteen one-line changes</h2>
+<p>None of these is a design change. Each is a guard clause, a constant, a helper call, or a migration. Ship as one PR. Items marked <span class="tag pf">payment flow</span> touch the README's protected section and get flagged to all three founders. <span class="tag re">reopens</span> means a Day-1 item you listed as done that needs another pass.</p>
+
+<div class="fix"><div class="t">1. Make the deadline cap one number, used everywhere. <span class="tag pf">payment flow</span><span class="tag re">reopens #8</span></div>
+<div class="m"><b>What's wrong:</b> <code>app/api/jobs/route.ts</code> has two checks. The first rejects anything where deadline plus the 72-hour grace exceeds 6 days, which caps real deadlines at 3 days. The second (7 days via <code>MAX_DEADLINE_DAYS</code>) can never fire. The form's default is rejected. <b>Change:</b> set <code>MAX_DEADLINE_DAYS = 3</code>, use it in the form default, form validation, hint text, and the one server check; delete the dead branch; add about 5 minutes of server-side slack for clock skew. <b>Verify:</b> post a job with the default deadline on staging; it must succeed. Closes D-10.</div></div>
+
+<div class="fix"><div class="t">2. Stop the duplicate "3 days left" email on every new job.</div>
+<div class="m"><b>What's wrong:</b> a 3-day job is already inside the 3-day reminder window at creation, so the reminder fires seconds after the "new job" alert. <b>Change:</b> in the reminder sweep, skip jobs created in the last 24 hours, or whose whole window is 3 days or less. <b>Verify:</b> post a job; musicians get one email, not two. Closes the email half of D-10.</div></div>
+
+<div class="fix"><div class="t">3. Fix the redirect helper and use it everywhere. <span class="tag re">reopens #5</span></div>
+<div class="m"><b>What's wrong:</b> <code>lib/safeRedirect.ts</code> lets <code>/\t/evil.com</code> (tab, CR, or LF after the first slash) through; browsers strip the control character and land on <code>evil.com</code>. And <code>app/auth/callback/route.ts</code> has its own weaker copy that lets <code>/\evil.com</code> through. <b>Change:</b> canonicalise with <code>new URL(next, origin)</code>, reject when <code>u.origin !== origin</code> or the string contains any character in <code>[\x00-\x1f]</code>; call the helper from the callback too. <b>Verify:</b> the nine strings listed in D-16 all land on <code>/producers</code>. Closes D-16.</div></div>
+
+<div class="fix"><div class="t">4. Put a ceiling and an integer check on price. <span class="tag pf">payment flow</span></div>
+<div class="m"><b>What's wrong:</b> the server accepts any number at or above 100 cents, so the two-account cash-out has no limit. <b>Change:</b> <code>Number.isInteger(priceCents) &amp;&amp; priceCents &lt;= MAX_PRICE_CENTS</code> server-side, with the founders picking the number (the slider max is the obvious value). <b>Verify:</b> a POST with 999999999 gets 400. Shrinks D-1; part of D-7.</div></div>
+
+<div class="fix"><div class="t">5. Stop returning the musician's payout email to the producer; notify admins on every manual payout.</div>
+<div class="m"><b>What's wrong:</b> <code>select-winner</code> returns <code>payoutEmail</code> and <code>payoutAccountName</code> in its JSON. No admin is told when a job lands in <code>pending_manual_payout</code>, so nothing ever moves it. <b>Change:</b> strip those fields from the response; email the admin allowlist whenever that status is written. <b>Verify:</b> award a PayPal musician on staging; the response has no email, the admins get one. First half of D-8.</div></div>
+
+<div class="fix"><div class="t">6. Stop reconfiguring the bucket on every upload; drop octet-stream. <span class="tag re">reopens #2</span></div>
+<div class="m"><b>What's wrong:</b> <code>app/api/uploads/sign/route.ts</code> calls <code>updateBucket({ public: true, ... })</code> on every request and the MIME allowlist includes <code>application/octet-stream</code>, which is any file. Anyone who makes the bucket private in the dashboard is undone by the next upload. <b>Change:</b> delete the <code>updateBucket</code> call and the <code>public: true</code> in <code>ensureAudioBucket</code>; configure the bucket once, out of band; remove octet-stream. <b>Verify:</b> flip the bucket private in the dashboard, mint an upload, confirm it's still private. Closes D-14; prerequisite for section 4.</div></div>
+
+<div class="fix"><div class="t">7. Make RLS cover the next table, not just these five.</div>
+<div class="m"><b>What's wrong:</b> the migration enables RLS and revokes grants on today's tables only. The next <code>prisma migrate</code> that adds a table exposes it to the anon key again. <b>Change:</b> a new migration with <code>ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM anon, authenticated</code> (and sequences); add <code>directUrl</code> to <code>schema.prisma</code> so migrations don't go through the transaction pooler; turn the Data API off in Supabase if nothing uses it (nothing in the app does). <b>Verify:</b> create a throwaway table in staging; the anon-key curl against it returns nothing. Closes D-17.</div></div>
+
+<div class="fix"><div class="t">8. Make the seed guard an allowlist and fail loud. <span class="tag re">reopens #7</span></div>
+<div class="m"><b>What's wrong:</b> <code>prisma/scriptGuard.js</code> is a hostname denylist that misses Supabase's direct host (<code>db.&lt;ref&gt;.supabase.co</code>), so a normal <code>.env.local</code> slips it; <code>seed.js</code> loads <code>.env.local</code> before the guard runs; <code>testpass123</code> is still the fallback. <b>Change:</b> allow only <code>localhost</code> and hosts you name; read <code>ALLOW_PROD_SCRIPTS</code> from the real environment only; throw when <code>SEED_TEST_PASSWORD</code> is unset. <b>Verify:</b> run the seed with a direct-host URL and no override; it must refuse. Closes D-18.</div></div>
+
+<div class="fix"><div class="t">9. Finish the webhook guards. <span class="tag re">reopens #10</span></div>
+<div class="m"><b>What's wrong:</b> <code>canceled</code> and <code>payment_failed</code> have no allowed-from list, writes are still find-then-update, <code>stripePaymentIntentId</code> has no unique index, and onboarding can still create a second Connect account. <b>Change:</b> <code>updateMany</code> with an allowed-from list on all four events; <code>@unique</code> on the intent id; <code>updateMany where stripeAccountId: null</code> in onboard. <b>Verify:</b> replay a <code>canceled</code> event against a <code>transferred</code> payment; status must not change. Closes D-6.</div></div>
+
+<div class="fix"><div class="t">10. One error helper, used on every route. <span class="tag re">reopens #11</span></div>
+<div class="m"><b>What's wrong:</b> only <code>uploads/sign</code> was sanitized. <code>select-winner</code>, <code>connect/onboard</code>, <code>connect/dashboard</code>, <code>uploads/preview</code>, and <code>jobs</code> POST still return raw Stripe, Prisma, Supabase, and ffmpeg text. <b>Change:</b> one <code>clientError(err)</code> helper that logs the detail and returns a fixed message; map Stripe <code>decline_code</code> to a short fixed set. <b>Verify:</b> force a Stripe error on staging; the response is generic. Part of D-20.</div></div>
+
+<div class="fix"><div class="t">11. One admin predicate.</div>
+<div class="m"><b>What's wrong:</b> the confirmed-email admin check is written twice, in <code>lib/admin.ts</code> and <code>app/api/auth/me/route.ts</code>. <b>Change:</b> <code>me/route.ts</code> calls the function in <code>lib/admin.ts</code>. Part of D-19.</div></div>
+
+<div class="fix"><div class="t">12. Repo hygiene.</div>
+<div class="m"><b>Change:</b> add <code>tsconfig.tsbuildinfo</code> to <code>.gitignore</code> and remove it from the repo (850 KB build cache); remove <code>fluent-ffmpeg</code> from <code>package.json</code> (nothing imports it); if previews stay, add <code>outputFileTracingIncludes</code> for the <code>ffmpeg-static</code> binary so it actually ships to Vercel. Part of D-27 and D-11.</div></div>
+
+<div class="fix"><div class="t">13. A confirm step on every pay button.</div>
+<div class="m"><b>What's wrong:</b> one un-confirmed click captures and transfers, and after the deadline every button on the job is a pay button. <b>Change:</b> a confirm dialog naming the musician and the amount before "End gig and pay" and before any post-deadline finalize. Closes D-9.</div></div>
+
+<div class="fix"><div class="t">14. Claim before send on the reminder sweeps.</div>
+<div class="m"><b>What's wrong:</b> both sweeps mark the job after sending, so two concurrent page loads send twice; the admin re-send has no "already sent" check. <b>Change:</b> <code>updateMany</code> that sets the sent timestamp where it's null, and only send when that update counted 1. Closes D-23.</div></div>
+
+<h2>3. Week 1: the escrow state machine, one reviewed change <span class="tag pf">payment flow</span></h2>
+<p>This is the September 4 root cause and it hasn't moved. Do it as one coherent change, reviewed as a unit, and make it the vehicle for capture-on-post rather than a separate project. The founders' decisions in section 6 come first.</p>
+<div class="box">
+<ul class="check">
+  <li><strong>Atomic claim before any Stripe call (D-3).</strong> <code>db.job.updateMany({ where: { id, status: "OPEN" }, data: { status: "AWARDING" } })</code> and abort unless <code>count === 1</code>. Same for cancel with <code>CANCELLING</code>. Persist <code>stripeChargeId</code>, <code>stripeTransferId</code>, and the paid <code>takeId</code> in the same write as the status, and refuse to record a different winner.</li>
+  <li><strong>Cancel that can refund (D-2).</strong> In <code>cancelJobAndRefund</code>, retrieve the intent first. <code>requires_capture</code>: cancel the hold. <code>succeeded</code>: <code>refunds.create</code> and write <code>refunded</code>, or refuse and flag to admin. Never write <code>cancelled</code> over a succeeded intent. There is no refund call anywhere in the app today.</li>
+  <li><strong>Sweeps out of the public page (D-4, D-5, D-23).</strong> A Vercel Cron runs all four sweeps with bounded batches and the same atomic claim. Remove every sweep from <code>GET /api/jobs</code> and <code>GET /api/admin/jobs</code>. Handle <code>payment_intent.canceled</code> by closing the job in the webhook. Takes POST requires <code>payment.status === "authorized"</code>.</li>
+  <li><strong>Idempotency and ordering (D-7).</strong> Idempotency keys and <code>metadata</code> on every Stripe mutation. Validate everything before creating the intent; cancel the intent in a <code>catch</code> around <code>db.job.create</code>.</li>
+  <li><strong>A real ledger for manual payouts (D-8).</strong> A <code>Payout</code> table (job, take, musician, provider, destination snapshot, amount, status, paidAt, paidBy, external ref) written in the award transaction; an admin-only "mark paid"; block <code>payouts/alt</code> edits while a payout is pending; alt destinations need founder verification before the takes gate passes.</li>
+  <li><strong>Business controls against the two-account cash-out (D-1).</strong> A Stripe Customer per creator so Radar can score; a transfer delay for first-time recipients; a <code>charge.dispute.created</code> handler; Radar rules. Capture-on-post rides on this foundation.</li>
+  <li><strong>Make <code>Payment.status</code> a Prisma enum.</strong></li>
+</ul>
+</div>
+
+<h2>4. Week 2: storage and previews (product decision first, then design)</h2>
+<div class="box">
+<p class="small">Today: the bucket is public, the preview is a full-length 192 kbps MP3, its path is the master's path plus <code>.preview.mp3</code>, the transcoder can be pointed at anyone's file, and on Vercel it most likely fails and hands out the master. Fix number 6 above stops the bucket being re-published; this section makes it private.</p>
+<ul class="check">
+  <li><strong>Decide what a producer may hear before award</strong> (founders): a clip of N seconds, a watermarked or low-bitrate render, or the full take. Full-length previews on a free-cancel product are the giveaway problem. Closes the design half of D-11.</li>
+  <li><strong>Private bucket, paths not URLs, signed reads.</strong> Store object paths; mint short-lived signed read URLs from the takes endpoint under the same creator-or-admin rule. Every link ever issued stops being a permanent key. Closes D-11 and the September 4 E-3.</li>
+  <li><strong>Previews under unrelated keys, generated off the request path.</strong> <code>preview/&lt;uuid&gt;.mp3</code> with no relation to the master; generate asynchronously (cron or queue); fail closed: if no preview exists, return neither URL and show "processing." For MIDI-only takes, don't expose <code>audioFileUrl</code>. Closes D-11 fail-open and D-13.</li>
+  <li><strong>Owner-scoped prefix; derive the preview server-side.</strong> Require <code>fileUrl</code> to start with <code>&lt;prefix&gt;/&lt;kind&gt;/&lt;sessionUserId&gt;/</code> for the kind being submitted; ignore the client's <code>previewUrl</code> entirely. Closes D-12.</li>
+  <li><strong>Delete old objects on take replacement</strong> (and their preview); bind the paid content to what was auditioned (a content hash or the file id at pick time). Closes D-15.</li>
+</ul>
+</div>
+
+<h2>5. Weeks 2 to 3: abuse, admin, and the loose ends</h2>
+<div class="box">
+<ul class="check">
+  <li><strong>Rate limiting</strong> per user and per IP on jobs POST, takes POST, upload sign, preview, and payouts/alt; a cap on take replacements. D-20.</li>
+  <li><strong>Admin audit trail.</strong> An <code>AdminAction</code> row for every admin mutation; refuse <code>reset-payouts</code> on a provisional winner; make <code>force</code> a typed confirmation. D-21.</li>
+  <li><strong>Demo Mode branch: don't merge as-is.</strong> It makes every visitor a signed-in user on one build-time env var with no production kill switch and ships an unguarded wipe script. Before merging: a runtime <code>VERCEL_ENV !== "production"</code> guard, <code>scriptGuard</code> in <code>seed-demo.js</code>, verified env scoping, Deployment Protection on previews. D-22.</li>
+  <li><strong>Public job DTO</strong> instead of the full row; recovery-only reset form; security headers; reverse the September 5 opt-out flip where it can be recovered. D-26, D-25, D-28.</li>
+</ul>
+</div>
+
+<h2>6. Decisions to bring to the founders' call</h2>
+<div class="box decide">
+<ul class="check">
+  <li><strong>Price ceiling</strong> number for fix 4.</li>
+  <li><strong>Cancellation policy under capture-on-post.</strong> Stripe keeps its fee on refunds (about 3% plus 30 cents). A short free-cancel window then refund minus fee, or the fee absorbed as cost of doing business. Decided and written down before section 3 starts.</li>
+  <li><strong>Preview policy</strong> for section 4: clip length, watermark, or full take.</li>
+  <li><strong>Capture-on-post: yes, and as the vehicle for section 3.</strong> The reviewer's recommendation, with reasons, is in <em>REVIEW-SUMMARY.md</em>. The hosted Checkout page is optional; the existing Payment Element with automatic capture gets the same result. Skip BNPL in the first version.</li>
+  <li><strong>Demo Mode</strong> conditions above.</li>
+</ul>
+</div>
+
+<h2>7. Tests: the minimum that would have caught this batch</h2>
+<div class="box">
+<p>There are still zero tests. None of the Day-1 guards has a regression detector, and the 3-versus-7-day mistake is exactly what one test catches before it ships. The minimum set, in whatever runner you prefer (Vitest fits this stack):</p>
+<ul class="check">
+  <li>The deadline boundary: default form value accepted, one day over rejected.</li>
+  <li><code>safeInternalPath</code> against the nine strings in D-16.</li>
+  <li>Buyer is not seller on all three paths.</li>
+  <li>Storage prefix with the owner segment.</li>
+  <li>Webhook allowed-from lists on all four events.</li>
+  <li><code>cancelJobAndRefund</code> against a succeeded intent (Stripe mocked).</li>
+</ul>
+</div>
+
+<h2>8. Runtime checks: one line back on each</h2>
+<p class="small">Exact queries, commands, and click paths are in the <em>Runtime checks</em> section of <em>D-critic-consolidated.md</em>.</p>
+<table>
+<thead><tr><th style="width:4%">#</th><th style="width:26%">Question</th><th>How</th><th style="width:22%">Send back</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Is production running this code, and is the 3-day cap live?</td><td>The SQL in D lists jobs since Sept 20 with their deadline length and reminder timestamp. Then post a job on staging with the default deadline.</td><td>Any job over 3 days? Reminder within minutes of creation? Default post accepted or 400?</td></tr>
+<tr><td>2</td><td>The keyboard job and the violin recovery</td><td>The SQL in D lists pre-Sept-20 OPEN jobs with their intent id; retrieve each in Stripe.</td><td>Hold alive (finalize now) or canceled (repost)?</td></tr>
+<tr><td>3</td><td>RLS actually applied in production</td><td>Migration row present; anon-key curl against <code>User</code>; Advisors panel empty; Data API toggle.</td><td>Curl result; Data API on or off</td></tr>
+<tr><td>4</td><td>Supabase Auth toggles and the redirect</td><td>Confirm email ON, Secure email change ON, no example.com users, Google provider and redirect allowlist. Then sign in with <code>?next=/%09/evil.com</code>.</td><td>Toggles; landed on evil.com or /producers?</td></tr>
+<tr><td>5</td><td>Does ffmpeg run on Vercel?</td><td>Count takes with a <code>.preview.mp3</code> URL versus null; check function logs for the preview route.</td><td>Any previews ever generated?</td></tr>
+<tr><td>6</td><td>Bucket state and the master-derivation bypass</td><td>Storage settings: public, MIME list, size limit. Then take a preview URL, swap <code>.preview.mp3</code> for <code>.wav</code>, open in a private window.</td><td>Downloads or 404?</td></tr>
+<tr><td>7</td><td>Stripe transfer cap and settings</td><td>Test mode: capture $10, transfer $9, second $9 must fail. Webhook events, connected-accounts toggle, Radar rules.</td><td>Second transfer failed? Radar rules present?</td></tr>
+<tr><td>8</td><td>Vercel Fluid Compute and the pooler</td><td>Project settings: Fluid Compute on? If so, <code>connection_limit=1</code> is a one-query-at-a-time ceiling per instance; watch for Prisma P2024 in logs.</td><td>Fluid on or off; any P2024?</td></tr>
+</tbody>
+</table>
+
+<h2>9. When this lands</h2>
+<div class="box">
+<p>Send the PR batch for section 2 first; it gets the same verify, refute, critic pass on the diff before merge. Section 3 goes as one PR with the founders' decisions written into its description. Update <code>README.md</code> lines 27 to 40 and <code>HANDOFF.md</code> to match whatever ships; the README section exists so payment-flow changes get flagged, and it's been changed three times without one.</p>
+</div>
+
+<footer>Prepared for Luke DeSpain by Damian Baca. Companion to REVIEW-SUMMARY.md and D-critic-consolidated.md (September 20, 2026). Review method: verify, refute, critic, four fresh-context Fable 5.1 passes over the code only.</footer>
+
+</body>
+</html>

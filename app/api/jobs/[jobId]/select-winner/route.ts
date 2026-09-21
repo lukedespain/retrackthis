@@ -37,15 +37,16 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   if (job.creatorId !== sessionUserId) {
     return NextResponse.json({ error: "Not authorized to select a winner for this job" }, { status: 403 });
   }
-  if (job.status === "AWARDED") {
-    return NextResponse.json({ success: true, alreadyAwarded: true });
-  }
-  if (job.status !== "OPEN") {
+  if (job.status === "AWARDED" || job.status === "AWARDING") {
+    if (job.status === "AWARDED") {
+      return NextResponse.json({ success: true, alreadyAwarded: true });
+    }
+  } else if (job.status !== "OPEN") {
     return NextResponse.json({ error: "Only open jobs can be awarded" }, { status: 400 });
   }
 
   const pastDeadline = new Date(job.deadline).getTime() <= Date.now();
-  const shouldFinalize = forceFinalize || pastDeadline;
+  const shouldFinalize = forceFinalize || pastDeadline || job.status === "AWARDING";
 
   try {
     if (!shouldFinalize) {
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         success: true,
         provisional: true,
         message:
-          "Pick saved. You can still switch takes, or end the gig anytime to pay and close it — don’t wait past the card hold (~7 days from posting).",
+          "Pick saved. You can still switch takes, or end the gig anytime to pay and close it.",
       });
     }
 
@@ -72,9 +73,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         provisional: false,
         payout: "manual",
         provider: result.provider,
-        payoutEmail: result.payoutEmail,
-        payoutAccountName: result.payoutAccountName,
-        message: `Awarded. Pay ${formatPayoutProviderLabel(result.provider)} manually. Funds are captured on the platform.`,
+        message: `Awarded. Pay ${formatPayoutProviderLabel(result.provider)} manually from the admin panel. Funds are on the platform.`,
       });
     }
 
@@ -82,7 +81,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
       success: true,
       provisional: false,
       payout: "stripe",
-      message: "Gig closed. Payment captured and the musician is being paid.",
+      message: "Gig closed. The musician is being paid.",
     });
   } catch (err) {
     console.error("[select-winner]", err);

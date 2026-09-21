@@ -26,9 +26,20 @@ export const AUTH_HOLD_SAFE_MS = 6 * 24 * 60 * 60 * 1000;
 export const THREE_DAY_REMINDER_MS = 3 * 24 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Latest moment we should auto-finalize a picked job (grace capped by hold life). */
-export function finalizeAutoAt(deadline: Date, paymentCreatedAt: Date): Date {
+/**
+ * Latest moment we should auto-finalize a picked job.
+ * Escrow (authorized hold): grace capped by ~day-6 hold life.
+ * Charge-upfront (already captured): deadline + grace only.
+ */
+export function finalizeAutoAt(
+  deadline: Date,
+  paymentCreatedAt: Date,
+  opts?: { escrowHold?: boolean }
+): Date {
   const afterGrace = deadline.getTime() + FINALIZE_GRACE_PERIOD_MS;
+  if (!opts?.escrowHold) {
+    return new Date(afterGrace);
+  }
   const beforeHoldDies = paymentCreatedAt.getTime() + AUTH_HOLD_SAFE_MS;
   return new Date(Math.min(afterGrace, beforeHoldDies));
 }
@@ -52,6 +63,39 @@ export type FinalizeAwardResult =
     }
   | { ok: false; error: string; status: number };
 
+const AWARD_RETRY_MS = 30_000;
+
+/**
+ * One award at a time. OPEN → AWARDING wins the race.
+ * A stuck AWARDING row can be resumed after 30s (crash between claim and DB write).
+ */
+async function claimJobForAward(jobId: string): Promise<"ok" | "busy" | "closed"> {
+  const fresh = await db.job.updateMany({
+    where: { id: jobId, status: "OPEN" },
+    data: { status: "AWARDING", moneyClaimedAt: new Date() },
+  });
+  if (fresh.count === 1) return "ok";
+
+  const job = await db.job.findUnique({ where: { id: jobId }, select: { status: true } });
+  if (!job || job.status === "AWARDED" || job.status === "CANCELLED" || job.status === "CANCELLING") {
+    return "closed";
+  }
+  if (job.status !== "AWARDING") return "closed";
+
+  const resume = await db.job.updateMany({
+    where: {
+      id: jobId,
+      status: "AWARDING",
+      OR: [
+        { moneyClaimedAt: null },
+        { moneyClaimedAt: { lt: new Date(Date.now() - AWARD_RETRY_MS) } },
+      ],
+    },
+    data: { moneyClaimedAt: new Date() },
+  });
+  return resume.count === 1 ? "ok" : "busy";
+}
+
 /**
  * Capture escrow, pay the winning musician, mark the job AWARDED.
  * Used when the producer selects after the deadline, or by the deadline sweep
@@ -67,9 +111,6 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
   }
   if (job.status === "AWARDED") {
     return { ok: true, payout: "stripe" };
-  }
-  if (job.status !== "OPEN") {
-    return { ok: false, error: "Only open jobs can be awarded", status: 400 };
   }
 
   const take = takeId
@@ -109,6 +150,18 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
     return { ok: false, error: "Payout amount is too small after platform fee", status: 400 };
   }
 
+  const claim = await claimJobForAward(job.id);
+  if (claim === "busy") {
+    return {
+      ok: false,
+      error: "Payment is already in progress. Refresh in a moment and try again if it didn’t finish.",
+      status: 409,
+    };
+  }
+  if (claim === "closed") {
+    return { ok: false, error: "Only open jobs can be awarded", status: 400 };
+  }
+
   let paymentIntent = await stripe.paymentIntents.retrieve(job.payment.stripePaymentIntentId);
   if (paymentIntent.status === "canceled" || job.payment.status === "cancelled") {
     // Escrow already gone — don't leave an OPEN job with a provisional winner stuck forever.
@@ -128,8 +181,16 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
     };
   }
   if (paymentIntent.status === "requires_capture") {
-    paymentIntent = await stripe.paymentIntents.capture(job.payment.stripePaymentIntentId);
+    paymentIntent = await stripe.paymentIntents.capture(
+      job.payment.stripePaymentIntentId,
+      {},
+      { idempotencyKey: `job_capture_${job.id}` }
+    );
   } else if (paymentIntent.status !== "succeeded") {
+    await db.job.updateMany({
+      where: { id: job.id, status: "AWARDING" },
+      data: { status: "OPEN" },
+    });
     return {
       ok: false,
       error: `Payment can’t be captured (status: ${paymentIntent.status})`,
@@ -194,13 +255,16 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
   // Avoid double-paying if a previous finalize captured + transferred but failed to update DB.
   const prior = await stripe.transfers.list({ transfer_group: job.id, limit: 1 });
   if (prior.data.length === 0) {
-    await stripe.transfers.create({
-      amount: payoutCents,
-      currency: "usd",
-      destination: musician.stripeAccountId!,
-      transfer_group: job.id,
-      source_transaction: chargeId,
-    });
+    await stripe.transfers.create(
+      {
+        amount: payoutCents,
+        currency: "usd",
+        destination: musician.stripeAccountId!,
+        transfer_group: job.id,
+        source_transaction: chargeId,
+      },
+      { idempotencyKey: `job_transfer_${job.id}` }
+    );
   }
 
   await db.$transaction([
@@ -285,13 +349,14 @@ export async function finalizeDueAwards(): Promise<number> {
     select: {
       id: true,
       deadline: true,
-      payment: { select: { createdAt: true } },
+      payment: { select: { createdAt: true, status: true } },
     },
   });
 
   const due = candidates.filter((job) => {
     if (!job.payment) return false;
-    return finalizeAutoAt(job.deadline, job.payment.createdAt).getTime() <= now;
+    const escrowHold = job.payment.status === "authorized";
+    return finalizeAutoAt(job.deadline, job.payment.createdAt, { escrowHold }).getTime() <= now;
   });
 
   let done = 0;
@@ -333,7 +398,7 @@ export async function sendDueFinalizeReminders(): Promise<number> {
       title: true,
       deadline: true,
       creatorId: true,
-      payment: { select: { createdAt: true } },
+      payment: { select: { createdAt: true, status: true } },
       takes: {
         where: { isWinner: true },
         take: 1,
@@ -345,9 +410,10 @@ export async function sendDueFinalizeReminders(): Promise<number> {
   let sent = 0;
   for (const job of jobs) {
     if (!job.payment) continue;
-    const autoAt = finalizeAutoAt(job.deadline, job.payment.createdAt);
+    const escrowHold = job.payment.status === "authorized";
+    const autoAt = finalizeAutoAt(job.deadline, job.payment.createdAt, { escrowHold });
     const deadlinePassed = job.deadline.getTime() <= now;
-    const holdClosingSoon = autoAt.getTime() - now <= warnWindowMs;
+    const holdClosingSoon = escrowHold && autoAt.getTime() - now <= warnWindowMs;
     if (!deadlinePassed && !holdClosingSoon) continue;
 
     try {
@@ -372,7 +438,7 @@ export async function sendDueFinalizeReminders(): Promise<number> {
   return sent;
 }
 
-// Releases the escrowed PaymentIntent and marks the job cancelled. Used by
+// Releases or refunds payment and marks the job cancelled. Used by
 // both the creator-initiated cancel endpoint and the deadline sweep.
 // Callers that auto-sweep must skip jobs with a selected winner (finalize those instead).
 export async function cancelJobAndRefund(jobId: string) {
@@ -380,27 +446,71 @@ export async function cancelJobAndRefund(jobId: string) {
     where: { id: jobId },
     include: { payment: true },
   });
-  if (!job || job.status !== "OPEN") return;
+  if (!job || (job.status !== "OPEN" && job.status !== "PENDING_PAYMENT" && job.status !== "CANCELLING")) {
+    return;
+  }
+
+  if (job.status !== "CANCELLING") {
+    const claim = await db.job.updateMany({
+      where: { id: job.id, status: { in: ["OPEN", "PENDING_PAYMENT"] } },
+      data: { status: "CANCELLING" },
+    });
+    if (claim.count !== 1) return;
+  }
+
+  let paymentStatus: "cancelled" | "refunded" = "cancelled";
 
   if (job.payment) {
-    try {
-      await stripe.paymentIntents.cancel(job.payment.stripePaymentIntentId);
-    } catch (err) {
-      // Already canceled/captured on Stripe's side - still sync our records.
-      const code = (err as { code?: string })?.code;
-      if (code !== "payment_intent_unexpected_state") throw err;
+    const piId = job.payment.stripePaymentIntentId;
+    if (piId.startsWith("pending_") || piId.startsWith("cs_")) {
+      // Checkout not completed — expire session if we have one.
+      if (job.payment.stripeCheckoutSessionId) {
+        try {
+          await stripe.checkout.sessions.expire(job.payment.stripeCheckoutSessionId);
+        } catch (err) {
+          const code = (err as { code?: string })?.code;
+          if (code !== "resource_missing" && code !== "checkout_session_unexpected_state") {
+            console.warn("[cancel] expire session", err);
+          }
+        }
+      }
+    } else {
+      const pi = await stripe.paymentIntents.retrieve(piId);
+      if (pi.status === "requires_capture") {
+        await stripe.paymentIntents.cancel(piId);
+        paymentStatus = "cancelled";
+      } else if (pi.status === "succeeded") {
+        const refunds = await stripe.refunds.list({ payment_intent: piId, limit: 1 });
+        if (refunds.data.length === 0) {
+          await stripe.refunds.create(
+            {
+              payment_intent: piId,
+              metadata: { jobId: job.id, reason: "job_cancelled" },
+            },
+            { idempotencyKey: `job_refund_${job.id}` }
+          );
+        }
+        paymentStatus = "refunded";
+      } else if (pi.status === "canceled") {
+        paymentStatus = "cancelled";
+      } else {
+        // Unexpected state — do not silently mark cancelled over captured money.
+        throw new Error(`Cannot cancel job: payment status is ${pi.status}`);
+      }
     }
   }
 
   await db.$transaction([
     db.job.update({ where: { id: job.id }, data: { status: "CANCELLED" } }),
     ...(job.payment
-      ? [db.payment.update({ where: { id: job.payment.id }, data: { status: "cancelled" } })]
+      ? [db.payment.update({ where: { id: job.payment.id }, data: { status: paymentStatus } })]
       : []),
     db.take.updateMany({ where: { jobId: job.id, isWinner: true }, data: { isWinner: false } }),
   ]);
 
-  await notifyMusiciansJobCancelled({ jobId: job.id, jobTitle: job.title });
+  if (job.status === "OPEN") {
+    await notifyMusiciansJobCancelled({ jobId: job.id, jobTitle: job.title });
+  }
 }
 
 /**
@@ -427,6 +537,7 @@ export async function sendDueThreeDayReminders(opts?: { jobId?: string }): Promi
       description: true,
       priceCents: true,
       deadline: true,
+      createdAt: true,
       creatorId: true,
     },
   });
@@ -434,6 +545,12 @@ export async function sendDueThreeDayReminders(opts?: { jobId?: string }): Promi
   const due = jobs.filter((job) => {
     const remaining = new Date(job.deadline).getTime() - now;
     if (remaining <= 0) return false;
+    // Damian D-10: a brand-new ≤3-day job is already inside the "3 days left" window;
+    // don't blast "only 3 days left" seconds after the new-job alert.
+    const windowMs = new Date(job.deadline).getTime() - new Date(job.createdAt).getTime();
+    if (windowMs <= 3 * DAY_MS + DAY_MS) return false;
+    const ageMs = now - new Date(job.createdAt).getTime();
+    if (ageMs < DAY_MS) return false;
     // Match the "N days left" pill (floor). 3.09 days → 3 days left → remind.
     return Math.floor(remaining / DAY_MS) <= 3;
   });
@@ -453,4 +570,43 @@ export async function sendDueThreeDayReminders(opts?: { jobId?: string }): Promi
     }
   }
   return sent;
+}
+
+/** Deadline finalize, reminders, and no-winner refunds. Called from /api/cron/jobs only. */
+export async function runJobMaintenance(): Promise<void> {
+  await finalizeDueAwards();
+  await sendDueFinalizeReminders();
+
+  const cutoff = new Date(Date.now() - CANCEL_GRACE_PERIOD_MS);
+  const expired = await db.job.findMany({
+    where: {
+      status: "OPEN",
+      deadline: { lt: cutoff },
+      takes: { none: { isWinner: true } },
+    },
+    select: { id: true },
+    take: 20,
+  });
+  for (const job of expired) {
+    try {
+      await cancelJobAndRefund(job.id);
+    } catch (err) {
+      console.error(`[jobs sweep] failed for ${job.id}`, err);
+    }
+  }
+
+  const stuckCancels = await db.job.findMany({
+    where: { status: "CANCELLING" },
+    select: { id: true },
+    take: 20,
+  });
+  for (const job of stuckCancels) {
+    try {
+      await cancelJobAndRefund(job.id);
+    } catch (err) {
+      console.error(`[jobs sweep] cancel retry failed for ${job.id}`, err);
+    }
+  }
+
+  await sendDueThreeDayReminders();
 }

@@ -16,12 +16,14 @@ export type Job = {
   /** null = flexible tempo; number = fixed BPM */
   bpm: number | null;
   deadline: string;
-  status: "OPEN" | "AWARDED" | "CANCELLED";
+  status: "PENDING_PAYMENT" | "OPEN" | "AWARDING" | "CANCELLING" | "AWARDED" | "CANCELLED";
   createdAt: string;
   /** Number of musician submissions (public count only - audio stays private). */
   takeCount?: number;
   /** True when the producer has a provisional or final selection. */
   hasSelectedWinner?: boolean;
+  /** Payment row status when included (creator/admin lists). */
+  paymentStatus?: string | null;
 };
 
 export type Take = {
@@ -51,6 +53,6 @@ export type MyTake = {
     priceCents: number;
     durationSeconds?: number | null;
     bpm: number | null;
-    status: "OPEN" | "AWARDED" | "CANCELLED";
+    status: "PENDING_PAYMENT" | "OPEN" | "AWARDING" | "CANCELLING" | "AWARDED" | "CANCELLED";
   };
 };

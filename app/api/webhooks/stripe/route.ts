@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { activateJobFromCheckout, abandonUnpaidCheckout } from "@/lib/checkoutActivate";
 import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 
@@ -7,9 +8,7 @@ import { stripe } from "@/lib/stripe";
  * Stripe webhook - async payment + Connect account events.
  * Dashboard endpoint: https://retrackthis.com/api/webhooks/stripe
  *
- * Capture / cancel / transfer still run in our API routes; this keeps DB
- * in sync when Stripe moves state outside those calls, and stores Connect
- * account ids when onboarding completes (metadata.userId set at create time).
+ * Also completes charge-upfront Checkout sessions (opens PENDING_PAYMENT jobs).
  */
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -35,34 +34,60 @@ export async function POST(req: NextRequest) {
 
   try {
     switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.mode === "payment" && session.payment_status === "paid") {
+          await activateJobFromCheckout(session);
+        }
+        break;
+      }
+
+      case "checkout.session.expired": {
+        await abandonUnpaidCheckout(event.data.object as Stripe.Checkout.Session);
+        break;
+      }
+
       case "payment_intent.payment_failed":
         await syncPaymentFromIntent(event.data.object as Stripe.PaymentIntent, "failed");
         break;
 
       case "payment_intent.canceled":
-        await syncPaymentFromIntent(event.data.object as Stripe.PaymentIntent, "cancelled");
+        await syncPaymentFromIntent(event.data.object as Stripe.PaymentIntent, "cancelled", {
+          onlyIfIn: ["authorized", "pending_checkout", "failed"],
+        });
         break;
 
       case "payment_intent.amount_capturable_updated":
-        // Manual-capture authorize succeeded - funds held, not charged yet.
         await syncPaymentFromIntent(event.data.object as Stripe.PaymentIntent, "authorized", {
           onlyIfIn: ["authorized", "failed"],
         });
         break;
 
       case "payment_intent.succeeded":
-        // Capture completed (or auto-capture). Don't downgrade past transferred.
         await syncPaymentFromIntent(event.data.object as Stripe.PaymentIntent, "captured", {
-          onlyIfIn: ["authorized", "captured", "failed"],
+          onlyIfIn: ["authorized", "captured", "failed", "pending_checkout"],
         });
         break;
+
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        const piId =
+          typeof charge.payment_intent === "string"
+            ? charge.payment_intent
+            : charge.payment_intent?.id;
+        if (piId) {
+          await syncPaymentFromIntent({ id: piId } as Stripe.PaymentIntent, "refunded", {
+            onlyIfIn: ["captured", "transferred", "authorized", "pending_manual_payout"],
+          });
+        }
+        break;
+      }
 
       case "account.updated":
         await handleConnectAccountUpdated(event.data.object as Stripe.Account);
         break;
 
       default:
-        // Acknowledge unknown events so Stripe doesn't retry forever.
         console.log(`[stripe webhook] ignored event type: ${event.type}`);
         break;
     }
@@ -75,7 +100,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function syncPaymentFromIntent(
-  pi: Stripe.PaymentIntent,
+  pi: { id: string },
   nextStatus: string,
   opts?: { onlyIfIn?: string[] }
 ) {
@@ -91,8 +116,7 @@ async function syncPaymentFromIntent(
     return;
   }
 
-  // Never overwrite a terminal transferred state with an earlier status.
-  if (payment.status === "transferred" && nextStatus !== "transferred") {
+  if (payment.status === "transferred" && nextStatus !== "transferred" && nextStatus !== "refunded") {
     return;
   }
 
@@ -104,11 +128,6 @@ async function syncPaymentFromIntent(
   });
 }
 
-/**
- * When Connect onboarding progresses, metadata.userId (our User.id / Supabase
- * auth id) must be set on the Account at creation. We store the account id
- * (and keep it in sync) so musicians can resume onboarding and receive transfers.
- */
 async function handleConnectAccountUpdated(account: Stripe.Account) {
   const userId = account.metadata?.userId;
   if (!userId) {
@@ -122,8 +141,6 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
     return;
   }
 
-  // Only fill when empty — never overwrite an existing Connect account id
-  // (avoids a webhook race clobbering a valid account).
   if (user.stripeAccountId) {
     if (user.stripeAccountId !== account.id) {
       console.warn(

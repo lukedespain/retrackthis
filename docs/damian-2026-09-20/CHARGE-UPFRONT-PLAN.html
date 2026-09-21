@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RetrackThis: charge-upfront payment update — plan for Damian review</title>
+<style>
+  @page { size: Letter; margin: 0.65in 0.7in; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10.5pt; line-height: 1.45; color: #1a1a1a; margin: 0; }
+  h1 { font-size: 18pt; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: #555; margin: 0 0 16px; font-size: 9.5pt; }
+  h2 { font-size: 12.5pt; margin: 20px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #1a1a1a; page-break-after: avoid; }
+  h3 { font-size: 10.5pt; margin: 12px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; }
+  .why { background: #f3f4f6; border-left: 4px solid #1a1a1a; padding: 8px 12px; margin: 0 0 12px; }
+  .box { border: 1px solid #cfcfcf; border-radius: 6px; padding: 10px 14px; margin: 0 0 12px; page-break-inside: avoid; }
+  .good { border-color: #2e7d32; background: #f1f8f1; }
+  .warn { border-color: #b26a00; background: #fff8ec; }
+  .ask { border-color: #1a4d9c; background: #eef4fc; }
+  code { font-family: Menlo, Monaco, monospace; font-size: 8.5pt; background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 12px; font-size: 9pt; }
+  th, td { border: 1px solid #d0d0d0; padding: 5px 7px; vertical-align: top; text-align: left; }
+  th { background: #efefef; font-weight: 600; }
+  tr { page-break-inside: avoid; }
+  ul { margin: 0 0 10px; padding-left: 18px; }
+  li { margin: 0 0 4px; }
+  .flow { font-family: Menlo, Monaco, monospace; font-size: 8.5pt; background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px 12px; white-space: pre-wrap; margin: 0 0 12px; page-break-inside: avoid; }
+  .tag { display: inline-block; font-size: 7.5pt; font-weight: 600; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
+  .tag.done { background: #e6f4ea; color: #137333; }
+  .tag.defer { background: #fff1d6; color: #7a4a00; }
+  .tag.manual { background: #e8f0fe; color: #1a4d9c; }
+  .small { font-size: 9pt; color: #555; }
+  footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 8.5pt; color: #666; }
+  ol.files { margin: 0 0 10px; padding-left: 20px; font-size: 9.5pt; }
+  ol.files li { margin: 0 0 3px; }
+</style>
+</head>
+<body>
+
+<h1>Charge-upfront payment update — plan for review</h1>
+<p class="sub">
+  RetrackThis &nbsp;·&nbsp; September 21, 2026 &nbsp;·&nbsp; For Damian (security / money review)<br>
+  Status: <strong>implemented locally, not committed / not deployed</strong> &nbsp;·&nbsp;
+  Deploy gate: Bryon awards the live keyboard gig on the <em>legacy</em> escrow hold first<br>
+  Maps to finding IDs in <code>D-critic-consolidated.md</code> (D-1…D-10)
+</p>
+
+<div class="why">
+<p><strong>Ask.</strong> Please review this design against your Sept 20 critic notes before we push to <code>main</code>. Code exists in Luke’s working tree only. Production still runs manual-capture escrow. We will not deploy until the open keyboard job is awarded and paid on the old path.</p>
+</div>
+
+<h2>1. Why this change</h2>
+<p>Legacy jobs authorize the card with <code>capture_method: manual</code>. Stripe holds die ~7 days. The violin job hit that wall; the keyboard job is the same shape. Charge-at-post via <strong>Stripe Checkout</strong> (auto-capture) removes the hold timer. Money sits on the platform until award → Connect transfer (or admin manual PayPal/Wise).</p>
+<p>You already agreed charge-at-post is the right product move <em>if</em> refunds, claim locks, cron sweeps, price ceiling, and idempotency ride along. This plan is that “same change,” not Checkout bolted on alone.</p>
+
+<div class="box warn">
+<p><strong>Live constraint right now.</strong> Aaron submitted a keyboard take; Luke reviewed — usable. Bryon still needs to <strong>End gig &amp; pay</strong> on production (old path) before the hold expires. Deploying Checkout before that award is an unnecessary risk on that one job.</p>
+</div>
+
+<h2>2. New job money lifecycle</h2>
+<div class="flow">POST /api/jobs
+  → create Job status = PENDING_PAYMENT + Payment (pending PI placeholder)
+  → Stripe Checkout Session (mode=payment, idempotencyKey job_checkout_{jobId})
+  → producer pays on Stripe-hosted page
+
+checkout.session.completed  (webhook)  OR  GET confirm-checkout fallback
+  → Payment.status = captured, store real PI id (@unique)
+  → Job.status = OPEN  (+ invite / new-job emails)
+
+Producer: End gig &amp; pay  /  cron finalize
+  → claim OPEN → AWARDING (updateMany count===1; resume after 30s if stuck)
+  → if PI requires_capture: capture (legacy holds) else already succeeded
+  → transfers.create (idempotencyKey job_transfer_{jobId}) OR pending_manual_payout
+  → Job = AWARDED
+
+Producer cancel / unpaid abandon / cron no-winner past grace
+  → claim → CANCELLING
+  → requires_capture → PI cancel
+  → succeeded → refunds.create (idempotencyKey job_refund_{jobId})
+  → unpaid Checkout → sessions.expire
+  → Job = CANCELLED
+
+checkout.session.expired → abandon unpaid PENDING_PAYMENT draft</div>
+
+<p class="small">Legacy keyboard job stays <code>OPEN</code> + authorized PI until Bryon finalizes. New statuses are additive; old code paths still capture when <code>requires_capture</code>.</p>
+
+<h2>3. Scoreboard vs your D-findings (this cutover)</h2>
+<table>
+  <thead>
+    <tr><th>ID</th><th>Ask</th><th>In this update?</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D-1</td>
+      <td>Price ceiling; later Radar / disputes / payout delay</td>
+      <td><span class="tag done">CEILING</span> <span class="tag defer">REST DEFER</span></td>
+      <td>Server <code>MAX_PRICE_CENTS</code> ($500) + integer check on POST. No dispute handler / delay / Radar yet — founder track.</td>
+    </tr>
+    <tr>
+      <td>D-2</td>
+      <td><code>refunds.create</code> on succeeded PI; never write cancelled over captured</td>
+      <td><span class="tag done">DONE</span></td>
+      <td><code>cancelJobAndRefund</code>: retrieve → cancel hold / refund succeeded / expire unpaid Checkout. Writes <code>refunded</code> when refunded.</td>
+    </tr>
+    <tr>
+      <td>D-3</td>
+      <td>Atomic OPEN→AWARDING before Stripe; cancel claim too</td>
+      <td><span class="tag done">DONE</span></td>
+      <td><code>claimJobForAward</code>; cancel uses CANCELLING. Stuck AWARDING resumable after 30s via <code>moneyClaimedAt</code>. Capture/transfer/refund/checkout idempotency keys.</td>
+    </tr>
+    <tr>
+      <td>D-4</td>
+      <td>Move money sweeps off public GET → cron</td>
+      <td><span class="tag done">DONE</span></td>
+      <td><code>GET /api/cron/jobs</code> + hourly <code>vercel.json</code>. Bearer <code>CRON_SECRET</code>. Public/admin job GETs no longer finalize/refund/remind.</td>
+    </tr>
+    <tr>
+      <td>D-5</td>
+      <td>Cron + hold-aware finalize; webhook close paths</td>
+      <td><span class="tag done">MOSTLY</span></td>
+      <td>Cron runs finalize + cancel retry + reminders. <code>checkout.session.expired</code> abandons drafts. Full <code>payment_intent.canceled</code>→job close still thinner than ideal.</td>
+    </tr>
+    <tr>
+      <td>D-6</td>
+      <td>@unique PI; webhook allow-lists; onboard claim</td>
+      <td><span class="tag done">PARTIAL</span></td>
+      <td><code>stripePaymentIntentId @unique</code> + Checkout activate path. Broader payment-status allow-lists / dispute / onboard claim: not this PR’s focus.</td>
+    </tr>
+    <tr>
+      <td>D-7</td>
+      <td>Ceiling, integer, metadata, idempotency</td>
+      <td><span class="tag done">DONE</span></td>
+      <td>Checkout + PI metadata; idempotency on checkout/capture/transfer/refund.</td>
+    </tr>
+    <tr>
+      <td>D-8</td>
+      <td>No payout email to creator JSON; ledger later</td>
+      <td><span class="tag done">EMAIL</span> <span class="tag defer">LEDGER</span></td>
+      <td>select-winner message no longer returns musician payout email. Ledger week-1.</td>
+    </tr>
+    <tr>
+      <td>D-9</td>
+      <td>Confirm step on pay buttons</td>
+      <td><span class="tag defer">DEFER</span></td>
+      <td>Nice-to-have; not blocking Checkout.</td>
+    </tr>
+    <tr>
+      <td>D-10</td>
+      <td>Deadline cap + reminder blast skip</td>
+      <td><span class="tag done">DONE</span></td>
+      <td>Form/server aligned to 7-day max with Checkout. Three-day reminder skips short windows and brand-new jobs.</td>
+    </tr>
+    <tr>
+      <td>D-11+</td>
+      <td>Private storage / preview policy</td>
+      <td><span class="tag defer">DEFER</span></td>
+      <td>Out of scope for money cutover. Founders still need a preview policy decision (full MP3 + free cancel + charge-upfront is the combo you flagged).</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>4. Schema / status machine</h2>
+<table>
+  <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>PENDING_PAYMENT</code></td><td>Draft; not on the musician board until Checkout completes.</td></tr>
+    <tr><td><code>OPEN</code></td><td>Live gig; takes accepted.</td></tr>
+    <tr><td><code>AWARDING</code></td><td>Claimed for payout; Stripe in flight. UI shows “Paying”; retry after 30s if stuck.</td></tr>
+    <tr><td><code>CANCELLING</code></td><td>Claimed for refund/expire; Stripe in flight. Cron retries stuck rows.</td></tr>
+    <tr><td><code>AWARDED</code> / <code>CANCELLED</code></td><td>Terminal.</td></tr>
+  </tbody>
+</table>
+<p>New column: <code>Job.moneyClaimedAt</code> (nullable) for crash-resume on AWARDING. Migration file: <code>prisma/migrations/20260921040000_award_cancel_claims/</code> — <strong>not applied to prod yet</strong>. Earlier <code>PENDING_PAYMENT</code> / Checkout columns migration was already applied to Supabase.</p>
+
+<h2>5. Primary files to review (uncommitted)</h2>
+<ol class="files">
+  <li><code>lib/jobActions.ts</code> — claim, finalize, cancel/refund, <code>runJobMaintenance</code></li>
+  <li><code>lib/checkoutActivate.ts</code> — activate on paid session; abandon expired unpaid</li>
+  <li><code>app/api/jobs/route.ts</code> — POST Checkout; GET list only (no money sweeps)</li>
+  <li><code>app/api/cron/jobs/route.ts</code> — Bearer <code>CRON_SECRET</code>; hourly</li>
+  <li><code>app/api/webhooks/stripe/route.ts</code> — <code>checkout.session.completed</code> / <code>expired</code></li>
+  <li><code>app/api/jobs/[jobId]/confirm-checkout/route.ts</code> · <code>resume-checkout/route.ts</code></li>
+  <li><code>app/api/jobs/[jobId]/select-winner/route.ts</code> · <code>cancel/route.ts</code></li>
+  <li><code>prisma/schema.prisma</code> + migration <code>20260921040000_…</code></li>
+  <li><code>vercel.json</code> — cron schedule <code>0 * * * *</code></li>
+  <li>UI: <code>PostJobForm.tsx</code>, <code>CreatorView.tsx</code>, FAQ/terms copy</li>
+</ol>
+
+<h2>6. Manual prep (Luke) — already done vs still needed</h2>
+<div class="box good">
+<p><strong>Done 2026-09-20 (no code deploy):</strong></p>
+<ul>
+  <li>Live Stripe webhook destination for <code>https://retrackthis.com/api/webhooks/stripe</code> now includes <code>checkout.session.completed</code> and <code>checkout.session.expired</code> (existing PI events kept).</li>
+  <li>Vercel Production env <code>CRON_SECRET</code> set (16-char memorable secret; value not in repo). Cron route not live until deploy.</li>
+</ul>
+</div>
+<div class="box warn">
+<p><strong>With deploy (after keyboard award):</strong></p>
+<ul>
+  <li>Apply migration <code>20260921040000_award_cancel_claims</code> (additive enum values + column).</li>
+  <li>Push / deploy payment branch — first deploy that uses <code>CRON_SECRET</code> and Checkout handlers.</li>
+  <li>Smoke: post→Checkout→OPEN; abandon draft; cancel→refund; award→transfer only (no second capture).</li>
+  <li>Confirm webhook deliveries for <code>checkout.session.completed</code> return 200.</li>
+</ul>
+</div>
+
+<h2>7. Explicitly deferred (founder track — not pretending closed)</h2>
+<ul>
+  <li>Dispute / Radar / first-payout delay (rest of D-1)</li>
+  <li>Payout ledger (D-8 full)</li>
+  <li>Private bucket + preview policy (D-11…)</li>
+  <li>Confirm dialog on End gig &amp; pay (D-9)</li>
+  <li>Rate limits / audit / Demo Mode kill-switch hardening (D-20, D-22)</li>
+  <li>Product: cancel/refund fee policy once money is captured upfront</li>
+</ul>
+
+<div class="box ask">
+<p><strong>Review asks for Damian</strong></p>
+<ol>
+  <li>Is the AWARDING / CANCELLING claim + 30s resume + idempotency keys enough to close D-3 for v1, or do you still want <code>stripeTransferId</code> / paid <code>takeId</code> persisted in the same write before calling this shippable?</li>
+  <li>Any objection to hourly cron (vs */15) for finalize/refund/reminders?</li>
+  <li>Anything in the Checkout activate / abandon path you’d block on before live money?</li>
+  <li>Confirm deferred list is acceptable for “safe enough for live money” under charge-upfront, given storage/preview remains a separate epic.</li>
+</ol>
+</div>
+
+<h2>8. Proposed ship sequence</h2>
+<ol>
+  <li>Bryon: End gig &amp; pay on keyboard (legacy hold) — <strong>blocker for deploy</strong>.</li>
+  <li>Damian: review this plan (+ optional skim of files in §5).</li>
+  <li>Luke: commit payment update on a branch / PR (or main with agreed window).</li>
+  <li>Apply claim migration → deploy → smoke §6.</li>
+  <li>Watch first real Checkout job end-to-end; then reopen piano / next Bryon gigs on the new path.</li>
+</ol>
+
+<footer>
+  Companion docs in <code>docs/damian-2026-09-20/</code>: D-critic-consolidated.md, TRIAGE.md, MANUAL-CHECKLIST.md, REVIEW-SUMMARY.md.<br>
+  This PDF describes the <em>planned / locally implemented</em> cutover. It is not a claim that production already runs Checkout.
+</footer>
+
+</body>
+</html>

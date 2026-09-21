@@ -51,8 +51,8 @@ function ProducersPageInner() {
       router.push("/sign-in?next=/producers");
       return;
     }
-    const { profile: next } = await res.json();
-    setProfile(next);
+    const body = await res.json().catch(() => null);
+    setProfile(body?.profile ?? null);
   }
 
   useEffect(() => {
@@ -64,6 +64,25 @@ function ProducersPageInner() {
     if (tabParam === "post" || searchParams.get("post") === "1") setTab("post");
     else setTab("jobs");
   }, [searchParams]);
+
+  // After Stripe Checkout success/cancel, land on My jobs and confirm activation.
+  useEffect(() => {
+    const jobId = searchParams.get("job");
+    const posted = searchParams.get("posted") === "1";
+    const cancelled = searchParams.get("checkout") === "cancelled";
+    if (!jobId && !posted && !cancelled) return;
+
+    setTab("jobs");
+    setJobsKey((k) => k + 1);
+
+    if (posted && jobId) {
+      void fetch(`/api/jobs/${jobId}/confirm-checkout`, { method: "POST" })
+        .then(() => setJobsKey((k) => k + 1))
+        .catch(() => {});
+    }
+
+    router.replace("/producers", { scroll: false });
+  }, [searchParams, router]);
 
   function changeTab(next: ProducerTab) {
     setTab(next);
@@ -93,7 +112,7 @@ function ProducersPageInner() {
       <main className="mx-auto max-w-5xl px-5 pb-16 pt-2 sm:px-6 sm:pb-24 sm:pt-4">
         <RoleHubHeader
           title="Producers"
-          description="Post a gig, hold payment until you pick a take, then pay the musician you choose."
+          description="Post a gig, pay upfront at checkout, then pay out the musician when you pick a winner."
           options={[
             { value: "post" as const, label: "Post a job" },
             { value: "jobs" as const, label: "My jobs" },

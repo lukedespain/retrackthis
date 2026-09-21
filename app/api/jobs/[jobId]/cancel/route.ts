@@ -20,8 +20,11 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   if (job.creatorId !== creatorId) {
     return NextResponse.json({ error: "Not authorized to cancel this job" }, { status: 403 });
   }
-  if (job.status !== "OPEN") {
-    return NextResponse.json({ error: "Only open jobs can be cancelled" }, { status: 400 });
+  if (job.status !== "OPEN" && job.status !== "PENDING_PAYMENT" && job.status !== "CANCELLING") {
+    return NextResponse.json(
+      { error: "Only open or unpaid draft jobs can be cancelled" },
+      { status: 400 }
+    );
   }
 
   await cancelJobAndRefund(job.id);

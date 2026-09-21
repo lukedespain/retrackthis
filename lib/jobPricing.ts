@@ -9,8 +9,10 @@ import {
 export const SLIDER_MIN_USD = 25;
 export const SLIDER_MAX_USD = 500;
 export const MIN_PRICE_CENTS = SLIDER_MIN_USD * 100;
+export const MAX_PRICE_CENTS = SLIDER_MAX_USD * 100;
 export const MIN_DURATION_SECONDS = 5;
 export const MAX_DURATION_SECONDS = 30 * 60; // 30 minutes
+/** With charge-upfront (no 7-day auth hold), deadlines can use the full product window. */
 export const MAX_DEADLINE_DAYS = 7;
 
 export type PricingBandId = "aux" | "core" | "session-heavy" | "specialist" | "topline";

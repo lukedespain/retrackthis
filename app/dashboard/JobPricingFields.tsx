@@ -220,7 +220,7 @@ export function JobPricingFields({
           value={deadlineText}
           disabled={disabled}
           required
-          info={`Maximum ${MAX_DEADLINE_DAYS} days. Card holds last about a week from posting — if you wait past that to pay a winner, the escrow can cancel. You can end a gig and pay as soon as you pick a take; you don’t have to wait for the deadline.`}
+          info={`Maximum ${MAX_DEADLINE_DAYS} days. You pay upfront at checkout — no card hold that expires after a week.`}
           onChange={(e) => {
             const next = e.target.value.replace(/[^\d]/g, "");
             if (next === "") {

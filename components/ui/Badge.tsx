@@ -1,5 +1,8 @@
 const statusStyles: Record<string, string> = {
   OPEN: "bg-emerald-50 text-emerald-700 ring-emerald-600/10 dark:ring-emerald-400/20",
+  PENDING_PAYMENT: "bg-amber-50 text-amber-800 ring-amber-600/10 dark:ring-amber-400/20",
+  AWARDING: "bg-accent-muted text-accent ring-accent/10",
+  CANCELLING: "bg-gray-100 text-gray-500 ring-gray-500/10 dark:ring-gray-400/20",
   AWARDED: "bg-accent-muted text-accent ring-accent/10",
   CANCELLED: "bg-gray-100 text-gray-500 ring-gray-500/10 dark:ring-gray-400/20",
   PENDING: "bg-amber-50 text-amber-700 ring-amber-600/10 dark:ring-amber-400/20",
@@ -11,6 +14,9 @@ const statusStyles: Record<string, string> = {
 
 const statusLabels: Record<string, string> = {
   OPEN: "Open",
+  PENDING_PAYMENT: "Awaiting payment",
+  AWARDING: "Paying",
+  CANCELLING: "Cancelling",
   AWARDED: "Awarded",
   CANCELLED: "Cancelled",
   PENDING: "Pending",

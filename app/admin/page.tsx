@@ -137,18 +137,22 @@ function AdminPageInner() {
   }, [searchParams]);
 
   useEffect(() => {
-    fetch("/api/auth/me").then(async (res) => {
-      if (res.status === 401) {
+    fetch("/api/auth/me")
+      .then(async (res) => {
+        if (res.status === 401) {
+          router.push("/sign-in?next=/admin");
+          return;
+        }
+        const body = await res.json().catch(() => null);
+        if (!body?.profile?.isAdmin) {
+          router.push("/producers");
+          return;
+        }
+        setProfile(body.profile);
+      })
+      .catch(() => {
         router.push("/sign-in?next=/admin");
-        return;
-      }
-      const body = await res.json();
-      if (!body.profile?.isAdmin) {
-        router.push("/producers");
-        return;
-      }
-      setProfile(body.profile);
-    });
+      });
   }, [router]);
 
   useEffect(() => {

@@ -70,7 +70,7 @@ export async function sendEmail({
         <div style="font-size:15px;line-height:1.6;color:#4b5563;font-family:${fontStack};">${bodyHtml}</div>
         ${
           ctaHref && ctaLabel
-            ? `<p style="margin:24px 0 0;"><a href="${escapeAttr(ctaHref)}" style="display:inline-block;background:#5B4BFF;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 18px;border-radius:999px;font-family:${fontStack};">${escapeHtml(ctaLabel)}</a></p>`
+            ? `<p style="margin:24px 0 0;"><a href="${escapeAttr(ctaHref)}" style="display:inline-block;background:#5F4AFF;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 18px;border-radius:999px;font-family:${fontStack};">${escapeHtml(ctaLabel)}</a></p>`
             : ""
         }
       </div>

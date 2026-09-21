@@ -299,7 +299,7 @@ function InstrumentOptionRow({
         aria-hidden="true"
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
           selected
-            ? "border-accent bg-accent text-white"
+            ? "border-accent bg-accent text-white dark:text-[#111827]"
             : blocked
               ? "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
               : "border-gray-300 bg-white text-transparent dark:border-gray-600 dark:bg-gray-950"

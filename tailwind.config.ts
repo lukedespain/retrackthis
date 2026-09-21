@@ -10,8 +10,9 @@ const config: Config = {
     extend: {
       colors: {
         accent: {
-          DEFAULT: "#5B4BFF",
-          hover: "#4A3BE0",
+          // Uses --accent-rgb so text-accent/30 and bg-accent work with light/dark tokens
+          DEFAULT: "rgb(var(--accent-rgb) / <alpha-value>)",
+          hover: "var(--accent-hover)",
           muted: "var(--accent-soft)",
         },
         surface: {

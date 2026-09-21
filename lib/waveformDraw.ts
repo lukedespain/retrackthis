@@ -86,7 +86,7 @@ export function paintWaveform(opts: {
     ctx.fillRect(0, 0, progressX, height);
   }
 
-  ctx.strokeStyle = "#5B4BFF";
+  ctx.strokeStyle = "#5F4AFF";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(progressX, 4);

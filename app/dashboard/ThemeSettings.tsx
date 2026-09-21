@@ -38,7 +38,7 @@ export function ThemeSettings() {
               onClick={() => setTheme(option.id)}
               className={`rounded-2xl border px-4 py-4 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 disabled:opacity-50 ${
                 selected
-                  ? "border-accent bg-[#eeecff] ring-1 ring-accent/20 dark:border-accent dark:bg-[#1e1b4b] dark:ring-accent/40"
+                  ? "border-accent bg-[#eeecff] ring-1 ring-accent/20 dark:border-accent dark:bg-[#2a2654] dark:ring-accent/40"
                   : "border-gray-200 bg-[#ffffff] hover:border-gray-300 dark:border-gray-700 dark:bg-[#0b1220] dark:hover:border-gray-600"
               }`}
             >

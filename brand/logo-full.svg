@@ -8,7 +8,7 @@
   />
   <path
     d="M456 44v56A18 18 0 0 1 438 118H368"
-    stroke="#5B4BFF"
+    stroke="#5F4AFF"
     stroke-width="14"
     stroke-linecap="round"
     stroke-linejoin="round"
@@ -22,6 +22,6 @@
     font-weight="700"
     letter-spacing="-1.2"
   >
-    <tspan fill="#15141A">Retrack</tspan><tspan fill="#15141A">&#160;</tspan><tspan fill="#5B4BFF">This</tspan>
+    <tspan fill="#15141A">Retrack</tspan><tspan fill="#15141A">&#160;</tspan><tspan fill="#5F4AFF">This</tspan>
   </text>
 </svg>

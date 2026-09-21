@@ -130,7 +130,7 @@ function RoleTrack({
             className="how-track-step relative grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 pb-8 last:pb-0 sm:gap-x-5 sm:pb-10"
           >
             <div className="relative flex flex-col items-center">
-              <span className="how-track-dot relative z-[1] flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-semibold text-white shadow-[0_0_0_6px_var(--page)] sm:h-10 sm:w-10">
+              <span className="how-track-dot relative z-[1] flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-semibold text-white shadow-[0_0_0_6px_var(--page)] dark:text-[#111827] sm:h-10 sm:w-10">
                 {step.number}
               </span>
               {index < steps.length - 1 ? (

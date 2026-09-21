@@ -7,7 +7,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variants = {
   primary:
-    "bg-accent text-white shadow-sm hover:bg-accent-hover active:bg-accent-hover disabled:hover:bg-accent",
+    "bg-accent text-white shadow-sm hover:bg-accent-hover active:bg-accent-hover disabled:hover:bg-accent dark:text-[#111827]",
   secondary:
     "bg-gray-900 text-white shadow-sm hover:bg-gray-800 active:bg-gray-950 disabled:hover:bg-gray-900 dark:bg-[#f3f4f6] dark:text-[#111827] dark:hover:bg-white dark:active:bg-white dark:disabled:hover:bg-[#f3f4f6]",
   outline:

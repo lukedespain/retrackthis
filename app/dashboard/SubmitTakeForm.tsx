@@ -444,7 +444,7 @@ function SuccessBurst() {
           key={i}
           className="submit-confetti absolute left-1/2 top-6 h-2 w-2 rounded-sm"
           style={{
-            backgroundColor: i % 3 === 0 ? "#5B4BFF" : i % 3 === 1 ? "#10B981" : "#F59E0B",
+            backgroundColor: i % 3 === 0 ? "#5F4AFF" : i % 3 === 1 ? "#10B981" : "#F59E0B",
             ["--dx" as string]: `${((i * 47) % 160) - 80}px`,
             ["--dy" as string]: `${40 + ((i * 31) % 70)}px`,
             ["--rot" as string]: `${(i * 40) % 360}deg`,

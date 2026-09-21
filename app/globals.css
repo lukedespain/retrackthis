@@ -12,7 +12,11 @@
     --line: #f3f4f6;
     --line-strong: #e5e7eb;
     --fade: #ffffff;
+    /* Brand purple — light mode (from logo mark) */
+    --accent: #5f4aff;
+    --accent-hover: #4f3ce6;
     --accent-soft: #eeecff;
+    --accent-rgb: 95 74 255;
     --chip: #f3f4f6;
   }
 
@@ -26,7 +30,11 @@
     --line: #1f2937;
     --line-strong: #374151;
     --fade: #030712;
-    --accent-soft: #1e1b4b;
+    /* Lighter brand purple for dark mode accessibility */
+    --accent: #a397ff;
+    --accent-hover: #b4acff;
+    --accent-soft: #2a2654;
+    --accent-rgb: 163 151 255;
     --chip: #1f2937;
   }
 
@@ -98,19 +106,19 @@ html.dark .bg-accent-muted {
   background-color: var(--accent-soft) !important;
 }
 html.dark .bg-accent-muted\/20 {
-  background-color: rgb(30 27 75 / 0.35) !important;
+  background-color: rgb(var(--accent-rgb) / 0.18) !important;
 }
 html.dark .bg-accent-muted\/40 {
-  background-color: rgb(30 27 75 / 0.55) !important;
+  background-color: rgb(var(--accent-rgb) / 0.28) !important;
 }
 html.dark .bg-accent-muted\/50 {
-  background-color: rgb(30 27 75 / 0.65) !important;
+  background-color: rgb(var(--accent-rgb) / 0.35) !important;
 }
 html.dark .bg-accent\/15 {
-  background-color: rgb(91 75 255 / 0.18) !important;
+  background-color: rgb(var(--accent-rgb) / 0.18) !important;
 }
 html.dark .bg-accent\/20 {
-  background-color: rgb(91 75 255 / 0.22) !important;
+  background-color: rgb(var(--accent-rgb) / 0.22) !important;
 }
 html.dark .bg-gray-50 {
   background-color: #0b1220 !important;

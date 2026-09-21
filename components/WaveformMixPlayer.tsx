@@ -561,7 +561,7 @@ export function WaveformMixPlayer({
             if (playing) pause();
             else void play();
           }}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white shadow-sm transition-transform duration-150 hover:bg-accent-hover active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white shadow-sm transition-transform duration-150 hover:bg-accent-hover active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 dark:text-[#111827]"
         >
           {playing ? (
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -633,7 +633,7 @@ export function WaveformMixPlayer({
             value={offsetMs}
             onChange={(e) => applyOffset(Number(e.target.value))}
             className="mt-2 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-gray-200"
-            style={{ accentColor: "#5B4BFF" }}
+            style={{ accentColor: "var(--accent)" }}
             aria-label="Nudge take in milliseconds"
           />
           <div className="mt-1 flex justify-between text-[10px] text-gray-400">

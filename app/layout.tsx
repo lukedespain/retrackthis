@@ -10,17 +10,19 @@ export const metadata = {
   icons: {
     icon: [
       {
-        url: "/brand/retrackthis-icon-light-32.png",
+        url: "/brand/retrackthis-icon-light-32.png?v=20260921",
         media: "(prefers-color-scheme: light)",
+        type: "image/png",
       },
       {
-        url: "/brand/retrackthis-icon-dark-32.png",
+        url: "/brand/retrackthis-icon-dark-32.png?v=20260921",
         media: "(prefers-color-scheme: dark)",
+        type: "image/png",
       },
       // Fallback for browsers that ignore media
-      { url: "/brand/retrackthis-icon-light-32.png" },
+      { url: "/brand/retrackthis-icon-light-32.png?v=20260921", type: "image/png" },
     ],
-    apple: "/brand/retrackthis-icon-light-180.png",
+    apple: "/brand/retrackthis-apple-touch-180.png?v=20260921",
   },
 };
 

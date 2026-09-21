@@ -67,7 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         success: true,
         provisional: true,
         message:
-          "Favorite saved. You can switch favorites anytime before the deadline. After it ends you’ll have 48 hours to award a musician.",
+          "Favorite saved (one submission at a time — this replaces any previous favorite). After the deadline you’ll have 48 hours to award; we’ll auto-award this favorite if you don’t.",
       });
     }
 

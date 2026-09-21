@@ -419,9 +419,10 @@ function CreatorJobCard({
       {job.status === "OPEN" && hasProvisionalWinner && !isPastDeadline && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="info">
-            Favorite saved — you can switch favorites anytime. Submissions stay open until the
-            deadline. After it ends you’ll have 48 hours to{" "}
-            <span className="font-medium">Award</span> a musician and close the job.
+            Favorite saved — only one submission at a time (favoriting another replaces this one,
+            including all its takes). Submissions stay open until the deadline. After it ends you’ll
+            have 48 hours to <span className="font-medium">Award</span> a musician; we’ll auto-award
+            your current favorite if you don’t.
           </Alert>
         </div>
       )}
@@ -736,8 +737,8 @@ function TakeCard({
         {jobOpen && isWinner && !jobAwarded && !pastDeadline && (
           <div className="border-t border-gray-100 pt-4">
             <p className="text-center text-xs leading-relaxed text-gray-500">
-              Favorited. You can switch anytime. Awarding opens after the deadline so musicians get
-              the full submission window.
+              Favorited (one at a time). Favoriting another submission replaces this one. Awarding
+              opens after the deadline so musicians get the full window.
             </p>
           </div>
         )}
@@ -787,8 +788,9 @@ function TakeCard({
                         : "Favorite this submission"}
                 </Button>
                 <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
-                  Favorites stay private until you award after the deadline. Jobs can’t close early —
-                  musicians keep the full window to submit.
+                  Favorites are one submission at a time (all takes in that submission). Favoriting
+                  another replaces the previous one so auto-award after the deadline stays clean.
+                  Jobs can’t close early — musicians keep the full window.
                 </p>
               </>
             )}

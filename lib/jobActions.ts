@@ -286,8 +286,8 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
 }
 
 /**
- * Mark a take as the provisional winner without capturing payment.
- * Job stays OPEN for more submissions until the deadline.
+ * Mark one submission as the favorite (replaces any previous favorite).
+ * A submission includes all takes/files inside it. Job stays OPEN until deadline.
  */
 export async function selectProvisionalWinner(jobId: string, takeId: string): Promise<FinalizeAwardResult> {
   const job = await db.job.findUnique({ where: { id: jobId } });

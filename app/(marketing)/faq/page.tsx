@@ -108,9 +108,9 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          While the job is open, use <span className="font-medium">Favorite</span> on a submission
-          (you can switch anytime). Favoriting does not close the job or pay anyone — musicians keep
-          the full deadline window.
+          While the job is open, use <span className="font-medium">Favorite</span> on one
+          submission (all takes in that submission). Favoriting another replaces the previous
+          favorite — only one can be saved at a time, so auto-award stays clean.
         </p>
         <p>
           After the deadline, submissions close and you have 48 hours to{" "}

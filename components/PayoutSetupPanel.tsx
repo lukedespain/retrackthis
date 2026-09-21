@@ -115,9 +115,14 @@ export function PayoutSetupPanel({
         return;
       }
       if (!body.url) throw new Error("Stripe did not return an onboarding link");
-      window.location.href = body.url;
+      const opened = window.open(body.url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        window.location.href = body.url;
+        return;
+      }
     } catch (err) {
       onError(err instanceof Error ? err.message : "Could not start payout setup");
+    } finally {
       setBusy(false);
     }
   }

@@ -479,7 +479,6 @@ function CreatorJobCard({
                   <ReferenceTracksPlayer
                     partSrc={job.demoFileUrl}
                     backingSrc={job.backingFileUrl}
-                    bpm={job.bpm}
                     allowDownload
                   />
                   {!job.backingFileUrl && job.status === "OPEN" && !readOnly ? (
@@ -501,7 +500,6 @@ function CreatorJobCard({
                   jobAwarded={job.status === "AWARDED"}
                   pastDeadline={isPastDeadline}
                   paying={job.status === "AWARDING"}
-                  jobBpm={job.bpm}
                   jobBackingUrl={job.backingFileUrl}
                   onAwarded={onChanged}
                   onSelectionChange={setHasProvisionalWinner}
@@ -522,7 +520,6 @@ function TakesList({
   jobAwarded,
   pastDeadline = false,
   paying = false,
-  jobBpm = null,
   jobBackingUrl = null,
   onAwarded,
   onSelectionChange,
@@ -533,7 +530,6 @@ function TakesList({
   jobAwarded: boolean;
   pastDeadline?: boolean;
   paying?: boolean;
-  jobBpm?: number | null;
   jobBackingUrl?: string | null;
   onAwarded: () => void;
   onSelectionChange?: (hasSelection: boolean) => void;
@@ -629,7 +625,6 @@ function TakesList({
           pastDeadline={pastDeadline}
           paying={paying}
           hasOtherSelection={hasSelection && !take.isWinner}
-          jobBpm={jobBpm}
           jobBackingUrl={jobBackingUrl}
           selecting={selectingId === take.id}
           disabled={selectingId !== null || readOnly}
@@ -651,7 +646,6 @@ function TakeCard({
   pastDeadline = false,
   paying = false,
   hasOtherSelection,
-  jobBpm = null,
   jobBackingUrl = null,
   selecting,
   disabled,
@@ -665,7 +659,6 @@ function TakeCard({
   pastDeadline?: boolean;
   paying?: boolean;
   hasOtherSelection: boolean;
-  jobBpm?: number | null;
   jobBackingUrl?: string | null;
   selecting: boolean;
   disabled: boolean;
@@ -709,7 +702,6 @@ function TakeCard({
           fallbackAudioUrl={take.audioFileUrl}
           allowDownload={allowDownload}
           collapsible={audioCount > 1}
-          bpm={jobBpm}
           backingSrc={jobBackingUrl}
         />
         {jobOpen && isWinner && !jobAwarded && pastDeadline && (

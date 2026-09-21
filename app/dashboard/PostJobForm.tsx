@@ -294,7 +294,6 @@ function PostJobFormInner({
                 <ReferenceTracksPlayer
                   partSrc={demoFileUrl}
                   backingSrc={backingFileUrl}
-                  bpm={null}
                   allowDownload={false}
                 />
               </div>

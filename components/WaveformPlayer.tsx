@@ -1,12 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  beatIntervalSec,
-  mixAudioUrlWithClick,
-  scheduleClick,
-  withClickFilename,
-} from "@/lib/metronome";
 import { formatWaveTime, paintWaveform } from "@/lib/waveformDraw";
 import { loadAudioForMixCached } from "@/lib/waveformPeaks";
 
@@ -31,7 +25,6 @@ export function WaveformPlayer({
   label = "Audio",
   filename,
   allowDownload = false,
-  bpm = null,
   className = "",
   compact = false,
 }: {
@@ -41,7 +34,6 @@ export function WaveformPlayer({
   label?: string;
   filename?: string;
   allowDownload?: boolean;
-  bpm?: number | null;
   className?: string;
   /** Tighter chrome when nested in a take row. */
   compact?: boolean;
@@ -49,7 +41,6 @@ export function WaveformPlayer({
   const fileForDownload = downloadSrc || src;
   const downloadName =
     filename ?? guessFilename(fileForDownload, `${label.toLowerCase().replace(/\s+/g, "-")}.mp3`);
-  const hasFixedTempo = typeof bpm === "number" && bpm > 0;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -60,25 +51,18 @@ export function WaveformPlayer({
   const currentTimeRef = useRef(0);
   const durationRef = useRef(0);
   const playingRef = useRef(false);
-  const withClickRef = useRef(false);
   const segCtxStartRef = useRef(0);
   const segTimelineStartRef = useRef(0);
   const rafUiRef = useRef<number | null>(null);
-  const rafClickRef = useRef<number | null>(null);
-  const nextBeatRef = useRef(0);
 
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [peaks, setPeaks] = useState<Float32Array | null>(null);
-  const [withClick, setWithClick] = useState(false);
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mixing, setMixing] = useState(false);
-  const [mixError, setMixError] = useState<string | null>(null);
 
-  withClickRef.current = withClick;
   playingRef.current = playing;
   durationRef.current = duration;
 
@@ -128,18 +112,10 @@ export function WaveformPlayer({
     }
   }
 
-  function stopClickLoop() {
-    if (rafClickRef.current != null) {
-      cancelAnimationFrame(rafClickRef.current);
-      rafClickRef.current = null;
-    }
-  }
-
   function pauseTransport(atTime?: number) {
     const t = atTime ?? timelineNow();
     stopSource();
     stopUiLoop();
-    stopClickLoop();
     playingRef.current = false;
     setPlaying(false);
     publishTime(t);
@@ -164,44 +140,12 @@ export function WaveformPlayer({
     rafUiRef.current = requestAnimationFrame(tick);
   }
 
-  function syncNextBeat(timelineSec: number) {
-    if (!hasFixedTempo || !bpm) return;
-    const interval = beatIntervalSec(bpm);
-    nextBeatRef.current = Math.ceil(timelineSec / interval - 1e-9) * interval;
-    if (nextBeatRef.current < timelineSec) nextBeatRef.current += interval;
-  }
-
-  function tickClicks() {
-    if (!withClickRef.current || !hasFixedTempo || !bpm || !playingRef.current || !ctxRef.current) {
-      rafClickRef.current = null;
-      return;
-    }
-    const ctx = ctxRef.current;
-    const interval = beatIntervalSec(bpm);
-    const now = timelineNow();
-    while (nextBeatRef.current <= now + 0.02) {
-      const beatIndex = Math.round(nextBeatRef.current / interval);
-      const when = segCtxStartRef.current + (nextBeatRef.current - segTimelineStartRef.current);
-      scheduleClick(ctx, Math.max(ctx.currentTime, when), { accent: beatIndex % 4 === 0 });
-      nextBeatRef.current += interval;
-    }
-    rafClickRef.current = requestAnimationFrame(tickClicks);
-  }
-
-  function startClickLoop() {
-    if (!withClickRef.current || !hasFixedTempo) return;
-    if (rafClickRef.current != null) cancelAnimationFrame(rafClickRef.current);
-    syncNextBeat(timelineNow());
-    rafClickRef.current = requestAnimationFrame(tickClicks);
-  }
-
   async function startTransport(t: number) {
     const buffer = bufRef.current;
     if (!buffer) return;
     const ctx = ensureCtx();
     await ctx.resume();
     stopSource();
-    stopClickLoop();
 
     const timeline = Math.max(0, Math.min(t, buffer.duration));
     if (timeline >= buffer.duration) {
@@ -225,7 +169,6 @@ export function WaveformPlayer({
     setPlaying(true);
     publishTime(timeline);
     startUiLoop();
-    if (withClickRef.current) startClickLoop();
   }
 
   useEffect(() => {
@@ -254,14 +197,6 @@ export function WaveformPlayer({
   }, [src]);
 
   useEffect(() => {
-    if (!hasFixedTempo) {
-      withClickRef.current = false;
-      setWithClick(false);
-      stopClickLoop();
-    }
-  }, [hasFixedTempo]);
-
-  useEffect(() => {
     return () => {
       pauseTransport(currentTimeRef.current);
       void ctxRef.current?.close().catch(() => undefined);
@@ -275,27 +210,6 @@ export function WaveformPlayer({
     const t = Math.max(0, Math.min(1, ratio)) * dur;
     if (playingRef.current) void startTransport(t);
     else publishTime(t);
-  }
-
-  async function downloadWithClick() {
-    if (!hasFixedTempo || !bpm) return;
-    setMixing(true);
-    setMixError(null);
-    try {
-      const blob = await mixAudioUrlWithClick(fileForDownload, bpm);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = withClickFilename(downloadName);
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setMixError(err instanceof Error ? err.message : "Couldn’t mix click track");
-    } finally {
-      setMixing(false);
-    }
   }
 
   useEffect(() => {
@@ -391,63 +305,22 @@ export function WaveformPlayer({
         </div>
       </div>
 
-      <div className={`${compact ? "mt-2" : "mt-3"} flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between`}>
-        <label
-          className={`inline-flex w-fit items-center gap-2 text-xs ${
-            hasFixedTempo ? "cursor-pointer text-gray-600" : "cursor-not-allowed text-gray-400"
-          }`}
-        >
-          <input
-            type="checkbox"
-            checked={withClick}
-            disabled={!hasFixedTempo}
-            onChange={(e) => {
-              const next = e.target.checked;
-              withClickRef.current = next;
-              setWithClick(next);
-              if (next && playingRef.current) startClickLoop();
-              else stopClickLoop();
-            }}
-            className="h-3.5 w-3.5 rounded border-gray-300 text-accent focus:ring-accent/30 disabled:opacity-40"
-          />
-          Listen with click
-          {hasFixedTempo ? (
-            <span className="text-gray-400">({bpm} BPM)</span>
-          ) : (
-            <span className="text-gray-400">(needs fixed tempo)</span>
-          )}
-        </label>
-
-        {allowDownload && (
-          <div className="flex flex-wrap gap-1.5">
-            <a
-              href={fileForDownload}
-              download={downloadName}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={downloadBtnClass}
-            >
-              <DownloadIcon />
-              {hasFixedTempo ? "Without click" : "Download"}
-            </a>
-            {hasFixedTempo && (
-              <button
-                type="button"
-                disabled={mixing}
-                onClick={() => void downloadWithClick()}
-                className={downloadBtnClass}
-              >
-                <DownloadIcon />
-                {mixing ? "Mixing…" : "With click"}
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {(error || mixError) && (
-        <p className="mt-2 text-xs text-red-600">{error || mixError}</p>
+      {allowDownload && (
+        <div className={`${compact ? "mt-2" : "mt-3"} flex justify-end`}>
+          <a
+            href={fileForDownload}
+            download={downloadName}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={downloadBtnClass}
+          >
+            <DownloadIcon />
+            Download
+          </a>
+        </div>
       )}
+
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
   );
 }

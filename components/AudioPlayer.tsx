@@ -8,14 +8,12 @@ export function AudioPlayer({
   label = "Audio",
   filename,
   allowDownload = false,
-  bpm = null,
   className = "",
 }: {
   src: string;
   label?: string;
   filename?: string;
   allowDownload?: boolean;
-  bpm?: number | null;
   className?: string;
 }) {
   return (
@@ -24,7 +22,6 @@ export function AudioPlayer({
       label={label}
       filename={filename}
       allowDownload={allowDownload}
-      bpm={bpm}
       className={className}
     />
   );

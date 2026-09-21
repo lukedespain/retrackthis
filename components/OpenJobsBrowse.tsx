@@ -342,7 +342,6 @@ function OpenJobCard({
                 <ReferenceTracksPlayer
                   partSrc={job.demoFileUrl}
                   backingSrc={job.backingFileUrl}
-                  bpm={job.bpm}
                   allowDownload={signedIn}
                 />
               </div>

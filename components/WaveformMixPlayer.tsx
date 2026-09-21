@@ -1,12 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  beatIntervalSec,
-  mixAudioUrlWithClick,
-  scheduleClick,
-  withClickFilename,
-} from "@/lib/metronome";
 import { formatWaveTime, paintWaveform } from "@/lib/waveformDraw";
 import { loadAudioForMixCached } from "@/lib/waveformPeaks";
 
@@ -40,7 +34,6 @@ export function WaveformMixPlayer({
   partSrc,
   partDownloadSrc = null,
   backingSrc = null,
-  bpm = null,
   allowDownload = false,
   className = "",
   partTabLabel = "Part",
@@ -52,7 +45,6 @@ export function WaveformMixPlayer({
   /** Master download URL when streaming a lighter preview. */
   partDownloadSrc?: string | null;
   backingSrc?: string | null;
-  bpm?: number | null;
   allowDownload?: boolean;
   className?: string;
   partTabLabel?: string;
@@ -63,7 +55,6 @@ export function WaveformMixPlayer({
 }) {
   const partFileForDownload = partDownloadSrc || partSrc;
   const hasAb = Boolean(backingSrc);
-  const hasFixedTempo = typeof bpm === "number" && bpm > 0;
   const modes: ModeId[] = hasAb ? ["part", "backing", "both"] : ["part"];
   const startMode: ModeId = hasAb && initialMode === "both" ? "both" : hasAb && initialMode === "backing" ? "backing" : "part";
 
@@ -75,7 +66,6 @@ export function WaveformMixPlayer({
   const currentTimeRef = useRef(0);
   const durationRef = useRef(0);
   const playingRef = useRef(false);
-  const withClickRef = useRef(false);
 
   const ctxRef = useRef<AudioContext | null>(null);
   const partBufRef = useRef<AudioBuffer | null>(null);
@@ -89,26 +79,20 @@ export function WaveformMixPlayer({
   const segTimelineStartRef = useRef(0);
 
   const rafUiRef = useRef<number | null>(null);
-  const rafClickRef = useRef<number | null>(null);
-  const nextBeatRef = useRef(0);
 
   const [mode, setMode] = useState<ModeId>(startMode);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [offsetMs, setOffsetMs] = useState(0);
-  const [withClick, setWithClick] = useState(false);
   const [partPeaks, setPartPeaks] = useState<Float32Array | null>(null);
   const [bedPeaks, setBedPeaks] = useState<Float32Array | null>(null);
   const [waveError, setWaveError] = useState<string | null>(null);
   const [loadingWave, setLoadingWave] = useState(true);
   const [ready, setReady] = useState(false);
-  const [mixingKey, setMixingKey] = useState<string | null>(null);
-  const [mixError, setMixError] = useState<string | null>(null);
 
   modeRef.current = mode;
   offsetMsRef.current = showNudge ? offsetMs : 0;
-  withClickRef.current = withClick;
   playingRef.current = playing;
   durationRef.current = duration;
 
@@ -181,13 +165,6 @@ export function WaveformMixPlayer({
     }
   }
 
-  function stopClickLoop() {
-    if (rafClickRef.current != null) {
-      cancelAnimationFrame(rafClickRef.current);
-      rafClickRef.current = null;
-    }
-  }
-
   function startUiLoop() {
     stopUiLoop();
     const tick = () => {
@@ -207,42 +184,10 @@ export function WaveformMixPlayer({
     rafUiRef.current = requestAnimationFrame(tick);
   }
 
-  function syncNextBeat(timelineSec: number) {
-    if (!hasFixedTempo || !bpm) return;
-    const interval = beatIntervalSec(bpm);
-    nextBeatRef.current = Math.ceil(timelineSec / interval - 1e-9) * interval;
-    if (nextBeatRef.current < timelineSec) nextBeatRef.current += interval;
-  }
-
-  function tickClicks() {
-    if (!withClickRef.current || !hasFixedTempo || !bpm || !playingRef.current || !ctxRef.current) {
-      rafClickRef.current = null;
-      return;
-    }
-    const ctx = ctxRef.current;
-    const interval = beatIntervalSec(bpm);
-    const now = timelineNow();
-    while (nextBeatRef.current <= now + 0.02) {
-      const beatIndex = Math.round(nextBeatRef.current / interval);
-      const when = segCtxStartRef.current + (nextBeatRef.current - segTimelineStartRef.current);
-      scheduleClick(ctx, Math.max(ctx.currentTime, when), { accent: beatIndex % 4 === 0 });
-      nextBeatRef.current += interval;
-    }
-    rafClickRef.current = requestAnimationFrame(tickClicks);
-  }
-
-  function startClickLoop() {
-    if (!withClickRef.current || !hasFixedTempo) return;
-    if (rafClickRef.current != null) cancelAnimationFrame(rafClickRef.current);
-    syncNextBeat(timelineNow());
-    rafClickRef.current = requestAnimationFrame(tickClicks);
-  }
-
   function pauseTransport(atTime?: number) {
     const t = atTime ?? timelineNow();
     stopSources();
     stopUiLoop();
-    stopClickLoop();
     playingRef.current = false;
     setPlaying(false);
     publishTime(t);
@@ -256,7 +201,6 @@ export function WaveformMixPlayer({
     await ctx.resume();
 
     stopSources();
-    stopClickLoop();
 
     const dur = Math.max(partBuf.duration, bedBuf?.duration ?? 0);
     durationRef.current = dur;
@@ -317,7 +261,6 @@ export function WaveformMixPlayer({
     setPlaying(true);
     publishTime(timeline);
     startUiLoop();
-    if (withClickRef.current) startClickLoop();
   }
 
   useEffect(() => {
@@ -360,14 +303,6 @@ export function WaveformMixPlayer({
       cancelled = true;
     };
   }, [partSrc, backingSrc]);
-
-  useEffect(() => {
-    if (!hasFixedTempo) {
-      withClickRef.current = false;
-      setWithClick(false);
-      stopClickLoop();
-    }
-  }, [hasFixedTempo]);
 
   useEffect(() => {
     return () => {
@@ -424,27 +359,6 @@ export function WaveformMixPlayer({
     const t = timelineNow();
     if (playingRef.current) void startTransport(t);
     else publishTime(t);
-  }
-
-  async function downloadTrackWithClick(src: string, filename: string, key: string) {
-    if (!hasFixedTempo || !bpm) return;
-    setMixingKey(key);
-    setMixError(null);
-    try {
-      const blob = await mixAudioUrlWithClick(src, bpm);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = withClickFilename(filename);
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setMixError(err instanceof Error ? err.message : "Couldn’t mix click track");
-    } finally {
-      setMixingKey(null);
-    }
   }
 
   useEffect(() => {
@@ -653,98 +567,41 @@ export function WaveformMixPlayer({
         </div>
       )}
 
-      <div className="mt-3">
-        <label
-          className={`inline-flex w-fit items-center gap-2 text-xs ${
-            hasFixedTempo ? "cursor-pointer text-gray-600" : "cursor-not-allowed text-gray-400"
-          }`}
-        >
-          <input
-            type="checkbox"
-            checked={withClick}
-            disabled={!hasFixedTempo}
-            onChange={(e) => {
-              const next = e.target.checked;
-              withClickRef.current = next;
-              setWithClick(next);
-              if (next && playingRef.current) startClickLoop();
-              else stopClickLoop();
-            }}
-            className="h-3.5 w-3.5 rounded border-gray-300 text-accent focus:ring-accent/30 disabled:opacity-40"
-          />
-          Listen with click
-          {hasFixedTempo ? (
-            <span className="text-gray-400">({bpm} BPM)</span>
-          ) : (
-            <span className="text-gray-400">(needs fixed tempo)</span>
-          )}
-        </label>
-      </div>
-
       {allowDownload && (
         <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/80 px-3.5 py-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">Downloads</p>
-          <p className="mt-1 text-[11px] text-gray-500">
-            Save either track{hasFixedTempo ? " with or without a metronome click" : ""}.
-          </p>
           <div className="mt-3 space-y-2.5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-medium text-gray-800">{partTabLabel}</p>
-              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
-                <a
-                  href={partFileForDownload}
-                  download={partName}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
-                >
-                  {hasFixedTempo ? "Download · no click" : "Download"}
-                </a>
-                {hasFixedTempo && (
-                  <button
-                    type="button"
-                    disabled={mixingKey !== null}
-                    onClick={() => void downloadTrackWithClick(partFileForDownload, partName, "part")}
-                    className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
-                  >
-                    {mixingKey === "part" ? "Mixing…" : "Download · with click"}
-                  </button>
-                )}
-              </div>
+              <a
+                href={partFileForDownload}
+                download={partName}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
+              >
+                Download
+              </a>
             </div>
             {backingSrc && (
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm font-medium text-gray-800">Bed</p>
-                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
-                  <a
-                    href={backingSrc}
-                    download={bedName}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
-                  >
-                    {hasFixedTempo ? "Download · no click" : "Download"}
-                  </a>
-                  {hasFixedTempo && (
-                    <button
-                      type="button"
-                      disabled={mixingKey !== null}
-                      onClick={() => void downloadTrackWithClick(backingSrc, bedName, "bed")}
-                      className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
-                    >
-                      {mixingKey === "bed" ? "Mixing…" : "Download · with click"}
-                    </button>
-                  )}
-                </div>
+                <a
+                  href={backingSrc}
+                  download={bedName}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
+                >
+                  Download
+                </a>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {(waveError || mixError) && (
-        <p className="mt-2 text-xs text-amber-700">{waveError || mixError}</p>
-      )}
+      {waveError && <p className="mt-2 text-xs text-amber-700">{waveError}</p>}
     </div>
   );
 }

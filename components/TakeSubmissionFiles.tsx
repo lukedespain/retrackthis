@@ -143,7 +143,6 @@ export function TakeSubmissionFiles({
   allowDownload = false,
   collapsible = false,
   defaultExpanded = false,
-  bpm = null,
   backingSrc = null,
 }: {
   files?: TakeFileRecord[];
@@ -151,8 +150,6 @@ export function TakeSubmissionFiles({
   allowDownload?: boolean;
   collapsible?: boolean;
   defaultExpanded?: boolean;
-  /** Job BPM so metronome / click works on takes the same as the reference. */
-  bpm?: number | null;
   /** Job bed track - enables Take / Bed / Both waveform player. */
   backingSrc?: string | null;
 }) {
@@ -236,7 +233,6 @@ export function TakeSubmissionFiles({
                       <TakeMixPlayer
                         takeSrc={streamSrc}
                         bedSrc={backingSrc}
-                        bpm={bpm}
                         allowDownload={allowDownload && Boolean(downloadHref)}
                         downloadSrc={downloadHref}
                       />
@@ -251,7 +247,6 @@ export function TakeSubmissionFiles({
                             : guessFilename(streamSrc, `${audioFile.label}.mp3`)
                         }
                         allowDownload={allowDownload && Boolean(downloadHref)}
-                        bpm={bpm}
                         compact
                       />
                     )}

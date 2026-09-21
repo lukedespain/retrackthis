@@ -8,14 +8,12 @@ import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
 export function ReferenceTracksPlayer({
   partSrc,
   backingSrc = null,
-  bpm = null,
   allowDownload = false,
   className = "",
   partTabLabel = "Part",
 }: {
   partSrc: string;
   backingSrc?: string | null;
-  bpm?: number | null;
   allowDownload?: boolean;
   className?: string;
   partTabLabel?: string;
@@ -24,7 +22,6 @@ export function ReferenceTracksPlayer({
     <WaveformMixPlayer
       partSrc={partSrc}
       backingSrc={backingSrc}
-      bpm={bpm}
       allowDownload={allowDownload}
       className={className}
       partTabLabel={partTabLabel}

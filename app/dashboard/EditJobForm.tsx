@@ -217,7 +217,7 @@ export function EditJobForm({
               Kept
             </span>
           </div>
-          <WaveformPlayer src={demoFileUrl} label="Part to retrack" allowDownload bpm={fixedTempo ? Number(bpm) || null : null} />
+          <WaveformPlayer src={demoFileUrl} label="Part to retrack" allowDownload />
           <FileUpload
             key={`demo-${uploadKey}`}
             label="Replace this track"
@@ -260,7 +260,7 @@ export function EditJobForm({
           </div>
           {backingFileUrl ? (
             <>
-              <WaveformPlayer src={backingFileUrl} label="Background" allowDownload bpm={fixedTempo ? Number(bpm) || null : null} />
+              <WaveformPlayer src={backingFileUrl} label="Background" allowDownload />
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"

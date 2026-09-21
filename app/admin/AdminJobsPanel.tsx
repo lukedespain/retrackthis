@@ -137,7 +137,6 @@ export function AdminJobsPanel({
             <AdminTakesList
               jobId={listeningJob.id}
               jobOpen={listeningJob.status === "OPEN"}
-              jobBpm={listeningJob.bpm}
               jobBackingUrl={listeningJob.backingFileUrl}
             />
           </div>
@@ -279,12 +278,10 @@ export function AdminJobsPanel({
 function AdminTakesList({
   jobId,
   jobOpen,
-  jobBpm = null,
   jobBackingUrl = null,
 }: {
   jobId: string;
   jobOpen: boolean;
-  jobBpm?: number | null;
   jobBackingUrl?: string | null;
 }) {
   const [takes, setTakes] = useState<Take[] | null>(null);
@@ -379,7 +376,6 @@ function AdminTakesList({
                 fallbackAudioUrl={take.audioFileUrl}
                 allowDownload
                 collapsible={audioCount > 1}
-                bpm={jobBpm}
                 backingSrc={jobBackingUrl}
               />
             </div>

@@ -32,7 +32,7 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
 
 ## Item-by-item evidence
 
-### #1 Takes listing auth — FIXED
+### #1 Takes listing auth - FIXED
 - Routes needing the control: `GET /api/jobs/:jobId/takes` (the only takes-listing route). `GET /api/takes/mine` (own takes only, `takes/mine/route.ts:8-14`, covered). Admin panel uses the same takes GET as admin (`app/admin/AdminJobsPanel.tsx:251`, covered by the admin branch).
 - Where: `app/api/jobs/[jobId]/takes/route.ts:252-275`
   ```
@@ -53,7 +53,7 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
 - Gap / bypass risk: 403 (not the suggested 404) confirms job existence to non-owners; harmless since job ids are public anyway. The response still spreads `...take` (`:291`) which includes `note`, `musicianId`, `humanAttestedAt`; fine for the creator. The real residual risk is E-3: the URLs this route now hides are still public objects (see E-3 below).
 - Quality: acceptable. The owner-or-admin check is written inline; there is no `requireJobOwnerOrAdmin(jobId)` helper, so the next per-job route copies it or forgets it. `getAdminUser` is loaded with `await import` for no stated reason (it is a normal server module, imported statically in `[jobId]/route.ts:2`).
 
-### #2 Upload signer — PARTIAL
+### #2 Upload signer - PARTIAL
 - Routes needing the control: `POST /api/uploads/sign` (covered), `POST /api/uploads/preview` (new since Sept 4; auth covered at `preview/route.ts:15-18`).
 - Where: `app/api/uploads/sign/route.ts:32-35` (session), `:57-59` (path)
   ```
@@ -78,7 +78,7 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
 - Gap / bypass risk: (a) Supabase enforces `allowedMimeTypes` against the `Content-Type` the uploader sends; the uploader chooses it, and `application/octet-stream` is on the list, so any bytes with any extension (`safeName` keeps the extension, `:57`) can be uploaded by declaring octet-stream. The restriction only stops an uploader who volunteers `text/html`; the phishing-host sub-case of E-4 is mitigated only because octet-stream is not rendered inline by browsers. (b) `updateBucket(... public: true ...)` now runs on **every** mint (not memoised like `ensureAudioBucket`), so the code re-forces the bucket public on every upload; this is the exact "config-only fix the code silently undoes" pattern the Sept 4 review called out, now stronger. (c) No per-user throttle (grep `ratelimit|throttle` over `app/`, `lib/`, `middleware.ts` = 0). (d) Failure of the bucket update is swallowed (`:53-55`), so the mime list can silently not be in effect.
 - Quality: fragile. Right idea in the wrong place: bucket configuration belongs in a one-time setup step (or migration), not in a request path with `public: true` hard-coded three times (`lib/supabaseAdmin.ts:17`, `:37`, `uploads/sign/route.ts:50`).
 
-### #3 Buyer ≠ seller — FIXED
+### #3 Buyer ≠ seller - FIXED
 - Routes needing the control: takes POST (submit), select-winner provisional path, select-winner finalize path, the automatic finalize sweep. All four covered.
 - Where: `app/api/jobs/[jobId]/takes/route.ts:139-144`
   ```
@@ -95,7 +95,7 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
 - Gap / bypass risk: the second-account variant is unchanged and is the normal shape of E-1; nothing in the range adds a price ceiling (`jobs/route.ts:93-98` checks only `>= MIN_PRICE_CENTS`; `SLIDER_MAX_USD = 500` at `lib/jobPricing.ts:10` is UI-only), a Stripe Customer, Radar signals, a payout delay, or a `charge.dispute.created` handler (grep = 0). Both Connect account shapes still make the platform the loss bearer (`lib/stripeConnect.ts:130-131` `fees_collector: "application", losses_collector: "application"`; `:181-182`). New since Sept 4: PayPal/Wise manual payouts (`d7b852f`) route the same money through a human, which is a de facto delay for those recipients only.
 - Quality: clean for what it is. Putting the award-side guard in `lib/jobActions.ts` means both the route and the sweep inherit it.
 
-### #5 Relative `next` param — FIXED-BUT-FRAGILE
+### #5 Relative `next` param - FIXED-BUT-FRAGILE
 - Entry points that consume `next`: sign-in (`router.push`), sign-up (`router.push` and the sign-in link), Google button (`redirectTo`), `app/auth/callback` (server redirect after code exchange), middleware (writes `next`, does not consume it). Covered: sign-in, sign-up, Google. **Not fully covered: callback.**
 - Where: `lib/safeRedirect.ts:5-14`
   ```
@@ -115,7 +115,7 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
   No backslash check. Verified with node against the WHATWG parser Next uses: `next=/\evil.com` and `next=/%5Cevil.com` both pass this test and `new URL(next, origin).href` resolves to `https://evil.com/`. The redirect fires only after a successful `exchangeCodeForSession`/`verifyOtp` (`:37-46`), so the live vector is a crafted Supabase authorize link (`.../auth/v1/authorize?provider=google&redirect_to=https://retrackthis.com/auth/callback?next=/\evil.com`): the victim completes a real Google login, a session cookie is set, then they land on the attacker's page. Whether Supabase's redirect allowlist accepts the query-string variant is runtime evidence; the app's own Google flow depends on it accepting `?next=`, so it very likely does. One-line fix: use `safeInternalPath` there too.
 - Quality: fragile. The helper exists and three callers use it; the fourth reimplements a weaker version.
 
-### #6 Storage URL prefix — FIXED
+### #6 Storage URL prefix - FIXED
 - Write paths needing the control: `POST /api/jobs` (demo, backing), `PATCH /api/jobs/:id` (demo, backing), `POST /api/jobs/:id/takes` (legacy `audioFileUrl`, every audio `fileUrl`, every MIDI `fileUrl`, every `previewUrl`). All covered.
 - Where: `lib/storageUrls.ts:4-11`
   ```
@@ -126,7 +126,7 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
 - Gap / bypass risk: (a) The fix direction asked for the caller's own user segment once E-4 landed; not done, so a musician can submit any public object URL in the bucket (a creator's demo, another take's preview URL they legitimately received, or a stale object). (b) No dedupe of identical URLs per job. (c) `startsWith` accepts `.../audio-files/../<other-bucket>/x`; the stored string is only rendered into `<audio src>`/`<a href>`, so the browser normalizes it to another public bucket on the same Supabase host. Low impact today (there is one bucket). (d) `uploads/preview/route.ts:26-42` does its own check with `storagePathFromPublicUrl` (`lib/audioPreview.ts:38-43`), which searches for the marker *anywhere* in the string rather than as a prefix; only the derived path is used server-side, so this is a consistency smell, not a hole.
 - Quality: acceptable. One helper, three routes. The `await import("@/lib/storageUrls")` in two of them (`jobs/route.ts:146`, `takes/route.ts:152`) is unexplained; `[jobId]/route.ts:4` imports it normally.
 
-### #7 Seed script guards — FIXED-BUT-FRAGILE
+### #7 Seed script guards - FIXED-BUT-FRAGILE
 - Scripts needing the guard: `prisma/seed.js`, `prisma/seed-ui-states.js`, `prisma/seed-demo-jobs.js`, `prisma/cleanup-demo.js`. All four call it before opening a client: `seed.js:12-13`, `seed-ui-states.js:11-12`, `seed-demo-jobs.js:11-12`, `cleanup-demo.js:18-19`.
 - Where: `prisma/scriptGuard.js:14-32`
   ```
@@ -141,7 +141,7 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
 - Gap / bypass risk: (a) This is a denylist, the review asked for an allowlist. Supabase's **direct** connection host is `db.<ref>.supabase.co`; `"db.x.supabase.co".includes("supabase.com")` is `false` (checked). A developer whose `.env.local` still holds the session-mode/direct URL (the shape `.env.example` used before `d9d43ee`) runs `node prisma/seed.js`, the guard prints the host and proceeds, and `seed.js:55-58` wipes `Payment`, `Take`, `Job`, `User` in production. (b) The fallback `"testpass123"` means the default behaviour without the env var is unchanged; the review asked to scrub it. (c) `package.json:38-40` still wires `prisma.seed` → `node prisma/seed.js`, so `prisma migrate reset` still seeds (guarded by the same denylist). (d) `cleanup-demo.js:31-33` still selects rows by content (E-22, untouched).
 - Quality: fragile. Right layer (one shared module, called first in each script), wrong predicate.
 
-### #8 Deadline validation — FIXED-BUT-FRAGILE (claim inaccurate)
+### #8 Deadline validation - FIXED-BUT-FRAGILE (claim inaccurate)
 - Routes needing the control: `POST /api/jobs` (covered). `PATCH /api/jobs/:id` does not accept `deadline` (`[jobId]/route.ts:50-56`), so no second path.
 - Where: `app/api/jobs/route.ts:119-144`
   ```
@@ -160,7 +160,7 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
 - Gap / bypass risk: arithmetic. Line 129 rejects any deadline later than **now + 3 days** (6 d minus 72 h). Line 139's 7-day check can therefore never fire; it is dead code that documents a cap that does not exist. Meanwhile the form defaults to 7 (`app/dashboard/PostJobForm.tsx:148` `useState(String(MAX_DEADLINE_DAYS))`), validates 1..7 client-side (`:230-236`), and posts `Date.now() + deadlineDays*86400000` (`:293`). A creator who accepts the default gets a 400 "Deadline is too far out for the current card-hold escrow" after filling the whole form, including the card. Anything 4 to 7 days fails the same way. So either production is not at HEAD, or job posting with the default is broken today; that is runtime evidence item 1 below. The developer's "capped (7 days)" is wrong in both directions: the effective cap is 3 days, and 7 days is what the code says while never enforcing it. Separately, the 3-day arithmetic was the review's literal Day-1 suggestion ("cap deadline + 72h at 6 days"), so the *security* intent is met; the product regression is what nobody checked. The E-15 design decision (charge-upfront / SetupIntent / extended auth) is still open; `AUTH_HOLD_SAFE_MS` (`jobActions.ts:24`) and `finalizeAutoAt` (`:30-34`) are the stopgap. The reported production incident (violin job, hold expired, job cancelled) is consistent with a job posted before `3dddf6e` under the old 7-day default plus lazy sweep; the new code would auto-finalize a *picked* job by `min(deadline+24h, hold+6d)` **only if someone hits `GET /api/jobs` in that window** (no cron, see E-14).
 - Quality: fragile. Three overlapping constants (`maxWindowMs` local at `:128`, `AUTH_HOLD_SAFE_MS`, `MAX_DEADLINE_DAYS`) in three files with different values; client and server disagree; dead branch.
 
-### #9 Admin confirmed email — FIXED
+### #9 Admin confirmed email - FIXED
 - Paths that bootstrap admin from the allowlist: `getAdminUser()` (every `requireAdmin()` caller and the takes GET) and `GET /api/auth/me`. Both covered.
 - Where: `lib/admin.ts:37-51`
   ```
@@ -175,7 +175,7 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
 - Gap / bypass risk: Google OAuth sign-ins arrive with `email_confirmed_at` set by Supabase (provider-verified), which is correct behaviour but means the allowlist path is now reachable via Google for any allowlisted address; Supabase's default identity linking on a verified email decides who owns that account. Runtime evidence: Confirm-email toggle, and whether every `ADMIN_EMAILS` entry already has an account. `DEFAULT_ADMIN_EMAILS` still hard-coded (`admin.ts:5`), stored `isAdmin` still cannot be revoked by removing an address (`:49`), both E-19.
 - Quality: acceptable. Same predicate written twice (`admin.ts:41-42` and `me/route.ts:22`); one should call the other.
 
-### #10 Webhook status guards — PARTIAL
+### #10 Webhook status guards - PARTIAL
 - What Day-1 item 10 asked for: (a) E-12 `updateMany({ where: { stripePaymentIntentId, status: { in: allowedFrom } } })` plus `@unique` on the PI id; (b) E-25 fill `stripeAccountId` only when null, in webhook and onboard.
 - Where (b, webhook): `app/api/webhooks/stripe/route.ts:127-134`
   ```
@@ -191,12 +191,12 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
 - Not done (b, onboard): `app/api/stripe/connect/onboard/route.ts:79-95` still creates an account and writes `stripeAccountId` unconditionally when the in-memory `accountId` is null; two concurrent POSTs both create. Fix direction was `updateMany where stripeAccountId: null`.
 - Quality: acceptable for the half that shipped. The developer's own claim wording ("payment status transitions hardened") describes the half that did not.
 
-### #11 Instruments dynamic + API errors sanitized — PARTIAL
+### #11 Instruments dynamic + API errors sanitized - PARTIAL
 - E-33: `app/api/instruments/route.ts:5` `export const dynamic = "force-dynamic";` (only such export in `app/`). Closed.
 - E-31 "errors sanitized": only `app/api/uploads/sign/route.ts:64` (`"Failed to create signed upload URL"`). Still echoing raw `.message` to the browser: `app/api/jobs/[jobId]/select-winner/route.ts:7-12, 89` (`stripeMessage(err)` returns `.message` of *anything* thrown, including Prisma errors from the `$transaction` inside `finalizeAward`), `app/api/jobs/route.ts:173-175` (Stripe text, 402), `app/api/stripe/connect/onboard/route.ts:101-103`, `app/api/stripe/connect/dashboard/route.ts:27-29`, `app/api/uploads/preview/route.ts:60` (ffmpeg stderr tail, `lib/audioPreview.ts:76`, reaches the client). Also unchanged from E-31: no `event.livemode` check (grep 0), `middleware.ts:51-53` matcher still runs the Supabase auth call on `/api/webhooks/*`, `!` on env at `lib/stripe.ts:3`, `lib/supabaseAdmin.ts:7-8`.
 - Quality: the one sanitized route is fine; the pattern was not applied where the review pointed (select-winner was named explicitly).
 
-### RLS — FIXED (needs runtime evidence)
+### RLS - FIXED (needs runtime evidence)
 - Where: `prisma/migrations/20260919220000_enable_rls_lock_down_data_api/migration.sql:7-19`
   ```
    7  ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
@@ -209,17 +209,17 @@ One structural note that applies to every auth item: `middleware.ts:32-36` gates
 - Gap / bypass risk: (a) Runtime: was it applied to production (`_prisma_migrations` row), and is the Data API toggle/exposed-schemas set? (b) Fragile for the future: Supabase's default privileges still grant `anon`/`authenticated` on any new table the `postgres` role creates in `public`, and RLS is off by default on it. The next `prisma migrate` that adds a table (the range added five columns but no tables; the next feature might) reopens E-7 for that table unless someone remembers. `ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM anon, authenticated;` or disabling the Data API would make it inherit. (c) Sequences/functions untouched; not relevant to this schema (ids are app-generated cuids).
 - Quality: right layer (a migration, lives with the schema), incomplete for inheritance.
 
-### Google SSO — FIXED (feature)
+### Google SSO - FIXED (feature)
 - Where: `components/GoogleAuthButton.tsx:41-57` (`signInWithOAuth({ provider: "google", options: { redirectTo } })` with `next` sanitized at `:44`), `app/auth/callback/route.ts:37-39` (`exchangeCodeForSession`), `app/dashboard/CompleteProfileForm.tsx` prefills the name from `user_metadata.full_name|name` (diff in `7e4aad1`, user-editable field, harmless). README `:72-82` documents the Supabase provider and redirect allowlist.
 - Gap / bypass risk: the callback's weaker `next` check (see #5). OAuth users are email-confirmed, which feeds the admin allowlist (see #9). Password reset (`app/(auth)/forgot-password/page.tsx:46-51`, `reset-password/page.tsx:64`) shares the callback and passes `next=/reset-password`; the callback default changed from `/reset-password` to `/producers` in `7e4aad1` (fine, the reset page asks for its own `next`).
 - Needs runtime: provider enabled with a real client id/secret; Supabase redirect URL allowlist contains `https://retrackthis.com/auth/callback`; Google Cloud authorized redirect URI is the Supabase one.
 
-### hello@ ops — FIXED
+### hello@ ops - FIXED
 - Where: `lib/email.ts:34` `const replyTo = process.env.RESEND_REPLY_TO?.trim() || "hello@retrackthis.com";`, `lib/resendInbound.ts:3`, `.env.example:20`. Commit `15575c2`.
 - Gap: `README.md:124` still reads "Inbound (`hello@retrackthis.com` → `music@lukedespain.com`)". `lib/admin.ts:5` still ships two personal addresses in source. `lib/resendInbound.ts:46` still special-cases the literal `hello@retrackthis.com`.
 - Quality: clean.
 
-### DB pool fix — FIXED in code (config; needs runtime)
+### DB pool fix - FIXED in code (config; needs runtime)
 - Where: `lib/db.ts:8-14` (client cached on `globalThis` in every environment; previously only outside production, diff in `d9d43ee`), `.env.example:1-3` documents `...pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1`.
 - Gap: the actual `DATABASE_URL` is a Vercel env var (runtime evidence). `prisma/schema.prisma:5-8` has `url` only, no `directUrl`; Prisma documents that `migrate` should not go through a transaction-mode pooler. That is an ops footgun for the next migration, not a security issue. `$transaction` batches and the interactive transaction in `takes/route.ts:195-208` are fine under transaction pooling with `pgbouncer=true`.
 - Quality: acceptable.

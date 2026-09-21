@@ -1,16 +1,16 @@
-# Damian Sept 20 review — triage for charge-upfront deploy
+# Damian Sept 20 review - triage for charge-upfront deploy
 
 Sources (in this folder):
-- `REVIEW-SUMMARY.md` — plain English
-- `D-critic-consolidated.md` — master findings D-1…D-28
-- `A` / `B` / `C` — evidence trail
-- `LUKE-FIX-LIST.html` — ordered fix list
+- `REVIEW-SUMMARY.md` - plain English
+- `D-critic-consolidated.md` - master findings D-1…D-28
+- `A` / `B` / `C` - evidence trail
+- `LUKE-FIX-LIST.html` - ordered fix list
 
 **Rule:** Do not push/deploy charge-upfront until this file’s “Ship with Checkout” column is closed or explicitly deferred by founders.
 
 ---
 
-## Damian’s Checkout opinion (agrees — with conditions)
+## Damian’s Checkout opinion (agrees - with conditions)
 
 Charge-at-post **is** the right product move (kills the 7-day hold timer). He says it must **not** be bolted on alone. Same change should carry the money state-machine work, or at least the items marked **BLOCKER** below.
 
@@ -46,16 +46,16 @@ Charge-at-post **is** the right product move (kills the 7-day hold timer). He sa
 If founders accept shipping Checkout **without** full Week-1 state machine:
 
 ### Must close in code (this PR)
-1. Refund path (D-2) — done  
-2. Price ceiling + integer (D-1/D-7) — done  
-3. `PENDING_PAYMENT` + activate only when paid — done  
-4. `checkout.session.completed` (+ confirm-checkout fallback) — done  
-5. Unique PI id — done  
-6. Reminder skip for short / just-created jobs (D-10 blast) — done  
-7. Stop returning musician payout email on select-winner (D-8 quick) — done  
-8. Soften FAQ/Terms for pay-upfront — done  
-9. Atomic award claim (D-3) — done locally; apply migration `20260921040000` with the deploy  
-10. Sweeps on cron only (D-4) — done locally; set `CRON_SECRET` before relying on it  
+1. Refund path (D-2) - done  
+2. Price ceiling + integer (D-1/D-7) - done  
+3. `PENDING_PAYMENT` + activate only when paid - done  
+4. `checkout.session.completed` (+ confirm-checkout fallback) - done  
+5. Unique PI id - done  
+6. Reminder skip for short / just-created jobs (D-10 blast) - done  
+7. Stop returning musician payout email on select-winner (D-8 quick) - done  
+8. Soften FAQ/Terms for pay-upfront - done  
+9. Atomic award claim (D-3) - done locally; apply migration `20260921040000` with the deploy  
+10. Sweeps on cron only (D-4) - done locally; set `CRON_SECRET` before relying on it  
 
 ### Explicitly defer (track, do not pretend closed)
 - Storage / previews (D-11…)  

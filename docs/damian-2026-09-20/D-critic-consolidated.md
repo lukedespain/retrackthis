@@ -20,7 +20,7 @@ The instincts were often right: the self-award guard lives in `lib/jobActions.ts
 ### Logical and future-proof?
 No. A new `/api/*` route inherits no protection (middleware gates four page prefixes only, `middleware.ts:32-36`), so the next route added is exactly as exposed as the two that produced E-2 and E-4. The next Prisma table will be readable with the anon key because the RLS migration sets no default privileges. The next upload path will pass the prefix check because the check is bucket-wide, not owner-scoped. The next person who makes the bucket private in the Supabase dashboard will be undone by the next upload. The money sweep runs inside a public GET, so the next feature added to the sweep also runs for anonymous visitors. There are zero tests, so none of the Day-1 guards has a regression detector; the 3-day-versus-7-day mistake is the kind of thing a single test would have caught before it reached production.
 
-### Overall: C+ — real, good-faith progress on the cheap items; the expensive items untouched; one claim wrong in a way that is breaking job posting today; nothing has a test.
+### Overall: C+ - real, good-faith progress on the cheap items; the expensive items untouched; one claim wrong in a way that is breaking job posting today; nothing has a test.
 
 ## Consolidated findings, ranked (root-cause grouped)
 

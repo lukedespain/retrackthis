@@ -1,9 +1,9 @@
 import Link from "next/link";
 
-/** Exact Figma exports — never redraw. */
+/** Exact Figma exports - never redraw. */
 export const LOGO_MARK_LIGHT = "/brand/retrackthis-icon-light-512.png";
 export const LOGO_MARK_DARK = "/brand/retrackthis-icon-dark-512.png";
-/** @deprecated use LOGO_MARK_LIGHT — kept for spinner/email default */
+/** @deprecated use LOGO_MARK_LIGHT - kept for spinner/email default */
 export const LOGO_MARK_SRC = LOGO_MARK_LIGHT;
 
 export function RetrackMark({ className = "h-7 w-7" }: { className?: string }) {

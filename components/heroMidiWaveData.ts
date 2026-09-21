@@ -41,7 +41,7 @@ function hash01(i: number, seed: number) {
 
 /**
  * Build a denser DAW-style peak train: irregular transients, quieter gaps,
- * slight phrase shape — not a smooth sine blob.
+ * slight phrase shape - not a smooth sine blob.
  */
 function makeWavePeaks(
   seed: number,

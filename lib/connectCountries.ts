@@ -52,7 +52,7 @@ export const PAYOUT_COUNTRIES: PayoutCountry[] = [
   { code: "ZA", label: "South Africa" },
 ].sort((a, b) => a.label.localeCompare(b.label));
 
-/** @deprecated Use STRIPE_CONNECT_COUNTRIES — kept for older imports. */
+/** @deprecated Use STRIPE_CONNECT_COUNTRIES - kept for older imports. */
 export const CONNECT_COUNTRIES = STRIPE_CONNECT_COUNTRIES;
 
 export type AltPayoutProvider = "paypal" | "wise";

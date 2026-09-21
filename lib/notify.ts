@@ -184,7 +184,7 @@ export async function notifyCreatorTakeSubmitted(opts: {
   );
 }
 
-/** Deadline ended — producer has 48h to award (or we auto-award / refund). */
+/** Deadline ended - producer has 48h to award (or we auto-award / refund). */
 export async function notifyProducerDeadlineReached(opts: {
   creatorId: string;
   jobId: string;
@@ -202,7 +202,7 @@ export async function notifyProducerDeadlineReached(opts: {
 
   const favoriteLine = opts.musicianName
     ? `You currently have <strong>${escape(opts.musicianName)}</strong> favorited.`
-    : `You don’t have a favorite yet — pick one before the window ends, or the job cancels and you’re refunded.`;
+    : `You don’t have a favorite yet - pick one before the window ends, or the job cancels and you’re refunded.`;
 
   await safeSend(`deadline-finalize ${opts.jobId}`, () =>
     sendEmail({

@@ -311,7 +311,7 @@ export function categoryForInstrument(instrument: string): InstrumentCategory {
 
   const ranked = [...INSTRUMENT_CATALOG].sort((a, b) => longestAlias(b) - longestAlias(a));
   for (const category of ranked) {
-    // Only match when the instrument text contains the alias — not the reverse,
+    // Only match when the instrument text contains the alias - not the reverse,
     // or "violin" would hit Erhu via alias "chinese violin".
     if (category.aliases.some((alias) => alias.length >= 3 && key.includes(alias))) {
       return category;
@@ -345,7 +345,7 @@ export function jobMatchesAlertFilters(
   instrumentId: string | null | undefined,
   selectedIds: string[]
 ): boolean {
-  // Never broadcast to "all" — alerts only match concrete profile instruments.
+  // Never broadcast to "all" - alerts only match concrete profile instruments.
   const concrete = selectedIds
     .map(normalizeInstrumentId)
     .filter((id) => id && id !== ALL_INSTRUMENTS_ID);

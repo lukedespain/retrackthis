@@ -21,7 +21,7 @@ export function JobCheckoutEmbed({
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           {amountLabel
             ? `Secure checkout for ${amountLabel}. Card, Apple Pay, Link, and other methods Stripe enables.`
-            : "Secure checkout — card, Apple Pay, Link, and other methods Stripe enables."}{" "}
+            : "Secure checkout - card, Apple Pay, Link, and other methods Stripe enables."}{" "}
           The musician is paid when you pick a winner.
         </p>
       </div>
@@ -38,7 +38,7 @@ export function JobCheckoutEmbed({
               onClick={onSaveForLater}
               className="text-left text-sm font-medium text-accent underline-offset-2 hover:underline"
             >
-              Save as draft — finish payment later
+              Save as draft - finish payment later
             </button>
           ) : (
             <span />

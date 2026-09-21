@@ -221,7 +221,7 @@ export function JobPricingFields({
           value={deadlineText}
           disabled={disabled}
           required
-          info="How long musicians can submit. The gig stays open for this many days — you can’t award or close it early. After the deadline you’ll have 48 hours to pick a winner."
+          info="How long musicians can submit. The gig stays open for this many days - you can’t award or close it early. After the deadline you’ll have 48 hours to pick a winner."
           onChange={(e) => {
             const next = e.target.value.replace(/[^\d]/g, "");
             onDeadlineTextChange(next);

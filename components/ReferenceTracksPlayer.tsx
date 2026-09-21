@@ -3,7 +3,7 @@
 import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
 
 /**
- * Job reference tracks — waveform Part / Bed / Both (no nudge).
+ * Job reference tracks - waveform Part / Bed / Both (no nudge).
  */
 export function ReferenceTracksPlayer({
   partSrc,

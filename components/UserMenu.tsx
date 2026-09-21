@@ -27,7 +27,7 @@ export function UserMenu({
   onSignOut,
 }: {
   name: string;
-  /** @deprecated unused — payouts live in Settings */
+  /** @deprecated unused - payouts live in Settings */
   hasStripeAccount?: boolean;
   isAdmin?: boolean;
   onSignOut: () => void;

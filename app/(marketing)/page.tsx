@@ -17,7 +17,7 @@ const PRODUCER_STEPS = [
   {
     number: "03",
     title: "Select a submission",
-    body: "Favorite takes while the gig is open. After the deadline, award a musician within 48 hours — they get paid from the funds you already paid. Cancel anytime before awarding for a full refund.",
+    body: "Favorite takes while the gig is open. After the deadline, award a musician within 48 hours - they get paid from the funds you already paid. Cancel anytime before awarding for a full refund.",
   },
 ] as const;
 

@@ -42,7 +42,7 @@ const ACTIVE_DURATION_ANALYZE_MAX_BYTES = 40 * 1024 * 1024;
 
 /**
  * Estimate how long audio is actually sounding (skips silence gaps in full-length stems).
- * Returns null when decode is too heavy or analysis fails — callers should not guess full file length.
+ * Returns null when decode is too heavy or analysis fails - callers should not guess full file length.
  */
 async function readActiveAudioDurationSeconds(file: File): Promise<number | null> {
   if (!file.type.startsWith("audio/") && !/\.(wav|mp3|m4a|aac|flac|ogg)$/i.test(file.name)) {

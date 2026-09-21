@@ -1,4 +1,4 @@
-# Luke — manual checklist (before / with charge-upfront deploy)
+# Luke - manual checklist (before / with charge-upfront deploy)
 
 Things that cannot be done from code alone. Check these off before calling the release done.
 
@@ -25,24 +25,24 @@ Things that cannot be done from code alone. Check these off before calling the r
 - [ ] Deploy only after code PR is ready (do **not** promote a preview that has `DEMO_MODE=true`)
 - [ ] `STRIPE_SECRET_KEY` / `DATABASE_URL` scoped so Preview cannot use live money + prod DB (Damian D-22)
 - [ ] Production `DATABASE_URL` is Supabase **pooler** `:6543` with `pgbouncer=true` (+ `connection_limit` as needed)
-- [x] Add `CRON_SECRET` (Production env; set 2026-09-20). Luke: 16-character password he will remember — value is **not** stored in this repo. Vercel Cron calls `GET /api/cron/jobs` daily at 18:00 UTC (Hobby plan limit; was hourly). Auth: `Authorization: Bearer $CRON_SECRET`.
-- [x] Apply Prisma migration `20260921040000_award_cancel_claims` **with** the charge-upfront deploy (`AWARDING` / `CANCELLING` + `moneyClaimedAt`) — applied 2026-09-21 before push
-- [x] Deploy charge-upfront (commit on main; Vercel production) — keyboard gate cleared first
+- [x] Add `CRON_SECRET` (Production env; set 2026-09-20). Luke: 16-character password he will remember - value is **not** stored in this repo. Vercel Cron calls `GET /api/cron/jobs` daily at 18:00 UTC (Hobby plan limit; was hourly). Auth: `Authorization: Bearer $CRON_SECRET`.
+- [x] Apply Prisma migration `20260921040000_award_cancel_claims` **with** the charge-upfront deploy (`AWARDING` / `CANCELLING` + `moneyClaimedAt`) - applied 2026-09-21 before push
+- [x] Deploy charge-upfront (commit on main; Vercel production) - keyboard gate cleared first
 
 ## Supabase
 
 - [ ] Auth → Email: **Confirm email** ON; **Secure email change** ON (Damian D-19)
 - [ ] Google provider redirect allowlist includes `https://retrackthis.com/auth/callback`
-- [ ] RLS migration applied (already done once — re-verify Advisors empty for “RLS Disabled in Public”)
+- [ ] RLS migration applied (already done once - re-verify Advisors empty for “RLS Disabled in Public”)
 - [ ] Decide: turn **Data API** off if unused (Damian D-17)
-- [ ] Storage `audio-files`: note it is still public until private-bucket epic (Damian D-11) — product risk, not a Checkout blocker
+- [ ] Storage `audio-files`: note it is still public until private-bucket epic (Damian D-11) - product risk, not a Checkout blocker
 
 ## Product / founder decisions (write down before go-live)
 
 - [ ] **Cancel / refund policy:** full refund forever vs free-cancel window then fee absorbed / passed through (Stripe keeps ~2.9%+$0.30 on refunds)
 - [ ] **Preview policy:** full-length MP3 OK vs clipped/watermarked (Damian: worst combo = charge upfront + free full masters + free cancel)
-- [ ] **Price ceiling:** currently $500 server-side — confirm number
-- [x] Keyboard gig: Bryon awarded Aaron’s take — deploy gate cleared 2026-09-21
+- [ ] **Price ceiling:** currently $500 server-side - confirm number
+- [x] Keyboard gig: Bryon awarded Aaron’s take - deploy gate cleared 2026-09-21
 - [x] Atomic award claim (D-3) shipped with this deploy
 
 ## Smoke test after deploy (test mode first if possible)

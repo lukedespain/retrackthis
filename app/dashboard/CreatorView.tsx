@@ -377,7 +377,7 @@ function CreatorJobCard({
       {job.status === "PENDING_PAYMENT" && !checkoutClientSecret && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
-            <p className="font-medium">Draft — payment not finished</p>
+            <p className="font-medium">Draft - payment not finished</p>
             <p className="mt-1">
               This gig stays private until you pay. Finish payment when you’re ready, edit the
               draft, or discard it.
@@ -419,7 +419,7 @@ function CreatorJobCard({
       {job.status === "OPEN" && hasProvisionalWinner && !isPastDeadline && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="info">
-            Favorite saved — only one submission at a time (favoriting another replaces this one,
+            Favorite saved - only one submission at a time (favoriting another replaces this one,
             including all its takes). Submissions stay open until the deadline. After it ends you’ll
             have 48 hours to <span className="font-medium">Award</span> a musician; we’ll auto-award
             your current favorite if you don’t.
@@ -430,7 +430,7 @@ function CreatorJobCard({
       {isPastDeadline && !hasProvisionalWinner && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
-            Deadline ended — submissions are closed. You have 48 hours to award a musician. If you
+            Deadline ended - submissions are closed. You have 48 hours to award a musician. If you
             don’t pick anyone, the job cancels automatically and you’re refunded.
           </Alert>
         </div>
@@ -439,7 +439,7 @@ function CreatorJobCard({
       {isPastDeadline && hasProvisionalWinner && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
-            Deadline ended — submissions are closed. Award your favorite (or switch first) within 48
+            Deadline ended - submissions are closed. Award your favorite (or switch first) within 48
             hours. Left alone, we’ll auto-award your current favorite.
           </Alert>
         </div>
@@ -790,7 +790,7 @@ function TakeCard({
                 <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
                   Favorites are one submission at a time (all takes in that submission). Favoriting
                   another replaces the previous one so auto-award after the deadline stays clean.
-                  Jobs can’t close early — musicians keep the full window.
+                  Jobs can’t close early - musicians keep the full window.
                 </p>
               </>
             )}

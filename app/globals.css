@@ -12,7 +12,7 @@
     --line: #f3f4f6;
     --line-strong: #e5e7eb;
     --fade: #ffffff;
-    /* Brand purple — light mode (from logo mark) */
+    /* Brand purple - light mode (from logo mark) */
     --accent: #5f4aff;
     --accent-hover: #4f3ce6;
     --accent-soft: #eeecff;
@@ -79,7 +79,7 @@
     }
   }
 
-  /* Exact Figma mark — slow spin only (no redraw / no color remapping) */
+  /* Exact Figma mark - slow spin only (no redraw / no color remapping) */
   .retrack-loader-spin {
     animation: retrack-loader-spin 2.4s linear infinite;
   }

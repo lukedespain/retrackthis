@@ -218,7 +218,7 @@ function isV2Unavailable(err: unknown): boolean {
 /**
  * Create a Connect Express account for receiving transfers (musician payouts).
  * Prefers Accounts v2 (current marketplace path); falls back to v1 Express.
- * `country` is ISO 3166-1 alpha-2 (e.g. US, CL) — locked at create time by Stripe.
+ * `country` is ISO 3166-1 alpha-2 (e.g. US, CL) - locked at create time by Stripe.
  */
 export async function createConnectAccount(opts: {
   userId: string;

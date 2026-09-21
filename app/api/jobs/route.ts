@@ -242,60 +242,9 @@ export async function POST(req: NextRequest) {
 
 // GET /api/jobs - list open jobs for musicians to browse.
 // Pass ?mine=true for the signed-in creator's jobs (all statuses).
-// Pass ?past=1 for recent AWARDED jobs with the winning take only (browse showcase).
 //
-// Money sweeps (finalize, refund, reminders) run from /api/cron/jobs — not here.
+// Money sweeps (finalize, refund, reminders) run from /api/cron/jobs - not here.
 export async function GET(req: NextRequest) {
-  const past = req.nextUrl.searchParams.get("past") === "1";
-  if (past) {
-    const awarded = await db.job.findMany({
-      where: { status: "AWARDED" },
-      orderBy: { createdAt: "desc" },
-      take: 24,
-      include: {
-        _count: { select: { takes: true } },
-        takes: {
-          where: { isWinner: true },
-          take: 1,
-          include: {
-            musician: { select: { id: true, name: true } },
-            files: { orderBy: { sortOrder: "asc" } },
-          },
-        },
-      },
-    });
-
-    return NextResponse.json(
-      awarded.map(({ _count, takes, ...job }) => {
-        const win = takes[0] ?? null;
-        return {
-          ...job,
-          takeCount: _count.takes,
-          hasSelectedWinner: Boolean(win),
-          paymentStatus: null,
-          winningTake: win
-            ? {
-                id: win.id,
-                note: win.note,
-                // Previews only on the public board — masters stay for the producer/winner path.
-                audioFileUrl: win.files.find((f) => f.kind === "AUDIO")?.previewUrl ?? win.audioFileUrl,
-                musician: win.musician,
-                files: win.files.map((f) => ({
-                  id: f.id,
-                  kind: f.kind,
-                  label: f.label,
-                  fileUrl: f.kind === "MIDI" ? f.fileUrl : null,
-                  previewUrl: f.previewUrl ?? null,
-                  sortOrder: f.sortOrder,
-                  audioIndex: f.audioIndex,
-                })),
-              }
-            : null,
-        };
-      })
-    );
-  }
-
   let where: { creatorId: string } | { status: "OPEN" } = { status: "OPEN" };
   if (req.nextUrl.searchParams.get("mine") === "true") {
     const creatorId = await getSessionUserId();

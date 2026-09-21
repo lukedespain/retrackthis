@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>RetrackThis: charge-upfront payment update — plan for Damian review</title>
+<title>RetrackThis: charge-upfront payment update - plan for Damian review</title>
 <style>
   @page { size: Letter; margin: 0.65in 0.7in; }
   * { box-sizing: border-box; }
@@ -37,7 +37,7 @@
 </head>
 <body>
 
-<h1>Charge-upfront payment update — plan for review</h1>
+<h1>Charge-upfront payment update - plan for review</h1>
 <p class="sub">
   RetrackThis &nbsp;·&nbsp; September 21, 2026 &nbsp;·&nbsp; For Damian (security / money review)<br>
   Status: <strong>implemented locally, not committed / not deployed</strong> &nbsp;·&nbsp;
@@ -54,7 +54,7 @@
 <p>You already agreed charge-at-post is the right product move <em>if</em> refunds, claim locks, cron sweeps, price ceiling, and idempotency ride along. This plan is that “same change,” not Checkout bolted on alone.</p>
 
 <div class="box warn">
-<p><strong>Live constraint right now.</strong> Aaron submitted a keyboard take; Luke reviewed — usable. Bryon still needs to <strong>End gig &amp; pay</strong> on production (old path) before the hold expires. Deploying Checkout before that award is an unnecessary risk on that one job.</p>
+<p><strong>Live constraint right now.</strong> Aaron submitted a keyboard take; Luke reviewed - usable. Bryon still needs to <strong>End gig &amp; pay</strong> on production (old path) before the hold expires. Deploying Checkout before that award is an unnecessary risk on that one job.</p>
 </div>
 
 <h2>2. New job money lifecycle</h2>
@@ -94,7 +94,7 @@ checkout.session.expired → abandon unpaid PENDING_PAYMENT draft</div>
       <td>D-1</td>
       <td>Price ceiling; later Radar / disputes / payout delay</td>
       <td><span class="tag done">CEILING</span> <span class="tag defer">REST DEFER</span></td>
-      <td>Server <code>MAX_PRICE_CENTS</code> ($500) + integer check on POST. No dispute handler / delay / Radar yet — founder track.</td>
+      <td>Server <code>MAX_PRICE_CENTS</code> ($500) + integer check on POST. No dispute handler / delay / Radar yet - founder track.</td>
     </tr>
     <tr>
       <td>D-2</td>
@@ -170,23 +170,23 @@ checkout.session.expired → abandon unpaid PENDING_PAYMENT draft</div>
     <tr><td><code>AWARDED</code> / <code>CANCELLED</code></td><td>Terminal.</td></tr>
   </tbody>
 </table>
-<p>New column: <code>Job.moneyClaimedAt</code> (nullable) for crash-resume on AWARDING. Migration file: <code>prisma/migrations/20260921040000_award_cancel_claims/</code> — <strong>not applied to prod yet</strong>. Earlier <code>PENDING_PAYMENT</code> / Checkout columns migration was already applied to Supabase.</p>
+<p>New column: <code>Job.moneyClaimedAt</code> (nullable) for crash-resume on AWARDING. Migration file: <code>prisma/migrations/20260921040000_award_cancel_claims/</code> - <strong>not applied to prod yet</strong>. Earlier <code>PENDING_PAYMENT</code> / Checkout columns migration was already applied to Supabase.</p>
 
 <h2>5. Primary files to review (uncommitted)</h2>
 <ol class="files">
-  <li><code>lib/jobActions.ts</code> — claim, finalize, cancel/refund, <code>runJobMaintenance</code></li>
-  <li><code>lib/checkoutActivate.ts</code> — activate on paid session; abandon expired unpaid</li>
-  <li><code>app/api/jobs/route.ts</code> — POST Checkout; GET list only (no money sweeps)</li>
-  <li><code>app/api/cron/jobs/route.ts</code> — Bearer <code>CRON_SECRET</code>; hourly</li>
-  <li><code>app/api/webhooks/stripe/route.ts</code> — <code>checkout.session.completed</code> / <code>expired</code></li>
+  <li><code>lib/jobActions.ts</code> - claim, finalize, cancel/refund, <code>runJobMaintenance</code></li>
+  <li><code>lib/checkoutActivate.ts</code> - activate on paid session; abandon expired unpaid</li>
+  <li><code>app/api/jobs/route.ts</code> - POST Checkout; GET list only (no money sweeps)</li>
+  <li><code>app/api/cron/jobs/route.ts</code> - Bearer <code>CRON_SECRET</code>; hourly</li>
+  <li><code>app/api/webhooks/stripe/route.ts</code> - <code>checkout.session.completed</code> / <code>expired</code></li>
   <li><code>app/api/jobs/[jobId]/confirm-checkout/route.ts</code> · <code>resume-checkout/route.ts</code></li>
   <li><code>app/api/jobs/[jobId]/select-winner/route.ts</code> · <code>cancel/route.ts</code></li>
   <li><code>prisma/schema.prisma</code> + migration <code>20260921040000_…</code></li>
-  <li><code>vercel.json</code> — cron schedule <code>0 * * * *</code></li>
+  <li><code>vercel.json</code> - cron schedule <code>0 * * * *</code></li>
   <li>UI: <code>PostJobForm.tsx</code>, <code>CreatorView.tsx</code>, FAQ/terms copy</li>
 </ol>
 
-<h2>6. Manual prep (Luke) — already done vs still needed</h2>
+<h2>6. Manual prep (Luke) - already done vs still needed</h2>
 <div class="box good">
 <p><strong>Done 2026-09-20 (no code deploy):</strong></p>
 <ul>
@@ -198,13 +198,13 @@ checkout.session.expired → abandon unpaid PENDING_PAYMENT draft</div>
 <p><strong>With deploy (after keyboard award):</strong></p>
 <ul>
   <li>Apply migration <code>20260921040000_award_cancel_claims</code> (additive enum values + column).</li>
-  <li>Push / deploy payment branch — first deploy that uses <code>CRON_SECRET</code> and Checkout handlers.</li>
+  <li>Push / deploy payment branch - first deploy that uses <code>CRON_SECRET</code> and Checkout handlers.</li>
   <li>Smoke: post→Checkout→OPEN; abandon draft; cancel→refund; award→transfer only (no second capture).</li>
   <li>Confirm webhook deliveries for <code>checkout.session.completed</code> return 200.</li>
 </ul>
 </div>
 
-<h2>7. Explicitly deferred (founder track — not pretending closed)</h2>
+<h2>7. Explicitly deferred (founder track - not pretending closed)</h2>
 <ul>
   <li>Dispute / Radar / first-payout delay (rest of D-1)</li>
   <li>Payout ledger (D-8 full)</li>
@@ -226,7 +226,7 @@ checkout.session.expired → abandon unpaid PENDING_PAYMENT draft</div>
 
 <h2>8. Proposed ship sequence</h2>
 <ol>
-  <li>Bryon: End gig &amp; pay on keyboard (legacy hold) — <strong>blocker for deploy</strong>.</li>
+  <li>Bryon: End gig &amp; pay on keyboard (legacy hold) - <strong>blocker for deploy</strong>.</li>
   <li>Damian: review this plan (+ optional skim of files in §5).</li>
   <li>Luke: commit payment update on a branch / PR (or main with agreed window).</li>
   <li>Apply claim migration → deploy → smoke §6.</li>

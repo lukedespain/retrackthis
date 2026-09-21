@@ -4,7 +4,7 @@ import { cancelJobAndRefund } from "@/lib/jobActions";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
 // POST /api/jobs/:jobId/cancel
-// Creator cancels their own OPEN or unpaid draft job — refunds a captured
+// Creator cancels their own OPEN or unpaid draft job - refunds a captured
 // charge, or expires unpaid Checkout, and marks the job CANCELLED.
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const creatorId = await getSessionUserId();

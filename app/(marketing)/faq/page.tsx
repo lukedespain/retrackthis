@@ -87,7 +87,7 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          Pick how many days submissions stay open. The job can’t be awarded early — musicians get
+          Pick how many days submissions stay open. The job can’t be awarded early - musicians get
           that full window. After the deadline, you have about 48 hours to award a musician (you can
           favorite takes beforehand). If you have a favorite and don’t award in time, we auto-award
           that favorite. If you have no favorite, the job cancels and you’re refunded.
@@ -106,7 +106,7 @@ const faqItems: FaqItem[] = [
         <p>
           While the job is open, use <span className="font-medium">Favorite</span> on one
           submission (all takes in that submission). Favoriting another replaces the previous
-          favorite — only one can be saved at a time, so auto-award stays clean.
+          favorite - only one can be saved at a time, so auto-award stays clean.
         </p>
         <p>
           After the deadline, submissions close and you have 48 hours to{" "}

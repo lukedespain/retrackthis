@@ -34,7 +34,7 @@ function formatOffset(ms: number) {
 
 /**
  * Dual-track Web Audio waveform player (Part/Take + Bed + Both).
- * Optional manual nudge — only enable for producer take review.
+ * Optional manual nudge - only enable for producer take review.
  */
 export function WaveformMixPlayer({
   partSrc,
@@ -57,7 +57,7 @@ export function WaveformMixPlayer({
   className?: string;
   partTabLabel?: string;
   headingLabel?: string;
-  /** Producer take review only — musicians / reference stay locked to the file. */
+  /** Producer take review only - musicians / reference stay locked to the file. */
   showNudge?: boolean;
   initialMode?: ModeId;
 }) {

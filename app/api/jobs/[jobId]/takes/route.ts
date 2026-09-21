@@ -144,7 +144,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   }
   if (new Date(job.deadline).getTime() <= Date.now()) {
     return NextResponse.json(
-      { error: "Submissions are closed — this job’s deadline has passed" },
+      { error: "Submissions are closed - this job’s deadline has passed" },
       { status: 400 }
     );
   }

@@ -1,8 +1,13 @@
 # Retrack This brand assets
 
 **Type:** Inter (sitewide)  
-**Mark:** Exact Figma PNGs only for product UI — **do not recreate for the site**. Resize only.  
+**Mark / logos:** Exact Figma PNGs - **do not recreate for the site**. Resize only.  
 SVGs in this folder are reference / export helpers and may lag the PNG masters.
+
+## Site header
+
+The live site keeps **icon mark + “Retrack This” text** (`components/Logo.tsx`) so the mark can
+hover-scale. Do **not** replace the header with the full horizontal wordmark PNG.
 
 ## Accent colors
 
@@ -18,21 +23,19 @@ Tailwind `accent` / `accent-hover` / `accent-muted` map to those variables.
 
 | File | Notes |
 |------|--------|
-| `logo-icon-light.png` | Light mark on white plate (keep for OAuth / email / apple touch) |
-| `logo-icon-dark.png` | Dark mark on black plate |
-| `logo-icon-light-transparent.png` | Derived: plate removed — **use in header / spinner** |
-| `logo-icon-dark-transparent.png` | Derived: plate removed — **use in dark header / spinner** |
-| `logo-wordmark-light.png` / `logo-wordmark-dark.png` | Full wordmarks |
-| `logo-icon-*-no-bg-raw.png` | Raw Figma “no background” drops (light export was incomplete; we derive real transparency from the plate versions) |
+| `logo-icon-light.png` / `logo-icon-dark.png` | Mark on white / black plate |
+| `logo-icon-light-transparent.png` / `logo-icon-dark-transparent.png` | **Main marks** - plate removed (header, favicon, spinner) |
+| `logo-wordmark-light.png` / `logo-wordmark-dark.png` | Full lockup on white / black plate |
+| `logo-wordmark-light-transparent.png` / `logo-wordmark-dark-transparent.png` | **Main wordmarks** - plate removed (brand kit / GitHub) |
+| `*-no-bg-raw.png` | Raw Figma “no background” drops (often incomplete; we derive transparency from plate versions) |
 
 ## Public (`public/brand/`)
 
-| Mode | Files |
+| Kind | Files |
 |------|--------|
-| Light (transparent) | `retrackthis-icon-light-*.png`, `retrackthis-favicon-*.png` |
-| Dark (transparent) | `retrackthis-icon-dark-*.png` |
-| Light on white (opaque) | apple-touch, google-oauth, email, workspace only |
-| With plate archives | `retrackthis-icon-light-on-white-512.png`, `retrackthis-icon-dark-on-black-512.png` |
-| Wordmarks | `retrackthis-logo-wordmark-light.png`, `retrackthis-logo-wordmark-dark.png` |
+| Icons (transparent) | `retrackthis-icon-light-*.png`, `retrackthis-icon-dark-*.png`, `retrackthis-favicon-*.png` |
+| Wordmarks (transparent) | `retrackthis-logo-wordmark-light.png`, `retrackthis-logo-wordmark-dark.png` (+ height variants `-40`/`-56`/`-80`/`-112`) |
+| Plate archives | `*-on-white.png`, `*-on-black.png` |
+| Opaque required | apple-touch, google-oauth, email, workspace |
 
-Favicons use **transparent** marks (no white/black plate). Apple/Google/email keep an opaque white plate because those surfaces require it.
+Favicons and header marks stay transparent (no white/black plate). Apple/Google/email keep an opaque white plate because those surfaces require it.

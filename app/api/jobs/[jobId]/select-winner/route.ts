@@ -67,7 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         success: true,
         provisional: true,
         message:
-          "Favorite saved (one submission at a time — this replaces any previous favorite). After the deadline you’ll have 48 hours to award; we’ll auto-award this favorite if you don’t.",
+          "Favorite saved (one submission at a time - this replaces any previous favorite). After the deadline you’ll have 48 hours to award; we’ll auto-award this favorite if you don’t.",
       });
     }
 

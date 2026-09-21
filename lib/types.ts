@@ -24,14 +24,6 @@ export type Job = {
   hasSelectedWinner?: boolean;
   /** Payment row status when included (creator/admin lists). */
   paymentStatus?: string | null;
-  /** Winning submission on past awarded jobs (browse showcase). */
-  winningTake?: {
-    id: string;
-    note: string | null;
-    audioFileUrl: string;
-    musician: { id: string; name: string };
-    files?: TakeFileRecord[];
-  } | null;
 };
 
 export type Take = {

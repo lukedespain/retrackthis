@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 
-// GET /api/admin/creators/:userId/jobs — producer job list for admin preview
+// GET /api/admin/creators/:userId/jobs - producer job list for admin preview
 export async function GET(
   _req: Request,
   { params }: { params: { userId: string } }

@@ -153,7 +153,7 @@ export function TakeSubmissionFiles({
   defaultExpanded?: boolean;
   /** Job BPM so metronome / click works on takes the same as the reference. */
   bpm?: number | null;
-  /** Job bed track — enables Take / Bed / Both waveform player. */
+  /** Job bed track - enables Take / Bed / Both waveform player. */
   backingSrc?: string | null;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);

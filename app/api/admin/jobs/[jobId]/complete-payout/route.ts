@@ -16,7 +16,7 @@ function chargeIdFromIntent(pi: Stripe.PaymentIntent): string | null {
  * Admin: finish musician payout for an AWARDED job whose payment is captured
  * but not yet transferred (e.g. Payment Link recovery).
  * POST /api/admin/jobs/:jobId/complete-payout
- * Body optional: { markOnly?: boolean } — skip Stripe transfer (already done in Dashboard).
+ * Body optional: { markOnly?: boolean } - skip Stripe transfer (already done in Dashboard).
  */
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const { error } = await requireAdmin();
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     const raw = err instanceof Error ? err.message : "Transfer failed";
     const hint =
       /No such payment_intent/i.test(raw)
-        ? `${raw} — Vercel’s STRIPE_SECRET_KEY likely doesn’t match the mode this charge was made in (Live vs Test). Transfer $90 in the Live Stripe Dashboard to the musician Connect account, then use “Mark transferred”.`
+        ? `${raw} - Vercel’s STRIPE_SECRET_KEY likely doesn’t match the mode this charge was made in (Live vs Test). Transfer $90 in the Live Stripe Dashboard to the musician Connect account, then use “Mark transferred”.`
         : raw;
     return NextResponse.json({ error: hint }, { status: 502 });
   }

@@ -23,8 +23,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { jobId: str
     return NextResponse.json({ error: "Not authorized to edit this job" }, { status: 403 });
   }
 
-  if (job.status !== "OPEN") {
-    return NextResponse.json({ error: "Only open jobs can be edited" }, { status: 400 });
+  if (job.status !== "OPEN" && job.status !== "PENDING_PAYMENT") {
+    return NextResponse.json({ error: "Only open or draft jobs can be edited" }, { status: 400 });
   }
 
   const body = await req.json();

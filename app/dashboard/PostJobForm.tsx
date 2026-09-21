@@ -44,6 +44,12 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
       <JobCheckoutEmbed
         clientSecret={clientSecret}
         amountLabel={checkoutAmountCents != null ? formatCents(checkoutAmountCents) : undefined}
+        onSaveForLater={() => {
+          setClientSecret(null);
+          setCheckoutAmountCents(null);
+          setPendingJobId(null);
+          onPosted();
+        }}
         onDiscard={discardDraft}
       />
     );

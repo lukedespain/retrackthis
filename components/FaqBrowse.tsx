@@ -72,10 +72,6 @@ export function FaqBrowse({ items }: { items: FaqItem[] }) {
               >
                 {selected && (
                   <div className="space-y-3 px-3 pb-5 pt-1 text-sm leading-relaxed text-gray-600 sm:px-4 sm:pl-12 sm:text-[15px]">
-                    <p className="font-mono text-xs text-accent">{formatIndex(index)}</p>
-                    <h2 className="text-xl font-semibold tracking-tight text-gray-900">
-                      {item.question}
-                    </h2>
                     <div className="space-y-3 [&_a]:font-medium [&_a]:text-accent [&_a]:underline-offset-2 hover:[&_a]:underline [&_p]:leading-relaxed">
                       {item.answer}
                     </div>

@@ -14,7 +14,7 @@ const statusStyles: Record<string, string> = {
 
 const statusLabels: Record<string, string> = {
   OPEN: "Open",
-  PENDING_PAYMENT: "Awaiting payment",
+  PENDING_PAYMENT: "Draft",
   AWARDING: "Paying",
   CANCELLING: "Cancelling",
   AWARDED: "Awarded",

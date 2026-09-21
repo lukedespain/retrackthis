@@ -87,17 +87,12 @@ export async function activateJobFromCheckout(session: Stripe.Checkout.Session) 
   }
 }
 
-/** Checkout expired or was abandoned — close the unpaid draft. No charge occurred. */
+/**
+ * Checkout expired without pay. Keep the job as Draft (PENDING_PAYMENT) so the
+ * producer can finish later. Explicit "Discard draft" is what cancels it.
+ */
 export async function abandonUnpaidCheckout(session: Stripe.Checkout.Session) {
   const jobId = session.metadata?.jobId ?? session.client_reference_id;
   if (!jobId) return;
-
-  await db.job.updateMany({
-    where: { id: jobId, status: "PENDING_PAYMENT" },
-    data: { status: "CANCELLED" },
-  });
-  await db.payment.updateMany({
-    where: { jobId, status: "pending_checkout" },
-    data: { status: "cancelled" },
-  });
+  console.log("[checkout] session expired; draft kept", jobId, session.id);
 }

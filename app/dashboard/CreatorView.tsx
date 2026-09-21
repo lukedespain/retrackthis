@@ -155,6 +155,7 @@ function CreatorJobCard({
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [resumingCheckout, setResumingCheckout] = useState(false);
+  const [restoringDraft, setRestoringDraft] = useState(false);
   const [checkoutClientSecret, setCheckoutClientSecret] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const isPastDeadline = job.status === "OPEN" && new Date(job.deadline).getTime() < Date.now();
@@ -162,6 +163,11 @@ function CreatorJobCard({
   const flexibleTempo = job.status === "OPEN" && job.bpm == null;
   const [hasProvisionalWinner, setHasProvisionalWinner] = useState(!!job.hasSelectedWinner);
   const escrowHold = job.paymentStatus === "authorized";
+  const unpaidCancelled =
+    job.status === "CANCELLED" &&
+    (job.paymentStatus == null ||
+      job.paymentStatus === "pending_checkout" ||
+      job.paymentStatus === "cancelled");
 
   useEffect(() => {
     setHasProvisionalWinner(!!job.hasSelectedWinner);
@@ -184,6 +190,25 @@ function CreatorJobCard({
       setCancelError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setCancelling(false);
+    }
+  }
+
+  async function restoreDraft(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (readOnly) return;
+    setRestoringDraft(true);
+    setCancelError(null);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/restore-draft`, { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(body?.error ?? `Request failed (${res.status})`);
+      }
+      onChanged();
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setRestoringDraft(false);
     }
   }
 
@@ -255,22 +280,41 @@ function CreatorJobCard({
               <Button
                 size="sm"
                 onClick={resumeCheckout}
-                disabled={resumingCheckout || cancelling}
+                disabled={resumingCheckout || cancelling || editing}
                 className="w-full sm:w-auto"
               >
                 {resumingCheckout ? "Opening…" : "Finish payment"}
               </Button>
               <Button
+                variant="secondary"
+                size="sm"
+                onClick={startEdit}
+                disabled={resumingCheckout || cancelling}
+                className="w-full sm:w-auto"
+              >
+                {editing ? "Editing…" : "Edit draft"}
+              </Button>
+              <Button
                 variant="danger"
                 size="sm"
                 onClick={cancelJob}
-                disabled={cancelling || resumingCheckout}
+                disabled={cancelling || resumingCheckout || editing}
                 className="w-full sm:w-auto"
-                aria-label="Cancel unpaid draft"
+                aria-label="Discard unpaid draft"
               >
-                {cancelling ? "Cancelling…" : "Discard draft"}
+                {cancelling ? "Discarding…" : "Discard draft"}
               </Button>
             </>
+          )}
+          {unpaidCancelled && !readOnly && (
+            <Button
+              size="sm"
+              onClick={restoreDraft}
+              disabled={restoringDraft}
+              className="w-full sm:w-auto"
+            >
+              {restoringDraft ? "Restoring…" : "Restore as draft"}
+            </Button>
           )}
           {job.status === "OPEN" && !readOnly && (
             <>
@@ -323,6 +367,7 @@ function CreatorJobCard({
           <JobCheckoutEmbed
             clientSecret={checkoutClientSecret}
             amountLabel={formatCents(job.priceCents)}
+            onSaveForLater={() => setCheckoutClientSecret(null)}
             onDiscard={() => {
               setCheckoutClientSecret(null);
               void cancelJob();
@@ -333,10 +378,10 @@ function CreatorJobCard({
       {job.status === "PENDING_PAYMENT" && !checkoutClientSecret && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
-            <p className="font-medium">Payment not finished</p>
+            <p className="font-medium">Draft — payment not finished</p>
             <p className="mt-1">
-              This gig stays private until you complete checkout. Finish payment, or discard the
-              draft.
+              This gig stays private until you pay. Finish payment when you’re ready, edit the
+              draft, or discard it.
             </p>
           </Alert>
         </div>

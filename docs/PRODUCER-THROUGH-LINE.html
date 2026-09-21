@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Retrack This — producer through-line (current code)</title>
+<style>
+  @page { size: Letter; margin: 0.6in 0.7in; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 1.45; color: #1a1a1a; margin: 0; }
+  h1 { font-size: 17pt; margin: 0 0 4px; }
+  .sub { color: #555; margin: 0 0 14px; font-size: 9pt; }
+  h2 { font-size: 12pt; margin: 18px 0 8px; padding-bottom: 3px; border-bottom: 2px solid #1a1a1a; page-break-after: avoid; }
+  h3 { font-size: 10.5pt; margin: 12px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; }
+  .note { background: #f3f4f6; border-left: 4px solid #1a1a1a; padding: 8px 12px; margin: 0 0 12px; }
+  .box { border: 1px solid #d0d0d0; border-radius: 6px; padding: 10px 12px; margin: 0 0 10px; page-break-inside: avoid; }
+  .yes { border-left: 4px solid #2e7d32; }
+  .no { border-left: 4px solid #c62828; }
+  .maybe { border-left: 4px solid #b26a00; }
+  code { font-family: Menlo, Monaco, monospace; font-size: 8pt; background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 12px; font-size: 9pt; }
+  th, td { border: 1px solid #d0d0d0; padding: 5px 7px; vertical-align: top; text-align: left; }
+  th { background: #efefef; }
+  tr { page-break-inside: avoid; }
+  ul, ol { margin: 0 0 10px; padding-left: 18px; }
+  li { margin: 0 0 4px; }
+  .flow { font-family: Menlo, Monaco, monospace; font-size: 8pt; background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px 12px; white-space: pre-wrap; margin: 0 0 12px; page-break-inside: avoid; }
+  .edit { background: #fffde7; }
+  footer { margin-top: 16px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 8pt; color: #666; }
+  .tag { display: inline-block; font-size: 7.5pt; font-weight: 600; padding: 1px 5px; border-radius: 3px; background: #eee; }
+</style>
+</head>
+<body>
+
+<h1>Producer through-line — what happens today</h1>
+<p class="sub">
+  Retrack This · as of Sept 21, 2026 · charge-upfront Checkout live<br>
+  Editable working doc for founder / Damian meetings and the community update email.<br>
+  Yellow boxes = open product questions / gaps to discuss.
+</p>
+
+<div class="note">
+<strong>One-sentence version.</strong> Producer fills out a gig → pays the full amount at checkout → musicians submit for free → producer picks a take → “End gig &amp; pay” sends money to the musician (platform keeps ~10%). If nobody wins in time, or the producer cancels, the producer gets a refund.
+</div>
+
+<h2>1. Status pills (what the producer sees)</h2>
+<table>
+  <tr><th>Pill</th><th>Code status</th><th>Meaning</th></tr>
+  <tr><td><strong>Draft</strong></td><td><code>PENDING_PAYMENT</code></td><td>Saved gig, not paid yet. Private. Can edit, finish payment, or discard.</td></tr>
+  <tr><td><strong>Open</strong></td><td><code>OPEN</code></td><td>Paid and live. Musicians can submit. Producer can edit refs/title (not price), cancel+refund, pick takes.</td></tr>
+  <tr><td><strong>Paying</strong></td><td><code>AWARDING</code></td><td>Payout in progress (brief). Retry if stuck.</td></tr>
+  <tr><td><strong>Awarded</strong></td><td><code>AWARDED</code></td><td>Winner paid (or marked for manual PayPal/Wise). Masters unlock.</td></tr>
+  <tr><td><strong>Cancelled</strong></td><td><code>CANCELLED</code></td><td>Closed with no award. If money was taken → refunded. Unpaid discard can be restored as Draft.</td></tr>
+</table>
+
+<h2>2. Happy path (decision tree)</h2>
+<div class="flow">START: Producer clicks “Post a job”
+  │
+  ├─ Fill form (title, refs, instrument, price, deadline 1–7 days, optional invite)
+  │
+  ├─ “Post job &amp; pay” → creates Draft job + Stripe Embedded Checkout on the page
+  │     ├─ Pay succeeds
+  │     │     → webhook checkout.session.completed (or confirm-checkout fallback)
+  │     │     → Job = Open, payment = captured
+  │     │     → emails: matching musicians + optional invite
+  │     │
+  │     ├─ “Save as draft” / close checkout without paying
+  │     │     → stays Draft (private). Finish payment later.
+  │     │
+  │     └─ “Discard draft”
+  │           → Cancelled (no charge). Can Restore as draft if never paid.
+  │
+  └─ While Open:
+        Musicians submit takes (free; need payouts set up)
+        │
+        ├─ Producer “Choose this submission” (before deadline)
+        │     → provisional pick; job stays Open; can switch picks
+        │
+        ├─ Producer “End gig &amp; pay”
+        │     → claim AWARDING → transfer to musician (or manual payout) → Awarded
+        │     → winner email; masters unlock for winner
+        │
+        ├─ Producer “Cancel &amp; refund”
+        │     → refund Stripe charge → Cancelled; musicians notified
+        │
+        └─ Deadline hits
+              ├─ Has provisional pick?
+              │     → reminder email to producer
+              │     → after ~24h grace (cron): auto End gig &amp; pay that pick
+              │
+              └─ No pick?
+                    → after ~72h grace (cron): auto Cancel &amp; refund
+</div>
+
+<h2>3. What gets “pinged” (systems)</h2>
+<table>
+  <tr><th>Moment</th><th>Who / what</th></tr>
+  <tr><td>Post &amp; pay</td><td>Our API → Stripe Checkout → Stripe webhook → DB Open → Resend emails (new job / invites)</td></tr>
+  <tr><td>Submit take</td><td>Musician API → storage upload → email producer (if prefs on)</td></tr>
+  <tr><td>End gig &amp; pay</td><td>API claims job → Stripe transfer (Connect) or admin manual queue → emails winner</td></tr>
+  <tr><td>Cancel / refund</td><td>API → Stripe refund (or expire unpaid session) → email musicians</td></tr>
+  <tr><td>Daily cron (~noon MT)</td><td>Auto-finalize due picks · auto-refund no-winner past grace · 3-day-left reminders</td></tr>
+</table>
+
+<h2>4. Branch: cancel / refund / discard</h2>
+<div class="box yes">
+<strong>Discard draft (never paid).</strong> No Stripe charge. Job Cancelled. Producer can <em>Restore as draft</em> and try again. Nothing emailed to musicians (job was never public).
+</div>
+<div class="box yes">
+<strong>Cancel open job (already paid).</strong> Full refund via Stripe. Job Cancelled. Musicians who submitted get a cancelled email. Takes stay in DB but job is closed.
+</div>
+<div class="box maybe">
+<strong>Product cost note.</strong> Stripe keeps ~2.9%+$0.30 on refunds. Founders still need a written cancel/refund policy for the community email.
+</div>
+
+<h2>5. Branch: deadline with / without a pick</h2>
+<ul>
+  <li><strong>Pick saved, deadline passed:</strong> Producer gets “finalize soon” email. Cron auto-pays that pick after ~24h grace if they don’t click.</li>
+  <li><strong>No pick, deadline passed:</strong> ~72h grace to choose or cancel. Then cron refunds and cancels.</li>
+  <li><strong>Cron is daily</strong> on Hobby — cleanup may wait until the next daily run (not hourly). Clicks (End gig / Cancel) are instant.</li>
+</ul>
+
+<h2>6. Branch: award / payout</h2>
+<ul>
+  <li>Musician must have Stripe Connect ready <em>or</em> PayPal/Wise on file.</li>
+  <li>Platform fee ~10%; rest transfers to musician.</li>
+  <li>Alt payout → job Awarded, payment <code>pending_manual_payout</code> until admin pays by hand.</li>
+  <li>Self-award (same account as creator + musician) blocked.</li>
+</ul>
+
+<div class="box edit">
+<strong>Can producers extend the deadline?</strong> <strong>Not today.</strong> Edit job only changes title, description, reference tracks, and tempo — not price, not deadline. Extending deadline would be a product add (and needs a rule for “already past deadline”).
+</div>
+
+<div class="box edit">
+<strong>If they’re not happy with takes?</strong> Before award: Cancel &amp; refund (full). Or wait out deadline with no pick → auto refund. After Awarded: no self-serve “undo” — would be support/admin.
+</div>
+
+<h2>7. What musicians see</h2>
+<ul>
+  <li>Only <strong>Open</strong> jobs on the board (Drafts are invisible).</li>
+  <li>Submit free; one submission per job (up to 3 takes inside).</li>
+  <li>Paid only if awarded. Previews available while open; full masters after award for the winner.</li>
+</ul>
+
+<h2>8. Payment methods (Checkout)</h2>
+<p>Stripe Embedded Checkout shows whatever is enabled on the Stripe account: card, Link, Apple Pay, Cash App, Affirm, Klarna, bank, etc. Returning users who used Link before may land on Link first (cookies) — first-time users still get the full method list. Branding colors/logo: Stripe Dashboard → Settings → Branding.</p>
+
+<h2>9. Gaps / meeting agenda (edit freely)</h2>
+<ol class="edit">
+  <li>Deadline extend — add or not?</li>
+  <li>Cancel/refund fee policy (who eats Stripe’s cut)?</li>
+  <li>Preview policy (full MP3 vs clip) once charging up front.</li>
+  <li>Community email: thank early users; explain pay-upfront; no more 7-day card holds.</li>
+  <li>Musician email shared with producer on award (still TODO).</li>
+</ol>
+
+<footer>
+  Source of truth in code: <code>app/api/jobs/*</code>, <code>lib/jobActions.ts</code>, <code>lib/checkoutActivate.ts</code>, <code>app/api/cron/jobs</code>, <code>app/api/webhooks/stripe</code>.<br>
+  Companion: <code>docs/damian-2026-09-20/CHARGE-UPFRONT-PLAN.pdf</code>
+</footer>
+
+</body>
+</html>

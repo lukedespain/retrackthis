@@ -13,10 +13,11 @@ function chargeIdFromIntent(pi: Stripe.PaymentIntent): string | null {
 }
 
 /**
- * Admin: finish musician payout for an AWARDED job whose payment is captured
- * but not yet transferred (e.g. Payment Link recovery).
+ * Admin: finish musician payout for an AWARDED job.
+ * - Stripe Connect: transfer (or markOnly if already done in Dashboard)
+ * - PayPal/Wise (pending_manual_payout): markOnly after you paid outside Stripe
  * POST /api/admin/jobs/:jobId/complete-payout
- * Body optional: { markOnly?: boolean } - skip Stripe transfer (already done in Dashboard).
+ * Body optional: { markOnly?: boolean }
  */
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const { error } = await requireAdmin();
@@ -46,9 +47,43 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   if (job.payment.status === "transferred") {
     return NextResponse.json({ success: true, alreadyTransferred: true });
   }
-  if (job.payment.status === "pending_manual_payout") {
-    return NextResponse.json({ success: true, alreadyManual: true });
+
+  const take = job.takes[0];
+  if (!take) {
+    return NextResponse.json({ error: "No winning take on this job" }, { status: 404 });
   }
+
+  const musician = take.musician;
+  const platformFeeCents =
+    job.payment.platformFeeCents ?? calcPlatformFeeCents(job.payment.amountCents);
+  const payoutCents = job.payment.amountCents - platformFeeCents;
+
+  if (job.payment.status === "pending_manual_payout") {
+    if (!markOnly) {
+      return NextResponse.json(
+        {
+          error: "This payout is PayPal/Wise. Send it outside Stripe, then use Mark paid.",
+          payout: "manual",
+          provider: musician.payoutProvider,
+          payoutEmail: musician.payoutEmail,
+          payoutAccountName: musician.payoutAccountName,
+          payoutCents,
+        },
+        { status: 400 }
+      );
+    }
+    await db.payment.update({
+      where: { id: job.payment.id },
+      data: { status: "transferred", platformFeeCents },
+    });
+    return NextResponse.json({
+      success: true,
+      payout: "manual_marked",
+      payoutCents,
+      platformFeeCents,
+    });
+  }
+
   if (job.payment.status !== "captured") {
     return NextResponse.json(
       { error: `Payment status is ${job.payment.status}; expected captured` },
@@ -56,14 +91,6 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     );
   }
 
-  const take = job.takes[0];
-  if (!take) {
-    return NextResponse.json({ error: "No winning take on this job" }, { status: 400 });
-  }
-
-  const musician = take.musician;
-  const platformFeeCents = calcPlatformFeeCents(job.payment.amountCents);
-  const payoutCents = job.payment.amountCents - platformFeeCents;
   if (payoutCents < 1) {
     return NextResponse.json({ error: "Payout too small after fee" }, { status: 400 });
   }
@@ -95,6 +122,9 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
       success: true,
       payout: "manual",
       provider: musician.payoutProvider,
+      payoutEmail: musician.payoutEmail,
+      payoutAccountName: musician.payoutAccountName,
+      payoutCents,
     });
   }
 
@@ -138,10 +168,9 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   } catch (err) {
     console.error("[admin complete-payout]", err);
     const raw = err instanceof Error ? err.message : "Transfer failed";
-    const hint =
-      /No such payment_intent/i.test(raw)
-        ? `${raw} - Vercel’s STRIPE_SECRET_KEY likely doesn’t match the mode this charge was made in (Live vs Test). Transfer $90 in the Live Stripe Dashboard to the musician Connect account, then use “Mark transferred”.`
-        : raw;
+    const hint = /No such payment_intent/i.test(raw)
+      ? `${raw} - Vercel’s STRIPE_SECRET_KEY likely doesn’t match the mode this charge was made in (Live vs Test). Transfer in the Live Stripe Dashboard to the musician Connect account, then use “Mark transferred”.`
+      : raw;
     return NextResponse.json({ error: hint }, { status: 502 });
   }
 }

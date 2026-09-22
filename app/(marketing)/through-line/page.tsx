@@ -134,7 +134,7 @@ function ProducerThroughLine() {
             },
             {
               pill: "Paying",
-              code: "AWARDING",
+              code: "PAYING",
               meaning: "Payout in progress (brief). Retry if stuck.",
             },
             {
@@ -183,8 +183,10 @@ function ProducerThroughLine() {
           submitted get a cancelled email.
         </Callout>
         <Callout tone="edit">
-          <strong>Product cost note.</strong> Stripe keeps ~2.9%+$0.30 on refunds. Founders still need
-          a written cancel/refund policy for the community email.
+          <strong>Product cost note.</strong> Stripe keeps ~2.9%+$0.30 on refunds. Lean proposal:
+          on cancel, refund the job amount minus Stripe&apos;s cut (no upfront cancel fee) so the
+          platform doesn&apos;t lose money on cancels. Still needs a one-line policy in Terms +
+          community email.
         </Callout>
         <ul className="list-disc space-y-1.5 pl-5">
           <li>
@@ -240,19 +242,15 @@ function MusicianThroughLine() {
           rows={[
             {
               pill: "Pending",
-              meaning: "Job still Open or in the post-deadline award window. Waiting.",
+              meaning: "Submitted and waiting. Stays Pending through the deadline and award window - favorites stay private to the producer.",
             },
             {
-              pill: "Picked",
-              meaning: "Producer favorited this submission. Not paid until the job is Awarded.",
-            },
-            {
-              pill: "Selected",
+              pill: "Awarded",
               meaning: "Won. Money moved (or queued for manual PayPal/Wise). Masters unlock.",
             },
             {
               pill: "Not selected",
-              meaning: "Job Awarded to someone else. No payout.",
+              meaning: "Job awarded to someone else. No payout.",
             },
             {
               pill: "Job cancelled",
@@ -261,7 +259,8 @@ function MusicianThroughLine() {
           ]}
         />
         <p className="text-xs text-gray-500">
-          Only Open jobs appear on the browse board. Drafts stay invisible.
+          Only Open jobs appear on the browse board. Drafts stay invisible. We never show Picked /
+          Favorite to musicians.
         </p>
       </Section>
 

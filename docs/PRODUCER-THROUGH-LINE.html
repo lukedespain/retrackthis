@@ -48,7 +48,7 @@
   <tr><th>Pill</th><th>Code status</th><th>Meaning</th></tr>
   <tr><td><strong>Draft</strong></td><td><code>PENDING_PAYMENT</code></td><td>Saved gig, not paid yet. Private. Can edit, finish payment, or discard.</td></tr>
   <tr><td><strong>Open</strong></td><td><code>OPEN</code></td><td>Paid and live. Musicians can submit. Producer can edit refs/title (not price), cancel+refund, pick takes.</td></tr>
-  <tr><td><strong>Paying</strong></td><td><code>AWARDING</code></td><td>Payout in progress (brief). Retry if stuck.</td></tr>
+  <tr><td><strong>Paying</strong></td><td><code>PAYING</code></td><td>Payout in progress (brief). Retry if stuck. (Internal DB status: <code>AWARDING</code>.)</td></tr>
   <tr><td><strong>Awarded</strong></td><td><code>AWARDED</code></td><td>Winner paid (or marked for manual PayPal/Wise). Masters unlock.</td></tr>
   <tr><td><strong>Cancelled</strong></td><td><code>CANCELLED</code></td><td>Closed with no award. If money was taken → refunded. Unpaid discard can be restored as Draft.</td></tr>
 </table>

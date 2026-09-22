@@ -19,6 +19,18 @@ export type AdminJobRow = Job & {
   missingBacking: boolean;
   flexibleTempo: boolean;
   takeCount?: number;
+  needsManualPayout?: boolean;
+  winnerPayout?: {
+    musicianName: string;
+    musicianEmail: string;
+    provider: string | null;
+    providerLabel: string;
+    payoutEmail: string | null;
+    payoutAccountName: string | null;
+    payoutLabel: string;
+    payoutCents: number;
+    hasStripe: boolean;
+  } | null;
 };
 
 export function AdminJobsPanel({
@@ -29,22 +41,30 @@ export function AdminJobsPanel({
   onChanged: () => void;
 }) {
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"OPEN" | "all">("OPEN");
+  const [statusFilter, setStatusFilter] = useState<"OPEN" | "manual" | "all">("OPEN");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [listeningId, setListeningId] = useState<string | null>(null);
   const [payoutJobId, setPayoutJobId] = useState<string | null>(null);
   const [payoutError, setPayoutError] = useState<string | null>(null);
 
+  const manualCount = useMemo(
+    () => jobs.filter((j) => j.needsManualPayout).length,
+    [jobs]
+  );
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return jobs.filter((job) => {
-      if (statusFilter !== "all" && job.status !== statusFilter) return false;
+      if (statusFilter === "OPEN" && job.status !== "OPEN") return false;
+      if (statusFilter === "manual" && !job.needsManualPayout) return false;
       if (!q) return true;
       return (
         job.title.toLowerCase().includes(q) ||
         job.creator.name.toLowerCase().includes(q) ||
         job.creator.email.toLowerCase().includes(q) ||
-        job.instrument.toLowerCase().includes(q)
+        job.instrument.toLowerCase().includes(q) ||
+        (job.winnerPayout?.payoutEmail ?? "").toLowerCase().includes(q) ||
+        (job.winnerPayout?.musicianName ?? "").toLowerCase().includes(q)
       );
     });
   }, [jobs, query, statusFilter]);
@@ -75,16 +95,29 @@ export function AdminJobsPanel({
     <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Edit open jobs on behalf of creators, and listen to submitted takes. Price and payment stay
-          locked.
+          Edit open jobs, listen to takes, and clear PayPal/Wise payouts waiting on founders.
+          {manualCount > 0 ? (
+            <>
+              {" "}
+              <button
+                type="button"
+                className="font-medium text-amber-800 underline underline-offset-2 dark:text-amber-300"
+                onClick={() => setStatusFilter("manual")}
+              >
+                {manualCount} waiting on manual payout
+              </button>
+              .
+            </>
+          ) : null}
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as "OPEN" | "all")}
+            onChange={(e) => setStatusFilter(e.target.value as "OPEN" | "manual" | "all")}
             className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white"
           >
             <option value="OPEN">Open only</option>
+            <option value="manual">Needs manual payout</option>
             <option value="all">All statuses</option>
           </select>
           <input
@@ -194,6 +227,18 @@ export function AdminJobsPanel({
                       <div className="text-[11px] text-gray-400">
                         {job.paymentStatus ? `Pay: ${job.paymentStatus}` : "Locked"}
                       </div>
+                      {job.needsManualPayout && job.winnerPayout && (
+                        <div className="mt-1.5 max-w-[14rem] rounded-lg bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                          <div className="font-medium">
+                            Send {job.winnerPayout.payoutLabel} via{" "}
+                            {job.winnerPayout.providerLabel}
+                          </div>
+                          <div className="mt-0.5 truncate">
+                            {job.winnerPayout.payoutAccountName ?? job.winnerPayout.musicianName}
+                          </div>
+                          <div className="truncate">{job.winnerPayout.payoutEmail}</div>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
@@ -240,6 +285,20 @@ export function AdminJobsPanel({
                           >
                             {editingId === job.id ? "Editing…" : "Edit"}
                           </Button>
+                        ) : job.needsManualPayout ? (
+                          <div className="flex flex-col items-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => completePayout(job.id, true)}
+                              disabled={payoutJobId === job.id}
+                            >
+                              {payoutJobId === job.id ? "Saving…" : "Mark paid"}
+                            </Button>
+                            <p className="max-w-[11rem] text-right text-[10px] leading-snug text-gray-400">
+                              After you send via PayPal/Wise
+                            </p>
+                          </div>
                         ) : job.status === "AWARDED" && job.paymentStatus === "captured" ? (
                           <div className="flex flex-col items-end gap-1">
                             <Button

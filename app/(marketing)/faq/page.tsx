@@ -259,6 +259,55 @@ const faqItems: FaqItem[] = [
     ),
   },
   {
+    id: "producer-path",
+    question: "What’s the path if I’m posting a job?",
+    answer: (
+      <>
+        <ol className="list-decimal space-y-2 pl-5">
+          <li>Write the brief, upload Part (and Bed if you have it), set a price and deadline.</li>
+          <li>Pay up front on checkout. Until you pay, the gig stays a private draft.</li>
+          <li>While it’s open, musicians submit. Favorite the take you like best - you can switch.</li>
+          <li>
+            After the deadline, you have 48 hours to award. If you already favorited someone and
+            don’t click, we’ll award that favorite. If you have no favorite, the job cancels and
+            you’re refunded.
+          </li>
+          <li>You can cancel an open job anytime before award for a refund.</li>
+        </ol>
+        <p>
+          Jobs don’t close early - musicians get the full window you posted. More detail in the{" "}
+          <Link href="/faq#payment">payment</Link> and{" "}
+          <Link href="/faq#deadlines-cancel">deadlines</Link> answers above.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "musician-path",
+    question: "What’s the path if I’m submitting takes?",
+    answer: (
+      <>
+        <ol className="list-decimal space-y-2 pl-5">
+          <li>Create an account and set up payouts in Settings (Stripe, or PayPal / Wise).</li>
+          <li>Browse open jobs. Listen with Part / Bed / Both, then submit for free.</li>
+          <li>One submission per job (up to three takes). You can replace files while the job is open.</li>
+          <li>
+            Your submission stays <span className="font-medium">Pending</span> until the job ends.
+          </li>
+          <li>
+            If you win, it shows <span className="font-medium">Awarded</span>, you get paid, and
+            masters unlock. If someone else wins: Not selected. If the gig is cancelled: Job
+            cancelled.
+          </li>
+        </ol>
+        <p>
+          Submitting never costs money. Only awarded takes are paid. See{" "}
+          <Link href="/faq#payouts">payouts</Link> for how money reaches you.
+        </p>
+      </>
+    ),
+  },
+  {
     id: "contact",
     question: "Still have a question?",
     answer: (

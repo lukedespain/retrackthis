@@ -14,10 +14,11 @@ import { Spinner } from "@/components/ui/Spinner";
 import type { MyTake } from "@/lib/types";
 
 function statusFor(take: MyTake): string {
-  if (take.isWinner && take.job.status === "AWARDED") return "SELECTED";
-  if (take.isWinner) return "PICKED";
-  if (take.job.status === "AWARDED") return "NOT SELECTED";
   if (take.job.status === "CANCELLED") return "JOB CANCELLED";
+  if (take.job.status === "AWARDED") {
+    return take.isWinner ? "AWARDED" : "NOT SELECTED";
+  }
+  // Stay Pending while the job is open or in the award window - never surface a private favorite.
   return "PENDING";
 }
 

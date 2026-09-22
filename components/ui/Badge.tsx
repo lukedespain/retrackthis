@@ -21,7 +21,7 @@ const statusLabels: Record<string, string> = {
   CANCELLED: "Cancelled",
   PENDING: "Pending",
   PICKED: "Favorite",
-  SELECTED: "Favorite",
+  SELECTED: "Awarded",
   "NOT SELECTED": "Not selected",
   "JOB CANCELLED": "Job cancelled",
 };

@@ -56,7 +56,7 @@
 <h2>2. Happy path (decision tree)</h2>
 <div class="flow">START: Producer clicks “Post a job”
   │
-  ├─ Fill form (title, refs, instrument, price, deadline 1–7 days, optional invite)
+  ├─ Fill form (title, refs, instrument, price, deadline days open, optional invite)
   │
   ├─ “Post job &amp; pay” → creates Draft job + Stripe Embedded Checkout on the page
   │     ├─ Pay succeeds
@@ -95,7 +95,7 @@
   <tr><th>Moment</th><th>Who / what</th></tr>
   <tr><td>Post &amp; pay</td><td>Our API → Stripe Checkout → Stripe webhook → DB Open → Resend emails (new job / invites)</td></tr>
   <tr><td>Submit take</td><td>Musician API → storage upload → email producer (if prefs on)</td></tr>
-  <tr><td>End gig &amp; pay</td><td>API claims job → Stripe transfer (Connect) or admin manual queue → emails winner</td></tr>
+  <tr><td>Award after deadline</td><td>API claims job → Stripe transfer (Connect) or admin manual queue → emails winner</td></tr>
   <tr><td>Cancel / refund</td><td>API → Stripe refund (or expire unpaid session) → email musicians</td></tr>
   <tr><td>Daily cron (~noon MT)</td><td>Auto-finalize due picks · auto-refund no-winner past grace · 3-day-left reminders</td></tr>
 </table>
@@ -157,7 +157,7 @@
 
 <footer>
   Source of truth in code: <code>app/api/jobs/*</code>, <code>lib/jobActions.ts</code>, <code>lib/checkoutActivate.ts</code>, <code>app/api/cron/jobs</code>, <code>app/api/webhooks/stripe</code>.<br>
-  Companion: <code>docs/damian-2026-09-20/CHARGE-UPFRONT-PLAN.pdf</code>
+  Companion: <code>docs/MUSICIAN-THROUGH-LINE.html</code> · on-site: <code>/through-line</code>
 </footer>
 
 </body>

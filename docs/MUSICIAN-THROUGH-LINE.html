@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Retrack This - musician through-line (current code)</title>
+<style>
+  @page { size: Letter; margin: 0.6in 0.7in; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 1.45; color: #1a1a1a; margin: 0; }
+  h1 { font-size: 17pt; margin: 0 0 4px; }
+  .sub { color: #555; margin: 0 0 14px; font-size: 9pt; }
+  h2 { font-size: 12pt; margin: 18px 0 8px; padding-bottom: 3px; border-bottom: 2px solid #1a1a1a; page-break-after: avoid; }
+  h3 { font-size: 10.5pt; margin: 12px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; }
+  .note { background: #f3f4f6; border-left: 4px solid #1a1a1a; padding: 8px 12px; margin: 0 0 12px; }
+  .box { border: 1px solid #d0d0d0; border-radius: 6px; padding: 10px 12px; margin: 0 0 10px; page-break-inside: avoid; }
+  .yes { border-left: 4px solid #2e7d32; }
+  .no { border-left: 4px solid #c62828; }
+  .maybe { border-left: 4px solid #b26a00; }
+  code { font-family: Menlo, Monaco, monospace; font-size: 8pt; background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 12px; font-size: 9pt; }
+  th, td { border: 1px solid #d0d0d0; padding: 5px 7px; vertical-align: top; text-align: left; }
+  th { background: #efefef; }
+  tr { page-break-inside: avoid; }
+  ul, ol { margin: 0 0 10px; padding-left: 18px; }
+  li { margin: 0 0 4px; }
+  .flow { font-family: Menlo, Monaco, monospace; font-size: 8pt; background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px 12px; white-space: pre-wrap; margin: 0 0 12px; page-break-inside: avoid; }
+  .edit { background: #fffde7; }
+  footer { margin-top: 16px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 8pt; color: #666; }
+</style>
+</head>
+<body>
+
+<h1>Musician through-line - what happens today</h1>
+<p class="sub">
+  Retrack This · as of Sept 21, 2026 · charge-upfront Checkout live<br>
+  Companion to the producer through-line. For founder / Damian meetings and community email.<br>
+  Yellow boxes = open product questions / gaps to discuss.
+</p>
+
+<div class="note">
+<strong>One-sentence version.</strong> Musician signs up → sets payouts in Settings → browses Open jobs → listens Part/Bed/Both → submits takes for free (need payouts ready) → waits through the deadline → if awarded, gets paid and masters unlock; if not, nothing is owed and they can keep browsing.
+</div>
+
+<h2>1. Status pills (what the musician sees on My submissions)</h2>
+<table>
+  <tr><th>Pill</th><th>Meaning</th></tr>
+  <tr><td><strong>Pending</strong></td><td>Job still Open (or in the post-deadline award window). Submission is in; waiting.</td></tr>
+  <tr><td><strong>Picked</strong></td><td>Producer favorited this submission before/at award time. Not paid yet until the job is Awarded.</td></tr>
+  <tr><td><strong>Selected</strong></td><td>Job Awarded and this take won. Money moved (or queued for manual PayPal/Wise). Masters unlock.</td></tr>
+  <tr><td><strong>Not selected</strong></td><td>Job Awarded to someone else. No payout for this submission.</td></tr>
+  <tr><td><strong>Job cancelled</strong></td><td>Producer cancelled / refunded, or cron refunded with no winner. No payout.</td></tr>
+</table>
+<p>Open jobs on the browse board are the only gigs musicians can see and join. Drafts and unpaid jobs stay invisible.</p>
+
+<h2>2. Happy path (decision tree)</h2>
+<div class="flow">START: Musician creates an account (email or Google)
+  │
+  ├─ Settings → Payouts
+  │     ├─ Stripe Connect (supported countries) → bank onboarding in a new tab
+  │     └─ PayPal / Wise (alt) where Connect isn’t available or preferred
+  │           → required before submit is allowed
+  │
+  ├─ Instruments (optional but helps matching emails)
+  │
+  ├─ Browse Open jobs
+  │     ├─ Listen: Part / Bed / Both
+  │     ├─ Read brief, price, deadline, tempo
+  │     │
+  │     └─ Submit (free)
+  │           ├─ Up to 3 audio takes + optional notes / MIDI
+  │           ├─ One submission per job (can replace files while Open)
+  │           └─ Producer may get a “new take” email (if prefs on)
+  │
+  └─ After deadline (submissions locked):
+        ├─ Producer awards (or cron auto-awards a favorite)
+        │     → Selected → Stripe transfer or pending_manual_payout
+        │     → “You were selected” email → masters download
+        │
+        ├─ Someone else wins
+        │     → Not selected (no pay)
+        │
+        └─ No favorite / cancel / refund path
+              → Job cancelled email if they had submitted
+</div>
+
+<h2>3. What gets “pinged” (systems)</h2>
+<table>
+  <tr><th>Moment</th><th>Who / what</th></tr>
+  <tr><td>New Open job matches instrument</td><td>Resend → musician email (prefs on)</td></tr>
+  <tr><td>Invite to a gig</td><td>Resend → invited musician</td></tr>
+  <tr><td>Submit / replace take</td><td>API → storage (+ preview transcode) → optional email to producer</td></tr>
+  <tr><td>Awarded</td><td>API → Stripe Connect transfer <em>or</em> admin manual queue → email winner</td></tr>
+  <tr><td>Job cancelled</td><td>Email musicians who submitted</td></tr>
+  <tr><td>3 days left</td><td>Reminder email to matching musicians (cron)</td></tr>
+</table>
+
+<h2>4. Branch: cannot submit yet</h2>
+<div class="box no">
+<strong>Payouts not ready.</strong> Submit is blocked until Stripe Connect is ready or PayPal/Wise is on file. Settings → Payouts; Stripe opens in a new tab.
+</div>
+<div class="box maybe">
+<strong>Wrong instrument / closed job.</strong> Only Open jobs accept takes. After the deadline, the form is gone even if the producer still has 48h to award.
+</div>
+
+<h2>5. Branch: while waiting</h2>
+<ul>
+  <li><strong>Replace files</strong> while the job is still Open (before deadline / before award).</li>
+  <li><strong>Favorite is private</strong> to the producer - musicians don’t see who is favorited.</li>
+  <li><strong>No early close.</strong> Jobs run the full deadline so the submit window is honest.</li>
+  <li>Previews stream as lighter MP3s; full WAV masters unlock only for the winner after Awarded.</li>
+</ul>
+
+<h2>6. Branch: payout</h2>
+<ul>
+  <li>Platform fee ~10% comes out of the job price; musician gets the rest.</li>
+  <li>Stripe Express: automatic transfer when Connect is ready.</li>
+  <li>PayPal / Wise: job shows Awarded, payment <code>pending_manual_payout</code> until a founder pays by hand.</li>
+  <li>Self-award (same account posting and winning) is blocked.</li>
+</ul>
+
+<div class="box edit">
+<strong>Musician email on award shared with producer?</strong> Still TODO - producers don’t automatically get the winner’s contact email in-product yet.
+</div>
+
+<div class="box edit">
+<strong>If the musician isn’t happy after winning?</strong> No self-serve reverse. Support / admin only. License to the producer kicks in on award (see Terms).
+</div>
+
+<h2>7. What producers do that musicians feel</h2>
+<ul>
+  <li>Pay up front - so the gig is real money when it goes Open.</li>
+  <li>Favorite (one at a time) until deadline; Award only after deadline (or cron).</li>
+  <li>Cancel &amp; refund anytime before award → job cancelled for submitters.</li>
+</ul>
+
+<h2>8. Gaps / meeting agenda (edit freely)</h2>
+<ol class="edit">
+  <li>Musician contact shared with producer on award.</li>
+  <li>Clearer “you’re still waiting / deadline passed” copy on My submissions.</li>
+  <li>Alt payout ledger / mark-paid for founders (Damian D-8).</li>
+  <li>Community email: how musicians get paid under pay-upfront.</li>
+</ol>
+
+<footer>
+  Source of truth in code: <code>app/dashboard/MySubmissions.tsx</code>, <code>app/api/jobs/[jobId]/takes</code>,
+  <code>lib/musicianPayouts.ts</code>, <code>lib/jobActions.ts</code>, <code>lib/notify.ts</code>.<br>
+  Companion: <code>docs/PRODUCER-THROUGH-LINE.html</code> · on-site: <code>/through-line</code>
+</footer>
+
+</body>
+</html>

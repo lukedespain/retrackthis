@@ -33,7 +33,7 @@ export async function sendEmail({
   const from = process.env.RESEND_FROM?.trim() || "Retrack This <hello@retrackthis.com>";
   const replyTo = process.env.RESEND_REPLY_TO?.trim() || "hello@retrackthis.com";
   const settingsUrl = `${appBaseUrl()}/settings`;
-  const logoUrl = `${appBaseUrl()}/brand/retrackthis-email-64.png`;
+  const logoUrl = `${appBaseUrl()}/brand/retrackthis-email-64.png?v=20260923`;
   const fontStack =
     "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
 
@@ -63,7 +63,7 @@ export async function sendEmail({
   <body style="margin:0;padding:0;background:#f7f7f8;font-family:${fontStack};color:#111827;">
     <div style="max-width:560px;margin:0 auto;padding:32px 20px;font-family:${fontStack};">
       <p style="margin:0 0 24px;">
-        <img src="${escapeAttr(logoUrl)}" width="32" height="32" alt="Retrack This" style="display:block;border:0;" />
+        <img src="${escapeAttr(logoUrl)}" width="32" height="32" alt="Retrack This" style="display:block;border:0;border-radius:8px;" />
       </p>
       <div style="background:#ffffff;border-radius:16px;padding:28px 24px;box-shadow:0 1px 2px rgba(16,24,40,0.04);font-family:${fontStack};">
         <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;font-weight:600;font-family:${fontStack};">${escapeHtml(heading)}</h1>

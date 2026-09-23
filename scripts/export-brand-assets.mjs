@@ -9,14 +9,11 @@ const outDir = join(brandDir, "png");
 const publicDir = join(root, "public", "brand");
 const appDir = join(root, "app");
 
-/** Square icon on white from main mark SVG (purple center). */
-async function renderIcon(size) {
-  const svg = await readFile(join(brandDir, "logo-mark.svg"));
-  // Pad mark in square with ~14% white margin to match Hazel export feel
-  const pad = Math.round(size * 0.14);
-  const inner = size - pad * 2;
-  const mark = await sharp(svg)
-    .resize(inner, inner, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+/** Square icon: mark on full white (no rounded plate / black corner pixels). */
+async function renderIconOnWhite(size) {
+  const markPath = join(brandDir, "source", "logo-icon-light-transparent.png");
+  const mark = await sharp(markPath)
+    .resize(size, size, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();
   return sharp({
@@ -27,9 +24,14 @@ async function renderIcon(size) {
       background: "#FFFFFF",
     },
   })
-    .composite([{ input: mark, left: pad, top: pad }])
+    .composite([{ input: mark, left: 0, top: 0 }])
     .png()
     .toBuffer();
+}
+
+/** @deprecated SVG path - prefer renderIconOnWhite from Figma transparent PNG */
+async function renderIcon(size) {
+  return renderIconOnWhite(size);
 }
 
 const wordmarkExports = [

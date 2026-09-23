@@ -115,6 +115,8 @@ function AdminPageInner() {
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [adminJobs, setAdminJobs] = useState<AdminJobRow[] | null>(null);
   const [jobsReloadToken, setJobsReloadToken] = useState(0);
+  const [communityEmailBusy, setCommunityEmailBusy] = useState(false);
+  const [communityEmailMsg, setCommunityEmailMsg] = useState<string | null>(null);
   const [instruments, setInstruments] = useState<{
     covered: InstrumentRow[];
     needed: InstrumentRow[];
@@ -294,6 +296,21 @@ function AdminPageInner() {
 
   if (!profile) return null;
 
+  async function sendCommunityUpdateTest() {
+    setCommunityEmailBusy(true);
+    setCommunityEmailMsg(null);
+    try {
+      const res = await fetch("/api/admin/emails/community-update-test", { method: "POST" });
+      const body = (await res.json().catch(() => ({}))) as { error?: string; to?: string };
+      if (!res.ok) throw new Error(body.error || `Send failed (${res.status})`);
+      setCommunityEmailMsg(`Sent to ${body.to ?? "music@lukedespain.com"}`);
+    } catch (err) {
+      setCommunityEmailMsg(err instanceof Error ? err.message : "Send failed");
+    } finally {
+      setCommunityEmailBusy(false);
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <SiteHeader />
@@ -310,16 +327,29 @@ function AdminPageInner() {
               Members, jobs, instrument coverage, and income.
             </p>
           </div>
-          <SegmentedControl
-            value={tab}
-            onChange={changeTab}
-            options={[
-              { value: "members", label: "Members" },
-              { value: "jobs", label: "Jobs" },
-              { value: "instruments", label: "Instruments" },
-              { value: "income", label: "Income" },
-            ]}
-          />
+          <div className="flex flex-col items-stretch gap-2 sm:items-end">
+            <SegmentedControl
+              value={tab}
+              onChange={changeTab}
+              options={[
+                { value: "members", label: "Members" },
+                { value: "jobs", label: "Jobs" },
+                { value: "instruments", label: "Instruments" },
+                { value: "income", label: "Income" },
+              ]}
+            />
+            <button
+              type="button"
+              onClick={() => void sendCommunityUpdateTest()}
+              disabled={communityEmailBusy}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-left text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              {communityEmailBusy ? "Sending…" : "Send community update test → music@"}
+            </button>
+            {communityEmailMsg && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">{communityEmailMsg}</p>
+            )}
+          </div>
         </div>
 
         {error && (

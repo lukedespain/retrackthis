@@ -12,6 +12,11 @@ function formatIndex(i: number) {
   return String(i + 1).padStart(2, "0");
 }
 
+function hashFaqId() {
+  if (typeof window === "undefined") return "";
+  return window.location.hash.replace(/^#/, "");
+}
+
 export function FaqBrowse({ items }: { items: FaqItem[] }) {
   const baseId = useId();
   const [activeId, setActiveId] = useState(items[0]?.id ?? "");
@@ -21,11 +26,42 @@ export function FaqBrowse({ items }: { items: FaqItem[] }) {
   );
   const active = items[activeIndex] ?? items[0];
 
+  function selectItem(id: string, syncHash = true) {
+    if (!items.some((item) => item.id === id)) return;
+    setActiveId(id);
+    if (syncHash && typeof window !== "undefined") {
+      const next = `#${id}`;
+      if (window.location.hash !== next) {
+        window.history.replaceState(null, "", next);
+      }
+    }
+  }
+
   useEffect(() => {
     if (!items.some((item) => item.id === activeId) && items[0]) {
       setActiveId(items[0].id);
     }
   }, [items, activeId]);
+
+  // Open the FAQ matching #hash (from in-page links or shared URLs).
+  useEffect(() => {
+    function applyHash() {
+      const id = hashFaqId();
+      if (!id) return;
+      if (!items.some((item) => item.id === id)) return;
+      setActiveId(id);
+      requestAnimationFrame(() => {
+        document.getElementById(`${baseId}-button-${id}`)?.scrollIntoView({
+          block: "nearest",
+          behavior: "smooth",
+        });
+      });
+    }
+
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+  }, [items, baseId]);
 
   if (!active) return null;
 
@@ -44,7 +80,7 @@ export function FaqBrowse({ items }: { items: FaqItem[] }) {
                 type="button"
                 aria-expanded={selected}
                 aria-controls={panelId}
-                onClick={() => setActiveId(item.id)}
+                onClick={() => selectItem(item.id)}
                 className={`group flex w-full items-start gap-4 px-3 py-4 text-left transition-colors duration-150 sm:px-4 sm:py-5 ${
                   selected
                     ? "rounded-xl ring-1 ring-accent text-gray-900"

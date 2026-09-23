@@ -114,7 +114,7 @@ export const INSTRUMENT_GROUPS: InstrumentGroup[] = [
     items: [
       {
         id: "vocal-male",
-        label: "Male",
+        label: "Male vocal",
         emoji: "🎤",
         aliases: [
           "male",
@@ -131,7 +131,7 @@ export const INSTRUMENT_GROUPS: InstrumentGroup[] = [
       },
       {
         id: "vocal-female",
-        label: "Female",
+        label: "Female vocal",
         emoji: "🎤",
         aliases: [
           "female",

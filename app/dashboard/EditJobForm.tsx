@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { WaveformPlayer } from "@/components/WaveformPlayer";
 import { FileUpload } from "@/components/FileUpload";
+import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -217,7 +217,6 @@ export function EditJobForm({
               Kept
             </span>
           </div>
-          <WaveformPlayer src={demoFileUrl} label="Part to retrack" allowDownload />
           <FileUpload
             key={`demo-${uploadKey}`}
             label="Replace this track"
@@ -260,7 +259,6 @@ export function EditJobForm({
           </div>
           {backingFileUrl ? (
             <>
-              <WaveformPlayer src={backingFileUrl} label="Background" allowDownload />
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
@@ -302,6 +300,20 @@ export function EditJobForm({
             />
           )}
         </div>
+
+        {demoFileUrl && (
+          <div className="space-y-2 rounded-xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Listen</p>
+            <p className="text-xs text-gray-500">
+              Part / Bed / Both - same player musicians get on the job.
+            </p>
+            <ReferenceTracksPlayer
+              partSrc={demoFileUrl}
+              backingSrc={backingFileUrl}
+              allowDownload
+            />
+          </div>
+        )}
       </div>
 
       {error && <Alert variant="error">{error}</Alert>}

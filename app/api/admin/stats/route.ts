@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
         platformFeeCents: true,
         status: true,
         createdAt: true,
+        job: { select: { status: true } },
       },
     }),
     db.job.count({ where: createdFilter ? { createdAt: createdFilter } : undefined }),
@@ -67,7 +68,9 @@ export async function GET(req: NextRequest) {
     db.user.count({ where: createdFilter ? { createdAt: createdFilter } : undefined }),
   ]);
 
-  let escrowAuthorizedCents = 0;
+  // Money on the platform for jobs still open (not yet awarded / paid out).
+  let fundsHeldCents = 0;
+  // Awarded volume (paid out or waiting on manual PayPal/Wise) - not open jobs.
   let volumeCapturedCents = 0;
   let platformFeeEarnedCents = 0;
   let cancelledCents = 0;
@@ -75,17 +78,32 @@ export async function GET(req: NextRequest) {
   let transferredCents = 0;
 
   for (const p of payments) {
-    if (p.status === "authorized") escrowAuthorizedCents += p.amountCents;
-    if (p.status === "captured" || p.status === "transferred") {
+    const jobStatus = p.job.status;
+    const openish = jobStatus === "OPEN" || jobStatus === "AWARDING";
+
+    if (p.status === "captured" && openish) {
+      fundsHeldCents += p.amountCents;
+    }
+    // Legacy manual-capture holds still open
+    if (p.status === "authorized" && openish) {
+      fundsHeldCents += p.amountCents;
+    }
+
+    if (p.status === "transferred" || p.status === "pending_manual_payout") {
       volumeCapturedCents += p.amountCents;
       platformFeeEarnedCents += p.platformFeeCents;
     }
+    // Awarded but Stripe transfer not finished yet (rare captured+AWARDED)
+    if (p.status === "captured" && jobStatus === "AWARDED") {
+      volumeCapturedCents += p.amountCents;
+      platformFeeEarnedCents += p.platformFeeCents;
+    }
+
     if (p.status === "transferred") transferredCents += p.amountCents;
-    if (p.status === "cancelled") cancelledCents += p.amountCents;
+    if (p.status === "cancelled" || p.status === "refunded") cancelledCents += p.amountCents;
     if (p.status === "failed") failedCents += p.amountCents;
   }
 
-  // Simple day buckets for a sparkline-friendly series (GMV authorized+captured+transferred)
   const dayMs = 24 * 60 * 60 * 1000;
   const seriesStart = since ?? (payments.length
     ? new Date(Math.min(...payments.map((p) => p.createdAt.getTime())))
@@ -102,7 +120,11 @@ export async function GET(req: NextRequest) {
   }
   const dayIndex = new Map(byDay.map((d, i) => [d.date, i]));
   for (const p of payments) {
-    if (p.status === "cancelled" || p.status === "failed") continue;
+    if (p.status === "cancelled" || p.status === "refunded" || p.status === "failed") continue;
+    // Chart = settled awarded volume only (not open holds)
+    if (p.status !== "transferred" && p.status !== "pending_manual_payout") {
+      if (!(p.status === "captured" && p.job.status === "AWARDED")) continue;
+    }
     const key = p.createdAt.toISOString().slice(0, 10);
     const idx = dayIndex.get(key);
     if (idx == null) continue;
@@ -115,7 +137,9 @@ export async function GET(req: NextRequest) {
     period,
     since: since?.toISOString() ?? null,
     income: {
-      escrowAuthorizedCents,
+      fundsHeldCents,
+      // Keep old key for a moment so a stale client doesn't blank - prefer fundsHeldCents
+      escrowAuthorizedCents: fundsHeldCents,
       volumeCapturedCents,
       platformFeeEarnedCents,
       transferredCents,

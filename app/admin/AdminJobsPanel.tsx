@@ -46,6 +46,8 @@ export function AdminJobsPanel({
   const [listeningId, setListeningId] = useState<string | null>(null);
   const [payoutJobId, setPayoutJobId] = useState<string | null>(null);
   const [payoutError, setPayoutError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const manualCount = useMemo(
     () => jobs.filter((j) => j.needsManualPayout).length,
@@ -91,6 +93,27 @@ export function AdminJobsPanel({
     }
   }
 
+  async function purgeJob(job: AdminJobRow) {
+    const ok = window.confirm(
+      `Permanently delete “${job.title}” and its payment/takes from the database?\n\nThis does not refund Stripe. Use only for test junk you already cancelled/refunded.`
+    );
+    if (!ok) return;
+    setDeletingId(job.id);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/admin/jobs/${job.id}`, { method: "DELETE" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? `Delete failed (${res.status})`);
+      if (editingId === job.id) setEditingId(null);
+      if (listeningId === job.id) setListeningId(null);
+      onChanged();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -132,6 +155,9 @@ export function AdminJobsPanel({
 
       {payoutError && (
         <p className="text-sm text-red-600 dark:text-red-400">{payoutError}</p>
+      )}
+      {deleteError && (
+        <p className="text-sm text-red-600 dark:text-red-400">{deleteError}</p>
       )}
 
       {editingJob && editingJob.status === "OPEN" && (
@@ -321,6 +347,14 @@ export function AdminJobsPanel({
                         ) : (
                           <span className="self-center text-xs text-gray-400">Closed</span>
                         )}
+                        <button
+                          type="button"
+                          className="text-[11px] text-red-600/80 underline-offset-2 hover:text-red-700 hover:underline disabled:opacity-50"
+                          disabled={deletingId === job.id}
+                          onClick={() => void purgeJob(job)}
+                        >
+                          {deletingId === job.id ? "Deleting…" : "Delete"}
+                        </button>
                       </div>
                     </td>
                   </tr>

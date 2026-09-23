@@ -54,5 +54,6 @@ export type MyTake = {
     durationSeconds?: number | null;
     bpm: number | null;
     status: "PENDING_PAYMENT" | "OPEN" | "AWARDING" | "CANCELLING" | "AWARDED" | "CANCELLED";
+    backingFileUrl?: string | null;
   };
 };

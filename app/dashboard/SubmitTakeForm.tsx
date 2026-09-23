@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { FileUpload } from "@/components/FileUpload";
+import { TakeMixPlayer } from "@/components/TakeMixPlayer";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
+import { WaveformPlayer } from "@/components/WaveformPlayer";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -41,12 +43,15 @@ export function SubmitTakeForm({
   alreadySubmitted = false,
   existingTakeUrl,
   existingFiles,
+  backingSrc = null,
   onSubmitted,
 }: {
   jobId: string;
   alreadySubmitted?: boolean;
   existingTakeUrl?: string | null;
   existingFiles?: TakeFileRecord[];
+  /** Job bed — enables Take / Bed / Both after upload. */
+  backingSrc?: string | null;
   onSubmitted?: (take: { jobId: string; audioFileUrl: string; files?: TakeFileRecord[] }) => void;
 }) {
   const [submitting, setSubmitting] = useState(false);
@@ -354,6 +359,27 @@ export function SubmitTakeForm({
                         })
                       }
                     />
+                    {row.audioFileUrl && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-medium text-gray-500">
+                          {backingSrc ? "Check your take against the bed" : "Preview your take"}
+                        </p>
+                        {backingSrc ? (
+                          <TakeMixPlayer
+                            takeSrc={row.audioPreviewUrl || row.audioFileUrl}
+                            bedSrc={backingSrc}
+                            downloadSrc={row.audioFileUrl}
+                          />
+                        ) : (
+                          <WaveformPlayer
+                            src={row.audioPreviewUrl || row.audioFileUrl}
+                            downloadSrc={row.audioFileUrl}
+                            label={row.audioLabel}
+                            compact
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 

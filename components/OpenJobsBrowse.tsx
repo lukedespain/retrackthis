@@ -385,6 +385,7 @@ function OpenJobCard({
                     alreadySubmitted={Boolean(myTake)}
                     existingTakeUrl={myTake?.audioFileUrl}
                     existingFiles={myTake?.files}
+                    backingSrc={job.backingFileUrl}
                     onSubmitted={onTakeSubmitted}
                   />
                 )}

@@ -51,6 +51,7 @@ type InstrumentRow = {
 type StatsPayload = {
   period: Period;
   income: {
+    fundsHeldCents?: number;
     escrowAuthorizedCents: number;
     volumeCapturedCents: number;
     platformFeeEarnedCents: number;
@@ -527,7 +528,7 @@ function AdminPageInner() {
           <section className="space-y-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Escrow volume and platform fees for the selected window.
+                Money on the platform and fees for the selected window.
               </p>
               <SegmentedControl
                 value={period}
@@ -542,9 +543,21 @@ function AdminPageInner() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Authorized holds" value={money(stats.income.escrowAuthorizedCents)} hint="Legacy card holds still open" />
-              <StatCard label="Captured volume" value={money(stats.income.volumeCapturedCents)} hint="Awarded jobs" />
-              <StatCard label="Platform fees" value={money(stats.income.platformFeeEarnedCents)} hint="Earned on awards" />
+              <StatCard
+                label="Funds held"
+                value={money(stats.income.fundsHeldCents ?? stats.income.escrowAuthorizedCents)}
+                hint="Open jobs — paid, not awarded yet"
+              />
+              <StatCard
+                label="Awarded volume"
+                value={money(stats.income.volumeCapturedCents)}
+                hint="Jobs that closed with a winner"
+              />
+              <StatCard
+                label="Platform fees"
+                value={money(stats.income.platformFeeEarnedCents)}
+                hint="Earned on awards"
+              />
               <StatCard label="Payments" value={`${stats.income.paymentCount}`} hint="In this period" />
             </div>
 

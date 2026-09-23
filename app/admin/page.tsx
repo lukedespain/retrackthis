@@ -303,7 +303,8 @@ function AdminPageInner() {
       const res = await fetch("/api/admin/emails/community-update-test", { method: "POST" });
       const body = (await res.json().catch(() => ({}))) as { error?: string; to?: string };
       if (!res.ok) throw new Error(body.error || `Send failed (${res.status})`);
-      setCommunityEmailMsg(`Sent to ${body.to ?? "music@lukedespain.com"}`);
+      const toList = Array.isArray(body.to) ? body.to.join(", ") : body.to;
+      setCommunityEmailMsg(`Sent to ${toList ?? "Luke + Hazel"}`);
     } catch (err) {
       setCommunityEmailMsg(err instanceof Error ? err.message : "Send failed");
     } finally {
@@ -344,7 +345,7 @@ function AdminPageInner() {
               disabled={communityEmailBusy}
               className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-left text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
             >
-              {communityEmailBusy ? "Sending…" : "Send community update test → music@"}
+              {communityEmailBusy ? "Sending…" : "Send community update test → Luke + Hazel"}
             </button>
             {communityEmailMsg && (
               <p className="text-xs text-gray-500 dark:text-gray-400">{communityEmailMsg}</p>

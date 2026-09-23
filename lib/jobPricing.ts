@@ -68,6 +68,9 @@ const INSTRUMENT_BAND: Record<string, PricingBandId> = {
   "piano-upright": "session-heavy",
   "hammond-organ": "session-heavy",
   mellotron: "session-heavy",
+  "vocal-male": "session-heavy",
+  "vocal-female": "session-heavy",
+  // Legacy range ids still map via normalizeInstrumentId → vocal-male/female
   "vocal-soprano": "session-heavy",
   "vocal-alto": "session-heavy",
   "vocal-tenor": "session-heavy",

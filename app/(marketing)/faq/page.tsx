@@ -276,8 +276,8 @@ const faqItems: FaqItem[] = [
         </ol>
         <p>
           Jobs don’t close early - musicians get the full window you posted. More detail in the{" "}
-          <Link href="/faq#payment">payment</Link> and{" "}
-          <Link href="/faq#deadlines-cancel">deadlines</Link> answers above.
+          <a href="#payment">payment</a> and{" "}
+          <a href="#deadlines-cancel">deadlines</a> answers above.
         </p>
       </>
     ),
@@ -302,7 +302,7 @@ const faqItems: FaqItem[] = [
         </ol>
         <p>
           Submitting never costs money. Only awarded takes are paid. See{" "}
-          <Link href="/faq#payouts">payouts</Link> for how money reaches you.
+          <a href="#payouts">payouts</a> for how money reaches you.
         </p>
       </>
     ),

@@ -301,7 +301,10 @@ function AdminPageInner() {
     setCommunityEmailMsg(null);
     try {
       const res = await fetch("/api/admin/emails/community-update-test", { method: "POST" });
-      const body = (await res.json().catch(() => ({}))) as { error?: string; to?: string };
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        to?: string | string[];
+      };
       if (!res.ok) throw new Error(body.error || `Send failed (${res.status})`);
       const toList = Array.isArray(body.to) ? body.to.join(", ") : body.to;
       setCommunityEmailMsg(`Sent to ${toList ?? "Luke + Hazel"}`);

@@ -48,6 +48,8 @@ export function AdminJobsPanel({
   const [payoutError, setPayoutError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [notifyJobId, setNotifyJobId] = useState<string | null>(null);
+  const [notifyMessage, setNotifyMessage] = useState<string | null>(null);
 
   const manualCount = useMemo(
     () => jobs.filter((j) => j.needsManualPayout).length,
@@ -114,6 +116,30 @@ export function AdminJobsPanel({
     }
   }
 
+  async function resendAlerts(job: AdminJobRow) {
+    const ok = window.confirm(
+      `Re-send “new job” emails for “${job.title}” to musicians matching ${job.instrument}?`
+    );
+    if (!ok) return;
+    setNotifyJobId(job.id);
+    setNotifyMessage(null);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/admin/jobs/${job.id}/notify-alerts`, {
+        method: "POST",
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? `Notify failed (${res.status})`);
+      setNotifyMessage(
+        `Sent alerts for “${job.title}” to ${body.recipientCount ?? "?"} matching musician(s).`
+      );
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Notify failed");
+    } finally {
+      setNotifyJobId(null);
+    }
+  }
+
   return (
     <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -158,6 +184,9 @@ export function AdminJobsPanel({
       )}
       {deleteError && (
         <p className="text-sm text-red-600 dark:text-red-400">{deleteError}</p>
+      )}
+      {notifyMessage && (
+        <p className="text-sm text-emerald-700 dark:text-emerald-300">{notifyMessage}</p>
       )}
 
       {editingJob && editingJob.status === "OPEN" && (
@@ -304,13 +333,23 @@ export function AdminJobsPanel({
                           {listeningId === job.id ? "Listening…" : "Listen"}
                         </Button>
                         {job.status === "OPEN" ? (
-                          <Button
-                            size="sm"
-                            variant={editingId === job.id ? "secondary" : "ghost"}
-                            onClick={() => setEditingId(editingId === job.id ? null : job.id)}
-                          >
-                            {editingId === job.id ? "Editing…" : "Edit"}
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant={editingId === job.id ? "secondary" : "ghost"}
+                              onClick={() => setEditingId(editingId === job.id ? null : job.id)}
+                            >
+                              {editingId === job.id ? "Editing…" : "Edit"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={notifyJobId === job.id}
+                              onClick={() => void resendAlerts(job)}
+                            >
+                              {notifyJobId === job.id ? "Sending…" : "Resend alerts"}
+                            </Button>
+                          </>
                         ) : job.needsManualPayout ? (
                           <div className="flex flex-col items-end gap-1">
                             <Button

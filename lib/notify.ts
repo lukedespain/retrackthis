@@ -41,8 +41,8 @@ async function safeSend(label: string, fn: () => Promise<void>) {
   }
 }
 
-export async function notifyNewJobPosted(job: JobLite) {
-  if (!emailConfigured()) return;
+export async function notifyNewJobPosted(job: JobLite): Promise<number> {
+  if (!emailConfigured()) return 0;
 
   const users = await db.user.findMany({
     where: {
@@ -74,6 +74,8 @@ export async function notifyNewJobPosted(job: JobLite) {
       )
     )
   );
+
+  return recipients.length;
 }
 
 /** Email matching musicians who have not submitted yet that a job has ~3 days left. */

@@ -2,7 +2,7 @@
 
 **To:** beta / early users (test: music@lukedespain.com + hazeldespain@gmail.com)  
 **From:** Retrack This / Hazel  
-**Subject:** We heard you — here’s what’s new on Retrack This
+**Subject:** We heard you: here’s what’s new on Retrack This
 
 ---
 

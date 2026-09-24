@@ -4,7 +4,7 @@ export function communityUpdateBodyHtml(firstName: string) {
   const link = (href: string, label: string) =>
     `<a href="${href}" style="color:#5F4AFF;text-decoration:underline;">${escape(label)}</a>`;
   const sectionLabel = (label: string) =>
-    `<p style="margin:18px 0 6px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#111827;">${escape(label)}</p>`;
+    `<p class="email-section" style="margin:18px 0 6px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#111827;">${escape(label)}</p>`;
 
   return `
       <p style="margin:0 0 14px;">Hi ${name},</p>
@@ -25,7 +25,7 @@ export function communityUpdateBodyHtml(firstName: string) {
 
 export const COMMUNITY_UPDATE_SUBJECT = "We heard you, here's what's new!";
 export const COMMUNITY_UPDATE_HERO_GIF =
-  "https://retrackthis.com/brand/retrackthis-hero-email.gif?v=20260924";
+  "https://retrackthis.com/brand/retrackthis-hero-email.gif?v=20260924b";
 
 /** Test recipients only — never broaden without an explicit allowlist. */
 export const COMMUNITY_UPDATE_TEST_RECIPIENTS = [

@@ -16,7 +16,7 @@ BG = (255, 255, 255)
 LANE = (243, 244, 246)
 STRIP = 400  # virtual strip width (scrolled)
 FRAMES = 24
-DURATION_MS = 80  # ~1.9s loop, feels snappy in email
+DURATION_MS = 250  # ~6s loop — slower / closer to the site feel
 
 
 def hash01(i: int, seed: float) -> float:

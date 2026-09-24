@@ -296,18 +296,28 @@ function AdminPageInner() {
 
   if (!profile) return null;
 
-  async function sendCommunityUpdateTest() {
+  async function sendCommunityUpdateBlast() {
+    const confirmed = window.confirm(
+      "Send the community update email to EVERY member (including Luke & Hazel)?\n\nThis cannot be undone."
+    );
+    if (!confirmed) return;
+
     setCommunityEmailBusy(true);
     setCommunityEmailMsg(null);
     try {
-      const res = await fetch("/api/admin/emails/community-update-test", { method: "POST" });
+      const res = await fetch("/api/admin/emails/community-update-blast", { method: "POST" });
       const body = (await res.json().catch(() => ({}))) as {
         error?: string;
-        to?: string | string[];
+        sent?: number;
+        failed?: number;
+        total?: number;
       };
       if (!res.ok) throw new Error(body.error || `Send failed (${res.status})`);
-      const toList = Array.isArray(body.to) ? body.to.join(", ") : body.to;
-      setCommunityEmailMsg(`Sent to ${toList ?? "Luke + Hazel"}`);
+      setCommunityEmailMsg(
+        `Blast done: ${body.sent ?? 0} sent` +
+          (body.failed ? `, ${body.failed} failed` : "") +
+          ` (of ${body.total ?? "?"})`
+      );
     } catch (err) {
       setCommunityEmailMsg(err instanceof Error ? err.message : "Send failed");
     } finally {
@@ -344,11 +354,11 @@ function AdminPageInner() {
             />
             <button
               type="button"
-              onClick={() => void sendCommunityUpdateTest()}
+              onClick={() => void sendCommunityUpdateBlast()}
               disabled={communityEmailBusy}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-left text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="rounded-lg border border-accent/30 bg-accent/10 px-3 py-1.5 text-left text-xs font-medium text-accent hover:bg-accent/15 disabled:opacity-50 dark:border-accent/40 dark:bg-accent/15"
             >
-              {communityEmailBusy ? "Sending…" : "Send community update test → Luke + Hazel"}
+              {communityEmailBusy ? "Sending blast…" : "Send community update → ALL members"}
             </button>
             {communityEmailMsg && (
               <p className="text-xs text-gray-500 dark:text-gray-400">{communityEmailMsg}</p>

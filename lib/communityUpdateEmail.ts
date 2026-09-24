@@ -25,7 +25,13 @@ export function communityUpdateBodyHtml(firstName: string) {
 
 export const COMMUNITY_UPDATE_SUBJECT = "We heard you, here's what's new!";
 export const COMMUNITY_UPDATE_HERO_GIF =
-  "https://retrackthis.com/brand/retrackthis-hero-email.gif?v=20260924b";
+  "https://retrackthis.com/brand/retrackthis-hero-email.gif?v=20260924c";
+
+/** First word of display name, or "there". */
+export function firstNameFromDisplayName(name: string | null | undefined) {
+  const first = (name ?? "").trim().split(/\s+/)[0];
+  return first || "there";
+}
 
 /** Test recipients only — never broaden without an explicit allowlist. */
 export const COMMUNITY_UPDATE_TEST_RECIPIENTS = [

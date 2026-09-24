@@ -24,6 +24,8 @@ export function communityUpdateBodyHtml(firstName: string) {
 }
 
 export const COMMUNITY_UPDATE_SUBJECT = "We heard you, here's what's new!";
+export const COMMUNITY_UPDATE_HERO_GIF =
+  "https://retrackthis.com/brand/retrackthis-hero-email.gif?v=20260924";
 
 /** Test recipients only — never broaden without an explicit allowlist. */
 export const COMMUNITY_UPDATE_TEST_RECIPIENTS = [

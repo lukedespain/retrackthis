@@ -8,6 +8,10 @@ type SendEmailInput = {
   bodyHtml: string;
   ctaLabel?: string;
   ctaHref?: string;
+  /** Optional image below the CTA (e.g. hero GIF). Absolute URL. */
+  bottomImageUrl?: string;
+  bottomImageAlt?: string;
+  bottomImageHref?: string;
   /** Default: notification settings footer. Pass false for transactional invites. */
   includeSettingsFooter?: boolean;
 };
@@ -23,6 +27,9 @@ export async function sendEmail({
   bodyHtml,
   ctaLabel,
   ctaHref,
+  bottomImageUrl,
+  bottomImageAlt,
+  bottomImageHref,
   includeSettingsFooter = true,
 }: SendEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
@@ -34,7 +41,6 @@ export async function sendEmail({
   const from = process.env.RESEND_FROM?.trim() || "Retrack This <hello@retrackthis.com>";
   const replyTo = process.env.RESEND_REPLY_TO?.trim() || "hello@retrackthis.com";
   const settingsUrl = `${appBaseUrl()}/settings`;
-  const logoUrl = `${appBaseUrl()}/brand/retrackthis-email-64.png?v=20260923`;
   const fontStack =
     "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
 
@@ -62,10 +68,7 @@ export async function sendEmail({
     <![endif]-->
   </head>
   <body style="margin:0;padding:0;background:#f7f7f8;font-family:${fontStack};color:#111827;">
-    <div style="max-width:560px;margin:0 auto;padding:32px 20px;font-family:${fontStack};">
-      <p style="margin:0 0 24px;">
-        <img src="${escapeAttr(logoUrl)}" width="32" height="32" alt="Retrack This" style="display:block;border:0;border-radius:8px;" />
-      </p>
+    <div style="max-width:560px;margin:0 auto;padding:16px 12px;font-family:${fontStack};">
       <div style="background:#ffffff;border-radius:16px;padding:28px 24px;box-shadow:0 1px 2px rgba(16,24,40,0.04);font-family:${fontStack};">
         ${
           heading?.trim()
@@ -76,6 +79,17 @@ export async function sendEmail({
         ${
           ctaHref && ctaLabel
             ? `<p style="margin:24px 0 0;"><a href="${escapeAttr(ctaHref)}" style="display:inline-block;background:#5F4AFF;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 18px;border-radius:999px;font-family:${fontStack};">${escapeHtml(ctaLabel)}</a></p>`
+            : ""
+        }
+        ${
+          bottomImageUrl
+            ? `<p style="margin:24px 0 0;">${
+                bottomImageHref
+                  ? `<a href="${escapeAttr(bottomImageHref)}" style="text-decoration:none;">`
+                  : ""
+              }<img src="${escapeAttr(bottomImageUrl)}" width="512" alt="${escapeAttr(bottomImageAlt || "")}" style="display:block;width:100%;max-width:512px;height:auto;border:0;border-radius:10px;" />${
+                bottomImageHref ? "</a>" : ""
+              }</p>`
             : ""
         }
       </div>

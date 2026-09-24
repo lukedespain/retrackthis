@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import {
+  COMMUNITY_UPDATE_HERO_GIF,
   COMMUNITY_UPDATE_SUBJECT,
   COMMUNITY_UPDATE_TEST_RECIPIENTS,
   communityUpdateBodyHtml,
@@ -33,6 +34,9 @@ export async function POST() {
         bodyHtml: communityUpdateBodyHtml(recipient.firstName),
         ctaLabel: "Open Retrack This",
         ctaHref: "https://retrackthis.com",
+        bottomImageUrl: COMMUNITY_UPDATE_HERO_GIF,
+        bottomImageAlt: "Retrack This — post a part, compare takes, pick your favorite",
+        bottomImageHref: "https://retrackthis.com",
       });
       results.push({ email: recipient.email, ok: true });
     } catch (err) {

@@ -11,11 +11,18 @@ import { emailConfigured, sendEmail } from "@/lib/email";
 
 export const maxDuration = 60;
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Admin: send the community update to every member (personalized greeting).
+ * Optional body: `{ emails?: string[] }` to send only those addresses (retry).
  * POST /api/admin/emails/community-update-blast
+ *
+ * Resend free tier: 10 req/sec — we send sequentially with a short gap.
  */
-export async function POST() {
+export async function POST(req: Request) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -26,17 +33,27 @@ export async function POST() {
     );
   }
 
+  let onlyEmails: Set<string> | null = null;
+  try {
+    const body = (await req.json().catch(() => null)) as { emails?: string[] } | null;
+    if (body?.emails?.length) {
+      onlyEmails = new Set(body.emails.map((e) => e.trim().toLowerCase()).filter(Boolean));
+    }
+  } catch {
+    // no body
+  }
+
   const users = await db.user.findMany({
     select: { id: true, email: true, name: true },
     orderBy: { createdAt: "asc" },
   });
 
-  // Dedupe by email (case-insensitive).
   const seen = new Set<string>();
   const recipients: Array<{ email: string; firstName: string }> = [];
   for (const user of users) {
     const email = user.email.trim().toLowerCase();
     if (!email || seen.has(email)) continue;
+    if (onlyEmails && !onlyEmails.has(email)) continue;
     seen.add(email);
     recipients.push({
       email: user.email.trim(),
@@ -46,35 +63,29 @@ export async function POST() {
 
   const results: Array<{ email: string; ok: boolean; error?: string }> = [];
 
-  // Small concurrency so Resend stays happy and we finish under the function limit.
-  const CONCURRENCY = 4;
-  for (let i = 0; i < recipients.length; i += CONCURRENCY) {
-    const chunk = recipients.slice(i, i + CONCURRENCY);
-    const chunkResults = await Promise.all(
-      chunk.map(async (recipient) => {
-        try {
-          await sendEmail({
-            to: recipient.email,
-            subject: COMMUNITY_UPDATE_SUBJECT,
-            includeSettingsFooter: false,
-            bodyHtml: communityUpdateBodyHtml(recipient.firstName),
-            ctaLabel: "Open Retrack This",
-            ctaHref: "https://retrackthis.com",
-            bottomImageUrl: COMMUNITY_UPDATE_HERO_GIF,
-            bottomImageAlt: "Retrack This — post a part, compare takes, pick your favorite",
-            bottomImageHref: "https://retrackthis.com",
-          });
-          return { email: recipient.email, ok: true as const };
-        } catch (err) {
-          return {
-            email: recipient.email,
-            ok: false as const,
-            error: err instanceof Error ? err.message : String(err),
-          };
-        }
-      })
-    );
-    results.push(...chunkResults);
+  for (const recipient of recipients) {
+    try {
+      await sendEmail({
+        to: recipient.email,
+        subject: COMMUNITY_UPDATE_SUBJECT,
+        includeSettingsFooter: false,
+        bodyHtml: communityUpdateBodyHtml(recipient.firstName),
+        ctaLabel: "Open Retrack This",
+        ctaHref: "https://retrackthis.com",
+        bottomImageUrl: COMMUNITY_UPDATE_HERO_GIF,
+        bottomImageAlt: "Retrack This — post a part, compare takes, pick your favorite",
+        bottomImageHref: "https://retrackthis.com",
+      });
+      results.push({ email: recipient.email, ok: true });
+    } catch (err) {
+      results.push({
+        email: recipient.email,
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+    // Stay under Resend’s 10 req/sec limit.
+    await sleep(150);
   }
 
   const sent = results.filter((r) => r.ok).length;

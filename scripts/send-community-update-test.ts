@@ -3,7 +3,6 @@
  * Run: npx tsx scripts/send-community-update-test.ts
  */
 import {
-  COMMUNITY_UPDATE_HEADING,
   COMMUNITY_UPDATE_SUBJECT,
   communityUpdateBodyHtml,
 } from "../lib/communityUpdateEmail";
@@ -23,7 +22,6 @@ async function main() {
   await sendEmail({
     to: TO,
     subject: COMMUNITY_UPDATE_SUBJECT,
-    heading: COMMUNITY_UPDATE_HEADING,
     includeSettingsFooter: false,
     bodyHtml: communityUpdateBodyHtml(FIRST_NAME),
     ctaLabel: "Open Retrack This",

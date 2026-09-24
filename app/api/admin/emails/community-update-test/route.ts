@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import {
-  COMMUNITY_UPDATE_HEADING,
   COMMUNITY_UPDATE_SUBJECT,
   COMMUNITY_UPDATE_TEST_RECIPIENTS,
   communityUpdateBodyHtml,
@@ -30,7 +29,6 @@ export async function POST() {
       await sendEmail({
         to: recipient.email,
         subject: COMMUNITY_UPDATE_SUBJECT,
-        heading: COMMUNITY_UPDATE_HEADING,
         includeSettingsFooter: false,
         bodyHtml: communityUpdateBodyHtml(recipient.firstName),
         ctaLabel: "Open Retrack This",

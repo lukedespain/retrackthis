@@ -3,7 +3,8 @@ import { appBaseUrl } from "@/lib/appUrl";
 type SendEmailInput = {
   to: string;
   subject: string;
-  heading: string;
+  /** Optional; omit to skip the h1 (body can open with greeting). */
+  heading?: string;
   bodyHtml: string;
   ctaLabel?: string;
   ctaHref?: string;
@@ -66,7 +67,11 @@ export async function sendEmail({
         <img src="${escapeAttr(logoUrl)}" width="32" height="32" alt="Retrack This" style="display:block;border:0;border-radius:8px;" />
       </p>
       <div style="background:#ffffff;border-radius:16px;padding:28px 24px;box-shadow:0 1px 2px rgba(16,24,40,0.04);font-family:${fontStack};">
-        <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;font-weight:600;font-family:${fontStack};">${escapeHtml(heading)}</h1>
+        ${
+          heading?.trim()
+            ? `<h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;font-weight:600;font-family:${fontStack};">${escapeHtml(heading.trim())}</h1>`
+            : ""
+        }
         <div style="font-size:15px;line-height:1.6;color:#4b5563;font-family:${fontStack};">${bodyHtml}</div>
         ${
           ctaHref && ctaLabel

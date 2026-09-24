@@ -6,21 +6,15 @@ export function communityUpdateBodyHtml(firstName: string) {
 
   return `
       <p style="margin:0 0 14px;">Hi ${name},</p>
-      <p style="margin:0 0 14px;">Thanks for being early with us. We’ve been listening to how you’ve been using Retrack This, and a lot of what you’re about to see came straight from that feedback.</p>
-      <p style="margin:0 0 14px;">The big change is how payment works. When a producer posts a job, they pay up front now. We dropped the old “7 day escrow hold” approach where producers could end the gig early. That method was confusing and put musicians on a clock that was unfair and inconsistent. Now, the funds sit with us until someone is awarded, and if a job is cancelled or nobody wins, the producer gets refunded.</p>
-      <p style="margin:18px 0 6px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#111827;">Producers</p>
-      <p style="margin:0 0 14px;">Now that jobs stay open for the full deadline that you set, you can “favorite” whichever submission you like most as they arrive. Once the deadline hits, you have a 48 hour window to confirm your selection and “award” a musician. If you have a submission favorited but don’t ever confirm before the window closes, then we’ll automatically award that musician. If you never selected a favorite, and the window closes, the job is cancelled and you are refunded.</p>
-      <p style="margin:18px 0 6px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#111827;">Musicians</p>
-      <p style="margin:0 0 14px;">Submitting is still free. (Yay!) You just need to set up payouts in ${link("https://retrackthis.com/settings", "Settings")} before you submit so we know where to send money if you win. You can check the status of your submission anytime, and it’ll show as either pending, awarded, not selected, or cancelled.</p>
-      <p style="margin:0 0 10px;">There’s more detail on the FAQ if you want it, and the Terms and Privacy pages are up to date too:</p>
-      <p style="margin:0 0 14px;">
-        ${link("https://retrackthis.com/faq", "FAQ")}<br />
-        ${link("https://retrackthis.com/terms", "Terms")}<br />
-        ${link("https://retrackthis.com/privacy", "Privacy")}
-      </p>
-      <p style="margin:0 0 14px;">If something still feels off, just reply to this email. We’re a small team that reads every email.</p>
+      <p style="margin:0 0 14px;">Thanks for being early with us, and for the feedback that shaped this update!</p>
+      <p style="margin:0 0 14px;"><em>Here’s what’s changing</em>: producers now pay upfront when they post a job. We hold onto the funds until someone is awarded. If the job gets cancelled or nothing gets selected, the producer is refunded automatically.</p>
+      <p style="margin:0 0 14px;">We made this change for a couple reasons. It gets rid of the gigs ending early, which put musicians on an unpredictable clock. And it gives producers more flexibility with the deadline length (no more 7 day max window).</p>
+      <p style="margin:0 0 14px;">For producers: as submissions roll in, you can favorite the one you like best. Once the deadline passes, you have 48 hours to confirm your pick. If you don’t, we’ll automatically award it to the submission you favorited, or refund you if you haven’t favorited one.</p>
+      <p style="margin:0 0 14px;">For musicians: the job stays open until the deadline. So if you’re in the middle of practicing a part, you don’t have to worry about it closing early.</p>
+      <p style="margin:0 0 14px;">If you want the full details, the ${link("https://retrackthis.com/faq", "FAQ")} and our updated ${link("https://retrackthis.com/terms", "Terms")} and ${link("https://retrackthis.com/privacy", "Privacy")} pages are here.</p>
+      <p style="margin:0 0 14px;">If anything about this still feels off, just reply. We’re a small team and we read everything.</p>
       <p style="margin:0 0 14px;">Thanks again for helping us shape this.</p>
-      <p style="margin:0;">Hazel<br />CPO, Retrack This</p>
+      <p style="margin:0;">Hazel<br />Co-Founder, Retrack This</p>
     `;
 }
 

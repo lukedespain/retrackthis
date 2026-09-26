@@ -6,10 +6,11 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
+import { AdminEmailsPanel } from "./AdminEmailsPanel";
 import { AdminJobsPanel, type AdminJobRow } from "./AdminJobsPanel";
 import { AdminMemberInstrumentsEditor } from "./AdminMemberInstrumentsEditor";
 
-type Tab = "members" | "jobs" | "instruments" | "income";
+type Tab = "members" | "jobs" | "instruments" | "income" | "emails";
 type Period = "7d" | "30d" | "90d" | "all";
 
 type Profile = {
@@ -115,8 +116,6 @@ function AdminPageInner() {
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [adminJobs, setAdminJobs] = useState<AdminJobRow[] | null>(null);
   const [jobsReloadToken, setJobsReloadToken] = useState(0);
-  const [communityEmailBusy, setCommunityEmailBusy] = useState(false);
-  const [communityEmailMsg, setCommunityEmailMsg] = useState<string | null>(null);
   const [instruments, setInstruments] = useState<{
     covered: InstrumentRow[];
     needed: InstrumentRow[];
@@ -134,7 +133,14 @@ function AdminPageInner() {
 
   useEffect(() => {
     const t = searchParams.get("tab");
-    if (t === "members" || t === "jobs" || t === "instruments" || t === "income") setTab(t);
+    if (
+      t === "members" ||
+      t === "jobs" ||
+      t === "instruments" ||
+      t === "income" ||
+      t === "emails"
+    )
+      setTab(t);
     const p = searchParams.get("period");
     if (p === "7d" || p === "30d" || p === "90d" || p === "all") setPeriod(p);
   }, [searchParams]);
@@ -193,6 +199,8 @@ function AdminPageInner() {
           if (!res.ok) throw new Error("Could not load instruments");
           const body = await res.json();
           if (!cancelled) setInstruments(body);
+        } else if (tab === "emails") {
+          // AdminEmailsPanel loads its own data.
         } else {
           const res = await fetch(`/api/admin/stats?period=${period}`);
           if (res.status === 403) {
@@ -296,35 +304,6 @@ function AdminPageInner() {
 
   if (!profile) return null;
 
-  async function sendCommunityUpdateBlast() {
-    const confirmed = window.confirm(
-      "Send the community update email to EVERY member (including Luke & Hazel)?\n\nThis cannot be undone."
-    );
-    if (!confirmed) return;
-
-    setCommunityEmailBusy(true);
-    setCommunityEmailMsg(null);
-    try {
-      const res = await fetch("/api/admin/emails/community-update-blast", { method: "POST" });
-      const body = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        sent?: number;
-        failed?: number;
-        total?: number;
-      };
-      if (!res.ok) throw new Error(body.error || `Send failed (${res.status})`);
-      setCommunityEmailMsg(
-        `Blast done: ${body.sent ?? 0} sent` +
-          (body.failed ? `, ${body.failed} failed` : "") +
-          ` (of ${body.total ?? "?"})`
-      );
-    } catch (err) {
-      setCommunityEmailMsg(err instanceof Error ? err.message : "Send failed");
-    } finally {
-      setCommunityEmailBusy(false);
-    }
-  }
-
   return (
     <div className="min-h-screen">
       <SiteHeader />
@@ -338,32 +317,20 @@ function AdminPageInner() {
               Operations
             </h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Members, jobs, instrument coverage, and income.
+              Members, jobs, instruments, income, and emails.
             </p>
           </div>
-          <div className="flex flex-col items-stretch gap-2 sm:items-end">
-            <SegmentedControl
-              value={tab}
-              onChange={changeTab}
-              options={[
-                { value: "members", label: "Members" },
-                { value: "jobs", label: "Jobs" },
-                { value: "instruments", label: "Instruments" },
-                { value: "income", label: "Income" },
-              ]}
-            />
-            <button
-              type="button"
-              onClick={() => void sendCommunityUpdateBlast()}
-              disabled={communityEmailBusy}
-              className="rounded-lg border border-accent/30 bg-accent/10 px-3 py-1.5 text-left text-xs font-medium text-accent hover:bg-accent/15 disabled:opacity-50 dark:border-accent/40 dark:bg-accent/15"
-            >
-              {communityEmailBusy ? "Sending blast…" : "Send community update → ALL members"}
-            </button>
-            {communityEmailMsg && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">{communityEmailMsg}</p>
-            )}
-          </div>
+          <SegmentedControl
+            value={tab}
+            onChange={changeTab}
+            options={[
+              { value: "members", label: "Members" },
+              { value: "jobs", label: "Jobs" },
+              { value: "instruments", label: "Instruments" },
+              { value: "income", label: "Income" },
+              { value: "emails", label: "Emails" },
+            ]}
+          />
         </div>
 
         {error && (
@@ -377,7 +344,8 @@ function AdminPageInner() {
           (tab === "members" && members) ||
           (tab === "jobs" && adminJobs) ||
           (tab === "instruments" && instruments) ||
-          (tab === "income" && stats)
+          (tab === "income" && stats) ||
+          tab === "emails"
         ) ? (
           <div className="flex justify-center py-20">
             <Spinner />
@@ -629,6 +597,8 @@ function AdminPageInner() {
             </div>
           </section>
         )}
+
+        {tab === "emails" && <AdminEmailsPanel />}
 
         <p className="text-xs text-gray-400">
           <Link href="/producers" className="underline-offset-2 hover:underline">

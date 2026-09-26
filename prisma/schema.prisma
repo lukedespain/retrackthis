@@ -133,3 +133,30 @@ model Payment {
   status                  String   // "pending_checkout" | "authorized" | "captured" | "transferred" | "pending_manual_payout" | "cancelled" | "refunded" | "failed"
   createdAt               DateTime @default(now())
 }
+
+enum EmailBlastKind {
+  TEST
+  BLAST
+}
+
+// Admin-composed member emails (tests + full blasts).
+model EmailBlast {
+  id              String         @id @default(cuid())
+  kind            EmailBlastKind
+  subject         String
+  bodyPlain       String
+  bodyHtml        String
+  ctaLabel        String?
+  ctaHref         String?
+  bottomImageUrl  String?
+  sentCount       Int            @default(0)
+  failedCount     Int            @default(0)
+  recipientEmails String[]       @default([])
+  failuresJson    String?
+  sentById        String?
+  sentByName      String?
+  createdAt       DateTime       @default(now())
+
+  @@index([kind, createdAt])
+  @@index([createdAt])
+}

@@ -37,6 +37,7 @@ export function firstNameFromDisplayName(name: string | null | undefined) {
 export const COMMUNITY_UPDATE_TEST_RECIPIENTS = [
   { email: "music@lukedespain.com", firstName: "Luke" },
   { email: "hazeldespain@gmail.com", firstName: "Hazel" },
+  { email: "dabthenatural@gmail.com", firstName: "Damian" },
 ] as const;
 
 function escape(value: string) {

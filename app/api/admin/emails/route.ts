@@ -54,6 +54,8 @@ type PostBody = {
   includeHeroGif?: boolean;
   ctaLabel?: string;
   ctaHref?: string;
+  /** Test mode only: which allowlisted teammates get it. */
+  testEmails?: string[];
 };
 
 /** POST /api/admin/emails — compose + send test or full blast, then store history. */
@@ -87,7 +89,11 @@ export async function POST(req: Request) {
   const ctaHref = (body.ctaHref ?? "").trim() || "https://retrackthis.com";
   const bottomImageUrl = body.includeHeroGif ? COMMUNITY_UPDATE_HERO_GIF : null;
 
-  const recipients = mode === "blast" ? await loadAllMemberRecipients() : testRecipients();
+  if (mode === "test" && (!Array.isArray(body.testEmails) || body.testEmails.length === 0)) {
+    return NextResponse.json({ error: "Pick at least one person for the test." }, { status: 400 });
+  }
+  const recipients =
+    mode === "blast" ? await loadAllMemberRecipients() : testRecipients(body.testEmails);
   if (!recipients.length) {
     return NextResponse.json({ error: "No recipients found." }, { status: 400 });
   }

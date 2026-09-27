@@ -10,7 +10,6 @@ import {
 } from "@/lib/jobPricing";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const QUICK_PICKS = [3, 7, 14];
 
 function formatDateTime(date: Date) {
   return date.toLocaleString(undefined, {
@@ -129,24 +128,7 @@ export function ExtendDeadlineDialog({
           </button>
         </div>
 
-        <div className="mt-3 flex justify-center gap-2">
-          {QUICK_PICKS.map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setDays(n)}
-              disabled={saving}
-              className={`rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition ${
-                days === n
-                  ? "bg-gray-900 text-white ring-gray-900 dark:bg-white dark:text-gray-900 dark:ring-white"
-                  : "bg-white text-gray-600 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:ring-gray-700 dark:hover:bg-gray-800"
-              }`}
-            >
-              {n === 1 ? "1 day" : `${n} days`}
-            </button>
-          ))}
-        </div>
-        <p className="mt-2 text-center text-[11px] text-gray-400">
+        <p className="mt-3 text-center text-[11px] text-gray-400">
           {MIN_EXTENSION_DAYS}–{MAX_EXTENSION_DAYS} days per extension
         </p>
 

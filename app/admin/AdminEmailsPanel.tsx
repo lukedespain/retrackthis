@@ -1,7 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Spinner } from "@/components/ui/Spinner";
+import { COMMUNITY_UPDATE_TEST_RECIPIENTS } from "@/lib/communityUpdateEmail";
+
+const TEST_PICK_STORAGE_KEY = "rt-admin-test-recipients";
 
 type BlastKind = "TEST" | "BLAST";
 type Filter = "all" | "TEST" | "BLAST";
@@ -50,6 +53,50 @@ export function AdminEmailsPanel() {
   const [includeHeroGif, setIncludeHeroGif] = useState(true);
   const [busy, setBusy] = useState<"test" | "blast" | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [testEmails, setTestEmails] = useState<string[]>([]);
+  const [testMenuOpen, setTestMenuOpen] = useState(false);
+  const testMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(TEST_PICK_STORAGE_KEY) ?? "[]");
+      if (Array.isArray(saved)) {
+        const allowed = new Set<string>(COMMUNITY_UPDATE_TEST_RECIPIENTS.map((r) => r.email));
+        setTestEmails(saved.filter((e): e is string => typeof e === "string" && allowed.has(e)));
+      }
+    } catch {
+      // Ignore a corrupt saved pick.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!testMenuOpen) return;
+    function onPointer(e: MouseEvent) {
+      if (!testMenuRef.current?.contains(e.target as Node)) setTestMenuOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setTestMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [testMenuOpen]);
+
+  function toggleTester(email: string) {
+    setTestEmails((prev) => {
+      const next = prev.includes(email) ? prev.filter((e) => e !== email) : [...prev, email];
+      localStorage.setItem(TEST_PICK_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  const testerNames = COMMUNITY_UPDATE_TEST_RECIPIENTS.filter((r) =>
+    testEmails.includes(r.email)
+  ).map((r) => r.firstName);
+  const composeReady = Boolean(subject.trim() && bodyPlain.trim());
 
   const loadList = useCallback(async () => {
     setError(null);
@@ -120,6 +167,7 @@ export function AdminEmailsPanel() {
           includeHeroGif,
           ctaLabel: "Open Retrack This",
           ctaHref: "https://retrackthis.com",
+          ...(mode === "test" ? { testEmails } : {}),
         }),
       });
       const body = (await res.json().catch(() => ({}))) as {
@@ -150,7 +198,7 @@ export function AdminEmailsPanel() {
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">Compose</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           We add <span className="font-medium text-gray-700 dark:text-gray-300">Hi {"{first name}"},</span>{" "}
-          automatically. Blank line = new paragraph. Test goes to Luke + Hazel only.
+          automatically. Blank line = new paragraph. Tests only go to the teammates you pick.
         </p>
 
         <div className="mt-4 space-y-3">
@@ -186,17 +234,70 @@ export function AdminEmailsPanel() {
         </div>
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div ref={testMenuRef} className="relative">
+            <button
+              type="button"
+              disabled={Boolean(busy) || !composeReady}
+              onClick={() => setTestMenuOpen((open) => !open)}
+              aria-haspopup="true"
+              aria-expanded={testMenuOpen}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50 sm:w-auto dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
+            >
+              {busy === "test"
+                ? "Sending test…"
+                : testerNames.length
+                  ? `Send test → ${testerNames.join(" + ")}`
+                  : "Send test"}
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 text-gray-400">
+                <path
+                  fill="currentColor"
+                  d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                />
+              </svg>
+            </button>
+            {testMenuOpen && (
+              <div className="absolute left-0 top-full z-20 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                <p className="px-2 pb-1.5 pt-1 text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                  Send test to
+                </p>
+                {COMMUNITY_UPDATE_TEST_RECIPIENTS.map((r) => (
+                  <label
+                    key={r.email}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={testEmails.includes(r.email)}
+                      onChange={() => toggleTester(r.email)}
+                      className="rounded border-gray-300 text-accent focus:ring-accent/30"
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                        {r.firstName}
+                      </span>
+                      <span className="block truncate text-xs text-gray-500">{r.email}</span>
+                    </span>
+                  </label>
+                ))}
+                <button
+                  type="button"
+                  disabled={!testEmails.length || Boolean(busy)}
+                  onClick={() => {
+                    setTestMenuOpen(false);
+                    void send("test");
+                  }}
+                  className="mt-2 w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-40 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+                >
+                  {testEmails.length
+                    ? `Send test to ${testEmails.length === 1 ? "1 person" : `${testEmails.length} people`}`
+                    : "Pick at least one"}
+                </button>
+              </div>
+            )}
+          </div>
           <button
             type="button"
-            disabled={Boolean(busy) || !subject.trim() || !bodyPlain.trim()}
-            onClick={() => void send("test")}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
-          >
-            {busy === "test" ? "Sending test…" : "Send test → Luke + Hazel"}
-          </button>
-          <button
-            type="button"
-            disabled={Boolean(busy) || !subject.trim() || !bodyPlain.trim()}
+            disabled={Boolean(busy) || !composeReady}
             onClick={() => void send("blast")}
             className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover disabled:opacity-50"
           >

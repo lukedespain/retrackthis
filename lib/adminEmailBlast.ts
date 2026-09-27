@@ -66,11 +66,12 @@ export async function loadAllMemberRecipients(): Promise<BlastRecipient[]> {
   return recipients;
 }
 
-export function testRecipients(): BlastRecipient[] {
-  return COMMUNITY_UPDATE_TEST_RECIPIENTS.map((r) => ({
-    email: r.email,
-    firstName: r.firstName,
-  }));
+/** Allowlisted test recipients, narrowed to `emails` when given. Unknown emails are dropped. */
+export function testRecipients(emails?: string[]): BlastRecipient[] {
+  const wanted = emails ? new Set(emails.map((e) => e.trim().toLowerCase())) : null;
+  return COMMUNITY_UPDATE_TEST_RECIPIENTS.filter((r) => !wanted || wanted.has(r.email)).map(
+    (r) => ({ email: r.email, firstName: r.firstName })
+  );
 }
 
 export async function sendPersonalizedEmails(opts: {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { EditJobForm } from "@/app/dashboard/EditJobForm";
 import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
+import { TestJobBadge } from "@/components/TestJobBadge";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -286,6 +287,7 @@ export function AdminJobsPanel({
                       <div className="font-medium text-gray-900 dark:text-white">{job.title}</div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
                         <Badge status={job.status} />
+                        {job.isTest && <TestJobBadge />}
                         {job.status === "OPEN" && job.hasSelectedWinner && (
                           <Badge status="PICKED" />
                         )}
@@ -303,9 +305,6 @@ export function AdminJobsPanel({
                     </td>
                     <td className="px-4 py-3 tabular-nums text-gray-700 dark:text-gray-300">
                       {job.priceLabel}
-                      <div className="text-[11px] text-gray-400">
-                        {job.paymentStatus ? `Pay: ${job.paymentStatus}` : "Locked"}
-                      </div>
                       {job.needsManualPayout && job.winnerPayout && (
                         <div className="mt-1.5 max-w-[14rem] rounded-lg bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
                           <div className="font-medium">
@@ -365,14 +364,16 @@ export function AdminJobsPanel({
                             >
                               {editingId === job.id ? "Editing…" : "Edit"}
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              disabled={notifyJobId === job.id}
-                              onClick={() => void resendAlerts(job)}
-                            >
-                              {notifyJobId === job.id ? "Sending…" : "Resend alerts"}
-                            </Button>
+                            {!job.isTest && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled={notifyJobId === job.id}
+                                onClick={() => void resendAlerts(job)}
+                              >
+                                {notifyJobId === job.id ? "Sending…" : "Resend alerts"}
+                              </Button>
+                            )}
                             {job.paymentStatus === "captured" &&
                               new Date(job.deadline).getTime() > Date.now() && (
                                 <Button

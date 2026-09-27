@@ -70,8 +70,34 @@ type StatsPayload = {
     membersTotal: number;
     membersNew: number;
   };
-  series: Array<{ date: string; amountCents: number; feesCents: number; count: number }>;
+  series: SeriesDay[];
 };
+
+type SeriesDay = {
+  date: string;
+  amountCents: number;
+  feesCents: number;
+  count: number;
+  jobs?: Array<{
+    id: string;
+    title: string;
+    instrument: string;
+    status: string;
+    amountCents: number;
+    creatorId: string;
+    creatorName: string;
+  }>;
+};
+
+/** Series dates are UTC day keys ("2026-09-08"); format without shifting the day. */
+function formatDayKey(key: string) {
+  return new Date(`${key}T00:00:00Z`).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
 
 function money(cents: number) {
   return new Intl.NumberFormat(undefined, {
@@ -128,6 +154,7 @@ function AdminPageInner() {
   } | null>(null);
   const [instrumentFilter, setInstrumentFilter] = useState<"covered" | "needed" | "all">("all");
   const [stats, setStats] = useState<StatsPayload | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingTab, setLoadingTab] = useState(false);
 
@@ -283,6 +310,7 @@ function AdminPageInner() {
 
   function changePeriod(next: Period) {
     setPeriod(next);
+    setSelectedDay(null);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", "income");
     params.set("period", next);
@@ -588,13 +616,24 @@ function AdminPageInner() {
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Daily volume
               </p>
-              <MiniBars series={stats.series} />
+              <MiniBars
+                series={stats.series}
+                selectedDate={selectedDay}
+                onSelect={(date) => setSelectedDay((cur) => (cur === date ? null : date))}
+              />
               <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
                 <span>Cancelled: {money(stats.income.cancelledCents)}</span>
                 <span>Failed: {money(stats.income.failedCents)}</span>
                 <span>Transferred: {money(stats.income.transferredCents)}</span>
               </div>
             </div>
+
+            {selectedDay &&
+              (() => {
+                const day = stats.series.find((d) => d.date === selectedDay);
+                if (!day) return null;
+                return <DayJobsList day={day} onClose={() => setSelectedDay(null)} />;
+              })()}
           </section>
         )}
 
@@ -685,8 +724,12 @@ function InstrumentTable({
 
 function MiniBars({
   series,
+  selectedDate,
+  onSelect,
 }: {
-  series: Array<{ date: string; amountCents: number }>;
+  series: SeriesDay[];
+  selectedDate: string | null;
+  onSelect: (date: string) => void;
 }) {
   const max = Math.max(1, ...series.map((s) => s.amountCents));
   const last = series.slice(-42);
@@ -699,15 +742,79 @@ function MiniBars({
     <div className="mt-4 flex h-28 items-end gap-0.5">
       {last.map((day) => {
         const h = Math.max(day.amountCents > 0 ? 8 : 2, Math.round((day.amountCents / max) * 100));
+        const hasJobs = day.amountCents > 0;
+        const selected = selectedDate === day.date;
+        const dimmed = selectedDate !== null && !selected;
         return (
-          <div
+          <button
             key={day.date}
-            title={`${day.date}: ${money(day.amountCents)}`}
-            className="min-w-0 flex-1 rounded-t bg-accent/80 transition-opacity hover:opacity-100"
-            style={{ height: `${h}%`, opacity: day.amountCents > 0 ? 1 : 0.25 }}
-          />
+            type="button"
+            disabled={!hasJobs}
+            onClick={() => onSelect(day.date)}
+            aria-label={`${formatDayKey(day.date)}: ${money(day.amountCents)}`}
+            aria-pressed={selected}
+            className={`group relative min-w-0 flex-1 rounded-t transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+              !hasJobs
+                ? "cursor-default bg-accent/25"
+                : selected
+                  ? "cursor-pointer bg-accent ring-2 ring-accent/30"
+                  : "cursor-pointer bg-accent/80 hover:bg-accent"
+            }`}
+            style={{ height: `${h}%`, opacity: dimmed ? 0.45 : 1 }}
+          >
+            <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-medium text-white shadow-lg group-hover:block group-focus-visible:block dark:bg-white dark:text-gray-900">
+              {formatDayKey(day.date)} · {money(day.amountCents)}
+            </span>
+          </button>
         );
       })}
+    </div>
+  );
+}
+
+function DayJobsList({ day, onClose }: { day: SeriesDay; onClose: () => void }) {
+  const jobs = day.jobs ?? [];
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800">
+      <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-2.5 dark:border-gray-800 dark:bg-gray-900/80">
+        <h2 className="text-sm font-medium text-gray-800 dark:text-gray-200">
+          {formatDayKey(day.date)} · {money(day.amountCents)} ·{" "}
+          {jobs.length === 1 ? "1 job" : `${jobs.length} jobs`}
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-xs font-medium text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
+        >
+          Close
+        </button>
+      </div>
+      {jobs.length === 0 ? (
+        <p className="px-4 py-6 text-sm text-gray-500">No jobs on this day.</p>
+      ) : (
+        <ul className="max-h-80 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-800">
+          {jobs.map((job) => (
+            <li key={job.id}>
+              <Link
+                href={`/admin/preview/producer/${job.creatorId}?job=${job.id}`}
+                className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/60"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                    {job.title}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                    {job.instrument} · {job.creatorName}
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm tabular-nums text-gray-700 dark:text-gray-300">
+                  {money(job.amountCents)}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

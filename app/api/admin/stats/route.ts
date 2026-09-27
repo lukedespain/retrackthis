@@ -35,35 +35,57 @@ export async function GET(req: NextRequest) {
     membersNew,
   ] = await Promise.all([
     db.payment.findMany({
-      where: createdFilter ? { createdAt: createdFilter } : undefined,
+      where: {
+        job: { isTest: false },
+        ...(createdFilter ? { createdAt: createdFilter } : {}),
+      },
       select: {
         amountCents: true,
         platformFeeCents: true,
         status: true,
         createdAt: true,
-        job: { select: { status: true } },
+        job: {
+          select: {
+            id: true,
+            title: true,
+            instrument: true,
+            status: true,
+            creatorId: true,
+            creator: { select: { name: true } },
+          },
+        },
       },
     }),
-    db.job.count({ where: createdFilter ? { createdAt: createdFilter } : undefined }),
+    db.job.count({
+      where: { isTest: false, ...(createdFilter ? { createdAt: createdFilter } : {}) },
+    }),
     db.job.count({
       where: {
         status: "OPEN",
+        isTest: false,
         ...(createdFilter ? { createdAt: createdFilter } : {}),
       },
     }),
     db.job.count({
       where: {
         status: "AWARDED",
+        isTest: false,
         ...(createdFilter ? { createdAt: createdFilter } : {}),
       },
     }),
     db.job.count({
       where: {
         status: "CANCELLED",
+        isTest: false,
         ...(createdFilter ? { createdAt: createdFilter } : {}),
       },
     }),
-    db.take.count({ where: createdFilter ? { submittedAt: createdFilter } : undefined }),
+    db.take.count({
+      where: {
+        job: { isTest: false },
+        ...(createdFilter ? { submittedAt: createdFilter } : {}),
+      },
+    }),
     db.user.count(),
     db.user.count({ where: createdFilter ? { createdAt: createdFilter } : undefined }),
   ]);
@@ -112,11 +134,25 @@ export async function GET(req: NextRequest) {
     1,
     Math.ceil((Date.now() - seriesStart.getTime()) / dayMs) + 1
   );
-  const byDay: Array<{ date: string; amountCents: number; feesCents: number; count: number }> = [];
+  const byDay: Array<{
+    date: string;
+    amountCents: number;
+    feesCents: number;
+    count: number;
+    jobs: Array<{
+      id: string;
+      title: string;
+      instrument: string;
+      status: string;
+      amountCents: number;
+      creatorId: string;
+      creatorName: string;
+    }>;
+  }> = [];
   for (let i = 0; i < seriesDays; i++) {
     const d = new Date(seriesStart.getTime() + i * dayMs);
     const key = d.toISOString().slice(0, 10);
-    byDay.push({ date: key, amountCents: 0, feesCents: 0, count: 0 });
+    byDay.push({ date: key, amountCents: 0, feesCents: 0, count: 0, jobs: [] });
   }
   const dayIndex = new Map(byDay.map((d, i) => [d.date, i]));
   for (const p of payments) {
@@ -131,6 +167,15 @@ export async function GET(req: NextRequest) {
     byDay[idx].amountCents += p.amountCents;
     byDay[idx].feesCents += p.platformFeeCents;
     byDay[idx].count += 1;
+    byDay[idx].jobs.push({
+      id: p.job.id,
+      title: p.job.title,
+      instrument: p.job.instrument,
+      status: p.job.status,
+      amountCents: p.amountCents,
+      creatorId: p.job.creatorId,
+      creatorName: p.job.creator.name,
+    });
   }
 
   return NextResponse.json({

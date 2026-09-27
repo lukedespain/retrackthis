@@ -93,6 +93,12 @@ const faqItems: FaqItem[] = [
           that favorite. If you have no favorite, the job cancels and you’re refunded.
         </p>
         <p>
+          Need more time? Before the deadline passes, you can extend an open job by 7 days at a
+          time from your jobs page. We email musicians who play that part (and anyone who already
+          submitted) so they know. Anyone who already submitted can keep updating their takes until
+          the new deadline, and your 48 hours to award starts after the new deadline.
+        </p>
+        <p>
           You can cancel an open job anytime before it is awarded. That refunds you in full.
         </p>
       </>

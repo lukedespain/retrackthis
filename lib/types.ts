@@ -16,6 +16,7 @@ export type Job = {
   /** null = flexible tempo; number = fixed BPM */
   bpm: number | null;
   deadline: string;
+  deadlineExtendedAt?: string | null;
   status: "PENDING_PAYMENT" | "OPEN" | "AWARDING" | "CANCELLING" | "AWARDED" | "CANCELLED";
   createdAt: string;
   /** Number of musician submissions (public count only - audio stays private). */

@@ -25,6 +25,7 @@ export function JobMetaTags({
   instrument,
   priceCents,
   deadline,
+  deadlineExtended = false,
   takeCount,
   durationSeconds,
   showDeadline = true,
@@ -32,6 +33,7 @@ export function JobMetaTags({
   instrument: string;
   priceCents: number;
   deadline?: string | Date;
+  deadlineExtended?: boolean;
   takeCount?: number;
   durationSeconds?: number | null;
   showDeadline?: boolean;
@@ -54,7 +56,7 @@ export function JobMetaTags({
       )}
       {showDeadline && deadline && (
         <MetaTag emoji="📅" className="bg-blue-50 text-blue-800 ring-blue-600/10">
-          {formatDeadline(deadline)}
+          {formatDeadline(deadline, { extended: deadlineExtended })}
         </MetaTag>
       )}
       {typeof takeCount === "number" && (

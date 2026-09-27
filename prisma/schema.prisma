@@ -70,6 +70,8 @@ model Job {
   // null = flexible/relative tempo; set = fixed BPM the take should match
   bpm            Int?
   deadline       DateTime
+  // Set the last time the producer (or an admin) pushed the deadline out.
+  deadlineExtendedAt DateTime?
   // Set when we emailed matching musicians that this job has ~3 days left.
   threeDayReminderSentAt DateTime?
   // Set when we emailed the producer that the deadline hit and finalize grace started.

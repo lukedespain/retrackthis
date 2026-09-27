@@ -313,6 +313,7 @@ function OpenJobCard({
                 priceCents={job.priceCents}
                 durationSeconds={job.durationSeconds}
                 deadline={job.deadline}
+                deadlineExtended={Boolean(job.deadlineExtendedAt)}
                 takeCount={job.takeCount ?? 0}
               />
               {myTake && (

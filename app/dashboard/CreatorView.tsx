@@ -13,6 +13,7 @@ import { audioFiles, midiFiles } from "@/lib/takeFiles";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import type { Job, Take } from "@/lib/types";
 import { formatCents } from "@/lib/format";
+import { DEADLINE_EXTENSION_DAYS } from "@/lib/jobPricing";
 import { EditJobForm } from "./EditJobForm";
 import { JobCheckoutEmbed } from "./JobCheckoutEmbed";
 import { PostJobForm } from "./PostJobForm";
@@ -158,7 +159,9 @@ function CreatorJobCard({
   const [restoringDraft, setRestoringDraft] = useState(false);
   const [checkoutClientSecret, setCheckoutClientSecret] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [extending, setExtending] = useState(false);
   const isPastDeadline = job.status === "OPEN" && new Date(job.deadline).getTime() < Date.now();
+  const canExtend = job.status === "OPEN" && !isPastDeadline && job.paymentStatus === "captured";
   const missingBacking = job.status === "OPEN" && !job.backingFileUrl;
   const flexibleTempo = job.status === "OPEN" && job.bpm == null;
   const [hasProvisionalWinner, setHasProvisionalWinner] = useState(!!job.hasSelectedWinner);
@@ -239,6 +242,32 @@ function CreatorJobCard({
     }
   }
 
+  async function extendDeadline(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (readOnly) return;
+    const ok = window.confirm(
+      `Add ${DEADLINE_EXTENSION_DAYS} days to “${job.title}”?\n\n` +
+        `Musicians who play ${job.instrument} (and anyone who already submitted) will get an email that there's more time. ` +
+        `Anyone who already submitted can keep updating their take until the new deadline.\n\n` +
+        `You'll still have 48 hours after the new deadline to award a take.`
+    );
+    if (!ok) return;
+    setExtending(true);
+    setCancelError(null);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/extend-deadline`, { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(body?.error ?? `Request failed (${res.status})`);
+      }
+      onChanged();
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setExtending(false);
+    }
+  }
+
   function startEdit(e?: React.MouseEvent) {
     e?.stopPropagation();
     if (readOnly) return;
@@ -269,6 +298,7 @@ function CreatorJobCard({
               priceCents={job.priceCents}
               durationSeconds={job.durationSeconds}
               deadline={job.deadline}
+              deadlineExtended={Boolean(job.deadlineExtendedAt)}
               takeCount={job.takeCount}
             />
           </div>
@@ -325,11 +355,22 @@ function CreatorJobCard({
               >
                 {editing ? "Editing…" : "Edit job"}
               </Button>
+              {canExtend && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={extendDeadline}
+                  disabled={extending || cancelling || editing}
+                  className="w-full sm:w-auto"
+                >
+                  {extending ? "Extending…" : `Extend +${DEADLINE_EXTENSION_DAYS} days`}
+                </Button>
+              )}
               <Button
                 variant="danger"
                 size="sm"
                 onClick={cancelJob}
-                disabled={cancelling || editing}
+                disabled={cancelling || editing || extending}
                 className="w-full sm:w-auto"
                 aria-label="Cancel and refund"
               >

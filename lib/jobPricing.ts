@@ -19,6 +19,8 @@ export const DEFAULT_DEADLINE_DAYS = 7;
  * Charge-upfront means there is no card-hold timer forcing a short window.
  */
 export const MAX_DEADLINE_DAYS = 365;
+/** Producers extend open jobs in fixed chunks so musicians can plan around a weekend. */
+export const DEADLINE_EXTENSION_DAYS = 7;
 /** Pricing only: shorter than this nudges the suggested range up (rush). */
 const DEADLINE_RUSH_REFERENCE_DAYS = 7;
 

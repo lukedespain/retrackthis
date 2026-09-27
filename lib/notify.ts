@@ -125,6 +125,68 @@ export async function notifyJobThreeDaysLeft(job: JobLite): Promise<number> {
   return recipients.length;
 }
 
+/**
+ * Deadline pushed out: tell matching musicians there's more time, and tell
+ * anyone who already submitted they can still update their take.
+ * Sent one at a time to stay under Resend's rate limit.
+ */
+export async function notifyJobDeadlineExtended(job: JobLite, extraDays: number): Promise<number> {
+  if (!emailConfigured()) return 0;
+
+  const [alertUsers, takes] = await Promise.all([
+    db.user.findMany({
+      where: {
+        notifyJobAlerts: true,
+        id: { not: job.creatorId },
+        NOT: { instruments: { isEmpty: true } },
+      },
+      select: { id: true, email: true, name: true, instruments: true },
+    }),
+    db.take.findMany({
+      where: { jobId: job.id, musicianId: { not: job.creatorId } },
+      select: {
+        musician: { select: { id: true, email: true, name: true, notifyTakeOutcome: true } },
+      },
+    }),
+  ]);
+
+  const recipients = new Map<string, { email: string; name: string; submitted: boolean }>();
+  for (const { musician } of takes) {
+    if (!musician.notifyTakeOutcome) continue;
+    recipients.set(musician.id, { email: musician.email, name: musician.name, submitted: true });
+  }
+  for (const user of alertUsers) {
+    if (recipients.has(user.id)) continue;
+    if (!jobMatchesAlertFilters(job.instrument, job.instrumentId, user.instruments)) continue;
+    recipients.set(user.id, { email: user.email, name: user.name, submitted: false });
+  }
+
+  const timeLeft = formatDeadline(job.deadline).toLowerCase();
+  let sent = 0;
+  for (const user of recipients.values()) {
+    const nextStep = user.submitted
+      ? `You’ve already sent a take, and you can still go in and update or replace your submission and takes any time before the new deadline.`
+      : `If timing was the only thing holding you back, now’s a good window to learn the part and send a take.`;
+    await safeSend(`deadline-extended ${job.id} → ${user.email}`, () =>
+      sendEmail({
+        to: user.email,
+        subject: `More time to submit: ${job.title}`,
+        heading: "This job just got more time",
+        bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(user.name.split(" ")[0] || "there")},</p>
+          <p style="margin:0 0 10px;">The producer added ${extraDays} more days to <strong>${escape(job.title)}</strong> (${escape(job.instrument)} · ${escape(formatCents(job.priceCents))}). There are now ${escape(timeLeft)} to submit.</p>
+          <p style="margin:0 0 10px;">${nextStep}</p>
+          <p style="margin:0;">Once the new deadline passes, the producer still has the usual 48 hours to pick a winner.</p>`,
+        ctaLabel: user.submitted ? "Update your take" : "View job",
+        ctaHref: jobUrl(),
+      })
+    );
+    sent += 1;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+
+  return sent;
+}
+
 export async function notifyJobInvites(opts: {
   job: JobLite;
   creatorName: string;

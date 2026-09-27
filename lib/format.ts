@@ -10,15 +10,19 @@ export function daysUntilDeadline(deadline: string | Date): number {
   return Math.floor(ms / DAY_MS);
 }
 
-/** Pill / UI copy: "3 days left", "1 day left", "Less than a day left", or "Closed …". */
-export function formatDeadline(deadline: string | Date) {
+/**
+ * Pill / UI copy: "3 days left", "1 day left", "Less than a day left", or "Closed …".
+ * Open jobs whose deadline was pushed out get " (extended)".
+ */
+export function formatDeadline(deadline: string | Date, opts: { extended?: boolean } = {}) {
   const date = new Date(deadline);
   const ms = date.getTime() - Date.now();
   if (ms < 0) {
     const formatted = date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     return `Closed ${formatted}`;
   }
-  if (ms < DAY_MS) return "Less than a day left";
+  const suffix = opts.extended ? " (extended)" : "";
+  if (ms < DAY_MS) return `Less than a day left${suffix}`;
   const days = Math.floor(ms / DAY_MS);
-  return days === 1 ? "1 day left" : `${days} days left`;
+  return `${days === 1 ? "1 day left" : `${days} days left`}${suffix}`;
 }

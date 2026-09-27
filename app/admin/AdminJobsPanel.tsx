@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { formatDeadline } from "@/lib/format";
+import { DEADLINE_EXTENSION_DAYS } from "@/lib/jobPricing";
 import { audioFiles, midiFiles } from "@/lib/takeFiles";
 import type { Job, Take } from "@/lib/types";
 
@@ -50,6 +52,7 @@ export function AdminJobsPanel({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [notifyJobId, setNotifyJobId] = useState<string | null>(null);
   const [notifyMessage, setNotifyMessage] = useState<string | null>(null);
+  const [extendingId, setExtendingId] = useState<string | null>(null);
 
   const manualCount = useMemo(
     () => jobs.filter((j) => j.needsManualPayout).length,
@@ -137,6 +140,29 @@ export function AdminJobsPanel({
       setDeleteError(err instanceof Error ? err.message : "Notify failed");
     } finally {
       setNotifyJobId(null);
+    }
+  }
+
+  async function extendDeadline(job: AdminJobRow) {
+    const ok = window.confirm(
+      `Add ${DEADLINE_EXTENSION_DAYS} days to “${job.title}” for ${job.creator.name}?\n\nMatching ${job.instrument} musicians and anyone who already submitted get an email.`
+    );
+    if (!ok) return;
+    setExtendingId(job.id);
+    setNotifyMessage(null);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/extend-deadline`, { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? `Extend failed (${res.status})`);
+      setNotifyMessage(
+        `Extended “${job.title}” by ${DEADLINE_EXTENSION_DAYS} days and emailed ${body.notified ?? "?"} musician(s).`
+      );
+      onChanged();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Extend failed");
+    } finally {
+      setExtendingId(null);
     }
   }
 
@@ -272,6 +298,11 @@ export function AdminJobsPanel({
                         )}
                         <span className="text-xs text-gray-500">{job.instrument}</span>
                       </div>
+                      {job.status === "OPEN" && (
+                        <div className="mt-1 text-[11px] text-gray-400">
+                          {formatDeadline(job.deadline, { extended: Boolean(job.deadlineExtendedAt) })}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-gray-900 dark:text-white">{job.creator.name}</div>
@@ -349,6 +380,19 @@ export function AdminJobsPanel({
                             >
                               {notifyJobId === job.id ? "Sending…" : "Resend alerts"}
                             </Button>
+                            {job.paymentStatus === "captured" &&
+                              new Date(job.deadline).getTime() > Date.now() && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled={extendingId === job.id}
+                                  onClick={() => void extendDeadline(job)}
+                                >
+                                  {extendingId === job.id
+                                    ? "Extending…"
+                                    : `Extend +${DEADLINE_EXTENSION_DAYS}d`}
+                                </Button>
+                              )}
                           </>
                         ) : job.needsManualPayout ? (
                           <div className="flex flex-col items-end gap-1">

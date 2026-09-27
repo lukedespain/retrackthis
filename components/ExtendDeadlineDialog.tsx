@@ -169,9 +169,8 @@ export function ExtendDeadlineDialog({
         </dl>
 
         <p className="mt-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-          We’ll email musicians who play {job.instrument} and anyone who already submitted. People
-          who submitted can keep updating their takes until the new deadline, and the 48 hours to
-          award starts after it.
+          We’ll email all musicians that have “{job.instrument}” included in their profile. The 48
+          hour grace-period to award a musician will start after the new deadline.
         </p>
 
         {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}

@@ -723,7 +723,7 @@ function MemberInstrumentChips({
   useLayoutEffect(() => {
     const el = rowRef.current;
     if (!el) return;
-    const measure = () => setOverflows(el.scrollHeight > el.clientHeight + 1);
+    const measure = () => setOverflows(el.scrollHeight > el.clientHeight + 4);
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
@@ -739,7 +739,7 @@ function MemberInstrumentChips({
       ) : (
         <div
           ref={rowRef}
-          className={`flex flex-wrap gap-1 ${expanded ? "" : "max-h-[1.375rem] overflow-hidden"}`}
+          className={`flex flex-wrap gap-1 ${expanded ? "" : "max-h-6 overflow-hidden"}`}
         >
           {instruments.map((inst) => (
             <span

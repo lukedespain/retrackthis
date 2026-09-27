@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
@@ -449,29 +449,13 @@ function AdminPageInner() {
                         {m.jobsWon}
                       </td>
                       <td className="px-4 py-3">
-                        {m.instruments.length === 0 ? (
-                          <span className="text-xs text-gray-400">None listed</span>
-                        ) : (
-                          <div className="flex max-w-md flex-wrap gap-1">
-                            {m.instruments.map((inst) => (
-                              <span
-                                key={inst.id}
-                                className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                              >
-                                {inst.label}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() =>
+                        <MemberInstrumentChips
+                          instruments={m.instruments}
+                          editing={editingMemberId === m.id}
+                          onEdit={() =>
                             setEditingMemberId((id) => (id === m.id ? null : m.id))
                           }
-                          className="mt-1.5 text-xs font-medium text-accent hover:underline"
-                        >
-                          {editingMemberId === m.id ? "Editing…" : "Edit instruments"}
-                        </button>
+                        />
                       </td>
                     </tr>
                   ))}
@@ -718,6 +702,65 @@ function InstrumentTable({
           </tbody>
         </table>
       )}
+    </div>
+  );
+}
+
+/** One row of chips; "View all" expands when they overflow. */
+function MemberInstrumentChips({
+  instruments,
+  editing,
+  onEdit,
+}: {
+  instruments: Array<{ id: string; label: string }>;
+  editing: boolean;
+  onEdit: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+    const measure = () => setOverflows(el.scrollHeight > el.clientHeight + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [instruments, expanded]);
+
+  const linkClass = "text-xs font-medium text-accent hover:underline";
+
+  return (
+    <div className="max-w-md">
+      {instruments.length === 0 ? (
+        <span className="text-xs text-gray-400">None listed</span>
+      ) : (
+        <div
+          ref={rowRef}
+          className={`flex flex-wrap gap-1 ${expanded ? "" : "max-h-[1.375rem] overflow-hidden"}`}
+        >
+          {instruments.map((inst) => (
+            <span
+              key={inst.id}
+              className="whitespace-nowrap rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            >
+              {inst.label}
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="mt-1.5 flex items-center gap-3">
+        {(overflows || expanded) && (
+          <button type="button" onClick={() => setExpanded((v) => !v)} className={linkClass}>
+            {expanded ? "Show less" : `View all (${instruments.length})`}
+          </button>
+        )}
+        <button type="button" onClick={onEdit} className={linkClass}>
+          {editing ? "Editing…" : "Edit"}
+        </button>
+      </div>
     </div>
   );
 }

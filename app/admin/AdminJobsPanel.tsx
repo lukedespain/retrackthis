@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { EditJobForm } from "@/app/dashboard/EditJobForm";
 import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
+import { AdminActionsMenu, type AdminAction } from "./AdminActionsMenu";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { TestJobBadge } from "@/components/TestJobBadge";
 import { Badge } from "@/components/ui/Badge";
@@ -145,6 +145,81 @@ export function AdminJobsPanel({
   }
 
   const extendingJob = extendingId ? jobs.find((j) => j.id === extendingId) : null;
+
+  function busyLabelFor(jobId: string): string | null {
+    if (notifyJobId === jobId) return "Sending…";
+    if (payoutJobId === jobId) return "Saving payout…";
+    if (deletingId === jobId) return "Deleting…";
+    return null;
+  }
+
+  function actionsFor(job: AdminJobRow, takeCount: number): AdminAction[] {
+    const busy = busyLabelFor(job.id) !== null;
+    const actions: AdminAction[] = [
+      {
+        label: "Preview as producer",
+        href: `/admin/preview/producer/${job.creator.id}?job=${job.id}`,
+      },
+      {
+        label: listeningId === job.id ? "Stop listening" : "Listen to takes",
+        onClick: () => setListeningId(listeningId === job.id ? null : job.id),
+        disabled: takeCount === 0,
+        hint: takeCount === 0 ? "No takes yet" : undefined,
+      },
+    ];
+
+    if (job.status === "OPEN") {
+      actions.push({
+        label: editingId === job.id ? "Close editor" : "Edit job",
+        onClick: () => setEditingId(editingId === job.id ? null : job.id),
+      });
+      if (job.paymentStatus === "captured" && new Date(job.deadline).getTime() > Date.now()) {
+        actions.push({
+          label: "Extend deadline",
+          onClick: () => {
+            setNotifyMessage(null);
+            setDeleteError(null);
+            setExtendingId(job.id);
+          },
+        });
+      }
+      if (!job.isTest) {
+        actions.push({
+          label: "Resend alerts",
+          onClick: () => void resendAlerts(job),
+          disabled: busy,
+        });
+      }
+    } else if (job.needsManualPayout) {
+      actions.push({
+        label: "Mark paid",
+        hint: "After you send via PayPal/Wise",
+        onClick: () => void completePayout(job.id, true),
+        disabled: busy,
+      });
+    } else if (job.status === "AWARDED" && job.paymentStatus === "captured") {
+      actions.push(
+        {
+          label: "Complete payout",
+          onClick: () => void completePayout(job.id, false),
+          disabled: busy,
+        },
+        {
+          label: "Mark transferred",
+          onClick: () => void completePayout(job.id, true),
+          disabled: busy,
+        }
+      );
+    }
+
+    actions.push({
+      label: "Delete",
+      danger: true,
+      onClick: () => void purgeJob(job),
+      disabled: busy,
+    });
+    return actions;
+  }
 
   return (
     <section className="space-y-4">
@@ -318,99 +393,11 @@ export function AdminJobsPanel({
                       {takeCount}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex flex-wrap justify-end gap-2">
-                        <Link
-                          href={`/admin/preview/producer/${job.creator.id}?job=${job.id}`}
-                          className="inline-flex min-h-10 items-center justify-center rounded-full px-3.5 py-2 text-sm font-medium text-gray-600 transition-all duration-150 ease-out hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:py-1.5 sm:text-xs dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-                        >
-                          Preview as producer
-                        </Link>
-                        <Button
-                          size="sm"
-                          variant={listeningId === job.id ? "secondary" : "ghost"}
-                          onClick={() => setListeningId(listeningId === job.id ? null : job.id)}
-                          disabled={takeCount === 0}
-                        >
-                          {listeningId === job.id ? "Listening…" : "Listen"}
-                        </Button>
-                        {job.status === "OPEN" ? (
-                          <>
-                            <Button
-                              size="sm"
-                              variant={editingId === job.id ? "secondary" : "ghost"}
-                              onClick={() => setEditingId(editingId === job.id ? null : job.id)}
-                            >
-                              {editingId === job.id ? "Editing…" : "Edit"}
-                            </Button>
-                            {!job.isTest && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                disabled={notifyJobId === job.id}
-                                onClick={() => void resendAlerts(job)}
-                              >
-                                {notifyJobId === job.id ? "Sending…" : "Resend alerts"}
-                              </Button>
-                            )}
-                            {job.paymentStatus === "captured" &&
-                              new Date(job.deadline).getTime() > Date.now() && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    setNotifyMessage(null);
-                                    setDeleteError(null);
-                                    setExtendingId(job.id);
-                                  }}
-                                >
-                                  Extend deadline
-                                </Button>
-                              )}
-                          </>
-                        ) : job.needsManualPayout ? (
-                          <div className="flex flex-col items-end gap-1">
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => completePayout(job.id, true)}
-                              disabled={payoutJobId === job.id}
-                            >
-                              {payoutJobId === job.id ? "Saving…" : "Mark paid"}
-                            </Button>
-                            <p className="max-w-[11rem] text-right text-[10px] leading-snug text-gray-400">
-                              After you send via PayPal/Wise
-                            </p>
-                          </div>
-                        ) : job.status === "AWARDED" && job.paymentStatus === "captured" ? (
-                          <div className="flex flex-col items-end gap-1">
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => completePayout(job.id, false)}
-                              disabled={payoutJobId === job.id}
-                            >
-                              {payoutJobId === job.id ? "Paying out…" : "Complete payout"}
-                            </Button>
-                            <button
-                              type="button"
-                              className="text-[11px] text-gray-500 underline-offset-2 hover:underline"
-                              onClick={() => completePayout(job.id, true)}
-                              disabled={payoutJobId === job.id}
-                            >
-                              Mark transferred
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="self-center text-xs text-gray-400">Closed</span>
+                      <div className="flex items-center justify-end gap-2">
+                        {busyLabelFor(job.id) && (
+                          <span className="text-xs text-gray-400">{busyLabelFor(job.id)}</span>
                         )}
-                        <button
-                          type="button"
-                          className="text-[11px] text-red-600/80 underline-offset-2 hover:text-red-700 hover:underline disabled:opacity-50"
-                          disabled={deletingId === job.id}
-                          onClick={() => void purgeJob(job)}
-                        >
-                          {deletingId === job.id ? "Deleting…" : "Delete"}
-                        </button>
+                        <AdminActionsMenu actions={actionsFor(job, takeCount)} />
                       </div>
                     </td>
                   </tr>

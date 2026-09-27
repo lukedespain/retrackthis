@@ -197,8 +197,8 @@ export function AdminEmailsPanel() {
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950 sm:p-6">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">Compose</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          We add <span className="font-medium text-gray-700 dark:text-gray-300">Hi {"{first name}"},</span>{" "}
-          automatically. Blank line = new paragraph. Tests only go to the teammates you pick.
+          <span className="font-medium text-gray-700 dark:text-gray-300">“Hi {"{first name}"}”</span>{" "}
+          is automatically added above the BODY.
         </p>
 
         <div className="mt-4 space-y-3">

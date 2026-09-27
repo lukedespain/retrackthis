@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { EditJobForm } from "@/app/dashboard/EditJobForm";
+import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -10,7 +11,6 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatDeadline } from "@/lib/format";
-import { DEADLINE_EXTENSION_DAYS } from "@/lib/jobPricing";
 import { audioFiles, midiFiles } from "@/lib/takeFiles";
 import type { Job, Take } from "@/lib/types";
 
@@ -143,31 +143,24 @@ export function AdminJobsPanel({
     }
   }
 
-  async function extendDeadline(job: AdminJobRow) {
-    const ok = window.confirm(
-      `Add ${DEADLINE_EXTENSION_DAYS} days to “${job.title}” for ${job.creator.name}?\n\nMatching ${job.instrument} musicians and anyone who already submitted get an email.`
-    );
-    if (!ok) return;
-    setExtendingId(job.id);
-    setNotifyMessage(null);
-    setDeleteError(null);
-    try {
-      const res = await fetch(`/api/jobs/${job.id}/extend-deadline`, { method: "POST" });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error ?? `Extend failed (${res.status})`);
-      setNotifyMessage(
-        `Extended “${job.title}” by ${DEADLINE_EXTENSION_DAYS} days and emailed ${body.notified ?? "?"} musician(s).`
-      );
-      onChanged();
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : "Extend failed");
-    } finally {
-      setExtendingId(null);
-    }
-  }
+  const extendingJob = extendingId ? jobs.find((j) => j.id === extendingId) : null;
 
   return (
     <section className="space-y-4">
+      {extendingJob && (
+        <ExtendDeadlineDialog
+          job={extendingJob}
+          onBehalfOf={extendingJob.creator.name}
+          onClose={() => setExtendingId(null)}
+          onExtended={({ days, notified }) => {
+            setExtendingId(null);
+            setNotifyMessage(
+              `Extended “${extendingJob.title}” by ${days === 1 ? "1 day" : `${days} days`} and emailed ${notified} musician(s).`
+            );
+            onChanged();
+          }}
+        />
+      )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Edit open jobs, listen to takes, and clear PayPal/Wise payouts waiting on founders.
@@ -385,12 +378,13 @@ export function AdminJobsPanel({
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  disabled={extendingId === job.id}
-                                  onClick={() => void extendDeadline(job)}
+                                  onClick={() => {
+                                    setNotifyMessage(null);
+                                    setDeleteError(null);
+                                    setExtendingId(job.id);
+                                  }}
                                 >
-                                  {extendingId === job.id
-                                    ? "Extending…"
-                                    : `Extend +${DEADLINE_EXTENSION_DAYS}d`}
+                                  Extend deadline
                                 </Button>
                               )}
                           </>

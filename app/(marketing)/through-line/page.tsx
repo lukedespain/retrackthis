@@ -206,8 +206,8 @@ function ProducerThroughLine() {
           </li>
         </ul>
         <Callout tone="edit">
-          <strong>Extend deadline?</strong> Yes, before it passes: Extend +7 days on the job card
-          (repeatable). Pill shows “(extended)”, matching musicians + existing submitters get an
+          <strong>Extend deadline?</strong> Yes, before it passes: Extend deadline on the job card,
+          pick 1–14 days (repeatable). Pill shows “(extended)”, matching musicians + existing submitters get an
           email, submitters can keep replacing takes, and the 48h award window follows the new
           deadline. Edit job still can’t change price.
         </Callout>

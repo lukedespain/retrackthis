@@ -13,7 +13,7 @@ import { audioFiles, midiFiles } from "@/lib/takeFiles";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import type { Job, Take } from "@/lib/types";
 import { formatCents } from "@/lib/format";
-import { DEADLINE_EXTENSION_DAYS } from "@/lib/jobPricing";
+import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
 import { EditJobForm } from "./EditJobForm";
 import { JobCheckoutEmbed } from "./JobCheckoutEmbed";
 import { PostJobForm } from "./PostJobForm";
@@ -242,32 +242,6 @@ function CreatorJobCard({
     }
   }
 
-  async function extendDeadline(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (readOnly) return;
-    const ok = window.confirm(
-      `Add ${DEADLINE_EXTENSION_DAYS} days to “${job.title}”?\n\n` +
-        `Musicians who play ${job.instrument} (and anyone who already submitted) will get an email that there's more time. ` +
-        `Anyone who already submitted can keep updating their take until the new deadline.\n\n` +
-        `You'll still have 48 hours after the new deadline to award a take.`
-    );
-    if (!ok) return;
-    setExtending(true);
-    setCancelError(null);
-    try {
-      const res = await fetch(`/api/jobs/${job.id}/extend-deadline`, { method: "POST" });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) {
-        throw new Error(body?.error ?? `Request failed (${res.status})`);
-      }
-      onChanged();
-    } catch (err) {
-      setCancelError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setExtending(false);
-    }
-  }
-
   function startEdit(e?: React.MouseEvent) {
     e?.stopPropagation();
     if (readOnly) return;
@@ -359,11 +333,15 @@ function CreatorJobCard({
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={extendDeadline}
-                  disabled={extending || cancelling || editing}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCancelError(null);
+                    setExtending(true);
+                  }}
+                  disabled={cancelling || editing}
                   className="w-full sm:w-auto"
                 >
-                  {extending ? "Extending…" : `Extend +${DEADLINE_EXTENSION_DAYS} days`}
+                  Extend deadline
                 </Button>
               )}
               <Button
@@ -397,6 +375,16 @@ function CreatorJobCard({
         </div>
       </div>
 
+      {extending && !readOnly && (
+        <ExtendDeadlineDialog
+          job={job}
+          onClose={() => setExtending(false)}
+          onExtended={() => {
+            setExtending(false);
+            onChanged();
+          }}
+        />
+      )}
       {job.status === "AWARDING" && (
         <Alert variant="info">
           Payment is in progress. If this stays on Paying, open the gig and click Finish payment.

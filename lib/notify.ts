@@ -162,6 +162,9 @@ export async function notifyJobDeadlineExtended(job: JobLite, extraDays: number)
   }
 
   const timeLeft = formatDeadline(job.deadline).toLowerCase();
+  const timeLeftLine = /^(1 day|less)/.test(timeLeft)
+    ? `There’s now ${timeLeft} to submit.`
+    : `There are now ${timeLeft} to submit.`;
   let sent = 0;
   for (const user of recipients.values()) {
     const nextStep = user.submitted
@@ -173,7 +176,7 @@ export async function notifyJobDeadlineExtended(job: JobLite, extraDays: number)
         subject: `More time to submit: ${job.title}`,
         heading: "This job just got more time",
         bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(user.name.split(" ")[0] || "there")},</p>
-          <p style="margin:0 0 10px;">The producer added ${extraDays} more days to <strong>${escape(job.title)}</strong> (${escape(job.instrument)} · ${escape(formatCents(job.priceCents))}). There are now ${escape(timeLeft)} to submit.</p>
+          <p style="margin:0 0 10px;">The producer added ${extraDays === 1 ? "1 more day" : `${extraDays} more days`} to <strong>${escape(job.title)}</strong> (${escape(job.instrument)} · ${escape(formatCents(job.priceCents))}). ${escape(timeLeftLine)}</p>
           <p style="margin:0 0 10px;">${nextStep}</p>
           <p style="margin:0;">Once the new deadline passes, the producer still has the usual 48 hours to pick a winner.</p>`,
         ctaLabel: user.submitted ? "Update your take" : "View job",

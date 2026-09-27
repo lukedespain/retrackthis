@@ -10,7 +10,12 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { AUDIO_FILE_ACCEPT } from "@/lib/constants";
 import { formatCents } from "@/lib/format";
-import { displayLabelForInstrumentId, labelForInstrumentId } from "@/lib/instruments";
+import {
+  displayLabelForInstrumentId,
+  isTestInstrumentId,
+  labelForInstrumentId,
+  TEST_INSTRUMENT_ID,
+} from "@/lib/instruments";
 import { MUSICAL_KEYS } from "@/lib/musicalKeys";
 import {
   MAX_DEADLINE_DAYS,
@@ -106,6 +111,15 @@ function PostJobFormInner({
   const [deadlineText, setDeadlineText] = useState(String(DEFAULT_DEADLINE_DAYS));
   const [availableIds, setAvailableIds] = useState<Set<string>>(new Set());
   const [networkLoaded, setNetworkLoaded] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const isTestJob = isTestInstrumentId(instrumentId);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => setIsAdmin(Boolean(body?.profile?.isAdmin)))
+      .catch(() => setIsAdmin(false));
+  }, []);
 
   const handlePriceChange = useCallback(
     (n: number) => {
@@ -131,7 +145,7 @@ function PostJobFormInner({
   }, []);
 
   const showNetworkGap =
-    Boolean(instrumentId) && networkLoaded && !availableIds.has(instrumentId!);
+    Boolean(instrumentId) && !isTestJob && networkLoaded && !availableIds.has(instrumentId!);
 
   function collectInviteEmails() {
     const email = inviteEmail.trim().toLowerCase();
@@ -386,11 +400,38 @@ function PostJobFormInner({
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <PostJobInstrumentPicker
-              selectedId={instrumentId}
+              selectedId={isTestJob ? null : instrumentId}
               onChange={setInstrumentId}
               disabled={submitting}
             />
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setInstrumentId(isTestJob ? null : TEST_INSTRUMENT_ID)}
+                disabled={submitting}
+                aria-pressed={isTestJob}
+                className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ring-1 ring-inset transition ${
+                  isTestJob
+                    ? "bg-amber-100 text-amber-900 ring-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:ring-amber-700"
+                    : "bg-white text-gray-600 ring-gray-200 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-300 dark:ring-gray-700"
+                }`}
+              >
+                <span aria-hidden="true">🧪</span>
+                Test (admins only)
+              </button>
+            )}
           </div>
+
+          {isTestJob && (
+            <Alert variant="warning" className="sm:col-span-2">
+              <p className="font-medium">This is a test job</p>
+              <p className="mt-1.5">
+                It goes live right away with no payment, only admins can see or submit to it, it
+                never sends emails, and it stays out of the Income stats. Awarding and cancelling
+                are simulated.
+              </p>
+            </Alert>
+          )}
 
           {showNetworkGap && instrumentId && (
             <Alert variant="warning" className="sm:col-span-2">
@@ -447,7 +488,13 @@ function PostJobFormInner({
 
       <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:gap-3">
         <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
-          {submitting ? "Starting checkout…" : "Post job & pay"}
+          {isTestJob
+            ? submitting
+              ? "Posting…"
+              : "Post test job"
+            : submitting
+              ? "Starting checkout…"
+              : "Post job & pay"}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel} className="w-full sm:w-auto">
           Cancel

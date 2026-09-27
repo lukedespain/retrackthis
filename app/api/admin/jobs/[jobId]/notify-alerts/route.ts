@@ -34,11 +34,15 @@ export async function POST(
       deadline: true,
       creatorId: true,
       status: true,
+      isTest: true,
     },
   });
 
   if (!job) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
+  }
+  if (job.isTest) {
+    return NextResponse.json({ error: "Test jobs never send email alerts." }, { status: 400 });
   }
   if (job.status !== "OPEN") {
     return NextResponse.json(

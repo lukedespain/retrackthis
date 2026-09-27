@@ -5,7 +5,14 @@ import { CANCEL_GRACE_PERIOD_MS } from "@/lib/jobActions";
 import { notifyJobInvites, notifyNewJobPosted } from "@/lib/notify";
 import { stripe } from "@/lib/stripe";
 import { getSessionUserId } from "@/lib/supabaseServer";
-import { isAllowedInstrumentId, labelForInstrumentId } from "@/lib/instruments";
+import { getAdminUser } from "@/lib/admin";
+import {
+  isAllowedInstrumentId,
+  isTestInstrumentId,
+  labelForInstrumentId,
+  TEST_INSTRUMENT_ID,
+  TEST_INSTRUMENT_LABEL,
+} from "@/lib/instruments";
 import { sanitizeMusicalKey } from "@/lib/musicalKeys";
 import {
   MAX_DEADLINE_DAYS,
@@ -67,7 +74,13 @@ export async function POST(req: NextRequest) {
   let instrumentLabel = typeof instrument === "string" ? instrument.trim() : "";
   let resolvedInstrumentId = typeof instrumentId === "string" ? instrumentId.trim() : "";
 
-  if (resolvedInstrumentId) {
+  const isTest = isTestInstrumentId(resolvedInstrumentId);
+  if (isTest) {
+    if (!(await getAdminUser())) {
+      return NextResponse.json({ error: "Invalid instrument" }, { status: 400 });
+    }
+    instrumentLabel = TEST_INSTRUMENT_LABEL;
+  } else if (resolvedInstrumentId) {
     if (!isAllowedInstrumentId(resolvedInstrumentId)) {
       return NextResponse.json({ error: "Invalid instrument" }, { status: 400 });
     }
@@ -142,6 +155,38 @@ export async function POST(req: NextRequest) {
   const descriptionStr = String(description).trim().slice(0, 5000);
   if (!titleStr || !descriptionStr) {
     return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
+  }
+
+  if (isTest) {
+    // Test jobs skip Stripe entirely: live immediately with a simulated paid-upfront
+    // payment, and no new-job alerts or invites.
+    const testJob = await db.job.create({
+      data: {
+        creatorId,
+        title: titleStr,
+        instrument: instrumentLabel,
+        instrumentId: TEST_INSTRUMENT_ID,
+        description: descriptionStr,
+        demoFileUrl: demoFileUrl.trim(),
+        backingFileUrl: backing,
+        priceCents,
+        durationSeconds: durationSecondsInt,
+        musicalKey: musicalKeyValue,
+        bpm: bpmValue,
+        deadline: deadlineDate,
+        status: "OPEN",
+        isTest: true,
+        payment: {
+          create: {
+            stripePaymentIntentId: `test_${crypto.randomUUID()}`,
+            amountCents: priceCents,
+            platformFeeCents: 0,
+            status: "captured",
+          },
+        },
+      },
+    });
+    return NextResponse.json({ id: testJob.id, status: "OPEN", isTest: true }, { status: 201 });
   }
 
   const base = appBaseUrl();
@@ -245,13 +290,15 @@ export async function POST(req: NextRequest) {
 //
 // Money sweeps (finalize, refund, reminders) run from /api/cron/jobs - not here.
 export async function GET(req: NextRequest) {
-  let where: { creatorId: string } | { status: "OPEN" } = { status: "OPEN" };
+  let where: { creatorId: string } | { status: "OPEN"; isTest?: false } = { status: "OPEN" };
   if (req.nextUrl.searchParams.get("mine") === "true") {
     const creatorId = await getSessionUserId();
     if (!creatorId) {
       return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     }
     where = { creatorId };
+  } else if (!(await getAdminUser())) {
+    where = { status: "OPEN", isTest: false };
   }
 
   const jobs = await db.job.findMany({

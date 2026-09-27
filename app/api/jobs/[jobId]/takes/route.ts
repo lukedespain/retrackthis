@@ -94,18 +94,29 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
-  const payout = await getMusicianPayoutSnapshot(musicianId);
-  if (!payout.ready) {
-    return NextResponse.json(
-      {
-        error:
-          payout.status === "pending"
-            ? "Finish payout setup before submitting a take."
-            : "Set up payouts before submitting a take.",
-        code: payout.status === "pending" ? "PAYOUTS_PENDING" : "PAYOUTS_REQUIRED",
-      },
-      { status: 403 }
-    );
+  const job = await db.job.findUnique({ where: { id: params.jobId } });
+  if (!job || job.status !== "OPEN") {
+    return NextResponse.json({ error: "Job is not open for submissions" }, { status: 400 });
+  }
+  if (job.isTest) {
+    const { getAdminUser } = await import("@/lib/admin");
+    if (!(await getAdminUser())) {
+      return NextResponse.json({ error: "Job is not open for submissions" }, { status: 400 });
+    }
+  } else {
+    const payout = await getMusicianPayoutSnapshot(musicianId);
+    if (!payout.ready) {
+      return NextResponse.json(
+        {
+          error:
+            payout.status === "pending"
+              ? "Finish payout setup before submitting a take."
+              : "Set up payouts before submitting a take.",
+          code: payout.status === "pending" ? "PAYOUTS_PENDING" : "PAYOUTS_REQUIRED",
+        },
+        { status: 403 }
+      );
+    }
   }
 
   const body = await req.json();
@@ -132,10 +143,6 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     );
   }
 
-  const job = await db.job.findUnique({ where: { id: params.jobId } });
-  if (!job || job.status !== "OPEN") {
-    return NextResponse.json({ error: "Job is not open for submissions" }, { status: 400 });
-  }
   if (job.creatorId === musicianId) {
     return NextResponse.json(
       { error: "You can’t submit a take on your own job." },
@@ -207,11 +214,13 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
       });
     });
 
-    await notifyCreatorTakeSubmitted({
-      job: { id: job.id, title: job.title, creatorId: job.creatorId },
-      musicianName: take.musician.name,
-      replaced: true,
-    });
+    if (!job.isTest) {
+      await notifyCreatorTakeSubmitted({
+        job: { id: job.id, title: job.title, creatorId: job.creatorId },
+        musicianName: take.musician.name,
+        replaced: true,
+      });
+    }
 
     return NextResponse.json({
       ...take,
@@ -233,10 +242,12 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     include: takeInclude,
   });
 
-  await notifyCreatorTakeSubmitted({
-    job: { id: job.id, title: job.title, creatorId: job.creatorId },
-    musicianName: take.musician.name,
-  });
+  if (!job.isTest) {
+    await notifyCreatorTakeSubmitted({
+      job: { id: job.id, title: job.title, creatorId: job.creatorId },
+      musicianName: take.musician.name,
+    });
+  }
 
   return NextResponse.json(
     {

@@ -126,6 +126,10 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
     return { ok: false, error: "You can’t award your own take on your own job", status: 400 };
   }
 
+  if (job.isTest) {
+    return finalizeTestAward(job.id, job.payment.id, job.payment.amountCents, take.id);
+  }
+
   const musician = take.musician;
   const altPayout =
     isAltPayoutProvider(musician.payoutProvider) &&
@@ -285,6 +289,32 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
   return { ok: true, payout: "stripe" };
 }
 
+/** Test jobs: same state transitions as a real award, but no Stripe and no emails. */
+async function finalizeTestAward(
+  jobId: string,
+  paymentId: string,
+  amountCents: number,
+  takeId: string
+): Promise<FinalizeAwardResult> {
+  const claim = await claimJobForAward(jobId);
+  if (claim === "busy") {
+    return { ok: false, error: "Award already in progress. Refresh in a moment.", status: 409 };
+  }
+  if (claim === "closed") {
+    return { ok: false, error: "Only open jobs can be awarded", status: 400 };
+  }
+  await db.$transaction([
+    db.take.updateMany({ where: { jobId, isWinner: true }, data: { isWinner: false } }),
+    db.take.update({ where: { id: takeId }, data: { isWinner: true } }),
+    db.job.update({ where: { id: jobId }, data: { status: "AWARDED" } }),
+    db.payment.update({
+      where: { id: paymentId },
+      data: { status: "transferred", platformFeeCents: calcPlatformFeeCents(amountCents) },
+    }),
+  ]);
+  return { ok: true, payout: "stripe" };
+}
+
 /**
  * Mark one submission as the favorite (replaces any previous favorite).
  * A submission includes all takes/files inside it. Job stays OPEN until deadline.
@@ -312,7 +342,7 @@ export async function selectProvisionalWinner(jobId: string, takeId: string): Pr
     Boolean(musician.payoutEmail?.trim()) &&
     Boolean(musician.payoutAccountName?.trim());
 
-  if (!altPayout) {
+  if (!altPayout && !job.isTest) {
     if (!musician.stripeAccountId) {
       return { ok: false, error: "Musician hasn't finished payout setup", status: 400 };
     }
@@ -388,6 +418,7 @@ export async function sendDueFinalizeReminders(): Promise<number> {
   const jobs = await db.job.findMany({
     where: {
       status: "OPEN",
+      isTest: false,
       finalizeReminderSentAt: null,
       deadline: { lte: new Date(now) },
       payment: { isNot: null },
@@ -454,9 +485,9 @@ export async function cancelJobAndRefund(jobId: string) {
     if (claim.count !== 1) return;
   }
 
-  let paymentStatus: "cancelled" | "refunded" = "cancelled";
+  let paymentStatus: "cancelled" | "refunded" = job.isTest ? "refunded" : "cancelled";
 
-  if (job.payment) {
+  if (job.payment && !job.isTest) {
     const piId = job.payment.stripePaymentIntentId;
     if (piId.startsWith("pending_") || piId.startsWith("cs_")) {
       // Checkout not completed - expire session if we have one.
@@ -504,7 +535,7 @@ export async function cancelJobAndRefund(jobId: string) {
     db.take.updateMany({ where: { jobId: job.id, isWinner: true }, data: { isWinner: false } }),
   ]);
 
-  if (job.status === "OPEN") {
+  if (job.status === "OPEN" && !job.isTest) {
     await notifyMusiciansJobCancelled({ jobId: job.id, jobTitle: job.title });
   }
 }
@@ -522,6 +553,7 @@ export async function sendDueThreeDayReminders(opts?: { jobId?: string }): Promi
   const jobs = await db.job.findMany({
     where: {
       status: "OPEN",
+      isTest: false,
       threeDayReminderSentAt: null,
       ...(opts?.jobId ? { id: opts.jobId } : {}),
     },

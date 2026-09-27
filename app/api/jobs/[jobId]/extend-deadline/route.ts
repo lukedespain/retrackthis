@@ -91,19 +91,21 @@ export async function POST(req: Request, { params }: { params: { jobId: string }
     );
   }
 
-  const notified = await notifyJobDeadlineExtended(
-    {
-      id: job.id,
-      title: job.title,
-      instrument: job.instrument,
-      instrumentId: job.instrumentId,
-      description: job.description,
-      priceCents: job.priceCents,
-      deadline: newDeadline,
-      creatorId: job.creatorId,
-    },
-    days
-  );
+  const notified = job.isTest
+    ? 0
+    : await notifyJobDeadlineExtended(
+        {
+          id: job.id,
+          title: job.title,
+          instrument: job.instrument,
+          instrumentId: job.instrumentId,
+          description: job.description,
+          priceCents: job.priceCents,
+          deadline: newDeadline,
+          creatorId: job.creatorId,
+        },
+        days
+      );
 
   return NextResponse.json({
     deadline: newDeadline.toISOString(),

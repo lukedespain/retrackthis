@@ -235,6 +235,19 @@ const LEGACY_INSTRUMENT_IDS: Record<string, string> = {
   mandolin: "mandolin",
 };
 
+/**
+ * Admin-only pseudo-instrument. Jobs posted with it are hidden test jobs:
+ * no Stripe, no emails, admins-only visibility, excluded from stats.
+ * Deliberately not in INSTRUMENT_CATALOG so it never shows in public pickers.
+ */
+export const TEST_INSTRUMENT_ID = "test";
+export const TEST_INSTRUMENT_LABEL = "Test";
+const TEST_INSTRUMENT_EMOJI = "🧪";
+
+export function isTestInstrumentId(id: string | null | undefined): boolean {
+  return id === TEST_INSTRUMENT_ID;
+}
+
 const FALLBACK_EMOJI = "🎵";
 const BY_ID = new Map(INSTRUMENT_CATALOG.map((item) => [item.id, item]));
 const ALLOWED_IDS = new Set(INSTRUMENT_CATALOG.map((item) => item.id));
@@ -322,6 +335,7 @@ export function groupForInstrumentId(id: string): InstrumentGroup | undefined {
 }
 
 export function labelForInstrumentId(id: string): string {
+  if (isTestInstrumentId(id)) return TEST_INSTRUMENT_LABEL;
   const custom = parseCustomInstrumentId(id);
   if (custom) return formatCustomSlug(custom.slug);
   const item = instrumentById(id);
@@ -379,6 +393,7 @@ function longestAlias(category: InstrumentCategory) {
 }
 
 export function emojiForInstrument(instrument: string): string {
+  if (instrument.trim() === TEST_INSTRUMENT_LABEL) return TEST_INSTRUMENT_EMOJI;
   return categoryForInstrument(instrument).emoji || FALLBACK_EMOJI;
 }
 

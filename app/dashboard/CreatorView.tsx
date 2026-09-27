@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
+import { TestJobBadge } from "@/components/TestJobBadge";
 import { audioFiles, midiFiles } from "@/lib/takeFiles";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
 import type { Job, Take } from "@/lib/types";
@@ -260,6 +261,7 @@ function CreatorJobCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium text-gray-900">{job.title}</span>
             <Badge status={job.status} />
+            {job.isTest && <TestJobBadge />}
             {missingBacking && (
               <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800">
                 Needs background track

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PayoutSetupPanel, type PayoutSnapshot } from "@/components/PayoutSetupPanel";
 import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
+import { TestJobBadge } from "@/components/TestJobBadge";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -307,6 +308,11 @@ function OpenJobCard({
             className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2"
           >
             <span className="font-medium text-gray-900">{job.title}</span>
+            {job.isTest && (
+              <span className="ml-2 align-middle">
+                <TestJobBadge />
+              </span>
+            )}
             <div className="mt-2.5 flex flex-wrap items-center gap-2">
               <JobMetaTags
                 instrument={job.instrument}

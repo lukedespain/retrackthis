@@ -23,11 +23,15 @@ export async function POST(
       deadline: true,
       creatorId: true,
       status: true,
+      isTest: true,
     },
   });
 
   if (!job || job.status !== "OPEN") {
     return NextResponse.json({ error: "Open job not found" }, { status: 404 });
+  }
+  if (job.isTest) {
+    return NextResponse.json({ error: "Test jobs never send email alerts." }, { status: 400 });
   }
 
   const recipients = await notifyJobThreeDaysLeft(job);

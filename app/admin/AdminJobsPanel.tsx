@@ -258,7 +258,6 @@ export function AdminJobsPanel({
               <th className="px-4 py-3 font-medium">Job</th>
               <th className="px-4 py-3 font-medium">Creator</th>
               <th className="px-4 py-3 font-medium">Price</th>
-              <th className="px-4 py-3 font-medium">Details</th>
               <th className="px-4 py-3 font-medium">Takes</th>
               <th className="px-4 py-3 font-medium" />
             </tr>
@@ -266,25 +265,22 @@ export function AdminJobsPanel({
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-500">
+                <td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-500">
                   No jobs match.
                 </td>
               </tr>
             ) : (
               filtered.map((job) => {
                 const takeCount = job.takeCount ?? 0;
-                const trackCount =
-                  (job.demoFileUrl ? 1 : 0) + (job.backingFileUrl ? 1 : 0);
-                const trackTone =
-                  trackCount >= 2
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                    : trackCount === 1
-                      ? "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
-                      : "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300";
                 return (
                   <tr key={job.id} className="align-top">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900 dark:text-white">{job.title}</div>
+                      <div
+                        className="max-w-[11rem] truncate font-medium text-gray-900 dark:text-white"
+                        title={job.title}
+                      >
+                        {job.title}
+                      </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
                         <Badge status={job.status} />
                         {job.isTest && <TestJobBadge />}
@@ -317,24 +313,6 @@ export function AdminJobsPanel({
                           <div className="truncate">{job.winnerPayout.payoutEmail}</div>
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${trackTone}`}
-                        >
-                          {trackCount}/2 tracks
-                        </span>
-                        {job.flexibleTempo ? (
-                          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-                            Flexible tempo
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                            {job.bpm} BPM
-                          </span>
-                        )}
-                      </div>
                     </td>
                     <td className="px-4 py-3 tabular-nums text-gray-700 dark:text-gray-300">
                       {takeCount}

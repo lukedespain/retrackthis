@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminEmailsPanel } from "./AdminEmailsPanel";
+import { AdminFinanceWaterfall } from "./AdminFinanceWaterfall";
 import { AdminJobsPanel, type AdminJobRow } from "./AdminJobsPanel";
 import { AdminMemberInstrumentsEditor } from "./AdminMemberInstrumentsEditor";
 
@@ -580,7 +581,7 @@ function AdminPageInner() {
               <StatCard
                 label="Platform fees"
                 value={money(stats.income.platformFeeEarnedCents)}
-                hint="Earned on awards"
+                hint="Gross 10%, before Stripe fees"
               />
               <StatCard label="Payments" value={`${stats.income.paymentCount}`} hint="In this period" />
             </div>
@@ -595,6 +596,8 @@ function AdminPageInner() {
                 hint={period === "all" ? "Total" : `${stats.activity.membersNew} new in period`}
               />
             </div>
+
+            <AdminFinanceWaterfall period={period} />
 
             <div className="rounded-2xl border border-gray-100 p-4 dark:border-gray-800">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">

@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
           <li>
             <span className="font-medium text-gray-800">Payment data:</span> payment and payout
             processing is handled by Stripe. We store Stripe identifiers and payment status needed to
-            run payments and awards. We do not store full card numbers on our servers.
+            run payments and payouts. We do not store full card numbers on our servers.
           </li>
           <li>
             <span className="font-medium text-gray-800">Usage data:</span> basic technical logs such
@@ -34,12 +34,12 @@ export default function PrivacyPolicyPage() {
 
       <LegalSection title="How we use information">
         <ul className="list-disc space-y-2 pl-5">
-          <li>Operate the marketplace (posting jobs, submitting takes, awarding winners).</li>
+          <li>Operate the marketplace (posting jobs, submitting takes, picking winners).</li>
           <li>Process charges, refunds, and musician payouts via Stripe.</li>
           <li>Enforce our human-performance rules and Terms of Service.</li>
           <li>Secure the service, prevent fraud, and debug outages.</li>
           <li>
-            Send email alerts you can turn off (new matching jobs, new takes on your jobs, award/cancel
+            Send email alerts you can turn off (new matching jobs, new takes on your jobs, pick/cancel
             outcomes) based on the preferences you set in Settings.
           </li>
           <li>Communicate about your account, jobs, or important service changes.</li>
@@ -64,7 +64,7 @@ export default function PrivacyPolicyPage() {
           <li>When required by law, or to protect rights, safety, and the integrity of the service.</li>
         </ul>
         <p className="mt-3">
-          Creators can hear takes submitted to their jobs. Awarded takes may be downloaded by the
+          Creators can hear takes submitted to their jobs. Picked takes may be downloaded by the
           creator. We do not sell your personal information.
         </p>
       </LegalSection>

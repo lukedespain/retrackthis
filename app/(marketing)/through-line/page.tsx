@@ -115,8 +115,8 @@ function ProducerThroughLine() {
 
       <OneLiner>
         Producer fills out a gig → pays up front at checkout → musicians submit until the deadline →
-        producer favorites takes (no early close) → after the deadline they have 48 hours to award a
-        musician. No award in time with a favorite → we auto-award it. No favorite → refund.
+        producer favorites takes (no early close) → after the deadline they have 48 hours to pick a
+        musician. No pick in time with a favorite → we auto-pick it. No favorite → refund.
       </OneLiner>
 
       <Section id="producer-status" title="1. Status pills">
@@ -138,14 +138,14 @@ function ProducerThroughLine() {
               meaning: "Payout in progress (brief). Retry if stuck.",
             },
             {
-              pill: "Awarded",
+              pill: "Picked",
               code: "AWARDED",
               meaning: "Winner paid (or marked for manual PayPal/Wise). Masters unlock.",
             },
             {
               pill: "Cancelled",
               code: "CANCELLED",
-              meaning: "Closed with no award. If money was taken → refunded. Unpaid discard can restore as Draft.",
+              meaning: "Closed with no pick. If money was taken → refunded. Unpaid discard can restore as Draft.",
             },
           ]}
         />
@@ -167,9 +167,9 @@ function ProducerThroughLine() {
         │
         ├─ “Favorite this submission” → private; can switch
         ├─ “Cancel & refund” → refund → Cancelled
-        └─ Deadline hits → “48 hours to award” email
-              ├─ “Award this submission” → transfer → Awarded
-              ├─ Has favorite, 48h passes → cron auto-awards
+        └─ Deadline hits → “48 hours to pick” email
+              ├─ “Pick this submission” → transfer → Picked
+              ├─ Has favorite, 48h passes → cron auto-picks
               └─ No favorite, 48h passes → cron Cancel & refund`}</Flow>
       </Section>
 
@@ -190,14 +190,14 @@ function ProducerThroughLine() {
         </Callout>
         <ul className="list-disc space-y-1.5 pl-5">
           <li>
-            <strong>Deadline hits:</strong> Submissions close. 48h to award. Favorite → auto-award if
+            <strong>Deadline hits:</strong> Submissions close. 48h to pick. Favorite → auto-pick if
             idle. No favorite → auto refund.
           </li>
           <li>
             <strong>No early “End gig &amp; pay”.</strong> Full submit window stays honest.
           </li>
           <li>
-            <strong>Cron is daily</strong> on Hobby - 48h cleanup may wait until the next run. Award
+            <strong>Cron is daily</strong> on Hobby - 48h cleanup may wait until the next run. Pick
             clicks are instant.
           </li>
           <li>
@@ -208,12 +208,12 @@ function ProducerThroughLine() {
         <Callout tone="edit">
           <strong>Extend deadline?</strong> Yes, before it passes: Extend deadline on the job card,
           pick 1–14 days (repeatable). Pill shows “(extended)”, matching musicians + existing submitters get an
-          email, submitters can keep replacing takes, and the 48h award window follows the new
+          email, submitters can keep replacing takes, and the 48h pick window follows the new
           deadline. Edit job still can’t change price.
         </Callout>
         <Callout tone="edit">
-          <strong>Unhappy with takes?</strong> Before award: Cancel &amp; refund, or wait out 48h with
-          no favorite. After Awarded: support/admin only.
+          <strong>Unhappy with takes?</strong> Before pick: Cancel &amp; refund, or wait out 48h with
+          no favorite. After Picked: support/admin only.
         </Callout>
       </Section>
     </article>
@@ -235,7 +235,7 @@ function MusicianThroughLine() {
 
       <OneLiner>
         Musician signs up → sets payouts in Settings → browses Open jobs → listens Part/Bed/Both →
-        submits takes for free (need payouts ready) → waits through the deadline → if awarded, gets
+        submits takes for free (need payouts ready) → waits through the deadline → if picked, gets
         paid and masters unlock; if not, nothing is owed.
       </OneLiner>
 
@@ -244,15 +244,15 @@ function MusicianThroughLine() {
           rows={[
             {
               pill: "Pending",
-              meaning: "Submitted and waiting. Stays Pending through the deadline and award window - favorites stay private to the producer.",
+              meaning: "Submitted and waiting. Stays Pending through the deadline and pick window - favorites stay private to the producer.",
             },
             {
-              pill: "Awarded",
+              pill: "Picked",
               meaning: "Won. Money moved (or queued for manual PayPal/Wise). Masters unlock.",
             },
             {
               pill: "Not selected",
-              meaning: "Job awarded to someone else. No payout.",
+              meaning: "Job picked to someone else. No payout.",
             },
             {
               pill: "Job cancelled",
@@ -282,7 +282,7 @@ function MusicianThroughLine() {
   │           → one submission per job; can replace while Open
   │
   └─ After deadline:
-        ├─ Awarded (or cron auto-award) → Selected → pay + masters
+        ├─ Picked (or cron auto-pick) → Selected → pay + masters
         ├─ Someone else wins → Not selected
         └─ Cancel / no favorite refund → Job cancelled`}</Flow>
       </Section>
@@ -295,7 +295,7 @@ function MusicianThroughLine() {
         <Callout tone="yes">
           <strong>While waiting.</strong> Replace files while Open. Favorites are private to the
           producer. Previews stream as lighter MP3s; WAV masters unlock only for the winner after
-          Awarded.
+          Picked.
         </Callout>
         <ul className="list-disc space-y-1.5 pl-5">
           <li>
@@ -303,17 +303,17 @@ function MusicianThroughLine() {
           </li>
           <li>Stripe Express transfers automatically when Connect is ready.</li>
           <li>
-            PayPal / Wise → Awarded with <code className="rounded bg-gray-100 px-1 text-xs">pending_manual_payout</code> until a founder pays by hand.
+            PayPal / Wise → Picked with <code className="rounded bg-gray-100 px-1 text-xs">pending_manual_payout</code> until a founder pays by hand.
           </li>
-          <li>Self-award (same account posting and winning) is blocked.</li>
+          <li>Self-pick (same account posting and winning) is blocked.</li>
         </ul>
         <Callout tone="edit">
-          <strong>Musician email shared with producer on award?</strong> Still TODO - not automatic
+          <strong>Musician email shared with producer on pick?</strong> Still TODO - not automatic
           in-product yet.
         </Callout>
         <Callout tone="edit">
           <strong>Unhappy after winning?</strong> No self-serve reverse. Support / admin only. License
-          to the producer kicks in on award (see Terms).
+          to the producer kicks in on pick (see Terms).
         </Callout>
       </Section>
     </article>

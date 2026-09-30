@@ -238,14 +238,14 @@ export function AdminJobsPanel({
         />
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-gray-500">
           Edit open jobs, listen to takes, and clear PayPal/Wise payouts waiting on founders.
           {manualCount > 0 ? (
             <>
               {" "}
               <button
                 type="button"
-                className="font-medium text-amber-800 underline underline-offset-2 dark:text-amber-300"
+                className="font-medium text-amber-800 underline underline-offset-2"
                 onClick={() => setStatusFilter("manual")}
               >
                 {manualCount} waiting on manual payout
@@ -258,7 +258,7 @@ export function AdminJobsPanel({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as "OPEN" | "manual" | "all")}
-            className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+            className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm"
           >
             <option value="OPEN">Open only</option>
             <option value="manual">Needs manual payout</option>
@@ -269,19 +269,19 @@ export function AdminJobsPanel({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search title, creator, instrument…"
-            className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 outline-none ring-accent/30 placeholder:text-gray-400 focus:ring-2 sm:max-w-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+            className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 outline-none ring-accent/30 placeholder:text-gray-400 focus:ring-2 sm:max-w-xs"
           />
         </div>
       </div>
 
       {payoutError && (
-        <p className="text-sm text-red-600 dark:text-red-400">{payoutError}</p>
+        <p className="text-sm text-red-600">{payoutError}</p>
       )}
       {deleteError && (
-        <p className="text-sm text-red-600 dark:text-red-400">{deleteError}</p>
+        <p className="text-sm text-red-600">{deleteError}</p>
       )}
       {notifyMessage && (
-        <p className="text-sm text-emerald-700 dark:text-emerald-300">{notifyMessage}</p>
+        <p className="text-sm text-emerald-700">{notifyMessage}</p>
       )}
 
       {editingJob && editingJob.status === "OPEN" && (
@@ -302,14 +302,14 @@ export function AdminJobsPanel({
       )}
 
       {listeningJob && (
-        <Card padding="md" className="border border-gray-100 dark:border-gray-800">
+        <Card padding="md" className="border border-gray-100">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-base font-semibold text-gray-900">
                 Takes · {listeningJob.title}
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                Posted by {listeningJob.creator.name}. Listen only. Awarding stays with the creator.
+                Posted by {listeningJob.creator.name}. Listen only. Picking stays with the creator.
               </p>
             </div>
             <Button size="sm" variant="ghost" onClick={() => setListeningId(null)}>
@@ -326,9 +326,9 @@ export function AdminJobsPanel({
         </Card>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-gray-800">
+      <div className="overflow-x-auto rounded-2xl border border-gray-100">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900/80 dark:text-gray-400">
+          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
             <tr>
               <th className="px-4 py-3 font-medium">Job</th>
               <th className="px-4 py-3 font-medium">Creator</th>
@@ -337,7 +337,7 @@ export function AdminJobsPanel({
               <th className="px-4 py-3 font-medium" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          <tbody className="divide-y divide-gray-100">
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-500">
@@ -351,7 +351,7 @@ export function AdminJobsPanel({
                   <tr key={job.id} className="align-top">
                     <td className="px-4 py-3">
                       <div
-                        className="max-w-[11rem] truncate font-medium text-gray-900 dark:text-white"
+                        className="max-w-[11rem] truncate font-medium text-gray-900"
                         title={job.title}
                       >
                         {job.title}
@@ -371,13 +371,13 @@ export function AdminJobsPanel({
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="text-gray-900 dark:text-white">{job.creator.name}</div>
+                      <div className="text-gray-900">{job.creator.name}</div>
                       <div className="text-xs text-gray-500">{job.creator.email}</div>
                     </td>
-                    <td className="px-4 py-3 tabular-nums text-gray-700 dark:text-gray-300">
+                    <td className="px-4 py-3 tabular-nums text-gray-700">
                       {job.priceLabel}
                       {job.needsManualPayout && job.winnerPayout && (
-                        <div className="mt-1.5 max-w-[14rem] rounded-lg bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                        <div className="mt-1.5 max-w-[14rem] rounded-lg bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-900">
                           <div className="font-medium">
                             Send {job.winnerPayout.payoutLabel} via{" "}
                             {job.winnerPayout.providerLabel}
@@ -389,7 +389,7 @@ export function AdminJobsPanel({
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3 tabular-nums text-gray-700 dark:text-gray-300">
+                    <td className="px-4 py-3 tabular-nums text-gray-700">
                       {takeCount}
                     </td>
                     <td className="px-4 py-3">
@@ -453,7 +453,7 @@ function AdminTakesList({
   }
 
   if (error) {
-    return <p className="text-sm text-red-600 dark:text-red-400">{error}</p>;
+    return <p className="text-sm text-red-600">{error}</p>;
   }
 
   if (takes.length === 0) {
@@ -468,7 +468,7 @@ function AdminTakesList({
   const visibleTakes = jobOpen ? takes : takes.filter((take) => take.isWinner);
   if (visibleTakes.length === 0) {
     return (
-      <EmptyState title="No awarded take" description="This job closed without a selected take." />
+      <EmptyState title="No picked take" description="This job closed without a selected take." />
     );
   }
 
@@ -488,17 +488,17 @@ function AdminTakesList({
             className={take.isWinner ? "ring-2 ring-accent/20 bg-accent-muted/30" : ""}
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <span className="text-sm font-medium text-gray-900">
                 {take.musician.name}
               </span>
               {take.isWinner && <Badge status={jobOpen ? "PICKED" : "AWARDED"} />}
               {audioCount > 1 && (
-                <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
                   {audioCount} files
                 </span>
               )}
               {hasMidi && (
-                <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700 ring-1 ring-inset ring-violet-100 dark:bg-violet-950/40 dark:text-violet-300">
+                <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700 ring-1 ring-inset ring-violet-100">
                   MIDI included
                 </span>
               )}

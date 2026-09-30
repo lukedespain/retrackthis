@@ -14,6 +14,8 @@ export const MIN_DURATION_SECONDS = 5;
 export const MAX_DURATION_SECONDS = 30 * 60; // 30 minutes
 /** Sensible default on the post-job form (not a hard product rule). */
 export const DEFAULT_DEADLINE_DAYS = 7;
+/** New posts use the prototype date picker, which only goes 30 days out. */
+export const POST_DEADLINE_MAX_DAYS = 30;
 /**
  * Absolute ceiling so a typo can’t create a decades-long job.
  * Charge-upfront means there is no card-hold timer forcing a short window.

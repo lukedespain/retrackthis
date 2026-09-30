@@ -68,14 +68,14 @@ export function MusicianInstrumentsSettings() {
     <Card padding="md" id="instruments">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">What I play</h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <h2 className="text-base font-semibold text-gray-900">What I play</h2>
+          <p className="mt-1 text-sm text-gray-500">
             Update the parts you can record live. This powers which instruments creators can post
             gigs for. Job alert emails are separate; manage those under Notifications.
           </p>
         </div>
         {!loading && (
-          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
             {draft.length === 0 ? "None selected" : `${draft.length} selected`}
           </span>
         )}

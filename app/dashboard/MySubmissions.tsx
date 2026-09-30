@@ -4,22 +4,25 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
-import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
+import { TempoTag } from "@/components/JobMetaTags";
+import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { PayoutSetupCard } from "@/components/PayoutSetupCard";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { formatCents } from "@/lib/format";
+import { audioFiles } from "@/lib/takeFiles";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import type { MyTake } from "@/lib/types";
 
-function statusFor(take: MyTake): string {
-  if (take.job.status === "CANCELLED") return "JOB CANCELLED";
-  if (take.job.status === "AWARDED") {
-    return take.isWinner ? "AWARDED" : "NOT SELECTED";
+function subStatus(take: MyTake): { cls: string; label: string } {
+  if (take.job.status === "CANCELLED" || take.job.status === "CANCELLING") {
+    return { cls: "cancel", label: "Cancelled" };
   }
-  // Stay Pending while the job is open or in the award window - never surface a private favorite.
-  return "PENDING";
+  if (take.job.status === "AWARDED") {
+    return take.isWinner ? { cls: "awarded", label: "Picked" } : { cls: "lost", label: "Not picked" };
+  }
+  return { cls: "pending", label: "Pending" };
 }
 
 export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?: boolean }) {
@@ -40,9 +43,32 @@ export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?:
     );
   }
 
+  const picked = takes.filter((take) => take.isWinner && take.job.status === "AWARDED");
+  const pending = takes.filter((take) => subStatus(take).cls === "pending");
+  const earned = picked.reduce((sum, take) => sum + take.job.priceCents, 0);
+  const waiting = pending.reduce((sum, take) => sum + take.job.priceCents, 0);
+
   return (
-    <div className="space-y-5">
-      <PayoutSetupCard highlightReturn={payoutsHighlight} allowManage />
+    <div>
+      <div className="earn">
+        <div className="earn-s">
+          <strong>{formatCents(earned)}</strong>
+          <span>Earned</span>
+        </div>
+        <div className="earn-s">
+          <strong>{picked.length}</strong>
+          <span>{picked.length === 1 ? "Time picked" : "Times picked"}</span>
+        </div>
+        <div className="earn-s">
+          <strong>{formatCents(waiting)}</strong>
+          <span>
+            Pending on {pending.length} job{pending.length === 1 ? "" : "s"}
+          </span>
+        </div>
+      </div>
+      <div className="mt-4">
+        <PayoutSetupCard highlightReturn={payoutsHighlight} allowManage />
+      </div>
       <JobAlertNudge />
 
       {takes.length === 0 ? (
@@ -56,7 +82,7 @@ export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?:
           }
         />
       ) : (
-        <div className="space-y-3">
+        <div className="jobs">
           {takes.map((take) => (
             <SubmissionCard
               key={take.id}
@@ -113,7 +139,7 @@ function SubmissionCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLElement>(null);
   const [liveTake, setLiveTake] = useState(take);
   const canReplace = !liveTake.isWinner && liveTake.job.status === "OPEN";
 
@@ -127,79 +153,68 @@ function SubmissionCard({
     }
   }, [expanded]);
 
-  return (
-    <div ref={cardRef}>
-      <Card padding="none" className="overflow-hidden">
-        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2"
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-gray-900">{liveTake.job.title}</span>
-              <Badge status={statusFor(liveTake)} />
-            </div>
-            <div className="mt-2.5">
-              <JobMetaTags
-                instrument={liveTake.job.instrument}
-                priceCents={liveTake.job.priceCents}
-                durationSeconds={liveTake.job.durationSeconds}
-                showDeadline={false}
-              />
-            </div>
-          </button>
-          <Button variant="ghost" size="sm" onClick={onToggle} className="w-full shrink-0 sm:w-auto">
-            {expanded ? "Hide" : "View take"}
-          </Button>
-        </div>
+  const status = subStatus(liveTake);
+  const takeCount = liveTake.files?.length ? Math.max(1, audioFiles(liveTake.files).length) : 1;
 
-        <div
-          className={`grid transition-all duration-200 ease-out ${
-            expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
-        >
-          <div className="overflow-hidden">
-            <div className="border-t border-gray-100 bg-surface px-4 py-4 sm:px-6 sm:py-5">
-              {liveTake.note && (
-                <p className="text-sm leading-relaxed text-gray-600">{liveTake.note}</p>
-              )}
-              <div className={liveTake.note ? "mt-3" : undefined}>
-                <TempoTag bpm={liveTake.job.bpm} />
-              </div>
-              {canReplace ? (
-                <div className="mt-4">
-                  <SubmitTakeForm
-                    jobId={liveTake.jobId}
-                    alreadySubmitted
-                    existingTakeUrl={liveTake.audioFileUrl}
-                    existingFiles={liveTake.files}
-                    backingSrc={liveTake.job.backingFileUrl}
-                    onSubmitted={(next) =>
-                      setLiveTake((prev) => ({
-                        ...prev,
-                        audioFileUrl: next.audioFileUrl,
-                        files: next.files,
-                      }))
-                    }
-                  />
-                </div>
-              ) : (
-                <>
-                  <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Your submission
-                  </p>
-                  <TakeSubmissionFiles
-                    files={liveTake.files}
-                    fallbackAudioUrl={liveTake.audioFileUrl}
-                    allowDownload
-                  />
-                </>
-              )}
-            </div>
+  return (
+    <article ref={cardRef} className="job">
+      <div className="job-head" onClick={onToggle}>
+        <span className="job-ico">
+          <InstrumentIcon instrument={liveTake.job.instrument} />
+        </span>
+        <div className="job-main">
+          <div className="job-title">
+            {liveTake.job.title} <span className={`status ${status.cls}`}>{status.label}</span>
+          </div>
+          <div className="pills">
+            <span className="pill money">{formatCents(liveTake.job.priceCents)}</span>
+            <span className="pill quiet">
+              {takeCount} take{takeCount === 1 ? "" : "s"}
+            </span>
           </div>
         </div>
-      </Card>
-    </div>
+        <button type="button" className="chip-btn" onClick={(e) => { e.stopPropagation(); onToggle(); }}>
+          {expanded ? "Hide" : "View"}
+        </button>
+      </div>
+      {expanded ? (
+        <div className="job-body" style={{ gridTemplateColumns: "1fr" }}>
+          <div className="panel">
+            {liveTake.note ? (
+              <div className="sub-note">
+                <span>Your note</span>
+                {liveTake.note}
+              </div>
+            ) : null}
+            <TempoTag bpm={liveTake.job.bpm} />
+            {canReplace ? (
+              <SubmitTakeForm
+                jobId={liveTake.jobId}
+                alreadySubmitted
+                existingTakeUrl={liveTake.audioFileUrl}
+                existingFiles={liveTake.files}
+                backingSrc={liveTake.job.backingFileUrl}
+                onSubmitted={(next) =>
+                  setLiveTake((prev) => ({
+                    ...prev,
+                    audioFileUrl: next.audioFileUrl,
+                    files: next.files,
+                  }))
+                }
+              />
+            ) : (
+              <TakeSubmissionFiles
+                files={liveTake.files}
+                fallbackAudioUrl={liveTake.audioFileUrl}
+                allowDownload
+              />
+            )}
+            <Link href={`/musicians?job=${liveTake.jobId}`} className="btn soft" style={{ height: 38, fontSize: 13.5 }}>
+              View job
+            </Link>
+          </div>
+        </div>
+      ) : null}
+    </article>
   );
 }

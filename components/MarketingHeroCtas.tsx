@@ -5,6 +5,14 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { supabaseClient } from "@/lib/supabaseClient";
 
+export const OPEN_POST_JOB = "rt-open-post-job";
+export const JOB_POSTED = "rt-job-posted";
+
+/** Opens the Post a job popup. Signed-out visitors should go to sign-in instead. */
+export function requestPostJob() {
+  window.dispatchEvent(new Event(OPEN_POST_JOB));
+}
+
 export const POST_JOB_HREF = "/producers?tab=post";
 export const SIGN_UP_TO_POST_HREF = `/sign-up?next=${encodeURIComponent(POST_JOB_HREF)}`;
 export const FIND_WORK_HREF = "/musicians";

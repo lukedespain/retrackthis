@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DueDatePicker } from "@/components/brand/DueDatePicker";
 import { FieldInfo } from "@/components/ui/FieldInfo";
 import { Input } from "@/components/ui/Input";
 import {
@@ -8,6 +9,7 @@ import {
   MAX_DEADLINE_DAYS,
   MAX_DURATION_SECONDS,
   MIN_DURATION_SECONDS,
+  POST_DEADLINE_MAX_DAYS,
   roundToTen,
   SLIDER_MIN_USD,
   suggestJobPrice,
@@ -34,6 +36,7 @@ export function JobPricingFields({
   priceDollars,
   onPriceChange,
   disabled = false,
+  variant = "form",
 }: {
   instrumentId: string | null;
   durationSeconds: number | null;
@@ -43,6 +46,8 @@ export function JobPricingFields({
   priceDollars: number;
   onPriceChange: (n: number) => void;
   disabled?: boolean;
+  /** Prototype part card: due date, budget, range, and what the musician gets. */
+  variant?: "form" | "part";
 }) {
   const [minutesText, setMinutesText] = useState("");
   const [secondsText, setSecondsText] = useState("");
@@ -165,6 +170,108 @@ export function JobPricingFields({
         ? "Above the typical range, which usually means a stronger incentive."
         : null;
 
+  if (variant === "part") {
+    const pct =
+      recMin != null && recMax != null && recMax > recMin
+        ? ((sliderValue - recMin) / (recMax - recMin)) * 100
+        : 0;
+    const cents = Math.round(priceDollars * 100);
+    const musicianGets = priceDollars > 0 ? Math.round((cents - Math.round(cents * 0.1)) / 100) : 0;
+    return (
+      <>
+        <div className="grid2">
+          <div className="fld">
+            <div className="lbl-row">
+              <label className="lbl" htmlFor="deadlineDays">
+                Due<span className="req">*</span>
+              </label>
+              <span className="hint">
+                {deadlineDays === 1 ? "Tomorrow" : `${deadlineDays} days`}
+              </span>
+            </div>
+            <DueDatePicker
+              days={Math.min(POST_DEADLINE_MAX_DAYS, Math.max(1, deadlineDays))}
+              disabled={disabled}
+              onChange={(n) => onDeadlineTextChange(String(n))}
+            />
+          </div>
+          <div className="fld">
+            <div className="lbl-row">
+              <label className="lbl" htmlFor="price">
+                Budget<span className="req">*</span>
+              </label>
+            </div>
+            <div className="money">
+              <span>$</span>
+              <input
+                id="price"
+                name="price"
+                className="in"
+                inputMode="numeric"
+                value={priceText}
+                disabled={disabled}
+                required
+                placeholder={suggestion ? String(suggestion.defaultPrice) : "0"}
+                onFocus={() => setPriceFocused(true)}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/[^\d]/g, "");
+                  setPriceText(next);
+                  priceDirtyRef.current = true;
+                  if (next === "") {
+                    onPriceChange(0);
+                    return;
+                  }
+                  const n = Number(next);
+                  if (Number.isFinite(n)) setPriceFromUser(n);
+                }}
+                onBlur={() => {
+                  setPriceFocused(false);
+                  if (priceText.trim() === "") return;
+                  const n = Number(priceText);
+                  if (Number.isFinite(n)) {
+                    setPriceText(String(Math.round(n)));
+                    onPriceChange(Math.round(n));
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+        {suggestion && recMin != null && recMax != null ? (
+          <div className="range">
+            <input
+              type="range"
+              min={recMin}
+              max={recMax}
+              step={5}
+              value={sliderValue}
+              disabled={disabled}
+              onChange={(e) => setPriceFromSlider(Number(e.target.value))}
+              style={{ ["--pct" as string]: `${pct}%` }}
+              aria-label={`Typical range $${recMin} to $${recMax}`}
+            />
+            <div className="range-ends">
+              <span>${recMin}</span>
+              <span className="typ">
+                Typical{" "}
+                <i className="tip sm" tabIndex={0} data-tip="Suggested from the instrument, how long the part plays, and how soon it's due.">
+                  i
+                </i>
+              </span>
+              <span>${recMax}</span>
+            </div>
+          </div>
+        ) : null}
+        {priceDollars > 0 ? (
+          <div className="gets">
+            Musician gets <b>${musicianGets}</b>
+            <i className="tip" tabIndex={0} data-tip="Budget minus the 10% fee">i</i>
+          </div>
+        ) : null}
+      </>
+    );
+  }
+
   return (
     <div className="sm:col-span-2 space-y-5">
       <div className="space-y-2 sm:max-w-xs">
@@ -221,7 +328,7 @@ export function JobPricingFields({
           value={deadlineText}
           disabled={disabled}
           required
-          info="How long musicians can submit. The gig stays open for this many days - you can’t award or close it early. After the deadline you’ll have 48 hours to pick a winner."
+          info="How long musicians can submit. The gig stays open for this many days - you can’t pick or close it early. After the deadline you’ll have 48 hours to pick a winner."
           onChange={(e) => {
             const next = e.target.value.replace(/[^\d]/g, "");
             onDeadlineTextChange(next);
@@ -292,7 +399,7 @@ export function JobPricingFields({
                 value={priceText}
                 disabled={disabled}
                 required
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-7 pr-3.5 text-sm text-gray-900 outline-none transition-all duration-150 ease-out hover:border-gray-300 focus:border-accent focus:ring-2 focus:ring-accent/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:hover:border-gray-600 dark:disabled:bg-gray-900"
+                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-7 pr-3.5 text-sm text-gray-900 outline-none transition-all duration-150 ease-out hover:border-gray-300 focus:border-accent focus:ring-2 focus:ring-accent/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
                 onFocus={() => setPriceFocused(true)}
                 onChange={(e) => {
                   const next = e.target.value.replace(/[^\d]/g, "");

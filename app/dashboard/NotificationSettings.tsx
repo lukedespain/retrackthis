@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
-import { Card } from "@/components/ui/Card";
 
 type Prefs = {
   notifyJobAlerts: boolean;
@@ -67,36 +66,33 @@ export function NotificationSettings() {
   }
 
   return (
-    <div className="space-y-5">
-      <Card padding="md">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">Email notifications</h2>
-        <div className="mt-4 space-y-4">
+    <div>
+      <div>
           <PrefRow
             title="New job alerts"
-            description="Email me when a creator posts a gig that matches my selected instruments. If I haven’t selected any instruments, I won’t get job alerts."
+            description="When a gig opens for an instrument you play."
             checked={prefs.notifyJobAlerts}
             disabled={saving}
             onChange={(checked) => void save({ ...prefs, notifyJobAlerts: checked })}
           />
           <PrefRow
-            title="New takes on my jobs"
-            description="When a musician submits a take to a gig you posted."
+            title="New submissions on my jobs"
+            description="When a musician submits to your job."
             checked={prefs.notifyTakeSubmitted}
             disabled={saving}
             onChange={(checked) => void save({ ...prefs, notifyTakeSubmitted: checked })}
           />
           <PrefRow
             title="Take outcomes"
-            description="When your take is selected, or a job you submitted to is cancelled."
+            description="When a producer picks a winner on a job you submitted to."
             checked={prefs.notifyTakeOutcome}
             disabled={saving}
             onChange={(checked) => void save({ ...prefs, notifyTakeOutcome: checked })}
           />
-        </div>
-      </Card>
+      </div>
 
       {error && <Alert variant="error">{error}</Alert>}
-      {saved && <p className="text-sm text-emerald-700 dark:text-emerald-400">Saved</p>}
+      {saved && <p className="text-sm text-emerald-700">Saved</p>}
     </div>
   );
 }
@@ -115,41 +111,20 @@ function PrefRow({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div>
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{title}</p>
-        <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+    <div className="opt-row">
+      <div className="t">
+        <strong>{title}</strong>
+        <span>{description}</span>
       </div>
-      <Toggle checked={checked} disabled={disabled} onChange={onChange} />
+      <button
+        type="button"
+        className="switch"
+        aria-pressed={checked}
+        aria-label={title}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+      />
     </div>
   );
 }
 
-function Toggle({
-  checked,
-  onChange,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 disabled:opacity-50 ${
-        checked ? "bg-accent" : "bg-gray-200 dark:bg-gray-700"
-      }`}
-    >
-      <span
-        className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform duration-150 ${
-          checked ? "translate-x-5" : "translate-x-0"
-        }`}
-      />
-    </button>
-  );
-}

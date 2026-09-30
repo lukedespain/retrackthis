@@ -10,8 +10,8 @@ const config: Config = {
     extend: {
       colors: {
         accent: {
-          // Uses --accent-rgb so text-accent/30 and bg-accent work with light/dark tokens
-          DEFAULT: "rgb(var(--accent-rgb) / <alpha-value>)",
+          // Space-separated channels so text-accent/30 and bg-accent/20 work.
+          DEFAULT: "rgb(var(--accent-rgb-space) / <alpha-value>)",
           hover: "var(--accent-hover)",
           muted: "var(--accent-soft)",
         },
@@ -31,8 +31,8 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
-          "var(--font-inter)",
-          "Inter",
+          "var(--font-geist-sans)",
+          "Geist",
           "-apple-system",
           "BlinkMacSystemFont",
           "Segoe UI",

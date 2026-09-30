@@ -194,10 +194,10 @@ export function AdminEmailsPanel() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950 sm:p-6">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">Compose</h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          <span className="font-medium text-gray-700 dark:text-gray-300">“Hi {"{first name}"}”</span>{" "}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+        <h2 className="text-base font-semibold text-gray-900">Compose</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          <span className="font-medium text-gray-700">“Hi {"{first name}"}”</span>{" "}
           is automatically added above the BODY.
         </p>
 
@@ -209,7 +209,7 @@ export function AdminEmailsPanel() {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="We heard you, here's what's new!"
-              className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none ring-accent/30 placeholder:text-gray-400 focus:ring-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none ring-accent/30 placeholder:text-gray-400 focus:ring-2"
             />
           </label>
           <label className="block">
@@ -219,10 +219,10 @@ export function AdminEmailsPanel() {
               onChange={(e) => setBodyPlain(e.target.value)}
               rows={12}
               placeholder={"Thanks for being early with us…\n\nWHAT’S NEW?\nProducers now pay upfront…"}
-              className="mt-1.5 w-full resize-y rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-gray-900 outline-none ring-accent/30 placeholder:text-gray-400 focus:ring-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              className="mt-1.5 w-full resize-y rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-gray-900 outline-none ring-accent/30 placeholder:text-gray-400 focus:ring-2"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
             <input
               type="checkbox"
               checked={includeHeroGif}
@@ -241,7 +241,7 @@ export function AdminEmailsPanel() {
               onClick={() => setTestMenuOpen((open) => !open)}
               aria-haspopup="true"
               aria-expanded={testMenuOpen}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50 sm:w-auto dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50 sm:w-auto"
             >
               {busy === "test"
                 ? "Sending test…"
@@ -256,14 +256,14 @@ export function AdminEmailsPanel() {
               </svg>
             </button>
             {testMenuOpen && (
-              <div className="absolute left-0 top-full z-20 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+              <div className="absolute left-0 top-full z-20 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-2 shadow-lg">
                 <p className="px-2 pb-1.5 pt-1 text-[11px] font-medium uppercase tracking-wide text-gray-400">
                   Send test to
                 </p>
                 {COMMUNITY_UPDATE_TEST_RECIPIENTS.map((r) => (
                   <label
                     key={r.email}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-gray-50"
                   >
                     <input
                       type="checkbox"
@@ -272,7 +272,7 @@ export function AdminEmailsPanel() {
                       className="rounded border-gray-300 text-accent focus:ring-accent/30"
                     />
                     <span className="min-w-0">
-                      <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                      <span className="block text-sm font-medium text-gray-900">
                         {r.firstName}
                       </span>
                       <span className="block truncate text-xs text-gray-500">{r.email}</span>
@@ -286,7 +286,7 @@ export function AdminEmailsPanel() {
                     setTestMenuOpen(false);
                     void send("test");
                   }}
-                  className="mt-2 w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-40 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+                  className="mt-2 w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-40"
                 >
                   {testEmails.length
                     ? `Send test to ${testEmails.length === 1 ? "1 person" : `${testEmails.length} people`}`
@@ -305,14 +305,14 @@ export function AdminEmailsPanel() {
           </button>
         </div>
         {statusMsg && (
-          <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{statusMsg}</p>
+          <p className="mt-3 text-sm text-gray-600">{statusMsg}</p>
         )}
       </div>
 
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">History</h2>
-          <div className="inline-flex rounded-full bg-gray-100 p-0.5 dark:bg-gray-800">
+          <h2 className="text-base font-semibold text-gray-900">History</h2>
+          <div className="inline-flex rounded-full bg-gray-100 p-0.5">
             {(
               [
                 ["all", "All"],
@@ -326,8 +326,8 @@ export function AdminEmailsPanel() {
                 onClick={() => setFilter(value)}
                 className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                   filter === value
-                    ? "bg-white text-gray-900 shadow-sm dark:bg-gray-950 dark:text-white"
-                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 {label}
@@ -337,7 +337,7 @@ export function AdminEmailsPanel() {
         </div>
 
         {error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </p>
         )}
@@ -347,19 +347,19 @@ export function AdminEmailsPanel() {
             <Spinner />
           </div>
         ) : blasts.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-gray-200 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+          <p className="rounded-2xl border border-dashed border-gray-200 px-4 py-10 text-center text-sm text-gray-500">
             No emails sent from here yet. Compose above to start the history.
           </p>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800">
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="overflow-hidden rounded-2xl border border-gray-200">
+            <ul className="divide-y divide-gray-100">
               {blasts.map((b) => (
                 <li key={b.id}>
                   <button
                     type="button"
                     onClick={() => setSelectedId(b.id === selectedId ? null : b.id)}
-                    className={`flex w-full flex-col gap-1 px-4 py-3.5 text-left transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between dark:hover:bg-gray-900/60 ${
-                      selectedId === b.id ? "bg-accent/5 dark:bg-accent/10" : ""
+                    className={`flex w-full flex-col gap-1 px-4 py-3.5 text-left transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between ${
+                      selectedId === b.id ? "bg-accent/5" : ""
                     }`}
                   >
                     <div className="min-w-0">
@@ -368,16 +368,16 @@ export function AdminEmailsPanel() {
                           className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                             b.kind === "BLAST"
                               ? "bg-accent/15 text-accent"
-                              : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                              : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {b.kind === "BLAST" ? "Blast" : "Test"}
                         </span>
-                        <span className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                        <span className="truncate text-sm font-medium text-gray-900">
                           {b.subject}
                         </span>
                       </div>
-                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      <p className="mt-0.5 text-xs text-gray-500">
                         {formatWhen(b.createdAt)}
                         {b.sentByName ? ` · ${b.sentByName}` : ""}
                         {" · "}
@@ -388,30 +388,30 @@ export function AdminEmailsPanel() {
                     <span className="text-xs text-gray-400">{selectedId === b.id ? "Hide" : "View"}</span>
                   </button>
                   {selectedId === b.id && (
-                    <div className="border-t border-gray-100 bg-gray-50 px-4 py-4 dark:border-gray-800 dark:bg-gray-900/40">
+                    <div className="border-t border-gray-100 bg-gray-50 px-4 py-4">
                       {detailLoading || !detail || detail.id !== b.id ? (
                         <div className="flex justify-center py-6">
                           <Spinner />
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          <pre className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-white p-4 text-sm leading-relaxed text-gray-800 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200">
+                          <pre className="whitespace-pre-wrap rounded-xl border border-gray-200 bg-white p-4 text-sm leading-relaxed text-gray-800">
                             {detail.bodyPlain}
                           </pre>
                           {(detail.ctaLabel || detail.bottomImageUrl) && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-gray-500">
                               {detail.ctaLabel ? `CTA: ${detail.ctaLabel}` : null}
                               {detail.ctaLabel && detail.bottomImageUrl ? " · " : null}
                               {detail.bottomImageUrl ? "Hero GIF included" : null}
                             </p>
                           )}
                           {detail.kind === "TEST" && detail.recipientEmails.length > 0 && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-gray-500">
                               To: {detail.recipientEmails.join(", ")}
                             </p>
                           )}
                           {detail.failures?.length > 0 && (
-                            <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                            <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
                               Failures:{" "}
                               {detail.failures.map((f) => f.email).join(", ")}
                             </div>

@@ -75,20 +75,17 @@ function SignUpForm() {
   return (
     <AuthLayout
       title="Create an account"
-      subtitle="Join as a creator, musician, or both"
+      subtitle="Post jobs, send takes, or both."
       footer={
         <>
           Already have an account? <AuthFooterLink href={signInHref}>Sign in</AuthFooterLink>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <GoogleAuthButton
-          nextPath={searchParams.get("next")}
-          label="Continue with Google"
-        />
-        <AuthDivider />
-        <Input label="Email" name="email" type="email" required autoComplete="email" />
+      <GoogleAuthButton nextPath={searchParams.get("next")} label="Continue with Google" />
+      <AuthDivider />
+      <form onSubmit={handleSubmit} className="stack" style={{ gap: 14 }}>
+        <Input label="Email" name="email" type="email" required autoComplete="email" placeholder="you@studio.com" />
         <Input
           label="Password"
           name="password"
@@ -96,11 +93,12 @@ function SignUpForm() {
           required
           minLength={6}
           autoComplete="new-password"
-          hint="At least 6 characters"
+          placeholder="••••••••"
+          aside={<span className="hint">6+ characters</span>}
         />
         {error && <Alert variant="error">{error}</Alert>}
-        <Button type="submit" disabled={submitting} className="w-full">
-          {submitting ? "Creating account…" : "Sign up"}
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Creating account…" : "Create account"}
         </Button>
       </form>
     </AuthLayout>

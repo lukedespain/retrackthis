@@ -15,7 +15,7 @@ import {
 } from "@/lib/instruments";
 import { sanitizeMusicalKey } from "@/lib/musicalKeys";
 import {
-  MAX_DEADLINE_DAYS,
+  POST_DEADLINE_MAX_DAYS,
   MAX_DURATION_SECONDS,
   MAX_PRICE_CENTS,
   MIN_DURATION_SECONDS,
@@ -42,6 +42,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
+  if (Array.isArray(body?.parts) && body.parts.length > 1) {
+    return createPartBundle(creatorId, body);
+  }
   const {
     title,
     instrument,
@@ -128,10 +131,10 @@ export async function POST(req: NextRequest) {
   if (deadlineDate.getTime() <= Date.now()) {
     return NextResponse.json({ error: "Deadline must be in the future" }, { status: 400 });
   }
-  const maxDeadlineMs = Date.now() + MAX_DEADLINE_DAYS * 24 * 60 * 60 * 1000 + 60_000;
+  const maxDeadlineMs = Date.now() + POST_DEADLINE_MAX_DAYS * 24 * 60 * 60 * 1000 + 60_000;
   if (deadlineDate.getTime() > maxDeadlineMs) {
     return NextResponse.json(
-      { error: `Deadline can’t be more than ${MAX_DEADLINE_DAYS} days out.` },
+      { error: `Deadline can’t be more than ${POST_DEADLINE_MAX_DAYS} days out.` },
       { status: 400 }
     );
   }
@@ -343,5 +346,248 @@ export async function GET(req: NextRequest) {
       hasSelectedWinner: winningTakes.length > 0,
       paymentStatus: payment?.status ?? null,
     }))
+  );
+}
+
+type BundlePart = {
+  instrumentId?: string;
+  description?: string;
+  demoFileUrl?: string;
+  backingFileUrl?: string | null;
+  priceCents?: number;
+  durationSeconds?: number;
+  deadline?: string;
+};
+
+/** One Stripe charge covering several parts. Each part is its own job. */
+async function createPartBundle(
+  creatorId: string,
+  body: {
+    title?: string;
+    musicalKey?: unknown;
+    bpm?: unknown;
+    inviteEmails?: unknown;
+    parts?: BundlePart[];
+  }
+) {
+  const parts = body.parts ?? [];
+  if (parts.length < 2 || parts.length > 8) {
+    return NextResponse.json({ error: "A project can include 2 to 8 parts." }, { status: 400 });
+  }
+  const title = String(body.title ?? "").trim().slice(0, 90);
+  if (!title) return NextResponse.json({ error: "Title is required" }, { status: 400 });
+
+  const musicalKeyValue = sanitizeMusicalKey(body.musicalKey);
+  let bpmValue: number | null = null;
+  if (body.bpm !== null && body.bpm !== undefined && body.bpm !== "") {
+    const parsed = Number(body.bpm);
+    if (!Number.isFinite(parsed) || parsed < 1 || parsed > 400) {
+      return NextResponse.json({ error: "BPM must be between 1 and 400" }, { status: 400 });
+    }
+    bpmValue = Math.round(parsed);
+  }
+
+  const admin = await getAdminUser();
+  const ready: Array<{
+    instrumentId: string;
+    instrument: string;
+    description: string;
+    demoFileUrl: string;
+    backingFileUrl: string | null;
+    priceCents: number;
+    durationSeconds: number;
+    deadline: Date;
+    isTest: boolean;
+  }> = [];
+
+  for (const part of parts) {
+    const instrumentId = typeof part.instrumentId === "string" ? part.instrumentId.trim() : "";
+    const isTest = isTestInstrumentId(instrumentId);
+    if (isTest && !admin) {
+      return NextResponse.json({ error: "Test jobs are for admins only." }, { status: 403 });
+    }
+    if (!isTest && !isAllowedInstrumentId(instrumentId)) {
+      return NextResponse.json({ error: "Pick an instrument for each part." }, { status: 400 });
+    }
+    const description = String(part.description ?? "").trim().slice(0, 5000);
+    const demoFileUrl = typeof part.demoFileUrl === "string" ? part.demoFileUrl.trim() : "";
+    if (!description || !demoFileUrl) {
+      return NextResponse.json({ error: "Each part needs notes and a Part file." }, { status: 400 });
+    }
+    const priceCents = Number(part.priceCents);
+    if (!Number.isInteger(priceCents) || priceCents < MIN_PRICE_CENTS || priceCents > MAX_PRICE_CENTS) {
+      return NextResponse.json(
+        { error: `Each budget must be between $${SLIDER_MIN_USD} and $${SLIDER_MAX_USD}.` },
+        { status: 400 }
+      );
+    }
+    const durationValue = Number(part.durationSeconds);
+    if (
+      !Number.isFinite(durationValue) ||
+      durationValue < MIN_DURATION_SECONDS ||
+      durationValue > MAX_DURATION_SECONDS
+    ) {
+      return NextResponse.json({ error: "Set how long each part plays." }, { status: 400 });
+    }
+    const deadline = new Date(String(part.deadline ?? ""));
+    if (Number.isNaN(deadline.getTime()) || deadline.getTime() <= Date.now()) {
+      return NextResponse.json({ error: "Each part needs a future due date." }, { status: 400 });
+    }
+    if (deadline.getTime() > Date.now() + POST_DEADLINE_MAX_DAYS * 86400000 + 60_000) {
+      return NextResponse.json(
+        { error: `Due dates can’t be more than ${POST_DEADLINE_MAX_DAYS} days out.` },
+        { status: 400 }
+      );
+    }
+    const backing =
+      typeof part.backingFileUrl === "string" && part.backingFileUrl.trim()
+        ? part.backingFileUrl.trim()
+        : null;
+    const { assertAppStorageUrls } = await import("@/lib/storageUrls");
+    const storageError = assertAppStorageUrls([demoFileUrl, backing]);
+    if (storageError) return NextResponse.json({ error: storageError }, { status: 400 });
+    ready.push({
+      instrumentId: isTest ? TEST_INSTRUMENT_ID : instrumentId,
+      instrument: isTest ? TEST_INSTRUMENT_LABEL : labelForInstrumentId(instrumentId),
+      description,
+      demoFileUrl,
+      backingFileUrl: backing,
+      priceCents,
+      durationSeconds: Math.round(durationValue),
+      deadline,
+      isTest,
+    });
+  }
+
+  if (ready.some((part) => part.isTest) && ready.some((part) => !part.isTest)) {
+    return NextResponse.json({ error: "Test parts can’t be mixed with paid parts." }, { status: 400 });
+  }
+
+  const invites = sanitizeInviteEmails(body.inviteEmails);
+
+  if (ready.every((part) => part.isTest)) {
+    const ids: string[] = [];
+    for (const part of ready) {
+      const job = await db.job.create({
+        data: {
+          creatorId,
+          title: `${title}: ${part.instrument}`.slice(0, 120),
+          instrument: part.instrument,
+          instrumentId: part.instrumentId,
+          description: part.description,
+          demoFileUrl: part.demoFileUrl,
+          backingFileUrl: part.backingFileUrl,
+          priceCents: part.priceCents,
+          durationSeconds: part.durationSeconds,
+          musicalKey: musicalKeyValue,
+          bpm: bpmValue,
+          deadline: part.deadline,
+          status: "OPEN",
+          isTest: true,
+          payment: {
+            create: {
+              stripePaymentIntentId: `test_${crypto.randomUUID()}`,
+              amountCents: part.priceCents,
+              platformFeeCents: 0,
+              status: "captured",
+            },
+          },
+        },
+      });
+      ids.push(job.id);
+    }
+    return NextResponse.json({ id: ids[0], ids, status: "OPEN", isTest: true }, { status: 201 });
+  }
+
+  const created = [];
+  for (const part of ready) {
+    const job = await db.job.create({
+      data: {
+        creatorId,
+        title: `${title}: ${part.instrument}`.slice(0, 120),
+        instrument: part.instrument,
+        instrumentId: part.instrumentId,
+        description: part.description,
+        demoFileUrl: part.demoFileUrl,
+        backingFileUrl: part.backingFileUrl,
+        priceCents: part.priceCents,
+        durationSeconds: part.durationSeconds,
+        musicalKey: musicalKeyValue,
+        bpm: bpmValue,
+        deadline: part.deadline,
+        status: "PENDING_PAYMENT",
+      },
+    });
+    created.push(job);
+  }
+
+  const base = appBaseUrl();
+  const jobIds = created.map((job) => job.id).join(",");
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      ui_mode: "embedded",
+      mode: "payment",
+      return_url: `${base}/producers?posted=1&job=${created[0].id}&session_id={CHECKOUT_SESSION_ID}`,
+      client_reference_id: created[0].id,
+      metadata: {
+        jobId: created[0].id,
+        jobIds: jobIds.slice(0, 500),
+        creatorId,
+        inviteEmails: invites.join(",").slice(0, 450),
+      },
+      payment_intent_data: {
+        metadata: { jobIds: jobIds.slice(0, 500), creatorId },
+      },
+      custom_text: {
+        submit: {
+          message:
+            "One charge covers every part. Each part is its own job. Cancel a part before you pick a winner and that part is refunded.",
+        },
+      },
+      line_items: created.map((job) => ({
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: job.priceCents,
+          product_data: {
+            name: `Retrack This: ${job.title}`.slice(0, 120),
+            description: `${job.instrument} · paid upfront; musician is paid when you pick a winner`.slice(0, 500),
+          },
+        },
+      })),
+    });
+  } catch (err) {
+    await db.job.deleteMany({ where: { id: { in: created.map((job) => job.id) } } }).catch(() => {});
+    console.error("[jobs POST] bundle checkout", err);
+    return NextResponse.json({ error: "Could not start checkout. Try again." }, { status: 502 });
+  }
+
+  if (!session.client_secret) {
+    await db.job.deleteMany({ where: { id: { in: created.map((job) => job.id) } } }).catch(() => {});
+    return NextResponse.json({ error: "Checkout did not return a client secret" }, { status: 502 });
+  }
+
+  await db.payment.createMany({
+    data: created.map((job) => ({
+      jobId: job.id,
+      stripePaymentIntentId: `pending_${session.id}_${job.id}`,
+      stripeCheckoutSessionId: session.id,
+      amountCents: job.priceCents,
+      platformFeeCents: 0,
+      status: "pending_checkout",
+    })),
+  });
+
+  return NextResponse.json(
+    {
+      id: created[0].id,
+      ids: created.map((job) => job.id),
+      status: "PENDING_PAYMENT",
+      clientSecret: session.client_secret,
+      checkoutSessionId: session.id,
+      amountCents: created.reduce((sum, job) => sum + job.priceCents, 0),
+    },
+    { status: 201 }
   );
 }

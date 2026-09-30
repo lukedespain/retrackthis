@@ -76,8 +76,8 @@ export function AdminActionsMenu({
   const itemClass = (danger?: boolean) =>
     `flex w-full flex-col items-start rounded-lg px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
       danger
-        ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
-        : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
+        ? "text-red-600 hover:bg-red-50"
+        : "text-gray-700 hover:bg-gray-50"
     }`;
 
   return (
@@ -91,7 +91,7 @@ export function AdminActionsMenu({
         }}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
       >
         {label}
         <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5 text-gray-400">
@@ -112,7 +112,7 @@ export function AdminActionsMenu({
               left: pos?.left ?? -9999,
               width: MENU_WIDTH,
             }}
-            className="z-50 rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+            className="z-50 rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg"
           >
             {actions.map((action) =>
               "href" in action ? (

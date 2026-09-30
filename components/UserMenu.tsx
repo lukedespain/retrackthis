@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 const menuItemClass =
-  "block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-600 transition-colors duration-150 hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white";
+  "block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-600 transition-colors duration-150 hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30";
 
 const sectionLabelClass =
-  "px-3 pb-0.5 pt-2 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500";
+  "px-3 pb-0.5 pt-2 text-[11px] font-medium uppercase tracking-wider text-gray-400";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -18,7 +18,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 function Divider() {
-  return <div className="my-1 h-px bg-gray-100 dark:bg-gray-800" role="separator" />;
+  return <div className="my-1 h-px bg-gray-100" role="separator" />;
 }
 
 export function UserMenu({
@@ -70,7 +70,7 @@ export function UserMenu({
         aria-haspopup="menu"
         aria-label="Account menu"
         onClick={() => setOpen((prev) => !prev)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-all duration-150 ease-out hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 active:scale-[0.97] dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus-visible:ring-offset-gray-950"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-all duration-150 ease-out hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 active:scale-[0.97]"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -80,10 +80,10 @@ export function UserMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 max-h-[min(28rem,calc(100dvh-5.5rem))] w-56 origin-top-right overflow-y-auto overscroll-contain rounded-xl border border-gray-100 bg-white p-1.5 shadow-card-hover dark:border-gray-800 dark:bg-gray-900"
+          className="absolute right-0 top-full z-50 mt-2 max-h-[min(28rem,calc(100dvh-5.5rem))] w-56 origin-top-right overflow-y-auto overscroll-contain rounded-xl border border-gray-100 bg-white p-1.5 shadow-card-hover"
         >
           <p
-            className="truncate px-3 py-2 text-sm font-medium text-gray-900 dark:text-white"
+            className="truncate px-3 py-2 text-sm font-medium text-gray-900"
             role="presentation"
           >
             {name}
@@ -106,7 +106,7 @@ export function UserMenu({
             Browse jobs
           </Link>
           <Link
-            href="/musicians?tab=submissions"
+            href="/submissions"
             role="menuitem"
             onClick={close}
             className={menuItemClass}

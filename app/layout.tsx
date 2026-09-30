@@ -1,8 +1,6 @@
-import { Inter } from "next/font/google";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { GeistSans } from "geist/font/sans";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+import "./brand.css";
 
 export const metadata = {
   title: "retrackthis.com",
@@ -26,27 +24,11 @@ export const metadata = {
   },
 };
 
-const themeInitScript = `
-(function() {
-  try {
-    var stored = localStorage.getItem('retrackthis-theme');
-    var theme = stored === 'dark' ? 'dark' : 'light';
-    var root = document.documentElement;
-    if (theme === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
-    root.style.colorScheme = theme;
-  } catch (e) {}
-})();
-`;
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
-      <body className={`${inter.variable} overflow-x-hidden font-sans antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
+    <html lang="en" className={`${GeistSans.variable} ${GeistSans.className}`}>
+      <body className="overflow-x-hidden antialiased">
+        {children}
       </body>
     </html>
   );

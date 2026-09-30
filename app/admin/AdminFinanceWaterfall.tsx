@@ -50,20 +50,20 @@ export function AdminFinanceWaterfall({ period }: { period: Period }) {
   }, [period]);
 
   return (
-    <div className="rounded-2xl border border-gray-100 p-4 dark:border-gray-800">
+    <div className="rounded-2xl border border-gray-100 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
           Where the money went
         </p>
         {data?.mode === "test" && (
-          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800">
+          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
             Stripe test mode
           </span>
         )}
       </div>
 
       {error ? (
-        <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p className="mt-4 text-sm text-red-600">{error}</p>
       ) : !data ? (
         <div className="flex justify-center py-10">
           <Spinner size="sm" />
@@ -116,7 +116,7 @@ function Breakdown({ data }: { data: FinanceBreakdown }) {
       key: "held",
       label: "Held for open jobs",
       cents: data.heldForOpenJobsCents,
-      color: "bg-slate-300 dark:bg-slate-600",
+      color: "bg-slate-300",
       detail: "Paid upfront, not picked yet. Mostly goes to musicians later.",
     },
     {
@@ -143,7 +143,7 @@ function Breakdown({ data }: { data: FinanceBreakdown }) {
   return (
     <div className="mt-4 space-y-5">
       <div>
-        <div className="flex h-4 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+        <div className="flex h-4 overflow-hidden rounded-full bg-gray-100">
           {deductions
             .filter((s) => s.cents > 0)
             .map((s) => (
@@ -162,7 +162,7 @@ function Breakdown({ data }: { data: FinanceBreakdown }) {
             />
           )}
         </div>
-        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-2 text-xs text-gray-500">
           Every dollar producers paid in this period, split by where it went.
         </p>
       </div>
@@ -202,7 +202,7 @@ function Breakdown({ data }: { data: FinanceBreakdown }) {
         />
       </ul>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-100 pt-3 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-100 pt-3 text-xs text-gray-500">
         <span>
           10% fee on picked jobs: {money(data.expectedPlatformFeeCents)} gross vs{" "}
           {signedMoney(net)} net
@@ -240,14 +240,14 @@ function WaterfallRow({
       <div className="min-w-0">
         <p
           className={`text-sm ${
-            emphasize ? "font-semibold text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"
+            emphasize ? "font-semibold text-gray-900" : "text-gray-700"
           }`}
         >
           {label}
         </p>
         {detail && <p className="truncate text-[11px] text-gray-400" title={detail}>{detail}</p>}
       </div>
-      <div className="relative h-3 rounded-full bg-gray-50 dark:bg-gray-900">
+      <div className="relative h-3 rounded-full bg-gray-50">
         <div
           className={`absolute inset-y-0 rounded-full ${color}`}
           style={{ left, width, minWidth: "2px" }}
@@ -256,7 +256,7 @@ function WaterfallRow({
       <div className="flex items-baseline justify-between gap-2 sm:block sm:text-right">
         <p
           className={`tabular-nums text-sm ${
-            emphasize ? "font-semibold text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"
+            emphasize ? "font-semibold text-gray-900" : "text-gray-700"
           }`}
         >
           {credit ? `+${money(cents)}` : signedMoney(cents)}

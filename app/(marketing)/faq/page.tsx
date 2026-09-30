@@ -5,11 +5,12 @@ import { MarketingFooter } from "@/components/MarketingFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SLIDER_MIN_USD } from "@/lib/jobPricing";
 import { PLATFORM_FEE_PERCENT } from "@/lib/stripe";
+import "./faq.css";
 
 export const metadata: Metadata = {
   title: "FAQ · Retrack This",
   description:
-    "How payments, awards, payouts, takes, Part/Bed/Both listening, and the pricing calculator work on Retrack This.",
+    "How payments, picks, payouts, takes, Part/Bed/Both listening, and the pricing calculator work on Retrack This.",
 };
 
 const faqItems: FaqItem[] = [
@@ -30,7 +31,7 @@ const faqItems: FaqItem[] = [
         <p>
           As submissions come in, the producer can listen and favorite takes. Jobs stay open until
           the deadline so musicians get the full window. After the deadline, the producer has 48
-          hours to award a musician and close the job.
+          hours to pick a musician and close the job.
         </p>
       </>
     ),
@@ -49,7 +50,7 @@ const faqItems: FaqItem[] = [
           If you cancel an open job, or if the job expires without a winner, you get a full refund.
         </p>
         <p>
-          When you award a musician after the deadline (or we auto-award your favorite after 48
+          When you pick a musician after the deadline (or we auto-pick your favorite after 48
           hours), they are paid from the funds you paid at checkout, minus the platform fee.
         </p>
       </>
@@ -87,36 +88,36 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          Pick how many days submissions stay open. The job can’t be awarded early - musicians get
-          that full window. After the deadline, you have about 48 hours to award a musician (you can
-          favorite takes beforehand). If you have a favorite and don’t award in time, we auto-award
+          Pick how many days submissions stay open. The job can’t be picked early - musicians get
+          that full window. After the deadline, you have about 48 hours to pick a musician (you can
+          favorite takes beforehand). If you have a favorite and don’t pick in time, we auto-pick
           that favorite. If you have no favorite, the job cancels and you’re refunded.
         </p>
         <p>
           Need more time? Before the deadline passes, you can extend an open job by 1 to 14 days at
           a time from your jobs page. We email musicians who play that part (and anyone who already
           submitted) so they know. Anyone who already submitted can keep updating their takes until
-          the new deadline, and your 48 hours to award starts after the new deadline.
+          the new deadline, and your 48 hours to pick starts after the new deadline.
         </p>
         <p>
-          You can cancel an open job anytime before it is awarded. That refunds you in full.
+          You can cancel an open job anytime before it is picked. That refunds you in full.
         </p>
       </>
     ),
   },
   {
     id: "award",
-    question: "What happens when I award a take?",
+    question: "What happens when I pick a take?",
     answer: (
       <>
         <p>
           While the job is open, use <span className="font-medium">Favorite</span> on one
           submission (all takes in that submission). Favoriting another replaces the previous
-          favorite - only one can be saved at a time, so auto-award stays clean.
+          favorite - only one can be saved at a time, so auto-pick stays clean.
         </p>
         <p>
           After the deadline, submissions close and you have 48 hours to{" "}
-          <span className="font-medium">Award</span> a musician. That pays them and unlocks masters.
+          <span className="font-medium">Pick</span> a musician. That pays them and unlocks masters.
           Payment was already collected when you posted.
         </p>
         <p>Make sure you have compared every take in each submission before you lock in a winner.</p>
@@ -143,7 +144,7 @@ const faqItems: FaqItem[] = [
         </p>
         <p>
           Producers use the same idea when reviewing takes: they can hear a submission alone, against
-          the bed, or both, so that they can hear how it sounds in context before awarding a
+          the bed, or both, so that they can hear how it sounds in context before picking a
           musician.
         </p>
       </>
@@ -183,7 +184,7 @@ const faqItems: FaqItem[] = [
         <p>
           Upload up to two audio takes as WAV or MP3 (WAV preferred). You can attach a note too. You
           can come back to your submission and replace your files
-          later if you need a better export before the job awards or closes.
+          later if you need a better export before the job is picked or closes.
         </p>
         <p>
           Before you can submit to a job, you need to set up payouts in Settings so we know where to
@@ -220,12 +221,12 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          Yes. Retrack This takes {PLATFORM_FEE_PERCENT}% of the job price when a take is awarded.
+          Yes. Retrack This takes {PLATFORM_FEE_PERCENT}% of the job price when a take is picked.
           The rest goes to the winning musician.
         </p>
         <p>
           Producers see the full offer amount authorized on their card. The fee comes out of that
-          amount at award time; it is not an extra charge on top for the producer.
+          amount at pick time; it is not an extra charge on top for the producer.
         </p>
       </>
     ),
@@ -241,7 +242,7 @@ const faqItems: FaqItem[] = [
         </p>
         <p>
           For listening on the site, Retrack This automatically creates an MP3 version of the
-          musician&apos;s submissions for lighter streaming previews. Once the job is awarded at the
+          musician&apos;s submissions for lighter streaming previews. Once the job is picked at the
           deadline, the master files become available for download.
         </p>
       </>
@@ -274,11 +275,11 @@ const faqItems: FaqItem[] = [
           <li>Pay up front on checkout. Until you pay, the gig stays a private draft.</li>
           <li>While it’s open, musicians submit. Favorite the take you like best - you can switch.</li>
           <li>
-            After the deadline, you have 48 hours to award. If you already favorited someone and
-            don’t click, we’ll award that favorite. If you have no favorite, the job cancels and
+            After the deadline, you have 48 hours to pick. If you already favorited someone and
+            don’t click, we’ll pick that favorite. If you have no favorite, the job cancels and
             you’re refunded.
           </li>
-          <li>You can cancel an open job anytime before award for a refund.</li>
+          <li>You can cancel an open job anytime before a pick for a refund.</li>
         </ol>
         <p>
           Jobs don’t close early - musicians get the full window you posted. More detail in the{" "}
@@ -301,13 +302,13 @@ const faqItems: FaqItem[] = [
             Your submission stays <span className="font-medium">Pending</span> until the job ends.
           </li>
           <li>
-            If you win, it shows <span className="font-medium">Awarded</span>, you get paid, and
+            If you win, it shows <span className="font-medium">Picked</span>, you get paid, and
             masters unlock. If someone else wins: Not selected. If the gig is cancelled: Job
             cancelled.
           </li>
         </ol>
         <p>
-          Submitting never costs money. Only awarded takes are paid. See{" "}
+          Submitting never costs money. Only picked takes are paid. See{" "}
           <a href="#payouts">payouts</a> for how money reaches you.
         </p>
       </>
@@ -331,21 +332,30 @@ const faqItems: FaqItem[] = [
 
 export default function FaqPage() {
   return (
-    <div className="min-h-screen">
+    <>
       <SiteHeader />
 
-      <main className="mx-auto max-w-5xl px-5 pb-16 sm:px-6 sm:pb-24">
-        <h1 className="text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
-          Questions.
-        </h1>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-gray-500 sm:text-base">
-          We know this is a unique idea for a marketplace, so let&apos;s talk about how it works.
-        </p>
+      <main className="wrap narrow">
+        <div className="page-head">
+          <div>
+            <h1>Questions.</h1>
+            <p>It&apos;s a new kind of marketplace, so here&apos;s how it works.</p>
+          </div>
+        </div>
 
-        <FaqBrowse items={faqItems} />
+        <FaqBrowse
+          items={faqItems}
+          footer={
+            <div className="banner" style={{ marginTop: 12 }}>
+              <span>
+                Still have a question? <b>hello@retrackthis.com</b>
+              </span>
+            </div>
+          }
+        />
       </main>
 
       <MarketingFooter />
-    </div>
+    </>
   );
 }

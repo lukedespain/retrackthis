@@ -72,7 +72,7 @@ export function ExtendDeadlineDialog({
 
   const dayLabel = days === 1 ? "1 day" : `${days} days`;
   const stepperButton =
-    "flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-lg font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800";
+    "flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-lg font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
     <div
@@ -87,16 +87,16 @@ export function ExtendDeadlineDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="extend-deadline-title"
-        className="w-full max-w-md rounded-2xl bg-white p-5 text-left shadow-xl sm:p-6 dark:bg-gray-900"
+        className="w-full max-w-md rounded-2xl bg-white p-5 text-left shadow-xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h2
           id="extend-deadline-title"
-          className="text-base font-semibold text-gray-900 dark:text-white"
+          className="text-base font-semibold text-gray-900"
         >
           Extend deadline
         </h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-gray-500">
           {job.title}
           {onBehalfOf ? ` · for ${onBehalfOf}` : ""}
         </p>
@@ -112,7 +112,7 @@ export function ExtendDeadlineDialog({
             −
           </button>
           <div className="min-w-[7rem] text-center" aria-live="polite">
-            <div className="text-3xl font-semibold tabular-nums text-gray-900 dark:text-white">
+            <div className="text-3xl font-semibold tabular-nums text-gray-900">
               +{days}
             </div>
             <div className="text-xs text-gray-500">{days === 1 ? "day" : "days"}</div>
@@ -132,16 +132,16 @@ export function ExtendDeadlineDialog({
           {MIN_EXTENSION_DAYS}–{MAX_EXTENSION_DAYS} days per extension
         </p>
 
-        <dl className="mt-5 space-y-1.5 rounded-xl bg-gray-50 px-4 py-3 text-sm dark:bg-gray-800/60">
+        <dl className="mt-5 space-y-1.5 rounded-xl bg-gray-50 px-4 py-3 text-sm">
           <div className="flex justify-between gap-3">
-            <dt className="text-gray-500 dark:text-gray-400">Current</dt>
-            <dd className="text-right text-gray-700 dark:text-gray-300">
+            <dt className="text-gray-500">Current</dt>
+            <dd className="text-right text-gray-700">
               {formatDateTime(currentDeadline)}
             </dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-gray-500 dark:text-gray-400">New deadline</dt>
-            <dd className="text-right font-medium text-gray-900 dark:text-white">
+            <dt className="text-gray-500">New deadline</dt>
+            <dd className="text-right font-medium text-gray-900">
               {formatDateTime(newDeadline)}
               <span className="block text-xs font-normal text-gray-500">
                 {formatDeadline(newDeadline)}
@@ -150,12 +150,12 @@ export function ExtendDeadlineDialog({
           </div>
         </dl>
 
-        <p className="mt-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+        <p className="mt-4 text-xs leading-relaxed text-gray-500">
           We’ll email all musicians that have “{job.instrument}” included in their profile. The 48
-          hour grace-period to award a musician will start after the new deadline.
+          hour grace-period to pick a musician will start after the new deadline.
         </p>
 
-        {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={saving}>

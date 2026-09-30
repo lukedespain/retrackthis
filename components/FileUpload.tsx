@@ -104,6 +104,9 @@ export function FileUpload({
   accept = AUDIO_FILE_ACCEPT,
   hint = AUDIO_UPLOAD_HINT,
   compact = false,
+  tile = false,
+  required = false,
+  onClear,
 }: {
   label: string;
   kind: UploadKind;
@@ -111,11 +114,16 @@ export function FileUpload({
   accept?: string;
   hint?: string;
   compact?: boolean;
+  /** Prototype drop tile used on the post-a-job Parts step. */
+  tile?: boolean;
+  required?: boolean;
+  onClear?: () => void;
 }) {
   const [status, setStatus] = useState<Status>("idle");
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [durationLabel, setDurationLabel] = useState<string | null>(null);
   const dragDepth = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -184,6 +192,12 @@ export function FileUpload({
       }
 
       setStatus("done");
+      if (typeof measuredDuration === "number" && measuredDuration > 0) {
+        const rounded = Math.round(measuredDuration);
+        const m = Math.floor(rounded / 60);
+        const s = rounded % 60;
+        setDurationLabel(`${m}:${String(s).padStart(2, "0")}`);
+      }
       onUploaded(publicUrl, {
         publicUrl,
         previewUrl,
@@ -246,6 +260,87 @@ export function FileUpload({
   };
 
   const busy = status === "uploading" || status === "processing";
+
+  function clearFile(e: React.MouseEvent) {
+    e.stopPropagation();
+    setStatus("idle");
+    setFileName(null);
+    setDurationLabel(null);
+    setError(null);
+    onClear?.();
+  }
+
+  if (tile) {
+    const openPicker = () => {
+      if (!busy && status !== "done") inputRef.current?.click();
+    };
+    return (
+      <div
+        className={`tile${dragging ? " drag" : ""}${busy ? " busy" : ""}${status === "done" ? " has" : ""}${status === "error" ? " need" : ""}`}
+        role="button"
+        tabIndex={0}
+        onClick={openPicker}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openPicker();
+          }
+        }}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          className="hidden"
+          onChange={handleFileChange}
+          disabled={busy}
+        />
+        {status === "done" && !dragging ? (
+          <>
+            <div className="tile-top">
+              <span className="tile-t">
+                {label}
+                {required ? <span className="req">*</span> : null}
+              </span>
+              {durationLabel ? <span className="tile-dur">{durationLabel}</span> : null}
+              <button type="button" className="icon sm" aria-label={`Remove ${label}`} onClick={clearFile}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+            <div className="tile-name">{fileName}</div>
+          </>
+        ) : busy ? (
+          <>
+            <span className="tile-t">{label}</span>
+            <span className="tile-s">{status === "processing" ? "Making a preview…" : "Reading audio…"}</span>
+            <div className="bar"><i /></div>
+          </>
+        ) : (
+          <>
+            <span className="tile-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 16V4M7 8l5-5 5 5M5 20h14" />
+              </svg>
+            </span>
+            <span className="tile-t">
+              {label}
+              {required ? <span className="req">*</span> : null}
+              {label === "Bed" ? (
+                <i className="tip sm" tabIndex={0} data-tip="The song without this part">i</i>
+              ) : null}
+            </span>
+            <span className="tile-s">{error ?? (dragging ? "Drop to upload" : "Drop or browse")}</span>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>

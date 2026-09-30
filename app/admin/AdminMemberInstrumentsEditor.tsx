@@ -77,20 +77,20 @@ export function AdminMemberInstrumentsEditor({ member, onSaved, onClose }: Props
         role="dialog"
         aria-modal="true"
         aria-labelledby="admin-edit-instruments-title"
-        className="flex h-[min(44rem,calc(100dvh-1.5rem))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-900"
+        className="flex h-[min(44rem,calc(100dvh-1.5rem))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 border-b border-gray-100 px-5 py-4 sm:px-6 dark:border-gray-800">
+        <div className="shrink-0 border-b border-gray-100 px-5 py-4 sm:px-6">
           <h2
             id="admin-edit-instruments-title"
-            className="text-lg font-semibold text-gray-900 dark:text-white"
+            className="text-lg font-semibold text-gray-900"
           >
             Edit instruments
           </h2>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-0.5 text-sm text-gray-500">
             {member.name} · {member.email}
           </p>
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-xs text-gray-500">
             Job-alert emails only go out when alerts are on and at least one instrument is selected.
             Leave empty for producer-only members.
           </p>
@@ -113,7 +113,7 @@ export function AdminMemberInstrumentsEditor({ member, onSaved, onClose }: Props
           )}
         </div>
 
-        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6 dark:border-gray-800">
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
           <Button type="button" size="sm" variant="ghost" disabled={saving} onClick={onClose}>
             Cancel
           </Button>

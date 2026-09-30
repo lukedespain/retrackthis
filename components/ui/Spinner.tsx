@@ -1,29 +1,14 @@
-import { LOGO_MARK_DARK, LOGO_MARK_LIGHT } from "@/components/Logo";
-
-/** Exact brand mark (light/dark), spinning slowly. */
+/** Brand badge mark, spinning slowly. */
 export function Spinner({ size = "md", className = "" }: { size?: "sm" | "md"; className?: string }) {
   const sizeClass = size === "sm" ? "h-5 w-5" : "h-7 w-7";
 
   return (
     <span className={`inline-flex ${sizeClass} ${className}`} role="status" aria-label="Loading">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={LOGO_MARK_LIGHT}
-        alt=""
-        width={512}
-        height={512}
-        className={`retrack-loader-spin h-full w-full dark:hidden`}
-        draggable={false}
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={LOGO_MARK_DARK}
-        alt=""
-        width={512}
-        height={512}
-        className={`retrack-loader-spin hidden h-full w-full dark:inline-block`}
-        draggable={false}
-      />
+      <svg viewBox="0 0 48 48" className="retrack-loader-spin h-full w-full" aria-hidden="true">
+        <circle cx="24" cy="24" r="22" fill="var(--accent)" />
+        <rect x="13" y="15" width="4.6" height="18" rx="1.4" fill="#fff" />
+        <path d="M19.6 24L34 15L34 33Z" fill="#fff" stroke="#fff" strokeWidth="2.6" strokeLinejoin="round" />
+      </svg>
     </span>
   );
 }

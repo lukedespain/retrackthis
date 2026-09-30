@@ -11,19 +11,20 @@ import { Spinner } from "@/components/ui/Spinner";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { TestJobBadge } from "@/components/TestJobBadge";
 import { audioFiles, midiFiles } from "@/lib/takeFiles";
-import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
+import { TempoTag } from "@/components/JobMetaTags";
+import { Avatar } from "@/components/brand/Avatar";
+import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import type { Job, Take } from "@/lib/types";
-import { formatCents } from "@/lib/format";
+import { formatCents, formatDeadline } from "@/lib/format";
 import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
 import { EditJobForm } from "./EditJobForm";
 import { JobCheckoutEmbed } from "./JobCheckoutEmbed";
-import { PostJobForm } from "./PostJobForm";
+import { JOB_POSTED, requestPostJob } from "@/components/MarketingHeroCtas";
 
 export function CreatorView({
   initialShowPost = false,
   hideHeading = false,
   hidePostButton = false,
-  onPostClosed,
   readOnly = false,
   jobsUrl = "/api/jobs?mine=true",
   initialExpandedJobId = null,
@@ -40,7 +41,7 @@ export function CreatorView({
   initialExpandedJobId?: string | null;
 }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
-  const [showPostForm, setShowPostForm] = useState(initialShowPost && !readOnly);
+  const [filter, setFilter] = useState<"all" | JobBucket>("all");
   const [expandedJobId, setExpandedJobId] = useState<string | null>(initialExpandedJobId);
 
   async function loadJobs() {
@@ -63,13 +64,14 @@ export function CreatorView({
   }, [initialExpandedJobId]);
 
   useEffect(() => {
-    if (initialShowPost && !readOnly) setShowPostForm(true);
+    if (initialShowPost && !readOnly) requestPostJob();
   }, [initialShowPost, readOnly]);
 
-  function closePostForm() {
-    setShowPostForm(false);
-    onPostClosed?.();
-  }
+  useEffect(() => {
+    const refresh = () => loadJobs();
+    window.addEventListener(JOB_POSTED, refresh);
+    return () => window.removeEventListener(JOB_POSTED, refresh);
+  }, [jobsUrl]);
 
   return (
     <div>
@@ -79,65 +81,159 @@ export function CreatorView({
             <h2 className="text-lg font-semibold text-gray-900">My jobs</h2>
             <p className="mt-0.5 text-sm text-gray-500">Manage your posted gigs and review takes</p>
           </div>
-          {!showPostForm && !hidePostButton && !readOnly && (
-            <Button onClick={() => setShowPostForm(true)} size="sm" className="w-full sm:w-auto">
+          {!hidePostButton && !readOnly && (
+            <Button onClick={requestPostJob} size="sm" className="w-full sm:w-auto">
               Post a job
             </Button>
           )}
         </div>
       )}
 
-      {hideHeading && !showPostForm && !hidePostButton && !readOnly && (
+      {hideHeading && !hidePostButton && !readOnly && (
         <div className="mb-6 flex justify-end sm:mb-8">
-          <Button onClick={() => setShowPostForm(true)} size="sm" className="w-full sm:w-auto">
+          <Button onClick={requestPostJob} size="sm" className="w-full sm:w-auto">
             Post a job
           </Button>
         </div>
       )}
 
-      {showPostForm && !readOnly && (
-        <div className={hideHeading ? "mb-6 sm:mb-8" : "mt-6 sm:mt-8"}>
-          <PostJobForm
-            onCancel={closePostForm}
-            onPosted={() => {
-              closePostForm();
-              loadJobs();
-            }}
-          />
-        </div>
-      )}
-
-      <div className={hideHeading ? "space-y-3 sm:space-y-4" : "mt-6 space-y-3 sm:mt-8 sm:space-y-4"}>
-        {jobs === null && (
-          <div className="flex justify-center py-16">
-            <Spinner />
-          </div>
-        )}
-        {jobs?.length === 0 && !showPostForm && (
-          <EmptyState
-            title="No jobs yet"
-            description="Post your first gig to start receiving takes from musicians."
-            action={
-              readOnly ? undefined : (
-                <Button onClick={() => setShowPostForm(true)} size="sm">
-                  Post a job
-                </Button>
-              )
-            }
-          />
-        )}
-        {jobs?.map((job) => (
-          <CreatorJobCard
-            key={job.id}
-            job={job}
-            expanded={expandedJobId === job.id}
-            onToggle={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
-            onChanged={loadJobs}
-            readOnly={readOnly}
-          />
-        ))}
-      </div>
+      <JobsList
+        jobs={jobs}
+        filter={filter}
+        onFilter={setFilter}
+        expandedJobId={expandedJobId}
+        onToggle={(id) => setExpandedJobId(expandedJobId === id ? null : id)}
+        onChanged={loadJobs}
+        readOnly={readOnly}
+      />
     </div>
+  );
+}
+
+type JobBucket = "review" | "open" | "awarded" | "cancel" | "draft";
+
+function jobBucket(job: Job): JobBucket {
+  if (job.status === "PENDING_PAYMENT") return "draft";
+  if (job.status === "CANCELLED" || job.status === "CANCELLING") return "cancel";
+  if (job.status === "AWARDED") return "awarded";
+  if (job.status === "AWARDING") return "review";
+  if (
+    job.status === "OPEN" &&
+    new Date(job.deadline).getTime() < Date.now() &&
+    (job.takeCount ?? 0) > 0
+  ) {
+    return "review";
+  }
+  return "open";
+}
+
+const BUCKET_LABEL: Record<JobBucket, string> = {
+  review: "Pick a winner",
+  open: "Open",
+  awarded: "Picked",
+  cancel: "Cancelled",
+  draft: "Draft",
+};
+
+function JobsList({
+  jobs,
+  filter,
+  onFilter,
+  expandedJobId,
+  onToggle,
+  onChanged,
+  readOnly,
+}: {
+  jobs: Job[] | null;
+  filter: "all" | JobBucket;
+  onFilter: (next: "all" | JobBucket) => void;
+  expandedJobId: string | null;
+  onToggle: (id: string) => void;
+  onChanged: () => void;
+  readOnly: boolean;
+}) {
+  if (jobs === null) {
+    return (
+      <div className="flex justify-center py-16">
+        <Spinner />
+      </div>
+    );
+  }
+  if (jobs.length === 0) {
+    return (
+      <div className="empty">
+        No jobs yet.{" "}
+        {readOnly ? null : (
+          <button type="button" className="btn text" onClick={requestPostJob}>
+            Post a job
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  const drafts = jobs.filter((job) => jobBucket(job) === "draft");
+  const live = jobs.filter((job) => jobBucket(job) !== "draft");
+  const counts = live.reduce<Partial<Record<JobBucket, number>>>((acc, job) => {
+    const bucket = jobBucket(job);
+    acc[bucket] = (acc[bucket] ?? 0) + 1;
+    return acc;
+  }, {});
+  const kinds = (["review", "open", "awarded", "cancel"] as JobBucket[]).filter((key) => counts[key]);
+  const shown = live.filter((job) => filter === "all" || jobBucket(job) === filter);
+
+  return (
+    <>
+      {drafts.length > 0 ? (
+        <>
+          <div className="section-title">Drafts</div>
+          <div className="jobs" style={{ paddingBottom: 8 }}>
+            {drafts.map((job) => (
+              <CreatorJobCard
+                key={job.id}
+                job={job}
+                expanded={expandedJobId === job.id}
+                onToggle={() => onToggle(job.id)}
+                onChanged={onChanged}
+                readOnly={readOnly}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+      <div className="jobs-bar">
+        <div className="section-title">Jobs</div>
+        {kinds.length > 1 ? (
+          <div className="seg">
+            <button type="button" aria-pressed={filter === "all"} onClick={() => onFilter("all")}>
+              All<span className="seg-n">{live.length}</span>
+            </button>
+            {kinds.map((key) => (
+              <button key={key} type="button" aria-pressed={filter === key} onClick={() => onFilter(key)}>
+                {BUCKET_LABEL[key]}
+                <span className="seg-n">{counts[key]}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <div className="jobs">
+        {shown.length === 0 ? (
+          <div className="empty">No jobs in this view</div>
+        ) : (
+          shown.map((job) => (
+            <CreatorJobCard
+              key={job.id}
+              job={job}
+              expanded={expandedJobId === job.id}
+              onToggle={() => onToggle(job.id)}
+              onChanged={onChanged}
+              readOnly={readOnly}
+            />
+          ))
+        )}
+      </div>
+    </>
   );
 }
 
@@ -250,36 +346,61 @@ function CreatorJobCard({
     if (!expanded) onToggle();
   }
 
+  const bucket = jobBucket(job);
+  const count = job.takeCount ?? 0;
+
   return (
-    <Card padding="none" className="overflow-hidden">
-      <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
-        <button
-          type="button"
-          onClick={onToggle}
-          className="flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 rounded-lg"
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-gray-900">{job.title}</span>
-            <Badge status={job.status} />
-            {job.isTest && <TestJobBadge />}
-            {missingBacking && (
-              <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800">
-                Needs background track
+    <article className="job">
+      <div className="job-head" onClick={onToggle}>
+        <span className="job-ico">
+          <InstrumentIcon instrument={job.instrument} />
+        </span>
+        <div className="job-main">
+          <div className="job-title">
+            {job.title} <span className={`status ${bucket}`}>{BUCKET_LABEL[bucket]}</span>
+            {job.isTest ? <TestJobBadge /> : null}
+          </div>
+          <div className="pills">
+            <span className="pill money">{formatCents(job.priceCents)}</span>
+            {bucket === "open" ? (
+              <span className="pill">
+                {formatDeadline(job.deadline, { extended: Boolean(job.deadlineExtendedAt) })}
               </span>
-            )}
+            ) : null}
+            <span className="pill quiet">
+              {count === 0 ? "No submissions yet" : `${count} submission${count === 1 ? "" : "s"}`}
+            </span>
+            {missingBacking ? <span className="pill quiet">Needs bed</span> : null}
           </div>
-          <div className="mt-2.5">
-            <JobMetaTags
-              instrument={job.instrument}
-              priceCents={job.priceCents}
-              durationSeconds={job.durationSeconds}
-              deadline={job.deadline}
-              deadlineExtended={Boolean(job.deadlineExtendedAt)}
-              takeCount={job.takeCount}
-            />
-          </div>
-        </button>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:shrink-0">
+        </div>
+        {job.status === "PENDING_PAYMENT" && !readOnly ? (
+          <button
+            type="button"
+            className="chip-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              void resumeCheckout(e);
+            }}
+          >
+            {resumingCheckout ? "Opening…" : "Finish posting"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="chip-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
+          >
+            {expanded ? "Hide" : count ? "View takes" : "View"}
+          </button>
+        )}
+      </div>
+
+      {expanded && !readOnly ? (
+        <div className="job-body" style={{ gridTemplateColumns: "1fr", paddingBottom: 0 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {job.status === "PENDING_PAYMENT" && !readOnly && (
             <>
               <Button
@@ -365,17 +486,9 @@ function CreatorJobCard({
               </Button>
             </>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggle}
-            disabled={editing || job.status === "PENDING_PAYMENT"}
-            className="w-full sm:w-auto"
-          >
-            {expanded ? "Hide takes" : "View takes"}
-          </Button>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {extending && !readOnly && (
         <ExtendDeadlineDialog
@@ -417,7 +530,7 @@ function CreatorJobCard({
         </div>
       )}
 
-      {(missingBacking || flexibleTempo) && !editing && job.status === "OPEN" && (
+      {expanded && (missingBacking || flexibleTempo) && !editing && job.status === "OPEN" && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
             <p className="font-medium">
@@ -447,31 +560,31 @@ function CreatorJobCard({
         </div>
       )}
 
-      {job.status === "OPEN" && hasProvisionalWinner && !isPastDeadline && (
+      {expanded && job.status === "OPEN" && hasProvisionalWinner && !isPastDeadline && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="info">
             Favorite saved - only one submission at a time (favoriting another replaces this one,
             including all its takes). Submissions stay open until the deadline. After it ends you’ll
-            have 48 hours to <span className="font-medium">Award</span> a musician; we’ll auto-award
+            have 48 hours to <span className="font-medium">Pick</span> a musician; we’ll auto-pick
             your current favorite if you don’t.
           </Alert>
         </div>
       )}
 
-      {isPastDeadline && !hasProvisionalWinner && (
+      {expanded && isPastDeadline && !hasProvisionalWinner && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
-            Deadline ended - submissions are closed. You have 48 hours to award a musician. If you
+            Deadline ended - submissions are closed. You have 48 hours to pick a musician. If you
             don’t pick anyone, the job cancels automatically and you’re refunded.
           </Alert>
         </div>
       )}
 
-      {isPastDeadline && hasProvisionalWinner && (
+      {expanded && isPastDeadline && hasProvisionalWinner && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="warning">
-            Deadline ended - submissions are closed. Award your favorite (or switch first) within 48
-            hours. Left alone, we’ll auto-award your current favorite.
+            Deadline ended - submissions are closed. Pick your favorite (or switch first) within 48
+            hours. Left alone, we’ll auto-pick your current favorite.
           </Alert>
         </div>
       )}
@@ -513,7 +626,7 @@ function CreatorJobCard({
                     allowDownload
                   />
                   {!job.backingFileUrl && job.status === "OPEN" && !readOnly ? (
-                    <p className="text-sm text-amber-700 dark:text-amber-400">
+                    <p className="text-sm text-amber-700">
                       No background track yet.{" "}
                       <button
                         type="button"
@@ -541,7 +654,7 @@ function CreatorJobCard({
           </div>
         </div>
       </div>
-    </Card>
+    </article>
   );
 }
 
@@ -704,30 +817,30 @@ function TakeCard({
   const allowDownload = jobAwarded && isWinner;
 
   return (
-    <Card
-      padding="sm"
-      className={`transition-all duration-150 ${
-        isWinner ? "ring-2 ring-accent/20 bg-accent-muted/30" : ""
-      }`}
-    >
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-gray-900">{take.musician.name}</span>
-          {isWinner && <Badge status={jobAwarded ? "AWARDED" : "PICKED"} />}
-          {audioCount > 1 && (
-            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-              {audioCount} takes
-            </span>
-          )}
-          {hasMidi && (
-            <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700 ring-1 ring-inset ring-violet-100">
-              MIDI included
-            </span>
-          )}
-        </div>
-        {take.note && (
-          <p className="text-sm leading-relaxed text-gray-500">{take.note}</p>
-        )}
+    <div className={`take${isWinner && !jobAwarded ? " fav" : ""}${jobAwarded && isWinner ? " win" : ""}`}>
+      <div className="take-head">
+        <Avatar name={take.musician.name} avatar={null} size="sm" />
+        <span className="who">
+          <strong>{take.musician.name}</strong>
+          <span>
+            {audioCount} take{audioCount === 1 ? "" : "s"}
+            {isWinner && !jobAwarded ? " · Your favorite" : ""}
+            {jobAwarded && isWinner ? " · Winner" : ""}
+            {hasMidi ? " · MIDI" : ""}
+          </span>
+        </span>
+        {jobOpen && !paying && !pastDeadline ? (
+          <button type="button" className="fav-btn" aria-pressed={isWinner} disabled={disabled || isWinner} onClick={onPick}>
+            {selecting ? "Saving…" : "Favorite"}
+          </button>
+        ) : null}
+        {jobOpen && pastDeadline && !jobAwarded ? (
+          <button type="button" className={`btn ${isWinner ? "primary" : "soft"}`} style={{ height: 34, padding: "0 14px", fontSize: 13 }} disabled={disabled} onClick={onFinalize}>
+            {selecting ? "Picking…" : `Pick ${take.musician.name.split(" ")[0]}`}
+          </button>
+        ) : null}
+      </div>
+        {take.note ? <p className="take-note">{take.note}</p> : null}
         <TakeSubmissionFiles
           files={take.files}
           fallbackAudioUrl={take.audioFileUrl}
@@ -735,91 +848,6 @@ function TakeCard({
           collapsible={audioCount > 1}
           backingSrc={jobBackingUrl}
         />
-        {jobOpen && isWinner && !jobAwarded && pastDeadline && (
-          <div className="flex flex-col items-center gap-2 border-t border-gray-100 pt-4">
-            <Button
-              size="sm"
-              onClick={onFinalize}
-              disabled={disabled}
-              title={readOnly ? "Preview only. Awarding stays with the producer." : undefined}
-              className="w-full sm:w-auto"
-            >
-              {readOnly
-                ? "Award this submission"
-                : selecting
-                  ? "Awarding…"
-                  : paying
-                    ? "Finish payment"
-                    : "Award this submission"}
-            </Button>
-            <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
-              Accepts this musician, pays them, unlocks masters, and closes the job.
-            </p>
-          </div>
-        )}
-        {jobOpen && isWinner && !jobAwarded && !pastDeadline && (
-          <div className="border-t border-gray-100 pt-4">
-            <p className="text-center text-xs leading-relaxed text-gray-500">
-              Favorited (one at a time). Favoriting another submission replaces this one. Awarding
-              opens after the deadline so musicians get the full window.
-            </p>
-          </div>
-        )}
-        {jobOpen && !isWinner && !paying && (
-          <div className="flex flex-col items-center gap-2 border-t border-gray-100 pt-4">
-            {pastDeadline ? (
-              <>
-                <Button
-                  size="sm"
-                  onClick={onFinalize}
-                  disabled={disabled}
-                  title={readOnly ? "Preview only. Awarding stays with the producer." : undefined}
-                  className="w-full sm:w-auto"
-                >
-                  {readOnly
-                    ? hasOtherSelection
-                      ? "Award this instead"
-                      : "Award this submission"
-                    : selecting
-                      ? "Awarding…"
-                      : hasOtherSelection
-                        ? "Award this instead"
-                        : "Award this submission"}
-                </Button>
-                <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
-                  Pays the musician, unlocks masters, and closes the job.
-                </p>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={onPick}
-                  disabled={disabled}
-                  title={readOnly ? "Preview only." : undefined}
-                  className="w-full sm:w-auto"
-                >
-                  {readOnly
-                    ? hasOtherSelection
-                      ? "Switch favorite"
-                      : "Favorite this submission"
-                    : selecting
-                      ? "Saving…"
-                      : hasOtherSelection
-                        ? "Switch favorite"
-                        : "Favorite this submission"}
-                </Button>
-                <p className="max-w-md text-center text-xs leading-relaxed text-gray-500">
-                  Favorites are one submission at a time (all takes in that submission). Favoriting
-                  another replaces the previous one so auto-award after the deadline stays clean.
-                  Jobs can’t close early - musicians keep the full window.
-                </p>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </Card>
+    </div>
   );
 }

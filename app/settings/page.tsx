@@ -1,30 +1,33 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useId, useMemo, useState, type CSSProperties } from "react";
+import { AccountHead } from "@/components/brand/AccountHead";
+import { AvatarBuilder } from "@/components/brand/AvatarBuilder";
+import { MarketingFooter } from "@/components/MarketingFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PayoutSetupCard } from "@/components/PayoutSetupCard";
+import { avatarSvg, cleanAvatar, randomAvatar } from "@/lib/avatar";
 import { Spinner } from "@/components/ui/Spinner";
 import { AccountSettings } from "@/app/dashboard/AccountSettings";
 import { MusicianInstrumentsSettings } from "@/app/dashboard/MusicianInstrumentsSettings";
 import { NotificationSettings } from "@/app/dashboard/NotificationSettings";
-import { ThemeSettings } from "@/app/dashboard/ThemeSettings";
 
-type Profile = { id: string; name: string; stripeAccountId?: string | null; isAdmin?: boolean };
-
-const SECTIONS = [
-  { id: "payouts", label: "Payouts" },
-  { id: "instruments", label: "Instruments" },
-  { id: "notifications", label: "Email" },
-  { id: "account", label: "Account" },
-  { id: "theme", label: "Theme" },
-] as const;
+type Profile = {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: unknown;
+  stripeAccountId?: string | null;
+  isAdmin?: boolean;
+};
 
 function SettingsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [payoutsHighlight, setPayoutsHighlight] = useState(false);
+  const [builderOpen, setBuilderOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -85,98 +88,92 @@ function SettingsPageInner() {
 
   if (profile === null) return null;
 
+  const avatar = cleanAvatar(profile.avatar);
+
   return (
-    <div className="min-h-screen">
+    <>
       <SiteHeader />
 
-      <main className="mx-auto max-w-5xl px-5 pb-16 pt-2 sm:px-6 sm:pb-24 sm:pt-4">
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl dark:text-white">
-          Settings
-        </h1>
-        <p className="mt-1.5 text-sm text-gray-500 sm:text-base dark:text-gray-400">
-          Payouts, instruments, email alerts, account, and appearance.
-        </p>
+      <main className="wrap">
+        <AccountHead
+          name={profile.name}
+          email={profile.email}
+          avatar={profile.avatar}
+          current="settings"
+        />
 
-        <nav
-          aria-label="Settings sections"
-          className="mt-5 -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:mt-6 sm:px-0"
-        >
-          {SECTIONS.map((section) => (
-            <a
-              key={section.id}
-              href={`#${section.id}`}
-              className="inline-flex min-h-10 shrink-0 items-center rounded-full bg-gray-100 px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-            >
-              {section.label}
-            </a>
-          ))}
-        </nav>
+        <div className="settings">
+        <div>
+        {!avatar ? (
+          <AvatarInvite onClick={() => setBuilderOpen(true)} />
+        ) : null}
 
-        <div className="mt-6 space-y-10 sm:mt-8">
-          <section aria-labelledby="payouts-heading" className="scroll-mt-8">
-            <h3
-              id="payouts-heading"
-              className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
-            >
-              Payouts
-            </h3>
-            <div id="payouts">
-              <PayoutSetupCard highlightReturn={payoutsHighlight} allowManage />
-            </div>
+          <section className="card" id="payouts">
+            <h2>Payouts</h2>
+            <p>Where your winnings go when a producer picks your take.</p>
+            <PayoutSetupCard highlightReturn={payoutsHighlight} allowManage />
           </section>
 
-          <section aria-labelledby="instruments-heading" className="scroll-mt-8">
-            <h3
-              id="instruments-heading"
-              className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
-            >
-              Instruments
-            </h3>
-            <div id="instruments">
-              <MusicianInstrumentsSettings />
-            </div>
+          <section className="card" id="instruments">
+            <h2>What you play</h2>
+            <p>We use this to show you the right gigs and let you know about new ones.</p>
+            <MusicianInstrumentsSettings />
           </section>
 
-          <section aria-labelledby="notifications-heading" className="scroll-mt-8">
-            <h3
-              id="notifications-heading"
-              className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
-            >
-              Email notifications
-            </h3>
-            <div id="notifications">
-              <NotificationSettings />
-            </div>
+          <section className="card" id="notifications">
+            <h2>Notifications</h2>
+            <p>Choose what we keep you posted on. Changes save automatically.</p>
+            <NotificationSettings />
           </section>
 
-          <section aria-labelledby="account-heading" className="scroll-mt-8">
-            <h3
-              id="account-heading"
-              className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
-            >
-              Account
-            </h3>
-            <div id="account">
-              <AccountSettings
-                onNameSaved={(name) => setProfile((prev) => (prev ? { ...prev, name } : prev))}
-              />
-            </div>
-          </section>
-
-          <section aria-labelledby="theme-heading" className="scroll-mt-8">
-            <h3
-              id="theme-heading"
-              className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400"
-            >
-              Theme
-            </h3>
-            <div id="theme">
-              <ThemeSettings />
-            </div>
+          <section className="card" id="account">
+            <h2>Account</h2>
+            <p>Your name is shown on jobs and takes.</p>
+            <AccountSettings
+              onNameSaved={(name) => setProfile((prev) => (prev ? { ...prev, name } : prev))}
+            />
           </section>
         </div>
+        </div>
       </main>
-    </div>
+      <MarketingFooter />
+      <AvatarBuilder
+        open={builderOpen}
+        initial={avatar}
+        name={profile.name}
+        onClose={() => setBuilderOpen(false)}
+        onSaved={(next) => {
+          setProfile((prev) => (prev ? { ...prev, avatar: next } : prev));
+          window.dispatchEvent(new CustomEvent("rt-avatar-saved", { detail: next }));
+          setBuilderOpen(false);
+        }}
+      />
+    </>
+  );
+}
+
+function AvatarInvite({ onClick }: { onClick: () => void }) {
+  const uid = useId();
+  const faces = useMemo(
+    () =>
+      ["Maya Chen", "Theo Alvarez", "Jun Park", "Ana Ruiz"].map((name, i) =>
+        avatarSvg(randomAvatar(i + 3), `${uid}-${name}`)
+      ),
+    [uid]
+  );
+  return (
+    <button type="button" className="av-invite" id="profile" onClick={onClick}>
+      <span className="av-invite-faces">
+        {faces.map((html, i) => (
+          <i key={i} style={{ "--i": i } as CSSProperties} dangerouslySetInnerHTML={{ __html: html }} />
+        ))}
+      </span>
+      <span className="av-invite-copy">
+        <strong>Make your avatar</strong>
+        <span>Hair, headphones, the works.</span>
+      </span>
+      <span className="av-invite-go">Let&apos;s go</span>
+    </button>
   );
 }
 

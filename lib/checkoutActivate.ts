@@ -5,12 +5,28 @@ import type Stripe from "stripe";
 /**
  * After Checkout succeeds: attach the PaymentIntent, open the job, notify musicians.
  */
+function sessionJobIds(session: Stripe.Checkout.Session): string[] {
+  const many = session.metadata?.jobIds
+    ?.split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  if (many && many.length > 0) return many;
+  const one = session.metadata?.jobId ?? session.client_reference_id;
+  return one ? [one] : [];
+}
+
 export async function activateJobFromCheckout(session: Stripe.Checkout.Session) {
-  const jobId = session.metadata?.jobId ?? session.client_reference_id;
-  if (!jobId) {
+  const ids = sessionJobIds(session);
+  if (ids.length === 0) {
     console.warn("[checkout] session missing jobId", session.id);
     return;
   }
+  for (const jobId of ids) {
+    await activateOneJob(session, jobId);
+  }
+}
+
+async function activateOneJob(session: Stripe.Checkout.Session, jobId: string) {
 
   const job = await db.job.findUnique({
     where: { id: jobId },

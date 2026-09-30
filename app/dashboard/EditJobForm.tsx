@@ -93,10 +93,10 @@ export function EditJobForm({
         <p className="text-xs font-semibold uppercase tracking-wide text-accent">
           {adminAs ? "Admin edit" : "Edit job"}
         </p>
-        <h3 className="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+        <h3 className="mt-1 text-base font-semibold text-gray-900">
           Update references &amp; tempo
         </h3>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-1 text-sm text-gray-600">
           {adminAs
             ? `Editing for ${adminAs.name} (${adminAs.email}). Price and payment stay locked`
             : "Your payment and price stay the same"}
@@ -153,10 +153,10 @@ export function EditJobForm({
         disabled={saving}
       />
 
-      <div className="space-y-3 rounded-xl border border-gray-100 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-950">
+      <div className="space-y-3 rounded-xl border border-gray-100 bg-white px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Fixed tempo</p>
+            <p className="text-sm font-medium text-gray-900">Fixed tempo</p>
             <p className="mt-0.5 text-xs text-gray-500">
               On = musicians match a BPM. Off = follow the demo freely.
             </p>
@@ -168,7 +168,7 @@ export function EditJobForm({
             disabled={saving}
             onClick={() => setFixedTempo((v) => !v)}
             className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 ${
-              fixedTempo ? "bg-accent" : "bg-gray-200 dark:bg-gray-700"
+              fixedTempo ? "bg-accent" : "bg-gray-200"
             }`}
           >
             <span
@@ -197,23 +197,23 @@ export function EditJobForm({
 
       <div className="space-y-4">
         <div>
-          <p className="text-sm font-medium text-gray-900 dark:text-white">Reference tracks</p>
+          <p className="text-sm font-medium text-gray-900">Reference tracks</p>
           <p className="mt-0.5 text-xs text-gray-500">
             Keep your existing scratch, or replace it. Add a background bed anytime.
           </p>
         </div>
 
-        <div className="space-y-3 rounded-xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+        <div className="space-y-3 rounded-xl border border-gray-100 bg-white p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              <p className="text-sm font-semibold text-gray-900">
                 1 · Part being retracked
               </p>
               <p className="mt-0.5 text-xs text-gray-500">
                 Currently saved. Musicians hear this as the part to replace.
               </p>
             </div>
-            <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+            <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
               Kept
             </span>
           </div>
@@ -232,15 +232,15 @@ export function EditJobForm({
         </div>
 
         <div
-          className={`space-y-3 rounded-xl border p-4 dark:bg-gray-950 ${
+          className={`space-y-3 rounded-xl border p-4 ${
             backingFileUrl
-              ? "border-gray-100 bg-white dark:border-gray-800"
-              : "border-amber-200 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/20"
+              ? "border-gray-100 bg-white"
+              : "border-amber-200 bg-amber-50/40"
           }`}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              <p className="text-sm font-semibold text-gray-900">
                 2 · Background / instrumental
               </p>
               <p className="mt-0.5 text-xs text-gray-500">
@@ -250,8 +250,8 @@ export function EditJobForm({
             <span
               className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                 backingFileUrl
-                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                  : "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-amber-100 text-amber-800"
               }`}
             >
               {backingFileUrl ? "Added" : "Needed"}
@@ -302,8 +302,8 @@ export function EditJobForm({
         </div>
 
         {demoFileUrl && (
-          <div className="space-y-2 rounded-xl border border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Listen</p>
+          <div className="space-y-2 rounded-xl border border-gray-100 bg-white p-4">
+            <p className="text-sm font-medium text-gray-900">Listen</p>
             <p className="text-xs text-gray-500">
               Part / Bed / Both - same player musicians get on the job.
             </p>

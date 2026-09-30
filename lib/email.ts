@@ -42,9 +42,9 @@ export async function sendEmail({
   const replyTo = process.env.RESEND_REPLY_TO?.trim() || "hello@retrackthis.com";
   const settingsUrl = `${appBaseUrl()}/settings`;
   const fontStack =
-    "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
+    "Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif";
 
-  // Brand: light = #5F4AFF / soft #eeecff; dark = #a397ff / soft #2a2654
+  // Brand (Iris): light = #7B61FF / soft #f3f1ff; dark = #b6a8ff / soft #2a2654
   const footer = includeSettingsFooter
     ? `<p class="email-footer" style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;font-family:${fontStack};">
         You’re getting this because of your Retrack This notification settings.
@@ -75,20 +75,20 @@ export async function sendEmail({
     <meta name="supported-color-schemes" content="light dark" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
       :root { color-scheme: light dark; }
-      .email-shell { background-color: #eeecff !important; }
+      .email-shell { background-color: #f3f1ff !important; }
       .email-card { background-color: #ffffff !important; }
-      .email-cta { background-color: #5F4AFF !important; color: #ffffff !important; }
+      .email-cta { background-color: #7B61FF !important; color: #ffffff !important; }
       @media (prefers-color-scheme: dark) {
         .email-shell { background-color: #2a2654 !important; }
         .email-card { background-color: #111827 !important; }
         .email-body, .email-body p { color: #d1d5db !important; }
         .email-section { color: #f3f4f6 !important; }
-        .email-cta { background-color: #a397ff !important; color: #111827 !important; }
+        .email-cta { background-color: #b6a8ff !important; color: #111827 !important; }
         .email-footer, .email-footer a { color: #9ca3af !important; }
-        .email-body a { color: #a397ff !important; }
+        .email-body a { color: #b6a8ff !important; }
       }
     </style>
     <!--[if mso]>
@@ -97,8 +97,8 @@ export async function sendEmail({
     </style>
     <![endif]-->
   </head>
-  <body class="email-shell" style="margin:0;padding:0;background:#eeecff;font-family:${fontStack};color:#111827;">
-    <div class="email-shell" style="max-width:560px;margin:0 auto;padding:20px 14px;background:#eeecff;font-family:${fontStack};">
+  <body class="email-shell" style="margin:0;padding:0;background:#f3f1ff;font-family:${fontStack};color:#111827;">
+    <div class="email-shell" style="max-width:560px;margin:0 auto;padding:20px 14px;background:#f3f1ff;font-family:${fontStack};">
       <div class="email-card" style="background:#ffffff;border-radius:16px;padding:28px 24px;box-shadow:0 1px 2px rgba(16,24,40,0.04);font-family:${fontStack};">
         ${
           heading?.trim()
@@ -108,7 +108,7 @@ export async function sendEmail({
         <div class="email-body" style="font-size:15px;line-height:1.6;color:#4b5563;font-family:${fontStack};">${bodyHtml}</div>
         ${
           ctaHref && ctaLabel
-            ? `<p style="margin:24px 0 0;"><a class="email-cta" href="${escapeAttr(ctaHref)}" style="display:inline-block;background:#5F4AFF;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 18px;border-radius:999px;font-family:${fontStack};">${escapeHtml(ctaLabel)}</a></p>`
+            ? `<p style="margin:24px 0 0;"><a class="email-cta" href="${escapeAttr(ctaHref)}" style="display:inline-block;background:#7B61FF;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 18px;border-radius:999px;font-family:${fontStack};">${escapeHtml(ctaLabel)}</a></p>`
             : ""
         }
         ${bottomImg}

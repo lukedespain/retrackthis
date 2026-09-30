@@ -228,17 +228,17 @@ export function SubmitTakeForm({
           {rows.map((row, index) => (
             <div
               key={index}
-              className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
+              className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4"
             >
               <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Take {index + 1}</p>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <label className="block text-xs font-medium text-gray-700">
                 Track name
                 <input
                   type="text"
                   value={row.audioLabel}
                   onChange={(e) => updateRow(index, { audioLabel: e.target.value })}
                   placeholder={`Take ${index + 1}`}
-                  className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                  className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                 />
               </label>
               <FileUpload
@@ -293,7 +293,7 @@ export function SubmitTakeForm({
           hint="Optional"
         />
 
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition-colors hover:border-gray-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/20 dark:border-gray-800 dark:bg-gray-950">
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition-colors hover:border-gray-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/20">
           <input
             type="checkbox"
             checked={attestHuman}
@@ -301,7 +301,7 @@ export function SubmitTakeForm({
             required
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent focus:ring-accent/30"
           />
-          <span className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+          <span className="text-sm leading-relaxed text-gray-700">
             I confirm this take is a real, live human performance, not AI-generated, AI-assisted, or produced
             by a generative music tool in any way.
           </span>

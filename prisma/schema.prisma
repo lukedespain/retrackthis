@@ -48,6 +48,9 @@ model User {
   // Platform admin (dashboard at /admin). Also granted via ADMIN_EMAILS allowlist.
   isAdmin         Boolean  @default(false)
 
+  // Avatar builder settings (parts + colors). Null until the user makes one.
+  avatar          Json?
+
   jobsPosted      Job[]    @relation("JobsPosted")
   takesSubmitted  Take[]
 }
@@ -130,12 +133,14 @@ model Payment {
   id                      String   @id @default(cuid())
   job                     Job      @relation(fields: [jobId], references: [id])
   jobId                   String   @unique
-  stripePaymentIntentId   String   @unique
+  stripePaymentIntentId   String
   stripeCheckoutSessionId String?
   amountCents             Int
   platformFeeCents        Int
   status                  String   // "pending_checkout" | "authorized" | "captured" | "transferred" | "pending_manual_payout" | "cancelled" | "refunded" | "failed"
   createdAt               DateTime @default(now())
+
+  @@index([stripePaymentIntentId])
 }
 
 enum EmailBlastKind {

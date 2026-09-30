@@ -30,23 +30,23 @@ export default function TermsOfServicePage() {
       <LegalSection title="Creators">
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            You warrant that you have the rights needed to upload demos and to use awarded takes in
+            You warrant that you have the rights needed to upload demos and to use picked takes in
             your projects as you describe when posting.
           </li>
           <li>
             You may upload full-song reference files (the part to retrack and a background bed). You
-            remain responsible for having the rights to share that material and to use awarded takes
+            remain responsible for having the rights to share that material and to use picked takes
             as described when posting.
           </li>
           <li>
             Paid job amounts are refunded if you cancel an open job, or if a job expires without an
-            award after the grace period.
+            pick after the grace period.
           </li>
           <li>
             Choosing favorites before the deadline keeps the job open for submissions. The musician
-            is paid when you award after the deadline (or when we auto-award a saved favorite after
+            is paid when you pick after the deadline (or when we auto-pick a saved favorite after
             the 48-hour window), minus the platform fee. You may change your favorite until you
-            award. Chargebacks and disputes on creator payments are your responsibility as the
+            pick. Chargebacks and disputes on creator payments are your responsibility as the
             purchaser through our platform, subject to Stripe&apos;s and card-network rules.
           </li>
         </ul>
@@ -56,7 +56,7 @@ export default function TermsOfServicePage() {
         <ul className="list-disc space-y-2 pl-5">
           <li>
             Submitting a take is free. You keep rights in your performance except that if your take
-            is awarded, you grant the creator a license to use that take in the project associated
+            is picked, you grant the creator a license to use that take in the project associated
             with the job (including editing, mixing, and commercial release of that project), unless
             you and the creator agree otherwise in writing.
           </li>
@@ -70,7 +70,7 @@ export default function TermsOfServicePage() {
             current. We are not responsible for delays caused by incomplete Stripe verification.
           </li>
           <li>
-            Submitting a take does not guarantee selection or payment. Only awarded takes are paid.
+            Submitting a take does not guarantee selection or payment. Only picked takes are paid.
           </li>
         </ul>
       </LegalSection>
@@ -79,8 +79,8 @@ export default function TermsOfServicePage() {
         <p>
           Payments are processed by Stripe. Checkout charges, refunds, and Connect transfers follow
           Stripe&apos;s systems and timelines. Platform fees are set by Retrack This and may change
-          with notice for future jobs. Past awarded jobs keep the fee in effect when they were
-          awarded.
+          with notice for future jobs. Past picked jobs keep the fee in effect when they were
+          picked.
         </p>
       </LegalSection>
 

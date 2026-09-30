@@ -124,7 +124,7 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
   if (loading) {
     return (
       <Card padding="md" id="account">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading account…</p>
+        <p className="text-sm text-gray-500">Loading account…</p>
       </Card>
     );
   }
@@ -132,8 +132,8 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
   return (
     <div id="account" className="space-y-5">
       <Card padding="md">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">Display name</h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <h3 className="text-base font-semibold text-gray-900">Display name</h3>
+        <p className="mt-1 text-sm text-gray-500">
           How you appear on jobs and submissions.
         </p>
         <form onSubmit={saveName} className="mt-5 space-y-4">
@@ -150,14 +150,14 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
             <Button type="submit" disabled={savingName || !name.trim()}>
               {savingName ? "Saving…" : "Save name"}
             </Button>
-            {nameSaved && <p className="text-sm text-emerald-700 dark:text-emerald-400">Saved</p>}
+            {nameSaved && <p className="text-sm text-emerald-700">Saved</p>}
           </div>
         </form>
       </Card>
 
       <Card padding="md" id="email" className="scroll-mt-8">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">Email</h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <h3 className="text-base font-semibold text-gray-900">Email</h3>
+        <p className="mt-1 text-sm text-gray-500">
           Used for sign-in and notifications. Changing it may require confirmation.
         </p>
         <form onSubmit={saveEmail} className="mt-5 space-y-4">
@@ -179,15 +179,15 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
               {savingEmail ? "Updating…" : "Update email"}
             </Button>
             {emailMessage && (
-              <p className="text-sm text-emerald-700 dark:text-emerald-400">{emailMessage}</p>
+              <p className="text-sm text-emerald-700">{emailMessage}</p>
             )}
           </div>
         </form>
       </Card>
 
       <Card padding="md" id="password" className="scroll-mt-8">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">Password</h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <h3 className="text-base font-semibold text-gray-900">Password</h3>
+        <p className="mt-1 text-sm text-gray-500">
           Enter your current password, then choose a new one.
         </p>
         <form onSubmit={savePassword} className="mt-5 space-y-4">
@@ -229,7 +229,7 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
               {savingPassword ? "Updating…" : "Update password"}
             </Button>
             {passwordSaved && (
-              <p className="text-sm text-emerald-700 dark:text-emerald-400">Password updated</p>
+              <p className="text-sm text-emerald-700">Password updated</p>
             )}
           </div>
         </form>

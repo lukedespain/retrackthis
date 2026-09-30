@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PayoutSetupPanel, type PayoutSnapshot } from "@/components/PayoutSetupPanel";
-import { JobMetaTags, TempoTag } from "@/components/JobMetaTags";
+import { TempoTag } from "@/components/JobMetaTags";
 import { TestJobBadge } from "@/components/TestJobBadge";
+import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
-import { POST_JOB_HREF, SIGN_UP_TO_POST_HREF } from "@/components/MarketingHeroCtas";
-import { emojiForInstrument } from "@/lib/instruments";
+import { requestPostJob } from "@/components/MarketingHeroCtas";
+import { formatCents, formatDeadline } from "@/lib/format";
+import { formatPartDuration } from "@/lib/jobPricing";
 import type { Job } from "@/lib/types";
 import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 
@@ -26,7 +27,10 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
-  const [selectedInstruments, setSelectedInstruments] = useState<Set<string>>(new Set());
+  const [instrument, setInstrument] = useState("All");
+  const [sort, setSort] = useState<"new" | "soon" | "pay">("new");
+  const [menu, setMenu] = useState<"inst" | "sort" | null>(null);
+  const searchParams = useSearchParams();
   const [myTakesByJob, setMyTakesByJob] = useState<Record<string, MyTakeSummary>>({});
   const [payout, setPayout] = useState<PayoutSnapshot | null>(null);
   const [payoutError, setPayoutError] = useState<string | null>(null);
@@ -105,6 +109,20 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
     setExpandedJobId((prev) => (prev === jobId ? null : jobId));
   }
 
+  useEffect(() => {
+    const id = searchParams.get("job");
+    if (id) setExpandedJobId(id);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!menu) return;
+    function close(e: MouseEvent) {
+      if (!(e.target as HTMLElement).closest(".fw-dd")) setMenu(null);
+    }
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [menu]);
+
   function handleTakeSubmitted(take: MyTakeSummary) {
     setMyTakesByJob((prev) => {
       const alreadyHad = Boolean(prev[take.jobId]);
@@ -130,25 +148,15 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
 
   const filteredJobs = useMemo(() => {
     if (!jobs) return [];
-
     const filtered =
-      selectedInstruments.size === 0
-        ? [...jobs]
-        : jobs.filter((job) => selectedInstruments.has(job.instrument));
-
-    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    return filtered;
-  }, [jobs, selectedInstruments]);
-
-  function toggleInstrument(name: string) {
-    setSelectedInstruments((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
+      instrument === "All" ? [...jobs] : jobs.filter((job) => job.instrument === instrument);
+    filtered.sort((a, b) => {
+      if (sort === "soon") return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      if (sort === "pay") return b.priceCents - a.priceCents;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }
+    return filtered;
+  }, [jobs, instrument, sort]);
 
   if (jobs === null) {
     return (
@@ -159,89 +167,99 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   }
 
   if (loadError) {
-    return (
-      <EmptyState
-        title="Couldn’t load jobs"
-        description={loadError}
-        action={
-          <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
-            Try again
-          </Button>
-        }
-      />
-    );
+    return <div className="empty">{loadError}</div>;
   }
 
-  const postJobHref = signedIn ? POST_JOB_HREF : SIGN_UP_TO_POST_HREF;
-
-  if (jobs.length === 0) {
-    return (
-      <EmptyState
-        title="No open jobs right now"
-        description="Check back soon, or post a gig if you're a producer."
-        action={
-          <Link href={postJobHref}>
-            <Button size="sm">Post a job</Button>
-          </Link>
-        }
-      />
-    );
-  }
+  const sortLabel = sort === "soon" ? "Due soon" : sort === "pay" ? "Highest pay" : "Newest";
+  const instCount = (name: string) =>
+    name === "All" ? jobs.length : jobs.filter((job) => job.instrument === name).length;
 
   return (
-    <div className="space-y-5">
-      <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-        <button
-          type="button"
-          onClick={() => setSelectedInstruments(new Set())}
-          aria-pressed={selectedInstruments.size === 0}
-          className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
-            selectedInstruments.size === 0
-              ? "bg-gray-900 text-white"
-              : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-gray-50 hover:text-gray-900"
-          }`}
+    <>
+      <div className="page-head">
+        <div>
+          <h1>Find work</h1>
+        </div>
+        <div className="fw-tools">
+        <FilterMenu
+          open={menu === "inst"}
+          label={instrument === "All" ? "All instruments" : instrument}
+          count={instCount(instrument)}
+          lead={<InstrumentIcon instrument={instrument === "All" ? "note" : instrument} />}
+          onOpen={() => setMenu(menu === "inst" ? null : "inst")}
+          menuClass="fw-menu-inst"
         >
-          All
-        </button>
-        {instruments.map((name) => {
-          const selected = selectedInstruments.has(name);
-          return (
+          {["All", ...instruments].map((name) => (
             <button
               key={name}
               type="button"
-              onClick={() => toggleInstrument(name)}
-              aria-pressed={selected}
-              className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 sm:min-h-0 sm:px-3 sm:py-1.5 sm:text-xs ${
-                selected
-                  ? "bg-gray-900 text-white"
-                  : "bg-white text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-50"
-              }`}
+              className="fw-opt"
+              role="menuitemradio"
+              aria-checked={instrument === name}
+              onClick={() => {
+                setInstrument(name);
+                setMenu(null);
+              }}
             >
-              <span aria-hidden="true">{emojiForInstrument(name)}</span>
-              <span>{name}</span>
+              <InstrumentIcon instrument={name === "All" ? "note" : name} />
+              <span className="fw-opt-l">{name === "All" ? "All instruments" : name}</span>
+              <span className="count">{instCount(name)}</span>
+              <span className="fw-tick">
+                <CheckIcon />
+              </span>
             </button>
-          );
-        })}
+          ))}
+        </FilterMenu>
+        <FilterMenu
+          open={menu === "sort"}
+          label={sortLabel}
+          lead={<SortIcon />}
+          onOpen={() => setMenu(menu === "sort" ? null : "sort")}
+          menuClass="fw-menu-sort"
+        >
+          {(
+            [
+              ["new", "Newest"],
+              ["soon", "Due soon"],
+              ["pay", "Highest pay"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              className="fw-opt"
+              role="menuitemradio"
+              aria-checked={sort === key}
+              onClick={() => {
+                setSort(key);
+                setMenu(null);
+              }}
+            >
+              <span className="fw-opt-l">{label}</span>
+              <span className="fw-tick">
+                <CheckIcon />
+              </span>
+            </button>
+          ))}
+        </FilterMenu>
+        </div>
       </div>
 
-      {filteredJobs.length === 0 ? (
-        <EmptyState
-          title="No jobs for these instruments"
-          description="Try selecting All, or pick a different instrument."
-          action={
-            selectedInstruments.size > 0 ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setSelectedInstruments(new Set())}
-              >
-                Show all
-              </Button>
-            ) : undefined
-          }
-        />
+      {jobs.length === 0 ? (
+        <div className="empty">
+          No open jobs right now.{" "}
+          {signedIn ? (
+            <button type="button" className="btn text" onClick={requestPostJob}>
+              Post a job
+            </button>
+          ) : (
+            <Link href="/sign-up">Post a job</Link>
+          )}
+        </div>
+      ) : filteredJobs.length === 0 ? (
+        <div className="empty">No jobs for this instrument.</div>
       ) : (
-        <div className="space-y-3">
+        <div className="jobs">
           {filteredJobs.map((job) => (
             <OpenJobCard
               key={job.id}
@@ -260,6 +278,42 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
           ))}
         </div>
       )}
+    </>
+  );
+}
+
+function FilterMenu({
+  open,
+  label,
+  count,
+  lead,
+  menuClass,
+  onOpen,
+  children,
+}: {
+  open: boolean;
+  label: string;
+  count?: number;
+  lead: ReactNode;
+  menuClass: string;
+  onOpen: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="fw-dd">
+      <button type="button" className="chip fw-chip" aria-expanded={open} aria-haspopup="menu" onClick={onOpen}>
+        {lead}
+        <span>
+          {label}
+          {count != null ? <span className="count"> {count}</span> : null}
+        </span>
+        <ChevronIcon />
+      </button>
+      {open ? (
+        <div className={`menu fw-menu ${menuClass}`} role="menu">
+          {children}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -289,7 +343,7 @@ function OpenJobCard({
   onTakeSubmitted: (take: MyTakeSummary) => void;
   onToggle: () => void;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLElement>(null);
   const signUpHref = `/sign-up?next=${encodeURIComponent("/musicians")}`;
 
   useEffect(() => {
@@ -298,61 +352,62 @@ function OpenJobCard({
     }
   }, [expanded]);
 
-  return (
-    <div ref={cardRef}>
-      <Card padding="none" className="overflow-hidden">
-        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2"
-          >
-            <span className="font-medium text-gray-900">{job.title}</span>
-            {job.isTest && (
-              <span className="ml-2 align-middle">
-                <TestJobBadge />
-              </span>
-            )}
-            <div className="mt-2.5 flex flex-wrap items-center gap-2">
-              <JobMetaTags
-                instrument={job.instrument}
-                priceCents={job.priceCents}
-                durationSeconds={job.durationSeconds}
-                deadline={job.deadline}
-                deadlineExtended={Boolean(job.deadlineExtendedAt)}
-                takeCount={job.takeCount ?? 0}
-              />
-              {myTake && (
-                <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
-                  Your take · pending
-                </span>
-              )}
-            </div>
-          </button>
-          <Button variant="ghost" size="sm" onClick={onToggle} className="w-full shrink-0 sm:w-auto">
-            {expanded ? "Hide" : "View job"}
-          </Button>
-        </div>
+  const due = formatDeadline(job.deadline, { extended: Boolean(job.deadlineExtendedAt) });
+  const closes = new Date(job.deadline).toLocaleString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
-        <div
-          className={`grid transition-all duration-200 ease-out ${
-            expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
-        >
-          <div className="overflow-hidden">
-            <div className="border-t border-gray-100 bg-surface px-4 py-4 sm:px-6 sm:py-5">
-              <p className="text-sm leading-relaxed text-gray-600">{job.description}</p>
-              <div className="mt-3">
-                <TempoTag bpm={job.bpm} />
-              </div>
-              <div className="mt-4">
-                <ReferenceTracksPlayer
-                  partSrc={job.demoFileUrl}
-                  backingSrc={job.backingFileUrl}
-                  allowDownload={signedIn}
-                />
-              </div>
-              <div className="mt-6">
+  return (
+    <article ref={cardRef} className="job">
+      <div className="job-head" onClick={onToggle}>
+        <span className="job-ico">
+          <InstrumentIcon instrument={job.instrument} />
+        </span>
+        <div className="job-main">
+          <div className="job-title">
+            {job.title}
+            {job.isTest ? <TestJobBadge /> : null}
+            {myTake ? <span className="status mine">Your take · pending</span> : null}
+          </div>
+          <div className="pills">
+            <span className="pill money">{formatCents(job.priceCents)}</span>
+            {job.durationSeconds ? (
+              <span className="pill">Part {formatPartDuration(job.durationSeconds)}</span>
+            ) : null}
+            <span className="pill due" tabIndex={0} data-due={`Closes ${closes}`} aria-label={`${due}. Closes ${closes}`}>
+              {due}
+            </span>
+            <span className="pill quiet">
+              {(job.takeCount ?? 0) === 0
+                ? "No submissions yet"
+                : `${job.takeCount} submission${job.takeCount === 1 ? "" : "s"}`}
+            </span>
+          </div>
+        </div>
+        <button type="button" className="chip-btn" onClick={(e) => { e.stopPropagation(); onToggle(); }}>
+          {expanded ? "Hide" : "View job"}
+        </button>
+      </div>
+
+      {expanded ? (
+        <div className="job-body">
+          <div className="panel">
+            <p>{job.description}</p>
+            <div className="pills" style={{ margin: 0 }}>
+              <TempoTag bpm={job.bpm} />
+              <span className="pill">{job.instrument}</span>
+            </div>
+            <ReferenceTracksPlayer
+              partSrc={job.demoFileUrl}
+              backingSrc={job.backingFileUrl}
+              allowDownload={signedIn}
+            />
+          </div>
+          <div className="panel">
                 {!signedIn ? (
                   <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 text-center sm:px-6">
                     <p className="text-sm text-gray-600">
@@ -396,11 +451,31 @@ function OpenJobCard({
                     onSubmitted={onTakeSubmitted}
                   />
                 )}
-              </div>
-            </div>
           </div>
         </div>
-      </Card>
-    </div>
+      ) : null}
+    </article>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12.5l5 5L19 7" />
+    </svg>
+  );
+}
+function ChevronIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+function SortIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M8 7h12M8 12h8M8 17h4M4 7h.01M4 12h.01M4 17h.01" />
+    </svg>
   );
 }

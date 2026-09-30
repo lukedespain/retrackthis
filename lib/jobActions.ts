@@ -507,11 +507,13 @@ export async function cancelJobAndRefund(jobId: string) {
         await stripe.paymentIntents.cancel(piId);
         paymentStatus = "cancelled";
       } else if (pi.status === "succeeded") {
-        const refunds = await stripe.refunds.list({ payment_intent: piId, limit: 1 });
-        if (refunds.data.length === 0) {
+        const refunds = await stripe.refunds.list({ payment_intent: piId, limit: 100 });
+        const already = refunds.data.some((refund) => refund.metadata?.jobId === job.id);
+        if (!already) {
           await stripe.refunds.create(
             {
               payment_intent: piId,
+              amount: job.payment.amountCents,
               metadata: { jobId: job.id, reason: "job_cancelled" },
             },
             { idempotencyKey: `job_refund_${job.id}` }

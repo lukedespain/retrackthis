@@ -431,33 +431,24 @@ export function WaveformMixPlayer({
   );
   const bedName = backingSrc ? guessFilename(backingSrc, "bed.mp3") : "";
 
-  const tabClass = (selected: boolean) =>
-    `rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 sm:px-3.5 ${
-      selected ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"
-    }`;
-
   return (
-    <div className={`rounded-2xl border border-gray-200 bg-white p-4 ${className}`}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-400">{headingLabel}</p>
-          <p className="mt-0.5 text-sm font-semibold text-gray-900">{modeCopy[mode].title}</p>
-          <p className="mt-0.5 text-xs text-gray-500">{modeCopy[mode].hint}</p>
-        </div>
+    <div className={`ref ${className}`}>
+      <div className="ref-head">
+        <strong className="ref-lbl">
+          {headingLabel}
+          <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
+            i
+          </i>
+        </strong>
         {hasAb && (
-          <div
-            className="inline-flex w-full max-w-full rounded-full bg-gray-100 p-0.5 sm:w-auto"
-            role="tablist"
-            aria-label={headingLabel}
-          >
+          <div className="seg" role="tablist" aria-label={headingLabel}>
             {modes.map((id) => (
               <button
                 key={id}
                 type="button"
                 role="tab"
-                aria-selected={mode === id}
+                aria-pressed={mode === id}
                 onClick={() => void switchMode(id)}
-                className={`${tabClass(mode === id)} min-h-10 flex-1 sm:min-h-0 sm:flex-none`}
               >
                 {id === "part" ? partTabLabel : id === "backing" ? "Bed" : "Both"}
               </button>
@@ -466,32 +457,33 @@ export function WaveformMixPlayer({
         )}
       </div>
 
-      <div className="mt-4 flex items-center gap-3">
+      <div className="player">
         <button
           type="button"
           aria-label={playing ? "Pause" : "Play"}
-          disabled={!ready}
           onClick={() => {
+            if (!ready) return;
             if (playing) pause();
             else void play();
           }}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white shadow-sm transition-transform duration-150 hover:bg-accent-hover active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 dark:text-[#111827]"
+          className="play"
         >
           {playing ? (
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7 5h3v14H7V5zm7 0h3v14h-3V5z" />
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <rect x="6.5" y="5" width="3.5" height="14" rx="1" />
+              <rect x="14" y="5" width="3.5" height="14" rx="1" />
             </svg>
           ) : (
-            <svg className="h-4 w-4 translate-x-0.5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7L8 5z" />
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M9 6.2v11.6L18.2 12 9 6.2z" />
             </svg>
           )}
         </button>
 
-        <div className="min-w-0 flex-1">
+        <div className="pw">
           <div
             ref={wrapRef}
-            className="relative cursor-pointer select-none"
+            className="pw-wave"
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               seekToRatio((e.clientX - rect.left) / rect.width);
@@ -514,7 +506,7 @@ export function WaveformMixPlayer({
               </div>
             )}
           </div>
-          <div className="mt-1 flex justify-between text-[11px] tabular-nums text-gray-400">
+          <div className="pw-times">
             <span>{formatWaveTime(currentTime)}</span>
             <span>{formatWaveTime(duration)}</span>
           </div>
@@ -568,36 +560,29 @@ export function WaveformMixPlayer({
       )}
 
       {allowDownload && (
-        <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50/80 px-3.5 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">Downloads</p>
-          <div className="mt-3 space-y-2.5">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm font-medium text-gray-800">{partTabLabel}</p>
-              <a
-                href={partFileForDownload}
-                download={partName}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
-              >
-                Download
-              </a>
-            </div>
-            {backingSrc && (
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm font-medium text-gray-800">Bed</p>
-                <a
-                  href={backingSrc}
-                  download={bedName}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${downloadBtnClass} w-full justify-center sm:w-auto`}
-                >
-                  Download
-                </a>
-              </div>
-            )}
-          </div>
+        <div className="dl-files">
+          <a className="dl-file" href={partFileForDownload} download={partName} target="_blank" rel="noopener noreferrer">
+            <span className="dl-ic">
+              <DownIcon />
+            </span>
+            <span className="dl-t">
+              <strong>{partTabLabel}</strong>
+              <span>{partTabLabel === "Take" ? "The submitted take" : "What you'll replace"}</span>
+            </span>
+            <span className="dl-size">{fileKind(partName)}</span>
+          </a>
+          {backingSrc ? (
+            <a className="dl-file" href={backingSrc} download={bedName} target="_blank" rel="noopener noreferrer">
+              <span className="dl-ic">
+                <DownIcon />
+              </span>
+              <span className="dl-t">
+                <strong>Bed</strong>
+                <span>The rest of the mix</span>
+              </span>
+              <span className="dl-size">{fileKind(bedName)}</span>
+            </a>
+          ) : null}
         </div>
       )}
 
@@ -606,5 +591,16 @@ export function WaveformMixPlayer({
   );
 }
 
-const downloadBtnClass =
-  "inline-flex h-9 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 text-xs font-medium text-gray-800 shadow-sm transition-colors hover:border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50";
+function fileKind(name: string) {
+  const ext = name.split(".").pop()?.toUpperCase();
+  if (ext === "MP3" || ext === "WAV") return ext;
+  return "Audio";
+}
+
+function DownIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 4v11M7 11l5 5 5-5M5 20h14" />
+    </svg>
+  );
+}

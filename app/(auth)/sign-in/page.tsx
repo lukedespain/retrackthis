@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthFooterLink, AuthLayout } from "@/components/AuthLayout";
@@ -15,7 +16,7 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        <AuthLayout title="Welcome back" subtitle="Sign in to your account">
+        <AuthLayout title="Welcome back" subtitle="Sign in to your account.">
           <div className="flex justify-center py-8">
             <Spinner />
           </div>
@@ -57,31 +58,32 @@ function SignInForm() {
   return (
     <AuthLayout
       title="Welcome back"
-      subtitle="Sign in to your account"
+      subtitle="Sign in to your account."
       footer={
         <>
-          Don&apos;t have an account? <AuthFooterLink href="/sign-up">Sign up</AuthFooterLink>
+          New here? <AuthFooterLink href="/sign-up">Create an account</AuthFooterLink>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <GoogleAuthButton nextPath={searchParams.get("next")} />
-        <AuthDivider />
-        <Input label="Email" name="email" type="email" required autoComplete="email" />
-        <div>
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            required
-            autoComplete="current-password"
-          />
-          <div className="mt-2 text-right">
-            <AuthFooterLink href="/forgot-password">Forgot password?</AuthFooterLink>
-          </div>
-        </div>
+      <GoogleAuthButton nextPath={searchParams.get("next")} />
+      <AuthDivider />
+      <form onSubmit={handleSubmit} className="stack" style={{ gap: 14 }}>
+        <Input label="Email" name="email" type="email" required autoComplete="email" placeholder="you@studio.com" />
+        <Input
+          label="Password"
+          name="password"
+          type="password"
+          required
+          autoComplete="current-password"
+          placeholder="••••••••"
+          aside={
+            <Link className="hint" href="/forgot-password">
+              Forgot?
+            </Link>
+          }
+        />
         {error && <Alert variant="error">{error}</Alert>}
-        <Button type="submit" disabled={submitting} className="w-full">
+        <Button type="submit" disabled={submitting}>
           {submitting ? "Signing in…" : "Sign in"}
         </Button>
       </form>

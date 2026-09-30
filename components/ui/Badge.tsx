@@ -1,15 +1,15 @@
 const statusStyles: Record<string, string> = {
-  OPEN: "bg-emerald-50 text-emerald-700 ring-emerald-600/10 dark:ring-emerald-400/20",
-  PENDING_PAYMENT: "bg-amber-50 text-amber-800 ring-amber-600/10 dark:ring-amber-400/20",
-  AWARDING: "bg-accent-muted text-accent ring-accent/10",
-  CANCELLING: "bg-gray-100 text-gray-500 ring-gray-500/10 dark:ring-gray-400/20",
-  AWARDED: "bg-accent-muted text-accent ring-accent/10",
-  CANCELLED: "bg-gray-100 text-gray-500 ring-gray-500/10 dark:ring-gray-400/20",
-  PENDING: "bg-amber-50 text-amber-700 ring-amber-600/10 dark:ring-amber-400/20",
-  PICKED: "bg-accent-muted text-accent ring-accent/10",
-  SELECTED: "bg-accent-muted text-accent ring-accent/10",
-  "NOT SELECTED": "bg-gray-100 text-gray-500 ring-gray-500/10 dark:ring-gray-400/20",
-  "JOB CANCELLED": "bg-gray-100 text-gray-500 ring-gray-500/10 dark:ring-gray-400/20",
+  OPEN: "open",
+  PENDING_PAYMENT: "draft",
+  AWARDING: "review",
+  CANCELLING: "cancel",
+  AWARDED: "awarded",
+  CANCELLED: "cancel",
+  PENDING: "pending",
+  PICKED: "review",
+  SELECTED: "awarded",
+  "NOT SELECTED": "lost",
+  "JOB CANCELLED": "cancel",
 };
 
 const statusLabels: Record<string, string> = {
@@ -17,22 +17,16 @@ const statusLabels: Record<string, string> = {
   PENDING_PAYMENT: "Draft",
   AWARDING: "Paying",
   CANCELLING: "Cancelling",
-  AWARDED: "Awarded",
+  AWARDED: "Picked",
   CANCELLED: "Cancelled",
   PENDING: "Pending",
   PICKED: "Favorite",
-  SELECTED: "Awarded",
-  "NOT SELECTED": "Not selected",
+  SELECTED: "Picked",
+  "NOT SELECTED": "Not picked",
   "JOB CANCELLED": "Job cancelled",
 };
 
 export function Badge({ status }: { status: string }) {
   const key = status.toUpperCase();
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${statusStyles[key] ?? "bg-gray-100 text-gray-600 ring-gray-500/10"}`}
-    >
-      {statusLabels[key] ?? status}
-    </span>
-  );
+  return <span className={`status ${statusStyles[key] ?? ""}`}>{statusLabels[key] ?? status}</span>;
 }

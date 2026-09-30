@@ -342,10 +342,10 @@ function AdminPageInner() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-accent">Admin</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">
               Operations
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-gray-500">
               Members, jobs, instruments, income, and emails.
             </p>
           </div>
@@ -363,7 +363,7 @@ function AdminPageInner() {
         </div>
 
         {error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </p>
         )}
@@ -384,7 +384,7 @@ function AdminPageInner() {
         {tab === "members" && members && (
           <section className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500">
                 {filteredMembers.length} of {members.length} members
               </p>
               <input
@@ -392,13 +392,13 @@ function AdminPageInner() {
                 value={memberQuery}
                 onChange={(e) => setMemberQuery(e.target.value)}
                 placeholder="Search name, email, instrument…"
-                className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 outline-none ring-accent/30 placeholder:text-gray-400 focus:ring-2 sm:max-w-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 outline-none ring-accent/30 placeholder:text-gray-400 focus:ring-2 sm:max-w-xs"
               />
             </div>
 
-            <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-gray-800">
+            <div className="overflow-x-auto rounded-2xl border border-gray-100">
               <table className="min-w-full text-left text-sm">
-                <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900/80 dark:text-gray-400">
+                <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                   <tr>
                     <th className="px-4 py-3 font-medium">Member</th>
                     <th className="px-4 py-3 font-medium">Posted</th>
@@ -407,11 +407,11 @@ function AdminPageInner() {
                     <th className="px-4 py-3 font-medium">Instruments</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                <tbody className="divide-y divide-gray-100">
                   {filteredMembers.map((m) => (
                     <tr key={m.id} className="align-top">
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900 dark:text-white">
+                        <div className="font-medium text-gray-900">
                           {m.name}
                           {m.isAdmin ? (
                             <span className="ml-2 rounded-full bg-accent-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
@@ -419,7 +419,7 @@ function AdminPageInner() {
                             </span>
                           ) : null}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{m.email}</div>
+                        <div className="text-xs text-gray-500">{m.email}</div>
                         <div className="mt-1 text-[11px] text-gray-400">
                           Joined {formatDate(m.createdAt)}
                           {m.hasPayouts
@@ -434,19 +434,19 @@ function AdminPageInner() {
                           <button
                             type="button"
                             onClick={() => void resetMemberPayouts(m)}
-                            className="mt-1.5 text-xs font-medium text-amber-700 hover:underline dark:text-amber-400"
+                            className="mt-1.5 text-xs font-medium text-amber-700 hover:underline"
                           >
                             Reset payout setup
                           </button>
                         ) : null}
                       </td>
-                      <td className="px-4 py-3 tabular-nums text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 tabular-nums text-gray-700">
                         {m.jobsPosted}
                       </td>
-                      <td className="px-4 py-3 tabular-nums text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 tabular-nums text-gray-700">
                         {m.takesSubmitted}
                       </td>
-                      <td className="px-4 py-3 tabular-nums text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 tabular-nums text-gray-700">
                         {m.jobsWon}
                       </td>
                       <td className="px-4 py-3">
@@ -517,7 +517,7 @@ function AdminPageInner() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500">
                 Sorted by musician count for covered; by group for gaps.
               </p>
               <SegmentedControl
@@ -552,7 +552,7 @@ function AdminPageInner() {
         {tab === "income" && stats && (
           <section className="space-y-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500">
                 Money on the platform and fees for the selected window.
               </p>
               <SegmentedControl
@@ -571,10 +571,10 @@ function AdminPageInner() {
               <StatCard
                 label="Funds held"
                 value={money(stats.income.fundsHeldCents ?? stats.income.escrowAuthorizedCents)}
-                hint="Open jobs — paid, not awarded yet"
+                hint="Open jobs — paid, not picked yet"
               />
               <StatCard
-                label="Awarded volume"
+                label="Picked volume"
                 value={money(stats.income.volumeCapturedCents)}
                 hint="Jobs that closed with a winner"
               />
@@ -588,7 +588,7 @@ function AdminPageInner() {
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard label="Jobs posted" value={`${stats.activity.jobsTotal}`} hint={`${stats.activity.jobsOpen} open`} />
-              <StatCard label="Jobs awarded" value={`${stats.activity.jobsAwarded}`} hint={`${stats.activity.jobsCancelled} cancelled`} />
+              <StatCard label="Jobs picked" value={`${stats.activity.jobsAwarded}`} hint={`${stats.activity.jobsCancelled} cancelled`} />
               <StatCard label="Takes submitted" value={`${stats.activity.takesTotal}`} hint="Auditions in period" />
               <StatCard
                 label="Members"
@@ -599,8 +599,8 @@ function AdminPageInner() {
 
             <AdminFinanceWaterfall period={period} />
 
-            <div className="rounded-2xl border border-gray-100 p-4 dark:border-gray-800">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <div className="rounded-2xl border border-gray-100 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                 Daily volume
               </p>
               <MiniBars
@@ -608,7 +608,7 @@ function AdminPageInner() {
                 selectedDate={selectedDay}
                 onSelect={(date) => setSelectedDay((cur) => (cur === date ? null : date))}
               />
-              <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
+              <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
                 <span>Cancelled: {money(stats.income.cancelledCents)}</span>
                 <span>Failed: {money(stats.income.failedCents)}</span>
                 <span>Transferred: {money(stats.income.transferredCents)}</span>
@@ -639,11 +639,11 @@ function AdminPageInner() {
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+    <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3">
+      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
         {label}
       </p>
-      <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-gray-900 dark:text-white">
+      <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-gray-900">
         {value}
       </p>
       {hint ? <p className="mt-0.5 text-xs text-gray-400">{hint}</p> : null}
@@ -663,26 +663,26 @@ function InstrumentTable({
   emphasizeGap?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-gray-100 dark:border-gray-800">
-      <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-4 py-2.5 dark:border-gray-800 dark:bg-gray-900/80">
-        <h2 className="text-sm font-medium text-gray-800 dark:text-gray-200">{title}</h2>
+    <div className="overflow-x-auto rounded-2xl border border-gray-100">
+      <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-4 py-2.5">
+        <h2 className="text-sm font-medium text-gray-800">{title}</h2>
         <span className="text-xs text-gray-400">{rows.length}</span>
       </div>
       {rows.length === 0 ? (
         <p className="px-4 py-8 text-sm text-gray-500">{empty}</p>
       ) : (
         <table className="min-w-full text-left text-sm">
-          <thead className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <thead className="text-xs uppercase tracking-wide text-gray-500">
             <tr>
               <th className="px-4 py-2.5 font-medium">Instrument</th>
               <th className="px-4 py-2.5 font-medium">Group</th>
               <th className="px-4 py-2.5 font-medium">Musicians</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          <tbody className="divide-y divide-gray-100">
             {rows.map((row) => (
               <tr key={row.id}>
-                <td className="px-4 py-2.5 text-gray-900 dark:text-white">
+                <td className="px-4 py-2.5 text-gray-900">
                   {row.label}
                   {row.custom ? (
                     <span className="ml-2 text-[10px] uppercase tracking-wide text-gray-400">
@@ -690,12 +690,12 @@ function InstrumentTable({
                     </span>
                   ) : null}
                 </td>
-                <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400">{row.groupLabel}</td>
+                <td className="px-4 py-2.5 text-gray-500">{row.groupLabel}</td>
                 <td
                   className={`px-4 py-2.5 tabular-nums ${
                     emphasizeGap || row.musicianCount === 0
-                      ? "font-medium text-amber-700 dark:text-amber-400"
-                      : "text-gray-700 dark:text-gray-300"
+                      ? "font-medium text-amber-700"
+                      : "text-gray-700"
                   }`}
                 >
                   {row.musicianCount}
@@ -747,7 +747,7 @@ function MemberInstrumentChips({
           {instruments.map((inst) => (
             <span
               key={inst.id}
-              className="whitespace-nowrap rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+              className="whitespace-nowrap rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600"
             >
               {inst.label}
             </span>
@@ -808,7 +808,7 @@ function MiniBars({
             }`}
             style={{ height: `${h}%`, opacity: dimmed ? 0.45 : 1 }}
           >
-            <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-medium text-white shadow-lg group-hover:block group-focus-visible:block dark:bg-white dark:text-gray-900">
+            <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-medium text-white shadow-lg group-hover:block group-focus-visible:block">
               {formatDayKey(day.date)} · {money(day.amountCents)}
             </span>
           </button>
@@ -821,16 +821,16 @@ function MiniBars({
 function DayJobsList({ day, onClose }: { day: SeriesDay; onClose: () => void }) {
   const jobs = day.jobs ?? [];
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800">
-      <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-2.5 dark:border-gray-800 dark:bg-gray-900/80">
-        <h2 className="text-sm font-medium text-gray-800 dark:text-gray-200">
+    <div className="overflow-hidden rounded-2xl border border-gray-100">
+      <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-2.5">
+        <h2 className="text-sm font-medium text-gray-800">
           {formatDayKey(day.date)} · {money(day.amountCents)} ·{" "}
           {jobs.length === 1 ? "1 job" : `${jobs.length} jobs`}
         </h2>
         <button
           type="button"
           onClick={onClose}
-          className="text-xs font-medium text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
+          className="text-xs font-medium text-gray-500 hover:text-gray-800"
         >
           Close
         </button>
@@ -838,22 +838,22 @@ function DayJobsList({ day, onClose }: { day: SeriesDay; onClose: () => void }) 
       {jobs.length === 0 ? (
         <p className="px-4 py-6 text-sm text-gray-500">No jobs on this day.</p>
       ) : (
-        <ul className="max-h-80 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-800">
+        <ul className="max-h-80 divide-y divide-gray-100 overflow-y-auto">
           {jobs.map((job) => (
             <li key={job.id}>
               <Link
                 href={`/admin/preview/producer/${job.creatorId}?job=${job.id}`}
-                className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/60"
+                className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-gray-50"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="truncate text-sm font-medium text-gray-900">
                     {job.title}
                   </p>
-                  <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-0.5 truncate text-xs text-gray-500">
                     {job.instrument} · {job.creatorName}
                   </p>
                 </div>
-                <span className="shrink-0 text-sm tabular-nums text-gray-700 dark:text-gray-300">
+                <span className="shrink-0 text-sm tabular-nums text-gray-700">
                   {money(job.amountCents)}
                 </span>
               </Link>

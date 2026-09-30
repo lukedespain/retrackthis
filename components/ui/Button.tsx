@@ -6,32 +6,22 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants = {
-  primary:
-    "bg-accent text-white shadow-sm hover:bg-accent-hover active:bg-accent-hover disabled:hover:bg-accent dark:text-[#111827]",
-  secondary:
-    "bg-gray-900 text-white shadow-sm hover:bg-gray-800 active:bg-gray-950 disabled:hover:bg-gray-900 dark:bg-[#f3f4f6] dark:text-[#111827] dark:hover:bg-white dark:active:bg-white dark:disabled:hover:bg-[#f3f4f6]",
-  outline:
-    "border border-gray-900 bg-white text-gray-900 shadow-none hover:bg-gray-50 active:bg-gray-100 disabled:hover:bg-white",
-  ghost:
-    "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200 disabled:hover:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white dark:active:bg-gray-700",
-  danger:
-    "bg-transparent text-gray-400 hover:bg-red-50 hover:text-red-600 active:bg-red-100 disabled:hover:bg-transparent dark:hover:bg-red-950/40 dark:hover:text-red-400 dark:active:bg-red-950/60",
+  primary: "btn primary",
+  secondary: "btn primary",
+  outline: "btn outline",
+  ghost: "btn soft",
+  danger: "btn text hover:!text-red-600",
 };
 
 const sizes = {
-  sm: "min-h-10 px-3.5 py-2 text-sm sm:min-h-0 sm:py-1.5 sm:text-xs",
-  md: "min-h-11 px-5 py-2.5 text-sm sm:min-h-0",
+  sm: "!h-9 !px-4 !text-[13.5px]",
+  md: "",
 };
 
-export function Button({
-  variant = "primary",
-  size = "md",
-  className = "",
-  ...props
-}: Props) {
+export function Button({ variant = "primary", size = "md", className = "", ...props }: Props) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-full font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 dark:focus-visible:ring-offset-gray-950 ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`${variants[variant]} ${sizes[size]} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       {...props}
     />
   );

@@ -95,7 +95,7 @@ function MidiStrip() {
       {MIDI_LANES.map((top) => (
         <div
           key={top}
-          className="absolute left-0 right-0 h-px bg-gray-100/90 dark:bg-gray-700/80"
+          className="absolute left-0 right-0 h-px bg-gray-100/90"
           style={{ top: `${top}%` }}
         />
       ))}
@@ -131,7 +131,7 @@ function WaveStrip({
   const n = samples.length;
   const step = STRIP_WIDTH / n;
   const barW = Math.max(1.1, step * 0.72);
-  const colorClass = tone === "accent" ? "text-accent" : "text-gray-300 dark:text-gray-600";
+  const colorClass = tone === "accent" ? "text-accent" : "text-gray-300";
   const fillOpacity = tone === "accent" ? 0.88 : 0.7;
 
   return (

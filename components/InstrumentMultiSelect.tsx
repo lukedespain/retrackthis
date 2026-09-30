@@ -134,19 +134,19 @@ export function InstrumentMultiSelect({
   if (loading) {
     return (
       <div>
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</p>
-        {hint && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
-        <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">Loading instruments…</p>
+        <p className="text-sm font-medium text-gray-700">{label}</p>
+        {hint && <p className="mt-0.5 text-xs text-gray-500">{hint}</p>}
+        <p className="mt-1.5 text-sm text-gray-500">Loading instruments…</p>
       </div>
     );
   }
 
   return (
     <div ref={containerRef} className={`relative ${panel ? "flex min-h-0 flex-1 flex-col" : ""} ${className}`}>
-      <label id={`${listId}-label`} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label id={`${listId}-label`} className="block text-sm font-medium text-gray-700">
         {label}
       </label>
-      {hint && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
+      {hint && <p className="mt-0.5 text-xs text-gray-500">{hint}</p>}
 
       {!panel && (
         <button
@@ -157,13 +157,13 @@ export function InstrumentMultiSelect({
           aria-expanded={open}
           aria-labelledby={`${listId}-label`}
           onClick={() => setOpen((value) => !value)}
-          className={`mt-1.5 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border bg-white px-3.5 py-2.5 text-left text-sm transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:bg-gray-950 dark:disabled:bg-gray-900 ${
+          className={`mt-1.5 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border bg-white px-3.5 py-2.5 text-left text-sm transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 ${
             open
               ? "border-accent ring-2 ring-accent/10"
-              : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+              : "border-gray-200 hover:border-gray-300"
           }`}
         >
-          <span className="text-gray-400 dark:text-gray-500">{triggerLabel}</span>
+          <span className="text-gray-400">{triggerLabel}</span>
           <Chevron open={open} />
         </button>
       )}
@@ -173,7 +173,7 @@ export function InstrumentMultiSelect({
           {selectedIds.map((id) => (
             <span
               key={id}
-              className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent-muted/50 py-1 pl-2.5 pr-1.5 text-xs font-medium text-gray-800 ring-1 ring-inset ring-accent/15 dark:bg-accent/20 dark:text-gray-100"
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent-muted/50 py-1 pl-2.5 pr-1.5 text-xs font-medium text-gray-800 ring-1 ring-inset ring-accent/15"
             >
               <span className="truncate">{chipLabel(id)}</span>
               {!disabled && (
@@ -181,7 +181,7 @@ export function InstrumentMultiSelect({
                   type="button"
                   aria-label={`Remove ${chipLabel(id)}`}
                   onClick={() => removeChip(id)}
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-white/80 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-white/80 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
                 >
                   <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
@@ -194,7 +194,7 @@ export function InstrumentMultiSelect({
       )}
 
       {mode === "single" && selectedIds[0] && (
-        <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">{chipLabel(selectedIds[0])}</p>
+        <p className="mt-2 text-sm font-medium text-gray-900">{chipLabel(selectedIds[0])}</p>
       )}
 
       {open && (
@@ -205,8 +205,8 @@ export function InstrumentMultiSelect({
           aria-multiselectable={mode === "multi"}
           className={
             panel
-              ? "mt-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 dark:border-gray-700 dark:bg-gray-950"
-              : "absolute z-50 mt-1.5 max-h-[min(420px,70vh)] w-full overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg shadow-gray-900/10 dark:border-gray-700 dark:bg-gray-900 dark:shadow-black/40"
+              ? "mt-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1"
+              : "absolute z-50 mt-1.5 max-h-[min(420px,70vh)] w-full overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg shadow-gray-900/10"
           }
         >
           {INSTRUMENT_GROUPS.map((group) => {
@@ -214,17 +214,17 @@ export function InstrumentMultiSelect({
             const selectedCount = selectedByGroup.get(group.id) ?? 0;
 
             return (
-              <div key={group.id} className="border-b border-gray-100 last:border-b-0 dark:border-gray-800">
+              <div key={group.id} className="border-b border-gray-100 last:border-b-0">
                 <button
                   type="button"
                   aria-expanded={expanded}
                   onClick={() => toggleGroup(group.id)}
-                  className="flex min-h-[44px] w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:outline-none dark:hover:bg-gray-800 dark:focus-visible:bg-gray-800"
+                  className="flex min-h-[44px] w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:outline-none"
                 >
                   <span className="text-base leading-none" aria-hidden="true">
                     {group.emoji}
                   </span>
-                  <span className="min-w-0 flex-1 text-sm font-semibold text-gray-900 dark:text-white">
+                  <span className="min-w-0 flex-1 text-sm font-semibold text-gray-900">
                     {group.label}
                   </span>
                   {selectedCount > 0 && (
@@ -292,17 +292,17 @@ function InstrumentOptionRow({
       className={`flex min-h-[44px] w-full items-center gap-3 py-2 pl-8 pr-3.5 text-left transition-colors focus-visible:outline-none ${
         blocked
           ? "cursor-not-allowed opacity-45"
-          : "hover:bg-gray-50 focus-visible:bg-gray-50 dark:hover:bg-gray-800 dark:focus-visible:bg-gray-800"
+          : "hover:bg-gray-50 focus-visible:bg-gray-50"
       }`}
     >
       <span
         aria-hidden="true"
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
           selected
-            ? "border-accent bg-accent text-white dark:text-[#111827]"
+            ? "border-accent bg-accent text-white"
             : blocked
-              ? "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
-              : "border-gray-300 bg-white text-transparent dark:border-gray-600 dark:bg-gray-950"
+              ? "border-gray-200 bg-gray-50"
+              : "border-gray-300 bg-white text-transparent"
         }`}
       >
         {mode === "single" && selected ? (
@@ -318,9 +318,9 @@ function InstrumentOptionRow({
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">{label}</span>
+        <span className="block text-sm font-medium text-gray-900">{label}</span>
         {blocked && (
-          <span className="block text-xs text-gray-500 dark:text-gray-400">No musicians in network yet</span>
+          <span className="block text-xs text-gray-500">No musicians in network yet</span>
         )}
       </span>
     </button>
@@ -348,7 +348,7 @@ function CustomInstrumentRow({
 
   return (
     <div className="px-3.5 py-2 pl-8">
-      <label htmlFor={inputId} className="block text-xs font-medium text-gray-500 dark:text-gray-400">
+      <label htmlFor={inputId} className="block text-xs font-medium text-gray-500">
         Other in this category
       </label>
       <div className="mt-1.5 flex gap-2">
@@ -365,13 +365,13 @@ function CustomInstrumentRow({
               submit();
             }
           }}
-          className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-accent focus:ring-2 focus:ring-accent/10 disabled:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500 dark:disabled:bg-gray-900"
+          className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-accent focus:ring-2 focus:ring-accent/10 disabled:bg-gray-50"
         />
         <button
           type="button"
           disabled={disabled || !value.trim()}
           onClick={submit}
-          className="shrink-0 rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+          className="shrink-0 rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Add
         </button>

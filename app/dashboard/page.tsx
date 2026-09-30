@@ -34,11 +34,13 @@ function DashboardRedirectInner() {
     const post = searchParams.get("post");
     const payouts = searchParams.get("payouts");
 
-    if (tab === "submissions" || payouts === "return" || payouts === "refresh") {
-      const params = new URLSearchParams();
-      params.set("tab", "submissions");
-      if (payouts) params.set("payouts", payouts);
-      router.replace(`/musicians?${params.toString()}`);
+    if (payouts === "return" || payouts === "refresh") {
+      router.replace(`/settings?payouts=${payouts}#payouts`);
+      return;
+    }
+
+    if (tab === "submissions") {
+      router.replace("/submissions");
       return;
     }
 

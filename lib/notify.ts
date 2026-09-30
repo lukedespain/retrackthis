@@ -24,7 +24,7 @@ function dashboardJobsUrl() {
 }
 
 function dashboardSubmissionsUrl() {
-  return `${appBaseUrl()}/musicians?tab=submissions`;
+  return `${appBaseUrl()}/submissions`;
 }
 
 function snippet(text: string, max = 180) {
@@ -251,7 +251,7 @@ export async function notifyCreatorTakeSubmitted(opts: {
   );
 }
 
-/** Deadline ended - producer has 48h to award (or we auto-award / refund). */
+/** Deadline ended - producer has 48h to pick (or we auto-pick / refund). */
 export async function notifyProducerDeadlineReached(opts: {
   creatorId: string;
   jobId: string;
@@ -274,12 +274,12 @@ export async function notifyProducerDeadlineReached(opts: {
   await safeSend(`deadline-finalize ${opts.jobId}`, () =>
     sendEmail({
       to: creator.email,
-      subject: `48 hours to award “${opts.jobTitle}”`,
+      subject: `48 hours to pick a take for “${opts.jobTitle}”`,
       heading: "Your gig deadline just ended",
       bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(creator.name.split(" ")[0] || "there")},</p>
         <p style="margin:0 0 10px;">Submissions are closed on <strong>${escape(opts.jobTitle)}</strong>. ${favoriteLine}</p>
-        <p style="margin:0;">You have <strong>48 hours</strong> to award a musician. We’ll auto-award a saved favorite by <strong>${escape(formatDeadline(opts.finalizeBy))}</strong> if you don’t act.</p>`,
-      ctaLabel: "Award a submission",
+        <p style="margin:0;">You have <strong>48 hours</strong> to pick a take. If you don’t, we’ll pick your saved favorite by <strong>${escape(formatDeadline(opts.finalizeBy))}</strong> if you don’t act.</p>`,
+      ctaLabel: "Pick a take",
       ctaHref: dashboardJobsUrl(),
     })
   );
@@ -307,8 +307,8 @@ export async function notifyMusicianAwarded(opts: {
   await safeSend(`awarded ${opts.musicianId}`, () =>
     sendEmail({
       to: musician.email,
-      subject: `You were selected for “${opts.jobTitle}”`,
-      heading: "Your take was selected",
+      subject: `Your take was picked for “${opts.jobTitle}”`,
+      heading: "Your take was picked",
       bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(musician.name.split(" ")[0] || "there")},</p>
         <p style="margin:0;">The creator picked your take on <strong>${escape(opts.jobTitle)}</strong>. ${escape(payoutLine)}</p>`,
       ctaLabel: "See submissions",
@@ -340,7 +340,7 @@ export async function notifyMusiciansJobCancelled(opts: {
           subject: `Job cancelled: “${opts.jobTitle}”`,
           heading: "A job you submitted to was cancelled",
           bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(take.musician.name.split(" ")[0] || "there")},</p>
-            <p style="margin:0;"><strong>${escape(opts.jobTitle)}</strong> was cancelled. Your take won’t be awarded.</p>`,
+            <p style="margin:0;"><strong>${escape(opts.jobTitle)}</strong> was cancelled, so no take will be picked.</p>`,
           ctaLabel: "Browse open jobs",
           ctaHref: jobUrl(),
         })

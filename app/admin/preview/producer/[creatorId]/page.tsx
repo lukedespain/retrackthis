@@ -59,20 +59,20 @@ function AdminProducerPreviewInner() {
     <div className="min-h-screen">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-5 pb-16 pt-2 sm:px-6 sm:pb-24 sm:pt-4">
-        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/50 dark:bg-amber-950/30">
-          <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-medium text-amber-900">
             Preview as producer · view only
           </p>
-          <p className="mt-1 text-sm text-amber-800/90 dark:text-amber-300/90">
+          <p className="mt-1 text-sm text-amber-800/90">
             You&apos;re seeing this member&apos;s My jobs experience. Listening works; edit, cancel,
-            and award stay disabled.
+            and pick stay disabled.
           </p>
           <div className="mt-3 flex flex-wrap gap-3 text-sm">
-            <Link href="/admin?tab=jobs" className="font-medium text-amber-900 underline-offset-2 hover:underline dark:text-amber-200">
+            <Link href="/admin?tab=jobs" className="font-medium text-amber-900 underline-offset-2 hover:underline">
               ← Back to Admin jobs
             </Link>
             {creator && (
-              <span className="text-amber-800/80 dark:text-amber-300/80">
+              <span className="text-amber-800/80">
                 {creator.name} · {creator.email}
               </span>
             )}
@@ -80,7 +80,7 @@ function AdminProducerPreviewInner() {
         </div>
 
         {error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </p>
         )}

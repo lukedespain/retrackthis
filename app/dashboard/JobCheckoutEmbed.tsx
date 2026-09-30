@@ -15,10 +15,10 @@ export function JobCheckoutEmbed({
   onDiscard?: () => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
-      <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">Pay to post this gig</h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="border-b border-gray-100 px-5 py-4">
+        <h3 className="text-base font-semibold text-gray-900">Pay to post this gig</h3>
+        <p className="mt-1 text-sm text-gray-500">
           {amountLabel
             ? `Secure checkout for ${amountLabel}. Card, Apple Pay, Link, and other methods Stripe enables.`
             : "Secure checkout - card, Apple Pay, Link, and other methods Stripe enables."}{" "}
@@ -31,7 +31,7 @@ export function JobCheckoutEmbed({
         </EmbeddedCheckoutProvider>
       </div>
       {(onSaveForLater || onDiscard) && (
-        <div className="flex flex-col gap-2 border-t border-gray-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800">
+        <div className="flex flex-col gap-2 border-t border-gray-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
           {onSaveForLater ? (
             <button
               type="button"
@@ -47,7 +47,7 @@ export function JobCheckoutEmbed({
             <button
               type="button"
               onClick={onDiscard}
-              className="text-left text-sm font-medium text-gray-500 underline-offset-2 hover:text-gray-800 hover:underline dark:text-gray-400 dark:hover:text-gray-200 sm:text-right"
+              className="text-left text-sm font-medium text-gray-500 underline-offset-2 hover:text-gray-800 hover:underline sm:text-right"
             >
               Discard draft
             </button>

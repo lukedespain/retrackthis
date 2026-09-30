@@ -254,20 +254,21 @@ export function WaveformPlayer({
         <button
           type="button"
           aria-label={playing ? "Pause" : "Play"}
-          disabled={!ready}
           onClick={() => {
+            if (!ready) return;
             if (playing) pauseTransport();
             else void startTransport(currentTimeRef.current);
           }}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white shadow-sm transition-transform duration-150 hover:bg-accent-hover active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 dark:text-[#111827]"
+          className="play"
         >
           {playing ? (
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7 5h3v14H7V5zm7 0h3v14h-3V5z" />
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <rect x="6.5" y="5" width="3.5" height="14" rx="1" />
+              <rect x="14" y="5" width="3.5" height="14" rx="1" />
             </svg>
           ) : (
-            <svg className="h-4 w-4 translate-x-0.5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7L8 5z" />
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M9 6.2v11.6L18.2 12 9 6.2z" />
             </svg>
           )}
         </button>

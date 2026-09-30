@@ -4,20 +4,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { CompleteProfileForm } from "@/app/dashboard/CompleteProfileForm";
 import { CreatorView } from "@/app/dashboard/CreatorView";
-import { PostJobForm } from "@/app/dashboard/PostJobForm";
-import { RoleHubHeader } from "@/components/RoleHubHeader";
+import { AccountHead } from "@/components/brand/AccountHead";
+import { JOB_POSTED, requestPostJob } from "@/components/MarketingHeroCtas";
+import { MarketingFooter } from "@/components/MarketingFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Spinner } from "@/components/ui/Spinner";
 
 type Profile = {
   id: string;
   name: string;
+  email: string;
+  avatar?: unknown;
   role: string[];
   stripeAccountId?: string | null;
   isAdmin?: boolean;
 };
-
-type ProducerTab = "post" | "jobs";
 
 export default function ProducersPage() {
   return (
@@ -42,7 +43,6 @@ function ProducersPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
-  const [tab, setTab] = useState<ProducerTab>("jobs");
   const [jobsKey, setJobsKey] = useState(0);
 
   async function loadProfile() {
@@ -60,10 +60,17 @@ function ProducersPageInner() {
   }, []);
 
   useEffect(() => {
-    const tabParam = searchParams.get("tab");
-    if (tabParam === "post" || searchParams.get("post") === "1") setTab("post");
-    else setTab("jobs");
-  }, [searchParams]);
+    if (searchParams.get("tab") === "post" || searchParams.get("post") === "1") {
+      requestPostJob();
+      router.replace("/producers", { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    const refresh = () => setJobsKey((k) => k + 1);
+    window.addEventListener(JOB_POSTED, refresh);
+    return () => window.removeEventListener(JOB_POSTED, refresh);
+  }, []);
 
   // After Stripe Checkout success/cancel, land on My jobs and confirm activation.
   useEffect(() => {
@@ -72,7 +79,6 @@ function ProducersPageInner() {
     const cancelled = searchParams.get("checkout") === "cancelled";
     if (!jobId && !posted && !cancelled) return;
 
-    setTab("jobs");
     setJobsKey((k) => k + 1);
 
     if (posted && jobId) {
@@ -83,11 +89,6 @@ function ProducersPageInner() {
 
     router.replace("/producers", { scroll: false });
   }, [searchParams, router]);
-
-  function changeTab(next: ProducerTab) {
-    setTab(next);
-    router.replace(next === "post" ? "/producers?tab=post" : "/producers", { scroll: false });
-  }
 
   if (profile === undefined) {
     return (
@@ -109,32 +110,16 @@ function ProducersPageInner() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto max-w-5xl px-5 pb-16 pt-2 sm:px-6 sm:pb-24 sm:pt-4">
-        <RoleHubHeader
-          title="Producers"
-          description="Post a gig, pay upfront at checkout, then pay out the musician when you pick a winner."
-          options={[
-            { value: "post" as const, label: "Post a job" },
-            { value: "jobs" as const, label: "My jobs" },
-          ]}
-          value={tab}
-          onChange={changeTab}
+      <main className="wrap">
+        <AccountHead
+          name={profile.name}
+          email={profile.email}
+          avatar={profile.avatar}
+          current="jobs"
         />
-
-        <div className="mt-8 sm:mt-10">
-          {tab === "post" ? (
-            <PostJobForm
-              onCancel={() => changeTab("jobs")}
-              onPosted={() => {
-                setJobsKey((k) => k + 1);
-                changeTab("jobs");
-              }}
-            />
-          ) : (
-            <CreatorView key={jobsKey} hideHeading hidePostButton />
-          )}
-        </div>
+        <CreatorView key={jobsKey} hideHeading hidePostButton />
       </main>
+      <MarketingFooter />
     </div>
   );
 }

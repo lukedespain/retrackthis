@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUDIO_BUCKET, ensureAudioBucket, supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getSessionUserId } from "@/lib/supabaseServer";
+import { isTakeFileName } from "@/lib/constants";
 
-const ALLOWED_KINDS = new Set(["demo", "demo-backing", "take", "take-midi"]);
+const ALLOWED_KINDS = new Set(["demo", "demo-backing", "take"]);
 
 const ALLOWED_MIME_TYPES = [
   "audio/mpeg",
@@ -18,10 +19,7 @@ const ALLOWED_MIME_TYPES = [
   "audio/mp4",
   "audio/x-m4a",
   "audio/m4a",
-  "audio/midi",
-  "audio/x-midi",
-  "audio/mid",
-  // Browsers sometimes send MIDI / WAV as octet-stream
+  // Browsers sometimes send WAV as octet-stream
   "application/octet-stream",
 ];
 
@@ -40,6 +38,9 @@ export async function POST(req: NextRequest) {
 
   if (!fileName || !kind || !ALLOWED_KINDS.has(kind)) {
     return NextResponse.json({ error: "Missing fileName or kind" }, { status: 400 });
+  }
+  if (kind === "take" && !isTakeFileName(String(fileName))) {
+    return NextResponse.json({ error: "Takes must be WAV or MP3 files." }, { status: 400 });
   }
 
   await ensureAudioBucket();

@@ -9,17 +9,13 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Textarea";
-import { AUDIO_FILE_ACCEPT, AUDIO_UPLOAD_HINT } from "@/lib/constants";
-import { MAX_AUDIO_TAKES, MAX_MIDI_FILES, type TakeFileRecord } from "@/lib/takeFiles";
-
-type SubmitMode = "audio" | "midi" | "both";
+import { TAKE_FILE_ACCEPT, TAKE_UPLOAD_HINT } from "@/lib/constants";
+import { MAX_AUDIO_TAKES, type TakeFileRecord } from "@/lib/takeFiles";
 
 type TakeRow = {
   audioLabel: string;
   audioFileUrl: string | null;
   audioPreviewUrl: string | null;
-  midiLabel: string;
-  midiFileUrl: string | null;
 };
 
 function emptyRow(index: number): TakeRow {
@@ -27,16 +23,8 @@ function emptyRow(index: number): TakeRow {
     audioLabel: `Take ${index + 1}`,
     audioFileUrl: null,
     audioPreviewUrl: null,
-    midiLabel: `MIDI ${index + 1}`,
-    midiFileUrl: null,
   };
 }
-
-const MODE_OPTIONS: Array<{ value: SubmitMode; label: string; hint: string }> = [
-  { value: "audio", label: "Audio", hint: "Recorded performance" },
-  { value: "midi", label: "MIDI", hint: "MIDI file only" },
-  { value: "both", label: "Both", hint: "Audio + MIDI" },
-];
 
 export function SubmitTakeForm({
   jobId,
@@ -60,7 +48,6 @@ export function SubmitTakeForm({
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(existingTakeUrl ?? null);
   const [submittedFiles, setSubmittedFiles] = useState<TakeFileRecord[] | undefined>(existingFiles);
   const [replacing, setReplacing] = useState(false);
-  const [mode, setMode] = useState<SubmitMode | null>(null);
   const [rows, setRows] = useState<TakeRow[]>([emptyRow(0)]);
   const [attestHuman, setAttestHuman] = useState(false);
   const [burst, setBurst] = useState(false);
@@ -74,44 +61,25 @@ export function SubmitTakeForm({
     }
   }, [alreadySubmitted, existingTakeUrl, existingFiles]);
 
-  const maxRows = mode === "midi" ? MAX_MIDI_FILES : MAX_AUDIO_TAKES;
   const isReplace = replacing;
 
-  const readyAudioRows = rows
-    .map((row, index) => ({ ...row, index }))
-    .filter((row) => row.audioFileUrl && row.audioLabel.trim());
+  const readyAudioRows = rows.filter((row) => row.audioFileUrl && row.audioLabel.trim());
 
-  const readyMidiRows = rows
-    .map((row, index) => ({ ...row, index }))
-    .filter((row) => row.midiFileUrl && row.midiLabel.trim());
-
-  const canSubmit =
-    Boolean(mode) &&
-    attestHuman &&
-    (mode === "audio"
-      ? readyAudioRows.length > 0
-      : mode === "midi"
-        ? readyMidiRows.length > 0
-        : readyAudioRows.length > 0 && readyAudioRows.every((row) => row.midiFileUrl));
+  const canSubmit = attestHuman && readyAudioRows.length > 0;
 
   function updateRow(index: number, patch: Partial<TakeRow>) {
     setRows((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
 
   function addRow() {
-    setRows((current) => (current.length < maxRows ? [...current, emptyRow(current.length)] : current));
-  }
-
-  function chooseMode(next: SubmitMode) {
-    setMode(next);
-    setRows([emptyRow(0)]);
-    setError(null);
+    setRows((current) =>
+      current.length < MAX_AUDIO_TAKES ? [...current, emptyRow(current.length)] : current
+    );
   }
 
   function startReplace() {
     setReplacing(true);
     setSubmitted(false);
-    setMode(null);
     setRows([emptyRow(0)]);
     setAttestHuman(false);
     setError(null);
@@ -121,7 +89,6 @@ export function SubmitTakeForm({
   function cancelReplace() {
     setReplacing(false);
     setSubmitted(true);
-    setMode(null);
     setRows([emptyRow(0)]);
     setAttestHuman(false);
     setError(null);
@@ -138,61 +105,20 @@ export function SubmitTakeForm({
       return;
     }
 
-    if (!mode) {
-      setError("Choose whether you’re submitting audio, MIDI, or both.");
+    if (readyAudioRows.length === 0) {
+      setError("Upload at least one take before submitting.");
       setSubmitting(false);
       return;
-    }
-
-    if (mode === "audio" || mode === "both") {
-      if (readyAudioRows.length === 0) {
-        setError("Upload at least one audio take before submitting.");
-        setSubmitting(false);
-        return;
-      }
-    }
-
-    if (mode === "midi" && readyMidiRows.length === 0) {
-      setError("Upload at least one MIDI file before submitting.");
-      setSubmitting(false);
-      return;
-    }
-
-    if (mode === "both") {
-      const missingMidi = readyAudioRows.some((row) => !row.midiFileUrl);
-      if (missingMidi) {
-        setError("Add a MIDI file for each audio take, or switch to Audio only.");
-        setSubmitting(false);
-        return;
-      }
     }
 
     const formEl = e.currentTarget;
     const form = new FormData(formEl);
 
-    const audioTakes =
-      mode === "midi"
-        ? []
-        : readyAudioRows.map(({ audioLabel, audioFileUrl, audioPreviewUrl }) => ({
-            label: audioLabel.trim(),
-            fileUrl: audioFileUrl as string,
-            previewUrl: audioPreviewUrl,
-          }));
-
-    const midiFiles =
-      mode === "audio"
-        ? []
-        : mode === "midi"
-          ? readyMidiRows.map(({ midiLabel, midiFileUrl }) => ({
-              label: midiLabel.trim(),
-              fileUrl: midiFileUrl as string,
-              audioIndex: null as number | null,
-            }))
-          : readyAudioRows.map(({ midiLabel, midiFileUrl, index }) => ({
-              label: midiLabel.trim(),
-              fileUrl: midiFileUrl as string,
-              audioIndex: index,
-            }));
+    const audioTakes = readyAudioRows.map(({ audioLabel, audioFileUrl, audioPreviewUrl }) => ({
+      label: audioLabel.trim(),
+      fileUrl: audioFileUrl as string,
+      previewUrl: audioPreviewUrl,
+    }));
 
     try {
       const res = await fetch(`/api/jobs/${jobId}/takes`, {
@@ -200,7 +126,6 @@ export function SubmitTakeForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           audioTakes,
-          midiFiles,
           note: form.get("note"),
           attestHuman: true,
         }),
@@ -217,7 +142,11 @@ export function SubmitTakeForm({
       setSubmittedUrl(take.audioFileUrl);
       setSubmittedFiles(take.files);
       setBurst(true);
-      onSubmitted?.({ jobId, audioFileUrl: take.audioFileUrl, files: take.files });
+      onSubmitted?.({
+        jobId,
+        audioFileUrl: take.audioFileUrl,
+        files: take.files,
+      });
       window.setTimeout(() => setBurst(false), 1800);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -239,8 +168,8 @@ export function SubmitTakeForm({
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-semibold text-gray-900">Take submitted</h3>
             <p className="mt-1 text-sm text-gray-500">
-              You&apos;re in. Status: <span className="font-medium text-gray-800">Pending</span>. The
-              creator will review takes and pick a winner. Jobs stay open until the deadline.
+              You&apos;re in. Status: <span className="font-medium text-gray-800">Pending</span>. The creator
+              will review takes and pick a winner. Jobs stay open until the deadline.
             </p>
             {(submittedFiles?.length || submittedUrl) && (
               <div className="mt-4">
@@ -259,8 +188,8 @@ export function SubmitTakeForm({
                 Replace take
               </Button>
               <p className="mt-2 text-xs text-gray-400">
-                Need a better file (e.g. WAV instead of MP3)? Upload a new version. It replaces what
-                the creator hears.
+                Need a better file (e.g. WAV instead of MP3)? Upload a new version. It replaces what the
+                creator hears.
               </p>
             </div>
           </div>
@@ -279,11 +208,11 @@ export function SubmitTakeForm({
           <p className="mt-1 text-sm text-gray-500">
             {isReplace
               ? "Upload the new file(s). This replaces your previous submission for this job."
-              : "Multiple musicians can submit. You get one submission, up to 3 takes, and the producer picks who to pay."}
+              : `Multiple musicians can submit. You get one submission, up to ${MAX_AUDIO_TAKES} takes, and the producer picks who to pay.`}
           </p>
           {!isReplace && (
             <p className="mt-2 text-xs text-gray-400">
-              One submission per job · up to 3 takes · free to submit
+              One submission per job · up to {MAX_AUDIO_TAKES} takes · free to submit
             </p>
           )}
         </div>
@@ -295,167 +224,100 @@ export function SubmitTakeForm({
       </div>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-        <div>
-          <p className="text-sm font-medium text-gray-900">What are you uploading?</p>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {MODE_OPTIONS.map((option) => {
-              const selected = mode === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => chooseMode(option.value)}
-                  className={`min-h-[4.5rem] rounded-2xl border px-2.5 py-3 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 sm:min-h-0 sm:px-4 ${
-                    selected
-                      ? "border-accent bg-accent-muted shadow-sm"
-                      : "border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-950"
-                  }`}
-                >
-                  <span className="block text-sm font-semibold text-gray-900 dark:text-white">
-                    {option.label}
-                  </span>
-                  <span className="mt-0.5 block text-[11px] leading-snug text-gray-500 sm:text-xs">
-                    {option.hint}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        <div className="space-y-4">
+          {rows.map((row, index) => (
+            <div
+              key={index}
+              className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
+            >
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Take {index + 1}</p>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                Track name
+                <input
+                  type="text"
+                  value={row.audioLabel}
+                  onChange={(e) => updateRow(index, { audioLabel: e.target.value })}
+                  placeholder={`Take ${index + 1}`}
+                  className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                />
+              </label>
+              <FileUpload
+                label={row.audioFileUrl ? "Replace audio" : "Upload audio"}
+                kind="take"
+                accept={TAKE_FILE_ACCEPT}
+                compact
+                hint={index === 0 ? TAKE_UPLOAD_HINT : undefined}
+                onUploaded={(url, meta) =>
+                  updateRow(index, {
+                    audioFileUrl: url,
+                    audioPreviewUrl: meta?.previewUrl ?? null,
+                  })
+                }
+              />
+              {row.audioFileUrl && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-gray-500">
+                    {backingSrc ? "Check your take against the bed" : "Preview your take"}
+                  </p>
+                  {backingSrc ? (
+                    <TakeMixPlayer
+                      takeSrc={row.audioPreviewUrl || row.audioFileUrl}
+                      bedSrc={backingSrc}
+                      downloadSrc={row.audioFileUrl}
+                    />
+                  ) : (
+                    <WaveformPlayer
+                      src={row.audioPreviewUrl || row.audioFileUrl}
+                      downloadSrc={row.audioFileUrl}
+                      label={row.audioLabel}
+                      compact
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {rows.length < MAX_AUDIO_TAKES && (
+            <Button type="button" variant="secondary" size="sm" onClick={addRow} className="w-full sm:w-auto">
+              Add another take
+            </Button>
+          )}
         </div>
 
-        {mode && (
-          <div className="space-y-4">
-            {rows.map((row, index) => (
-              <div
-                key={index}
-                className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
-              >
-                <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                  Take {index + 1}
-                </p>
+        <Textarea
+          label="Note"
+          name="note"
+          rows={2}
+          placeholder="Anything the creator should know about your take?"
+          hint="Optional"
+        />
 
-                {(mode === "audio" || mode === "both") && (
-                  <div className="space-y-3">
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                      Track name
-                      <input
-                        type="text"
-                        value={row.audioLabel}
-                        onChange={(e) => updateRow(index, { audioLabel: e.target.value })}
-                        placeholder={`Take ${index + 1}`}
-                        className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                      />
-                    </label>
-                    <FileUpload
-                      label={row.audioFileUrl ? "Replace audio" : "Upload audio"}
-                      kind="take"
-                      accept={AUDIO_FILE_ACCEPT}
-                      compact
-                      hint={index === 0 ? AUDIO_UPLOAD_HINT : undefined}
-                      onUploaded={(url, meta) =>
-                        updateRow(index, {
-                          audioFileUrl: url,
-                          audioPreviewUrl: meta?.previewUrl ?? null,
-                        })
-                      }
-                    />
-                    {row.audioFileUrl && (
-                      <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-gray-500">
-                          {backingSrc ? "Check your take against the bed" : "Preview your take"}
-                        </p>
-                        {backingSrc ? (
-                          <TakeMixPlayer
-                            takeSrc={row.audioPreviewUrl || row.audioFileUrl}
-                            bedSrc={backingSrc}
-                            downloadSrc={row.audioFileUrl}
-                          />
-                        ) : (
-                          <WaveformPlayer
-                            src={row.audioPreviewUrl || row.audioFileUrl}
-                            downloadSrc={row.audioFileUrl}
-                            label={row.audioLabel}
-                            compact
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition-colors hover:border-gray-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/20 dark:border-gray-800 dark:bg-gray-950">
+          <input
+            type="checkbox"
+            checked={attestHuman}
+            onChange={(e) => setAttestHuman(e.target.checked)}
+            required
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent focus:ring-accent/30"
+          />
+          <span className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+            I confirm this take is a real, live human performance, not AI-generated, AI-assisted, or produced
+            by a generative music tool in any way.
+          </span>
+        </label>
 
-                {(mode === "midi" || mode === "both") && (
-                  <div className="space-y-3">
-                    {mode === "both" && (
-                      <p className="text-xs font-medium text-gray-500">Paired MIDI for this take</p>
-                    )}
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-                      MIDI name
-                      <input
-                        type="text"
-                        value={row.midiLabel}
-                        onChange={(e) => updateRow(index, { midiLabel: e.target.value })}
-                        placeholder={`MIDI ${index + 1}`}
-                        className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                      />
-                    </label>
-                    <FileUpload
-                      label={row.midiFileUrl ? "Replace MIDI" : "Upload MIDI"}
-                      kind="take-midi"
-                      accept=".mid,.midi,audio/midi"
-                      compact
-                      hint={index === 0 ? ".mid or .midi files only." : undefined}
-                      onUploaded={(url) => updateRow(index, { midiFileUrl: url })}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
+        {error && <Alert variant="error">{error}</Alert>}
 
-            {rows.length < maxRows && (
-              <Button type="button" variant="secondary" size="sm" onClick={addRow} className="w-full sm:w-auto">
-                Add another take
-              </Button>
-            )}
-          </div>
-        )}
-
-        {mode && (
-          <>
-            <Textarea
-              label="Note"
-              name="note"
-              rows={2}
-              placeholder="Anything the creator should know about your take?"
-              hint="Optional"
-            />
-
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition-colors hover:border-gray-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/20 dark:border-gray-800 dark:bg-gray-950">
-              <input
-                type="checkbox"
-                checked={attestHuman}
-                onChange={(e) => setAttestHuman(e.target.checked)}
-                required
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent focus:ring-accent/30"
-              />
-              <span className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                I confirm this take is a real, live human performance, not AI-generated, AI-assisted,
-                or produced by a generative music tool in any way.
-              </span>
-            </label>
-
-            {error && <Alert variant="error">{error}</Alert>}
-
-            <Button type="submit" disabled={submitting || !canSubmit} className="w-full sm:w-auto">
-              {submitting
-                ? isReplace
-                  ? "Replacing…"
-                  : "Submitting…"
-                : isReplace
-                  ? "Replace take"
-                  : "Submit take"}
-            </Button>
-          </>
-        )}
+        <Button type="submit" disabled={submitting || !canSubmit} className="w-full sm:w-auto">
+          {submitting
+            ? isReplace
+              ? "Replacing…"
+              : "Submitting…"
+            : isReplace
+              ? "Replace take"
+              : "Submit take"}
+        </Button>
       </form>
     </Card>
   );

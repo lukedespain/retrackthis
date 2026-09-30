@@ -4,9 +4,9 @@ import { db } from "@/lib/db";
 import { notifyCreatorTakeSubmitted } from "@/lib/notify";
 import { getMusicianPayoutSnapshot } from "@/lib/musicianPayouts";
 import { getSessionUserId } from "@/lib/supabaseServer";
+import { isTakeFileName } from "@/lib/constants";
 import {
   MAX_AUDIO_TAKES,
-  MAX_MIDI_FILES,
   parseTakeFileInputs,
   type TakeFileInput,
   type TakeFileRecord,
@@ -129,18 +129,32 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     );
   }
 
+  if (Array.isArray(body.audioTakes) && body.audioTakes.length > MAX_AUDIO_TAKES) {
+    return NextResponse.json(
+      { error: `You can submit up to ${MAX_AUDIO_TAKES} takes.` },
+      { status: 400 }
+    );
+  }
+
+  if (Array.isArray(body.midiFiles) && body.midiFiles.length > 0) {
+    return NextResponse.json({ error: "Takes must be WAV or MP3 audio." }, { status: 400 });
+  }
+
   let audioTakes = parseTakeFileInputs(body.audioTakes, "AUDIO", MAX_AUDIO_TAKES);
-  const midiFiles = parseTakeFileInputs(body.midiFiles, "MIDI", MAX_MIDI_FILES);
 
   if (audioTakes.length === 0 && legacyAudioUrl) {
     audioTakes.push({ label: "Take 1", fileUrl: String(legacyAudioUrl) });
   }
 
-  if (audioTakes.length === 0 && midiFiles.length === 0) {
+  if (audioTakes.length === 0) {
     return NextResponse.json(
-      { error: "Upload at least one audio take or MIDI file before submitting." },
+      { error: "Upload at least one take before submitting." },
       { status: 400 }
     );
+  }
+
+  if (audioTakes.some((f) => !isTakeFileName(f.fileUrl))) {
+    return NextResponse.json({ error: "Takes must be WAV or MP3 files." }, { status: 400 });
   }
 
   if (job.creatorId === musicianId) {
@@ -160,7 +174,6 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   const storageError = assertAppStorageUrls([
     legacyAudioUrl ? String(legacyAudioUrl) : null,
     ...audioTakes.map((f) => f.fileUrl),
-    ...midiFiles.map((f) => f.fileUrl),
     ...audioTakes.map((f) => f.previewUrl ?? null),
   ]);
   if (storageError) {
@@ -170,25 +183,14 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   // Best-effort: ensure MP3 previews exist before persisting (covers client timeout / skip).
   audioTakes = await Promise.all(audioTakes.map((f) => ensurePreviewForAudio(f)));
 
-  // MIDI-only takes store the first MIDI URL in audioFileUrl for legacy list UIs.
-  const primaryAudioUrl = audioTakes[0]?.fileUrl ?? midiFiles[0]?.fileUrl ?? "";
-  const fileCreates = [
-    ...audioTakes.map((file, index) => ({
-      kind: "AUDIO" as const,
-      label: file.label,
-      fileUrl: file.fileUrl,
-      previewUrl: file.previewUrl ?? null,
-      sortOrder: index,
-    })),
-    ...midiFiles.map((file, index) => ({
-      kind: "MIDI" as const,
-      label: file.label,
-      fileUrl: file.fileUrl,
-      previewUrl: null as string | null,
-      sortOrder: index,
-      audioIndex: file.audioIndex ?? null,
-    })),
-  ];
+  const primaryAudioUrl = audioTakes[0].fileUrl;
+  const fileCreates = audioTakes.map((file, index) => ({
+    kind: "AUDIO" as const,
+    label: file.label,
+    fileUrl: file.fileUrl,
+    previewUrl: file.previewUrl ?? null,
+    sortOrder: index,
+  }));
 
   const existing = await db.take.findFirst({
     where: { jobId: params.jobId, musicianId },

@@ -164,7 +164,7 @@ const faqItems: FaqItem[] = [
           a real mix, not only the flashiest performance.
         </p>
         <p>
-          If notes or MIDI came with the submission, use them as supporting context, not a
+          If a note came with the submission, use it as supporting context, not a
           substitute for listening in the player.
         </p>
       </>
@@ -178,11 +178,11 @@ const faqItems: FaqItem[] = [
         <p>
           Browse the open jobs, choose one that fits your instrument, listen using the Part / Bed /
           Both toggle, then submit your recording from the job page. You can submit one time per job,
-          and you can upload three takes per submission. Submitting is always free.
+          and you can upload up to two takes per submission. Submitting is always free.
         </p>
         <p>
-          Upload the audio take (WAV preferred; MP3 is fine). You can attach notes, and on some jobs
-          additional files like MIDI. You can come back to your submission and replace your files
+          Upload up to two audio takes as WAV or MP3 (WAV preferred). You can attach a note too. You
+          can come back to your submission and replace your files
           later if you need a better export before the job awards or closes.
         </p>
         <p>
@@ -296,7 +296,7 @@ const faqItems: FaqItem[] = [
         <ol className="list-decimal space-y-2 pl-5">
           <li>Create an account and set up payouts in Settings (Stripe, or PayPal / Wise).</li>
           <li>Browse open jobs. Listen with Part / Bed / Both, then submit for free.</li>
-          <li>One submission per job (up to three takes). You can replace files while the job is open.</li>
+          <li>One submission per job (up to two takes). You can replace files while the job is open.</li>
           <li>
             Your submission stays <span className="font-medium">Pending</span> until the job ends.
           </li>

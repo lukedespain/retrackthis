@@ -278,7 +278,7 @@ function MusicianThroughLine() {
   │
   ├─ Browse Open jobs
   │     ├─ Listen: Part / Bed / Both
-  │     └─ Submit (free) - up to 3 takes + notes / MIDI
+  │     └─ Submit (free) - up to 2 WAV/MP3 takes + notes
   │           → one submission per job; can replace while Open
   │
   └─ After deadline:

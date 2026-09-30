@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 
 type Status = "idle" | "uploading" | "processing" | "done" | "error";
 
-export type UploadKind = "demo" | "demo-backing" | "take" | "take-midi";
+export type UploadKind = "demo" | "demo-backing" | "take";
 
 export type UploadedAudio = {
   publicUrl: string;

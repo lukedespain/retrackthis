@@ -1,5 +1,4 @@
-export const MAX_AUDIO_TAKES = 3;
-export const MAX_MIDI_FILES = 3;
+export const MAX_AUDIO_TAKES = 2;
 
 export type TakeFileKind = "AUDIO" | "MIDI";
 

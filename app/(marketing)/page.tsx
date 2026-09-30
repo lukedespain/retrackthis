@@ -30,7 +30,7 @@ const MUSICIAN_STEPS = [
   {
     number: "02",
     title: "Submit your takes",
-    body: "One submission per job, with up to three takes inside it. Free to submit. The producer picks who to pay.",
+    body: "One submission per job, with up to two takes inside it. Free to submit. The producer picks who to pay.",
   },
   {
     number: "03",

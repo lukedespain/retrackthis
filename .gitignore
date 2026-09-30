@@ -7,3 +7,9 @@ node_modules
 next-env.d.ts
 .vercel
 .env*
+
+# Local one-off scripts
+query*.js
+check_*.js
+map_musicians.js
+bt.json

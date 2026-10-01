@@ -143,14 +143,14 @@ function glyphKey(instrument: string): string {
   return (cat && BY_GROUP[cat.groupId]) || "note";
 }
 
-/** Sticker · Soft: ink outline, soft fill, white die-cut border. */
-export function instrumentIconSvg(instrument: string, uid: string): string {
+/** Misprint: ink outline with the fill knocked off-register, like a risograph. */
+export function instrumentIconSvg(instrument: string, _uid: string): string {
   const g = G[glyphKey(instrument)] ?? G.note;
   const p = (role: string, ds: string[] | undefined) =>
     (ds || [])
       .map((d) => `<path class="${role}" d="${d}"${d.includes("zM") ? ' fill-rule="evenodd"' : ""}/>`)
       .join("");
-  const id = `stk${uid.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const under = `<g transform="translate(1.6 1.4)">${p("bo", g.b)}</g>`;
   const body = `${p("b", g.b)}${p("l", g.l)}${p("k", g.k)}${p("w", g.w)}`;
-  return `<svg class="stk stk-soft ico-duo" viewBox="-2.5 -2.5 29 29" style="overflow:visible" aria-hidden="true"><defs><filter id="${id}" x="-25%" y="-25%" width="150%" height="150%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.6" result="d"/><feFlood flood-color="#fff"/><feComposite in2="d" operator="in" result="o"/><feMerge result="s"><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge><feDropShadow in="s" dx="0" dy=".7" stdDeviation=".6" flood-color="#111113" flood-opacity=".22"/></filter></defs><g filter="url(#${id})">${body}</g></svg>`;
+  return `<svg class="ico-duo v-offset" viewBox="0 0 24 24" style="overflow:visible" aria-hidden="true">${under}${body}</svg>`;
 }

@@ -351,15 +351,15 @@ export function AdminEmailsPanel() {
             No emails sent from here yet. Compose above to start the history.
           </p>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-gray-200">
-            <ul className="divide-y divide-gray-100">
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+            <ul className="divide-y divide-gray-200 bg-white">
               {blasts.map((b) => (
-                <li key={b.id}>
+                <li key={b.id} className="bg-white">
                   <button
                     type="button"
                     onClick={() => setSelectedId(b.id === selectedId ? null : b.id)}
-                    className={`flex w-full flex-col gap-1 px-4 py-3.5 text-left transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between ${
-                      selectedId === b.id ? "bg-accent/5" : ""
+                    className={`flex w-full flex-col gap-1 bg-white px-4 py-3.5 text-left transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between ${
+                      selectedId === b.id ? "bg-gray-50" : ""
                     }`}
                   >
                     <div className="min-w-0">
@@ -388,7 +388,7 @@ export function AdminEmailsPanel() {
                     <span className="text-xs text-gray-400">{selectedId === b.id ? "Hide" : "View"}</span>
                   </button>
                   {selectedId === b.id && (
-                    <div className="border-t border-gray-100 bg-gray-50 px-4 py-4">
+                    <div className="border-t border-gray-200 bg-white px-4 py-4">
                       {detailLoading || !detail || detail.id !== b.id ? (
                         <div className="flex justify-center py-6">
                           <Spinner />

@@ -348,7 +348,7 @@ export function AdminJobsPanel({
               filtered.map((job) => {
                 const takeCount = job.takeCount ?? 0;
                 return (
-                  <tr key={job.id} className="bg-white align-top">
+                  <tr key={job.id} className="bg-white align-top hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div
                         className="max-w-[11rem] truncate font-medium text-gray-900"

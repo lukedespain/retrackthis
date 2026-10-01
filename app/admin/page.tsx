@@ -773,7 +773,7 @@ function InstrumentTable({
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {rows.map((row) => (
-              <tr key={row.id} className="bg-white">
+              <tr key={row.id} className="bg-white hover:bg-gray-50">
                 <td className="px-4 py-2.5 text-gray-900">
                   {row.label}
                   {row.custom ? (
@@ -1127,8 +1127,8 @@ function MiniBars({
 function DayJobsList({ day, onClose }: { day: SeriesDay; onClose: () => void }) {
   const jobs = day.jobs ?? [];
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100">
-      <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-2.5">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+      <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-2.5">
         <h2 className="text-sm font-medium text-gray-800">
           {formatDayKey(day.date)} · {money(day.amountCents)} ·{" "}
           {jobs.length === 1 ? "1 job" : `${jobs.length} jobs`}
@@ -1144,12 +1144,12 @@ function DayJobsList({ day, onClose }: { day: SeriesDay; onClose: () => void }) 
       {jobs.length === 0 ? (
         <p className="px-4 py-6 text-sm text-gray-500">No jobs on this day.</p>
       ) : (
-        <ul className="max-h-80 divide-y divide-gray-100 overflow-y-auto">
+        <ul className="max-h-80 divide-y divide-gray-200 overflow-y-auto bg-white">
           {jobs.map((job) => (
-            <li key={job.id}>
+            <li key={job.id} className="bg-white">
               <Link
                 href={`/admin/preview/producer/${job.creatorId}?job=${job.id}`}
-                className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-gray-50"
+                className="flex items-center justify-between gap-4 bg-white px-4 py-3 transition-colors hover:bg-gray-50"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-gray-900">

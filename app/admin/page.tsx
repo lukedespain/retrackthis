@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
@@ -141,6 +141,7 @@ function AdminPageInner() {
   const [members, setMembers] = useState<Member[] | null>(null);
   const [memberQuery, setMemberQuery] = useState("");
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [openMemberId, setOpenMemberId] = useState<string | null>(null);
   const [adminJobs, setAdminJobs] = useState<AdminJobRow[] | null>(null);
   const [jobsReloadToken, setJobsReloadToken] = useState(0);
   const [instruments, setInstruments] = useState<{
@@ -296,7 +297,6 @@ function AdminPageInner() {
             )
           : prev
       );
-      window.alert(body?.message ?? "Payout setup cleared.");
     } catch (err) {
       window.alert(err instanceof Error ? err.message : "Could not reset payouts");
     }
@@ -405,64 +405,81 @@ function AdminPageInner() {
                     <th className="px-4 py-3 font-medium">Submitted</th>
                     <th className="px-4 py-3 font-medium">Won</th>
                     <th className="px-4 py-3 font-medium">Instruments</th>
+                    <th className="px-4 py-3 text-center font-medium">Payout</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {filteredMembers.map((m) => (
-                    <tr key={m.id} className="bg-white align-top">
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900">
-                          {m.name}
-                          {m.isAdmin ? (
-                            <span className="ml-2 rounded-full bg-accent-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
-                              Admin
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="text-xs text-gray-500">{m.email}</div>
-                        <div className="mt-1 text-[11px] text-gray-400">
-                          Joined {formatDate(m.createdAt)}
-                          {m.hasPayouts
-                            ? m.hasAltPayout
-                              ? ` · ${m.payoutProviderLabel ?? "PayPal/Wise"}${
-                                  m.payoutEmail ? ` · ${m.payoutEmail}` : ""
-                                }`
-                              : " · Stripe linked"
-                            : ""}
-                        </div>
-                        {m.hasPayouts ? (
-                          <button
-                            type="button"
-                            onClick={() => void resetMemberPayouts(m)}
-                            className="mt-1.5 text-xs font-medium text-amber-700 hover:underline"
-                          >
-                            Reset payout setup
-                          </button>
-                        ) : null}
-                      </td>
-                      <td className="px-4 py-3 tabular-nums text-gray-700">
-                        {m.jobsPosted}
-                      </td>
-                      <td className="px-4 py-3 tabular-nums text-gray-700">
-                        {m.takesSubmitted}
-                      </td>
-                      <td className="px-4 py-3 tabular-nums text-gray-700">
-                        {m.jobsWon}
-                      </td>
-                      <td className="px-4 py-3">
-                        <MemberInstrumentChips
-                          instruments={m.instruments}
-                          editing={editingMemberId === m.id}
-                          onEdit={() =>
-                            setEditingMemberId((id) => (id === m.id ? null : m.id))
+                  {filteredMembers.map((m) => {
+                    const shown = m.instruments.slice(0, 2);
+                    return (
+                      <tr
+                        key={m.id}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`Open ${m.name}`}
+                        onClick={() => setOpenMemberId(m.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setOpenMemberId(m.id);
                           }
-                        />
-                      </td>
-                    </tr>
-                  ))}
+                        }}
+                        className="cursor-pointer bg-white align-middle hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40"
+                      >
+                        <td className="px-4 py-2.5">
+                          <div className="font-medium text-gray-900">
+                            {m.name}
+                            {m.isAdmin ? (
+                              <span className="ml-2 rounded-full bg-accent-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
+                                Admin
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="text-xs text-gray-500">{m.email}</div>
+                        </td>
+                        <td className="px-4 py-2.5 tabular-nums text-gray-700">{m.jobsPosted}</td>
+                        <td className="px-4 py-2.5 tabular-nums text-gray-700">{m.takesSubmitted}</td>
+                        <td className="px-4 py-2.5 tabular-nums text-gray-700">{m.jobsWon}</td>
+                        <td className="px-4 py-2.5">
+                          {shown.length === 0 ? (
+                            <span className="text-xs text-gray-400">None</span>
+                          ) : (
+                            <div className="flex flex-wrap gap-1">
+                              {shown.map((inst) => (
+                                <span
+                                  key={inst.id}
+                                  className="whitespace-nowrap rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600"
+                                >
+                                  {inst.label}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5 text-center">
+                          <PayoutMark member={m} />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
+
+            {openMemberId &&
+              (() => {
+                const open = members.find((m) => m.id === openMemberId);
+                if (!open) return null;
+                return (
+                  <MemberDetail
+                    member={open}
+                    locked={editingMemberId === open.id}
+                    onClose={() => setOpenMemberId(null)}
+                    onEditInstruments={() => setEditingMemberId(open.id)}
+                    onResetPayouts={() => void resetMemberPayouts(open)}
+                  />
+                );
+              })()}
 
             {editingMemberId &&
               (() => {
@@ -709,60 +726,223 @@ function InstrumentTable({
   );
 }
 
-/** One row of chips; "View all" expands when they overflow. */
-function MemberInstrumentChips({
-  instruments,
-  editing,
-  onEdit,
+type PayoutKind = "stripe" | "paypal" | "wise" | "none";
+
+function payoutKind(member: Member): PayoutKind {
+  if (member.hasAltPayout && member.payoutProvider === "paypal") return "paypal";
+  if (member.hasAltPayout && member.payoutProvider === "wise") return "wise";
+  if (member.hasStripe || member.payoutProvider === "stripe") return "stripe";
+  return "none";
+}
+
+function payoutLabel(kind: PayoutKind) {
+  if (kind === "stripe") return "Stripe";
+  if (kind === "paypal") return "PayPal";
+  if (kind === "wise") return "Wise";
+  return "No payout";
+}
+
+function PayoutMark({ member }: { member: Member }) {
+  const kind = payoutKind(member);
+  const label = payoutLabel(kind);
+  return (
+    <span className="inline-flex" title={label} aria-label={label}>
+      {kind === "stripe" ? <StripeMark /> : null}
+      {kind === "paypal" ? <PayPalMark /> : null}
+      {kind === "wise" ? <WiseMark /> : null}
+      {kind === "none" ? <EmptyPayoutMark /> : null}
+    </span>
+  );
+}
+
+function StripeMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
+      <rect width="24" height="24" rx="7" fill="#635BFF" />
+      <path
+        fill="#fff"
+        d="M11.1 9.3c0-.6.5-.9 1.3-.9 1.2 0 2.6.4 3.6 1V6.7A9 9 0 0 0 12.4 6C9.9 6 8.2 7.3 8.2 9.5c0 3.5 4.8 2.9 4.8 4.4 0 .7-.6 1-1.5 1-1.3 0-2.9-.5-4.2-1.3v2.8A9.6 9.6 0 0 0 11.6 18c2.6 0 4.4-1.3 4.4-3.5 0-3.8-4.9-3.1-4.9-4.5Z"
+      />
+    </svg>
+  );
+}
+
+function PayPalMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
+      <rect width="24" height="24" rx="7" fill="#003087" />
+      <path
+        fill="#009CDE"
+        d="M15.2 6.2h-4.1c-.3 0-.5.2-.6.5L9.2 16.4c0 .2.1.3.3.3h1.8c.3 0 .5-.2.6-.5l.4-1.6c.1-.3.3-.5.6-.5h1.3c2.3 0 3.6-1.1 4-3.3.2-.9 0-1.6-.5-2.1-.6-.6-1.6-.9-2.5-.9Zm.4 3.2c-.2 1.2-1.1 1.2-2 1.2h-.5l.5-2.1c0-.1.2-.2.3-.2h.3c.6 0 1.2 0 1.4.4.1.2.2.5 0 .7Z"
+      />
+      <path
+        fill="#fff"
+        d="M13.6 7.4H9.7c-.2 0-.4.2-.4.4L8.1 16.8c0 .2.1.3.3.3h2l.5-2.2c0-.2.2-.4.4-.4h1.2c2.2 0 3.5-1.1 3.8-3.2.2-.8 0-1.5-.5-2-.5-.5-1.5-.9-2.2-.9Zm.3 3.1c-.2 1.1-1 1.1-1.8 1.1h-.5l.4-2c0-.1.1-.2.3-.2h.2c.6 0 1.1 0 1.3.4.1.2.2.4.1.7Z"
+      />
+    </svg>
+  );
+}
+
+function WiseMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
+      <rect width="24" height="24" rx="7" fill="#9FE870" />
+      <path fill="#163300" d="M6.2 7.2h4.2l1.6 3.3 1.6-3.3h4.2l-3.7 6.4 3.9 3.2h-4.3l-1.7-2.6-1.7 2.6H6l3.9-3.2-3.7-6.4Z" />
+    </svg>
+  );
+}
+
+function EmptyPayoutMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
+      <circle cx="12" cy="12" r="8" fill="none" stroke="#C8C7C2" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function MemberDetail({
+  member,
+  locked = false,
+  onClose,
+  onEditInstruments,
+  onResetPayouts,
 }: {
-  instruments: Array<{ id: string; label: string }>;
-  editing: boolean;
-  onEdit: () => void;
+  member: Member;
+  locked?: boolean;
+  onClose: () => void;
+  onEditInstruments: () => void;
+  onResetPayouts: () => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const [overflows, setOverflows] = useState(false);
-  const rowRef = useRef<HTMLDivElement>(null);
+  const kind = payoutKind(member);
 
-  useLayoutEffect(() => {
-    const el = rowRef.current;
-    if (!el) return;
-    const measure = () => setOverflows(el.scrollHeight > el.clientHeight + 4);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [instruments, expanded]);
-
-  const linkClass = "text-xs font-medium text-accent hover:underline";
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !locked) onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose, locked]);
 
   return (
-    <div className="max-w-md">
-      {instruments.length === 0 ? (
-        <span className="text-xs text-gray-400">None listed</span>
-      ) : (
-        <div
-          ref={rowRef}
-          className={`flex flex-wrap gap-1 ${expanded ? "" : "max-h-6 overflow-hidden"}`}
-        >
-          {instruments.map((inst) => (
-            <span
-              key={inst.id}
-              className="whitespace-nowrap rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600"
-            >
-              {inst.label}
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="mt-1.5 flex items-center gap-3">
-        {(overflows || expanded) && (
-          <button type="button" onClick={() => setExpanded((v) => !v)} className={linkClass}>
-            {expanded ? "Show less" : `View all (${instruments.length})`}
+    <div
+      className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-3 sm:items-center sm:p-6"
+      role="presentation"
+      onClick={() => {
+        if (!locked) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="member-detail-title"
+        className="max-h-[min(40rem,calc(100dvh-1.5rem))] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4">
+          <div>
+            <h2 id="member-detail-title" className="text-lg font-medium text-gray-900">
+              {member.name}
+              {member.isAdmin ? (
+                <span className="ml-2 rounded-full bg-accent-muted px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-accent">
+                  Admin
+                </span>
+              ) : null}
+            </h2>
+            <p className="mt-0.5 text-sm text-gray-500">{member.email}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid h-8 w-8 place-items-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
           </button>
-        )}
-        <button type="button" onClick={onEdit} className={linkClass}>
-          {editing ? "Editing…" : "Edit"}
-        </button>
+        </div>
+
+        <dl className="grid grid-cols-4 gap-3 border-b border-gray-200 px-5 py-4 text-sm">
+          <div>
+            <dt className="text-[11px] uppercase tracking-wide text-gray-400">Joined</dt>
+            <dd className="mt-1 text-gray-900">{formatDate(member.createdAt)}</dd>
+          </div>
+          <div>
+            <dt className="text-[11px] uppercase tracking-wide text-gray-400">Posted</dt>
+            <dd className="mt-1 tabular-nums text-gray-900">{member.jobsPosted}</dd>
+          </div>
+          <div>
+            <dt className="text-[11px] uppercase tracking-wide text-gray-400">Submitted</dt>
+            <dd className="mt-1 tabular-nums text-gray-900">{member.takesSubmitted}</dd>
+          </div>
+          <div>
+            <dt className="text-[11px] uppercase tracking-wide text-gray-400">Won</dt>
+            <dd className="mt-1 tabular-nums text-gray-900">{member.jobsWon}</dd>
+          </div>
+        </dl>
+
+        <div className="border-b border-gray-200 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <PayoutMark member={member} />
+            <h3 className="text-sm font-medium text-gray-900">{payoutLabel(kind)}</h3>
+          </div>
+          {kind === "none" ? (
+            <p className="mt-2 text-sm text-gray-500">No payout method on file.</p>
+          ) : (
+            <div className="mt-2 space-y-0.5 text-sm text-gray-600">
+              {member.hasStripe && kind !== "stripe" ? <p>Stripe is also linked.</p> : null}
+              {member.payoutEmail ? <p>{member.payoutEmail}</p> : null}
+              {member.payoutAccountName ? <p>{member.payoutAccountName}</p> : null}
+              {member.payoutCountry ? <p>{member.payoutCountry}</p> : null}
+            </div>
+          )}
+          {member.hasPayouts ? (
+            <button
+              type="button"
+              onClick={onResetPayouts}
+              className="mt-3 text-sm font-medium text-amber-700 hover:underline"
+            >
+              Reset payout setup
+            </button>
+          ) : null}
+        </div>
+
+        <div className="px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-medium text-gray-900">
+              Instruments
+              {member.instruments.length > 0 ? (
+                <span className="ml-1.5 font-normal text-gray-400">{member.instruments.length}</span>
+              ) : null}
+            </h3>
+            <button
+              type="button"
+              onClick={onEditInstruments}
+              className="text-sm font-medium text-accent hover:underline"
+            >
+              Edit
+            </button>
+          </div>
+          {member.instruments.length === 0 ? (
+            <p className="mt-2 text-sm text-gray-500">None listed.</p>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {member.instruments.map((inst) => (
+                <span
+                  key={inst.id}
+                  className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700"
+                >
+                  {inst.label}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

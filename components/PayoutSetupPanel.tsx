@@ -29,6 +29,8 @@ type Props = {
   justReturned?: boolean;
   /** When ready, show summary + edit / open Stripe controls. */
   allowManage?: boolean;
+  /** Settings row: Stripe Express, Active, Manage. */
+  compact?: boolean;
   onRefresh: () => Promise<void> | void;
   onError: (message: string | null) => void;
   onReady: (snapshot: PayoutSnapshot) => void;
@@ -41,6 +43,7 @@ export function PayoutSetupPanel({
   error = null,
   justReturned = false,
   allowManage = false,
+  compact = false,
   onRefresh,
   onError,
   onReady,
@@ -206,6 +209,52 @@ export function PayoutSetupPanel({
 
   if (snapshot === null) {
     return <p className="text-sm text-gray-500">Checking payout setup…</p>;
+  }
+
+  if (snapshot.ready && compact && !(allowManage && editing)) {
+    const providerLabel = formatPayoutProviderLabel(snapshot.provider);
+    const stripe = snapshot.provider === "stripe";
+    const detail = stripe
+      ? "Connected"
+      : [snapshot.payoutEmail, snapshot.payoutAccountName].filter(Boolean).join(" · ") || "Connected";
+    return (
+      <div>
+        <div className="payout">
+          <span className="logo" style={{ color: stripe ? "#635bff" : undefined }}>
+            {stripe ? "S" : providerLabel.slice(0, 1)}
+          </span>
+          <div style={{ flex: 1 }}>
+            <strong style={{ fontWeight: 500 }}>{stripe ? "Stripe Express" : providerLabel}</strong>
+            <div style={{ fontSize: 13, color: "var(--muted)" }}>{detail}</div>
+          </div>
+          <span className="status open">Active</span>
+          <button
+            type="button"
+            className="btn soft"
+            style={{ height: 36, fontSize: 13.5 }}
+            onClick={() => (stripe ? void openStripeDashboard() : startEditing())}
+            disabled={busy || loading}
+          >
+            {busy ? "Opening…" : "Manage"}
+          </button>
+        </div>
+        {allowManage && stripe ? (
+          <button
+            type="button"
+            className="btn text"
+            style={{ marginTop: 10, height: 32, padding: 0 }}
+            onClick={startEditing}
+            disabled={busy || loading}
+          >
+            Change payout method
+          </button>
+        ) : null}
+        {justReturned ? (
+          <p className="mt-2 text-xs font-medium uppercase tracking-wider text-emerald-700">Setup complete</p>
+        ) : null}
+        {error ? <Alert variant="error">{error}</Alert> : null}
+      </div>
+    );
   }
 
   if (snapshot.ready && !(allowManage && editing)) {

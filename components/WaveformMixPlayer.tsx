@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { formatWaveTime, paintWaveform } from "@/lib/waveformDraw";
+import { formatWaveTime, paintWaveform, ratioFromClientX, type WaveLayer } from "@/lib/waveformDraw";
 import { loadAudioForMixCached } from "@/lib/waveformPeaks";
 
 type ModeId = "part" | "backing" | "both";
@@ -79,6 +79,8 @@ export function WaveformMixPlayer({
   const segTimelineStartRef = useRef(0);
 
   const rafUiRef = useRef<number | null>(null);
+  const scrubbingRef = useRef(false);
+  const resumeAfterScrubRef = useRef(false);
 
   const [mode, setMode] = useState<ModeId>(startMode);
   const [playing, setPlaying] = useState(false);
@@ -346,8 +348,56 @@ export function WaveformMixPlayer({
   function seekToRatio(ratio: number) {
     const dur = durationRef.current || 0;
     const t = Math.max(0, Math.min(1, ratio)) * dur;
-    if (playingRef.current) void startTransport(t);
-    else publishTime(t);
+    publishTime(t);
+  }
+
+  function waveLayers(shift: number): WaveLayer[] {
+    const layers: WaveLayer[] = [];
+    const showPart = modeRef.current === "part" || modeRef.current === "both";
+    const showBed = modeRef.current === "backing" || modeRef.current === "both";
+    if (showBed && bedPeaks) layers.push({ peaks: bedPeaks, role: "bed" });
+    if (showPart && partPeaks) layers.push({ peaks: partPeaks, role: "part", shiftPx: shift });
+    return layers;
+  }
+
+  function paint() {
+    const canvas = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!canvas || !wrap) return;
+    const pxPerSec = wrap.clientWidth / (durationRef.current || 1);
+    const shift = modeRef.current === "both" && showNudge ? (offsetMsRef.current / 1000) * pxPerSec : 0;
+    paintWaveform({
+      canvas,
+      wrap,
+      peaks: waveLayers(shift),
+      currentTime: currentTimeRef.current,
+      duration: durationRef.current,
+    });
+  }
+
+  function onWavePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (!ready) return;
+    e.preventDefault();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+    resumeAfterScrubRef.current = playingRef.current;
+    scrubbingRef.current = true;
+    if (playingRef.current) pauseTransport(timelineNow());
+    seekToRatio(ratioFromClientX(e.currentTarget, e.clientX));
+  }
+
+  function onWavePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!scrubbingRef.current) return;
+    seekToRatio(ratioFromClientX(e.currentTarget, e.clientX));
+  }
+
+  function onWavePointerUp() {
+    if (!scrubbingRef.current) return;
+    scrubbingRef.current = false;
+    if (resumeAfterScrubRef.current) void startTransport(currentTimeRef.current);
   }
 
   function applyOffset(nextMs: number) {
@@ -362,65 +412,11 @@ export function WaveformMixPlayer({
   }
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const wrap = wrapRef.current;
-    if (!canvas || !wrap) return;
-
-    const layers: Array<{ peaks: Float32Array; color: string; shiftPx?: number }> = [];
-    const showPart = mode === "part" || mode === "both";
-    const showBed = mode === "backing" || mode === "both";
-    const pxPerSec = wrap.clientWidth / (duration || 1);
-    const shift = mode === "both" && showNudge ? (offsetMs / 1000) * pxPerSec : 0;
-
-    if (showBed && bedPeaks) {
-      layers.push({
-        peaks: bedPeaks,
-        color: mode === "both" ? "rgba(107, 114, 128, 0.45)" : "rgba(75, 85, 99, 0.85)",
-      });
-    }
-    if (showPart && partPeaks) {
-      layers.push({
-        peaks: partPeaks,
-        color: mode === "both" ? "rgba(91, 75, 255, 0.85)" : "rgba(91, 75, 255, 0.95)",
-        shiftPx: shift,
-      });
-    }
-
-    paintWaveform({ canvas, wrap, peaks: layers, currentTime, duration });
+    paint();
   }, [partPeaks, bedPeaks, mode, offsetMs, currentTime, duration, loadingWave, showNudge]);
 
   useEffect(() => {
-    const onResize = () => {
-      const canvas = canvasRef.current;
-      const wrap = wrapRef.current;
-      if (!canvas || !wrap) return;
-      const layers: Array<{ peaks: Float32Array; color: string; shiftPx?: number }> = [];
-      const showPart = modeRef.current === "part" || modeRef.current === "both";
-      const showBed = modeRef.current === "backing" || modeRef.current === "both";
-      const pxPerSec = wrap.clientWidth / (durationRef.current || 1);
-      const shift =
-        modeRef.current === "both" && showNudge ? (offsetMsRef.current / 1000) * pxPerSec : 0;
-      if (showBed && bedPeaks) {
-        layers.push({
-          peaks: bedPeaks,
-          color: modeRef.current === "both" ? "rgba(107, 114, 128, 0.45)" : "rgba(75, 85, 99, 0.85)",
-        });
-      }
-      if (showPart && partPeaks) {
-        layers.push({
-          peaks: partPeaks,
-          color: modeRef.current === "both" ? "rgba(91, 75, 255, 0.85)" : "rgba(91, 75, 255, 0.95)",
-          shiftPx: shift,
-        });
-      }
-      paintWaveform({
-        canvas,
-        wrap,
-        peaks: layers,
-        currentTime: currentTimeRef.current,
-        duration: durationRef.current,
-      });
-    };
+    const onResize = () => paint();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [partPeaks, bedPeaks, showNudge]);
@@ -484,10 +480,11 @@ export function WaveformMixPlayer({
           <div
             ref={wrapRef}
             className="pw-wave"
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              seekToRatio((e.clientX - rect.left) / rect.width);
-            }}
+            data-seek=""
+            onPointerDown={onWavePointerDown}
+            onPointerMove={onWavePointerMove}
+            onPointerUp={onWavePointerUp}
+            onPointerCancel={onWavePointerUp}
             role="slider"
             aria-label="Seek"
             aria-valuemin={0}
@@ -511,13 +508,13 @@ export function WaveformMixPlayer({
             <span>{formatWaveTime(duration)}</span>
           </div>
           {mode === "both" && hasAb && (
-            <div className="mt-1.5 flex items-center gap-3 text-[11px] text-gray-500">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            <div className="pw-key">
+              <span>
+                <i className="part" />
                 {partTabLabel}
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+              <span>
+                <i className="bed" />
                 Bed
               </span>
             </div>

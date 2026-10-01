@@ -1,4 +1,5 @@
 import { AUDIO_FILE_ACCEPT, AUDIO_UPLOAD_HINT, MAX_AUDIO_UPLOAD_BYTES, MAX_AUDIO_UPLOAD_MB } from "@/lib/constants";
+import { scanAudioFile, type AudioScan } from "@/lib/audioScan";
 import { supabaseClient } from "@/lib/supabaseClient";
 import { Alert } from "@/components/ui/Alert";
 import { useRef, useState } from "react";
@@ -13,6 +14,8 @@ export type UploadedAudio = {
   path: string;
   /** Seconds of sounding audio when measurable (Part uploads; skips silence). */
   durationSeconds?: number | null;
+  /** Full file length, including silence around the part. */
+  fileDurationSeconds?: number | null;
 };
 
 function fileMatchesAccept(file: File, accept: string) {
@@ -37,64 +40,29 @@ function wantsPreview(kind: UploadKind) {
   return kind === "take" || kind === "demo" || kind === "demo-backing";
 }
 
-/** Max file size we will decode to estimate non-silent "playing" time. */
-const ACTIVE_DURATION_ANALYZE_MAX_BYTES = 40 * 1024 * 1024;
+function clock(seconds: number) {
+  const rounded = Math.max(0, Math.round(seconds));
+  const m = Math.floor(rounded / 60);
+  const s = rounded % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
 
-/**
- * Estimate how long audio is actually sounding (skips silence gaps in full-length stems).
- * Returns null when decode is too heavy or analysis fails - callers should not guess full file length.
- */
-async function readActiveAudioDurationSeconds(file: File): Promise<number | null> {
-  if (!file.type.startsWith("audio/") && !/\.(wav|mp3|m4a|aac|flac|ogg)$/i.test(file.name)) {
-    return null;
-  }
-  if (file.size > ACTIVE_DURATION_ANALYZE_MAX_BYTES) return null;
-
-  let ctx: AudioContext | null = null;
-  try {
-    const AudioCtx =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return null;
-
-    ctx = new AudioCtx();
-    const buffer = await ctx.decodeAudioData(await file.arrayBuffer());
-    await ctx.close();
-    ctx = null;
-
-    const channel = buffer.getChannelData(0);
-    const { sampleRate, duration } = buffer;
-    if (!Number.isFinite(duration) || duration <= 0) return null;
-
-    const windowSize = Math.max(1, Math.floor(sampleRate * 0.02)); // 20ms
-    const threshold = 0.012;
-    let activeWindows = 0;
-
-    for (let i = 0; i < channel.length; i += windowSize) {
-      let peak = 0;
-      const end = Math.min(channel.length, i + windowSize);
-      for (let j = i; j < end; j++) {
-        const a = Math.abs(channel[j]);
-        if (a > peak) peak = a;
-      }
-      if (peak >= threshold) activeWindows += 1;
-    }
-
-    const activeSeconds = (activeWindows * windowSize) / sampleRate;
-    if (!Number.isFinite(activeSeconds) || activeSeconds < 5) return null;
-
-    // If almost everything is "active", full length is fine.
-    // If much quieter overall, prefer the active estimate (what the musician actually plays).
-    const rounded = Math.round(activeSeconds);
-    return Math.min(Math.round(duration), rounded);
-  } catch {
-    try {
-      await ctx?.close();
-    } catch {
-      // ignore
-    }
-    return null;
-  }
+function TileWave({ scan, ink }: { scan: AudioScan; ink: boolean }) {
+  const n = scan.peaks.length;
+  const w = 4;
+  const gap = 1.6;
+  const H = 32;
+  const width = n * (w + gap) - gap;
+  return (
+    <svg className="tile-wave" viewBox={`0 0 ${width} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+      {scan.peaks.map((v, k) => {
+        const h = Math.max(2, v * H);
+        const on = scan.active[k];
+        const cls = ink ? "w-ink" : on ? "w-hot" : "w-base";
+        return <rect key={k} className={cls} x={k * (w + gap)} y={(H - h) / 2} width={w} height={h} rx={2} />;
+      })}
+    </svg>
+  );
 }
 
 export function FileUpload({
@@ -124,6 +92,8 @@ export function FileUpload({
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [durationLabel, setDurationLabel] = useState<string | null>(null);
+  const [scan, setScan] = useState<AudioScan | null>(null);
+  const [reading, setReading] = useState(false);
   const dragDepth = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -145,12 +115,12 @@ export function FileUpload({
     setStatus("uploading");
     setError(null);
     setFileName(file.name);
+    setReading(true);
 
     try {
-      // Part uploads: estimate sounding time (not full stem length with silence).
-      // Other kinds leave duration unset here.
-      const measuredDuration =
-        kind === "demo" ? await readActiveAudioDurationSeconds(file) : null;
+      const measured = kind === "demo" || kind === "demo-backing" ? await scanAudioFile(file) : null;
+      setReading(false);
+      setScan(measured);
 
       const signRes = await fetch("/api/uploads/sign", {
         method: "POST",
@@ -192,19 +162,19 @@ export function FileUpload({
       }
 
       setStatus("done");
-      if (typeof measuredDuration === "number" && measuredDuration > 0) {
-        const rounded = Math.round(measuredDuration);
-        const m = Math.floor(rounded / 60);
-        const s = rounded % 60;
-        setDurationLabel(`${m}:${String(s).padStart(2, "0")}`);
+      if (measured && measured.fileDurationSeconds > 0) {
+        setDurationLabel(clock(measured.fileDurationSeconds));
       }
       onUploaded(publicUrl, {
         publicUrl,
         previewUrl,
         path,
-        durationSeconds: measuredDuration,
+        durationSeconds:
+          kind === "demo" && measured && measured.playSeconds >= 1 ? measured.playSeconds : null,
+        fileDurationSeconds: measured?.fileDurationSeconds ?? null,
       });
     } catch (err) {
+      setReading(false);
       setStatus("error");
       setError(err instanceof Error ? err.message : "Upload failed");
     }
@@ -266,6 +236,8 @@ export function FileUpload({
     setStatus("idle");
     setFileName(null);
     setDurationLabel(null);
+    setScan(null);
+    setReading(false);
     setError(null);
     onClear?.();
   }
@@ -313,12 +285,15 @@ export function FileUpload({
                 </svg>
               </button>
             </div>
+            {scan ? <TileWave scan={scan} ink={kind !== "demo"} /> : null}
             <div className="tile-name">{fileName}</div>
           </>
         ) : busy ? (
           <>
             <span className="tile-t">{label}</span>
-            <span className="tile-s">{status === "processing" ? "Making a preview…" : "Reading audio…"}</span>
+            <span className="tile-s">
+              {reading ? "Reading audio…" : status === "processing" ? "Making a preview…" : "Uploading…"}
+            </span>
             <div className="bar"><i /></div>
           </>
         ) : (

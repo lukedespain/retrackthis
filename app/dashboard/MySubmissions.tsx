@@ -6,10 +6,9 @@ import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { TempoTag } from "@/components/JobMetaTags";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
-import { PayoutSetupCard } from "@/components/PayoutSetupCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { formatCents } from "@/lib/format";
+import { formatCents, formatDeadline } from "@/lib/format";
 import { audioFiles } from "@/lib/takeFiles";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
@@ -25,9 +24,33 @@ function subStatus(take: MyTake): { cls: string; label: string } {
   return { cls: "pending", label: "Pending" };
 }
 
-export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?: boolean }) {
+const SUB_ORDER = ["pending", "awarded", "lost", "cancel"] as const;
+type SubFilter = "all" | (typeof SUB_ORDER)[number];
+const SUB_LABEL: Record<(typeof SUB_ORDER)[number], string> = {
+  pending: "Pending",
+  awarded: "Picked",
+  lost: "Not picked",
+  cancel: "Cancelled",
+};
+
+function monthDay(value: string) {
+  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function whenLabel(take: MyTake, status: string) {
+  if (status === "pending" && take.job.deadline) return formatDeadline(take.job.deadline);
+  const stamp = take.job.moneyClaimedAt || take.job.deadline;
+  if (!stamp) return null;
+  const formatted = monthDay(stamp);
+  if (status === "awarded") return `Picked ${formatted}`;
+  if (status === "cancel") return `Cancelled ${formatted}`;
+  return `Closed ${formatted}`;
+}
+
+export function MySubmissions() {
   const [takes, setTakes] = useState<MyTake[] | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<SubFilter>("all");
 
   useEffect(() => {
     fetch("/api/takes/mine")
@@ -47,6 +70,16 @@ export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?:
   const pending = takes.filter((take) => subStatus(take).cls === "pending");
   const earned = picked.reduce((sum, take) => sum + take.job.priceCents, 0);
   const waiting = pending.reduce((sum, take) => sum + take.job.priceCents, 0);
+  const counts = takes.reduce<Record<string, number>>((acc, take) => {
+    const key = subStatus(take).cls;
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+  const kinds = SUB_ORDER.filter((key) => counts[key]);
+  const active: SubFilter = filter !== "all" && !counts[filter] ? "all" : filter;
+  const shown = takes
+    .filter((take) => active === "all" || subStatus(take).cls === active)
+    .sort((a, b) => SUB_ORDER.indexOf(subStatus(a).cls as (typeof SUB_ORDER)[number]) - SUB_ORDER.indexOf(subStatus(b).cls as (typeof SUB_ORDER)[number]));
 
   return (
     <div>
@@ -66,10 +99,6 @@ export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?:
           </span>
         </div>
       </div>
-      <div className="mt-4">
-        <PayoutSetupCard highlightReturn={payoutsHighlight} allowManage />
-      </div>
-      <JobAlertNudge />
 
       {takes.length === 0 ? (
         <EmptyState
@@ -82,17 +111,38 @@ export function MySubmissions({ payoutsHighlight = false }: { payoutsHighlight?:
           }
         />
       ) : (
-        <div className="jobs">
-          {takes.map((take) => (
-            <SubmissionCard
-              key={take.id}
-              take={take}
-              expanded={expandedId === take.id}
-              onToggle={() => setExpandedId(expandedId === take.id ? null : take.id)}
-            />
-          ))}
-        </div>
+        <>
+          {kinds.length < 2 ? (
+            <div className="section-title">Submissions</div>
+          ) : (
+            <div className="jobs-bar">
+              <div className="section-title">Submissions</div>
+              <div className="seg">
+                <button type="button" aria-pressed={active === "all"} onClick={() => setFilter("all")}>
+                  All<span className="seg-n">{takes.length}</span>
+                </button>
+                {kinds.map((key) => (
+                  <button key={key} type="button" aria-pressed={active === key} onClick={() => setFilter(key)}>
+                    {SUB_LABEL[key]}
+                    <span className="seg-n">{counts[key]}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="jobs">
+            {shown.map((take) => (
+              <SubmissionCard
+                key={take.id}
+                take={take}
+                expanded={expandedId === take.id}
+                onToggle={() => setExpandedId(expandedId === take.id ? null : take.id)}
+              />
+            ))}
+          </div>
+        </>
       )}
+      <JobAlertNudge />
     </div>
   );
 }
@@ -168,6 +218,9 @@ function SubmissionCard({
           </div>
           <div className="pills">
             <span className="pill money">{formatCents(liveTake.job.priceCents)}</span>
+            {whenLabel(liveTake, status.cls) ? (
+              <span className="pill quiet">{whenLabel(liveTake, status.cls)}</span>
+            ) : null}
             <span className="pill quiet">
               {takeCount} take{takeCount === 1 ? "" : "s"}
             </span>

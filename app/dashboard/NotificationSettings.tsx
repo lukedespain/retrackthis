@@ -70,21 +70,21 @@ export function NotificationSettings() {
       <div>
           <PrefRow
             title="New job alerts"
-            description="When a gig opens for an instrument you play."
+            description="When a gig opens for an instrument you play"
             checked={prefs.notifyJobAlerts}
             disabled={saving}
             onChange={(checked) => void save({ ...prefs, notifyJobAlerts: checked })}
           />
           <PrefRow
             title="New submissions on my jobs"
-            description="When a musician submits to your job."
+            description="When a musician submits to your job"
             checked={prefs.notifyTakeSubmitted}
             disabled={saving}
             onChange={(checked) => void save({ ...prefs, notifyTakeSubmitted: checked })}
           />
           <PrefRow
             title="Take outcomes"
-            description="When a producer picks a winner on a job you submitted to."
+            description="When a producer picks a winner on a job you submitted to"
             checked={prefs.notifyTakeOutcome}
             disabled={saving}
             onChange={(checked) => void save({ ...prefs, notifyTakeOutcome: checked })}

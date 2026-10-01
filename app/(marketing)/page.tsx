@@ -43,7 +43,9 @@ export default function LandingPage() {
       <main className="wrap">
         <section className="hero">
           <h1>
-            Retrack your demo with <em>real</em> musicians
+            Retrack your demo
+            <br />
+            with <em>real</em> musicians
           </h1>
           <p className="hero-sub">
             Post the part you need. Real musicians send back their take. Pick the one that feels

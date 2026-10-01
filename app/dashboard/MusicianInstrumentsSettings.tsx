@@ -1,17 +1,74 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { InstrumentMultiSelect } from "@/components/InstrumentMultiSelect";
 import { InstrumentTypeahead } from "@/components/InstrumentTypeahead";
+import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { Alert } from "@/components/ui/Alert";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import {
+  INSTRUMENT_CATALOG,
+  INSTRUMENT_GROUPS,
+  labelForInstrumentId,
+  type InstrumentGroup,
+} from "@/lib/instruments";
 
-function sameIds(a: string[], b: string[]) {
-  if (a.length !== b.length) return false;
-  const left = [...a].sort();
-  const right = [...b].sort();
-  return left.every((id, index) => id === right[index]);
+const POPULAR = [
+  "electric-guitar",
+  "acoustic-guitar-steel",
+  "bass-guitar-electric",
+  "piano-grand",
+  "synthesizer",
+  "vocal-male",
+  "vocal-female",
+  "background-vocals",
+  "drum-kit",
+  "violin",
+  "cello",
+  "sax-tenor",
+];
+
+const GROUP_ORDER = [
+  "fretted",
+  "keyboards",
+  "vocals",
+  "drums-percussion",
+  "orchestral-strings",
+  "horns",
+  "world",
+];
+
+const GROUP_LABEL: Record<string, string> = {
+  fretted: "Guitars & fretted",
+  keyboards: "Keys & pianos",
+  vocals: "Vocals",
+  "drums-percussion": "Drums & percussion",
+  "orchestral-strings": "Orchestral strings",
+  horns: "Brass & woodwinds",
+  world: "World & traditional",
+};
+
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
 }
 
 export function MusicianInstrumentsSettings() {
@@ -20,9 +77,8 @@ export function MusicianInstrumentsSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedFlash, setSavedFlash] = useState(false);
-
-  const dirty = useMemo(() => !sameIds(saved, draft), [saved, draft]);
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/settings/instruments")
@@ -36,87 +92,166 @@ export function MusicianInstrumentsSettings() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function saveChanges() {
+  const groups = useMemo(() => {
+    const byId = new Map(INSTRUMENT_GROUPS.map((group) => [group.id, group]));
+    return GROUP_ORDER.map((id) => byId.get(id)).filter((group): group is InstrumentGroup => Boolean(group));
+  }, []);
+
+  const hits = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return INSTRUMENT_CATALOG.filter((item) => {
+      if (item.label.toLowerCase().includes(q)) return true;
+      return item.aliases.some((alias) => alias.includes(q));
+    });
+  }, [query]);
+
+  async function commit(next: string[]) {
+    setDraft(next);
     setSaving(true);
     setError(null);
-    setSavedFlash(false);
     try {
       const res = await fetch("/api/settings/instruments", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instruments: draft }),
+        body: JSON.stringify({ instruments: next }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.error ?? "Could not save");
       setSaved(body.instruments);
       setDraft(body.instruments);
-      setSavedFlash(true);
-      window.setTimeout(() => setSavedFlash(false), 2000);
     } catch (err) {
+      setDraft(saved);
       setError(err instanceof Error ? err.message : "Could not save");
     } finally {
       setSaving(false);
     }
   }
 
-  function resetDraft() {
-    setDraft(saved);
-    setError(null);
+  function toggle(id: string) {
+    if (saving) return;
+    const next = draft.includes(id) ? draft.filter((item) => item !== id) : [...draft, id];
+    void commit(next);
   }
 
-  return (
-    <Card padding="md" id="instruments">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">What I play</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Update the parts you can record live. This powers which instruments creators can post
-            gigs for. Job alert emails are separate; manage those under Notifications.
-          </p>
-        </div>
-        {!loading && (
-          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-            {draft.length === 0 ? "None selected" : `${draft.length} selected`}
-          </span>
-        )}
-      </div>
+  function tile(id: string) {
+    const label = labelForInstrumentId(id);
+    return (
+      <button
+        key={id}
+        type="button"
+        className="inst-pick"
+        aria-pressed={draft.includes(id)}
+        disabled={saving}
+        onClick={() => toggle(id)}
+      >
+        <InstrumentIcon instrument={label} />
+        <span>{label}</span>
+      </button>
+    );
+  }
 
-      <div className="mt-5">
-        <InstrumentMultiSelect
-          label="Instruments"
-          hint="Expand a category and pick each part you play. Use Other for anything missing."
-          selectedIds={draft}
-          onChange={setDraft}
-          disabled={saving}
-          loading={loading}
+  if (loading) {
+    return <p className="text-sm text-gray-500">Loading instruments…</p>;
+  }
+
+  const q = query.trim();
+
+  return (
+    <div>
+      <div className="ip-search">
+        <SearchIcon />
+        <input
+          className="in"
+          type="search"
+          value={query}
+          placeholder="Search instruments"
+          autoComplete="off"
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && query) {
+              setQuery("");
+            }
+          }}
         />
       </div>
 
-      {!loading && (
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <Button type="button" disabled={!dirty || saving} onClick={() => void saveChanges()}>
-            {saving ? "Saving…" : "Save changes"}
-          </Button>
-          {dirty && (
+      {draft.length > 0 ? (
+        <div className="ip-mine">
+          <span className="ip-lbl">You play {draft.length}</span>
+          {draft.map((id) => (
             <button
+              key={id}
               type="button"
+              className="ip-chip"
+              aria-label={`Remove ${labelForInstrumentId(id)}`}
               disabled={saving}
-              onClick={resetDraft}
-              className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 disabled:opacity-50"
+              onClick={() => toggle(id)}
             >
-              Cancel
+              {labelForInstrumentId(id)}
+              <CloseIcon />
             </button>
-          )}
-          {savedFlash && !dirty && <p className="text-sm text-emerald-700">Saved</p>}
+          ))}
         </div>
+      ) : null}
+
+      {q ? (
+        <>
+          <div className="ip-lbl">
+            {hits.length ? `${hits.length} match${hits.length === 1 ? "" : "es"}` : "No matches yet"}
+          </div>
+          <div className="inst-grid">{hits.map((item) => tile(item.id))}</div>
+        </>
+      ) : (
+        <>
+          <div className="ip-lbl">Popular</div>
+          <div className="inst-grid">{POPULAR.map((id) => tile(id))}</div>
+          <div className="ip-lbl">All instruments</div>
+          <div className="ip-groups">
+            {groups.map((group) => {
+              const selected = group.items.filter((item) => draft.includes(item.id)).length;
+              const isOpen = open.has(group.id);
+              const icon = group.items[0]?.label ?? group.label;
+              return (
+                <div key={group.id} className="ip-grp" data-open={isOpen ? "true" : "false"}>
+                  <button
+                    type="button"
+                    className="ip-grp-h"
+                    aria-expanded={isOpen}
+                    onClick={() =>
+                      setOpen((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(group.id)) next.delete(group.id);
+                        else next.add(group.id);
+                        return next;
+                      })
+                    }
+                  >
+                    <InstrumentIcon instrument={icon} />
+                    <strong>{GROUP_LABEL[group.id] ?? group.label}</strong>
+                    <span className="ip-n">
+                      {selected ? <b>{selected} selected</b> : group.items.length}
+                    </span>
+                    <Chevron />
+                  </button>
+                  {isOpen ? (
+                    <div className="ip-grp-b">
+                      <div className="inst-grid">{group.items.map((item) => tile(item.id))}</div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
-      {error && !loading && (
+      {error ? (
         <Alert variant="error" className="mt-3">
           {error}
         </Alert>
-      )}
-    </Card>
+      ) : null}
+    </div>
   );
 }
 

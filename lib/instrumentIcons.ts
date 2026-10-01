@@ -143,15 +143,14 @@ function glyphKey(instrument: string): string {
   return (cat && BY_GROUP[cat.groupId]) || "note";
 }
 
-/** SVG markup for an instrument. `uid` must be unique per rendered icon (mask ids). */
+/** Sticker · Soft: ink outline, soft fill, white die-cut border. */
 export function instrumentIconSvg(instrument: string, uid: string): string {
   const g = G[glyphKey(instrument)] ?? G.note;
-  const p = (ds: string[] | undefined, a = "") =>
+  const p = (role: string, ds: string[] | undefined) =>
     (ds || [])
-      .map((d) => `<path d="${d}"${d.includes("zM") ? ' fill-rule="evenodd"' : ""}${a}/>`)
+      .map((d) => `<path class="${role}" d="${d}"${d.includes("zM") ? ' fill-rule="evenodd"' : ""}/>`)
       .join("");
-  const cut = ' fill="#000" stroke="#000" stroke-width="1.2" stroke-linejoin="round"';
-  const box = '<rect x="-4" y="-4" width="32" height="32" fill="#fff"/>';
-  const id = `rtm${uid.replace(/[^a-zA-Z0-9_-]/g, "")}`;
-  return `<svg class="ico-mark" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="${id}b" maskUnits="userSpaceOnUse">${box}<g fill="none" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">${p(g.l)}</g>${p(g.k, cut)}${p(g.w, cut)}</mask><mask id="${id}l" maskUnits="userSpaceOnUse">${box}${p(g.b, cut)}</mask></defs><g class="l" mask="url(#${id}l)">${p(g.l)}</g><g class="b" mask="url(#${id}b)">${p(g.b)}</g><g class="w">${p(g.w)}</g></svg>`;
+  const id = `stk${uid.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const body = `${p("b", g.b)}${p("l", g.l)}${p("k", g.k)}${p("w", g.w)}`;
+  return `<svg class="stk stk-soft ico-duo" viewBox="-2.5 -2.5 29 29" style="overflow:visible" aria-hidden="true"><defs><filter id="${id}" x="-25%" y="-25%" width="150%" height="150%"><feMorphology in="SourceAlpha" operator="dilate" radius="1.6" result="d"/><feFlood flood-color="#fff"/><feComposite in2="d" operator="in" result="o"/><feMerge result="s"><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge><feDropShadow in="s" dx="0" dy=".7" stdDeviation=".6" flood-color="#111113" flood-opacity=".22"/></filter></defs><g filter="url(#${id})">${body}</g></svg>`;
 }

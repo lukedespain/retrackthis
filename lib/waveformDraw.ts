@@ -48,35 +48,78 @@ function bucketPeaks(peaks: Float32Array, bars: number) {
   return out;
 }
 
-/** Rounded bars, one per bucket, vertically centred. */
-export function drawWavePeaks(
+const QUIET = 0.1;
+
+export type WaveLayer = {
+  peaks: Float32Array;
+  role: "part" | "bed";
+  shiftPx?: number;
+};
+
+function barLayout(width: number) {
+  const step = BAR_W + BAR_GAP;
+  const bars = Math.max(12, Math.floor((width + BAR_GAP) / step));
+  const barW = (width + BAR_GAP) / bars - BAR_GAP;
+  return { bars, barW };
+}
+
+/** Rounded bars. Quiet buckets stay dots so silence doesn't look like audio. */
+function drawBars(
   ctx: CanvasRenderingContext2D,
   peaks: Float32Array,
   width: number,
   mid: number,
-  { color, shiftPx }: { color: string; shiftPx: number }
+  color: string,
+  shiftPx: number,
+  { widthScale = 1, dots = true }: { widthScale?: number; dots?: boolean } = {}
 ) {
   if (peaks.length === 0 || width <= 0) return;
-  const step = BAR_W + BAR_GAP;
-  const bars = Math.max(8, Math.floor((width + BAR_GAP) / step));
-  const barW = (width + BAR_GAP) / bars - BAR_GAP;
+  const { bars, barW } = barLayout(width);
   const data = bucketPeaks(peaks, bars);
+  const drawW = Math.max(1.6, barW * widthScale);
   ctx.fillStyle = color;
   ctx.beginPath();
   for (let i = 0; i < bars; i++) {
-    const x = i * (barW + BAR_GAP) + shiftPx;
-    if (x + barW < 0 || x > width) continue;
-    // Quiet stretches stay dots, so the wave only rises where the part is actually playing.
-    if (data[i] < 0.12) {
-      const cx = x + barW / 2;
-      ctx.moveTo(cx + 1.25, mid);
-      ctx.arc(cx, mid, 1.25, 0, Math.PI * 2);
+    const slot = i * (barW + BAR_GAP) + shiftPx;
+    const x = slot + (barW - drawW) / 2;
+    if (x + drawW < -2 || slot > width + 2) continue;
+    if (data[i] < QUIET) {
+      if (!dots) continue;
+      const cx = slot + barW / 2;
+      ctx.moveTo(cx + 1.35, mid);
+      ctx.arc(cx, mid, 1.35, 0, Math.PI * 2);
       continue;
     }
-    const h = Math.max(4, data[i] * mid * 1.85);
-    roundWaveRect(ctx, x, mid - h / 2, barW, h, 2);
+    const h = Math.max(4, data[i] * (mid - 2) * 1.92);
+    roundWaveRect(ctx, x, mid - h / 2, drawW, h, widthScale < 1 ? 1.2 : 1.6);
   }
   ctx.fill();
+}
+
+function drawPlayhead(ctx: CanvasRenderingContext2D, x: number, height: number) {
+  if (x <= 0.5) return;
+  const px = Math.round(x) + 0.5;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(px, 1);
+  ctx.lineTo(px, height - 1);
+  ctx.stroke();
+  ctx.strokeStyle = "#111113";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(px, 1);
+  ctx.lineTo(px, height - 1);
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function ratioFromClientX(el: HTMLElement, clientX: number) {
+  const rect = el.getBoundingClientRect();
+  if (rect.width <= 0) return 0;
+  return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
 }
 
 function cssAccent(el: HTMLElement) {
@@ -87,8 +130,7 @@ function cssAccent(el: HTMLElement) {
 export function paintWaveform(opts: {
   canvas: HTMLCanvasElement;
   wrap: HTMLDivElement;
-  /** `color` is the unplayed bar colour; `progressColor` fills bars left of the playhead. */
-  peaks: Array<{ peaks: Float32Array; color: string; progressColor?: string; shiftPx?: number }>;
+  peaks: WaveLayer[];
   currentTime: number;
   duration: number;
   height?: number;
@@ -110,22 +152,31 @@ export function paintWaveform(opts: {
   const dur = duration || 1;
   const progressX = Math.max(0, Math.min(cssW, (currentTime / dur) * cssW));
   const accent = cssAccent(wrap);
+  const bed = peaks.find((layer) => layer.role === "bed");
+  const part = peaks.find((layer) => layer.role === "part");
+  const overlay = Boolean(bed && part);
 
-  for (const layer of peaks) {
-    drawWavePeaks(ctx, layer.peaks, cssW, mid, { color: layer.color, shiftPx: layer.shiftPx ?? 0 });
-  }
-
-  if (progressX > 0) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, progressX, height);
-    ctx.clip();
-    for (const layer of peaks) {
-      drawWavePeaks(ctx, layer.peaks, cssW, mid, {
-        color: layer.progressColor ?? accent,
-        shiftPx: layer.shiftPx ?? 0,
-      });
+  if (overlay && bed && part) {
+    drawBars(ctx, bed.peaks, cssW, mid, "#b9b8b3", 0);
+    drawBars(ctx, part.peaks, cssW, mid, accent, part.shiftPx ?? 0, { widthScale: 0.48, dots: false });
+    if (progressX > 1 && progressX < cssW - 1) {
+      ctx.fillStyle = "rgba(255,255,255,0.42)";
+      ctx.fillRect(progressX, 0, cssW - progressX, height);
     }
-    ctx.restore();
+  } else {
+    const layer = part ?? bed ?? peaks[0];
+    if (layer) {
+      drawBars(ctx, layer.peaks, cssW, mid, WAVE_BASE, layer.shiftPx ?? 0);
+      if (progressX > 1) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, progressX, height);
+        ctx.clip();
+        drawBars(ctx, layer.peaks, cssW, mid, accent, layer.shiftPx ?? 0);
+        ctx.restore();
+      }
+    }
   }
+
+  drawPlayhead(ctx, progressX, height);
 }

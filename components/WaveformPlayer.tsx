@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { formatWaveTime, paintWaveform } from "@/lib/waveformDraw";
+import { formatWaveTime, paintWaveform, ratioFromClientX } from "@/lib/waveformDraw";
 import { loadAudioForMixCached } from "@/lib/waveformPeaks";
 
 const START_AHEAD_SEC = 0.04;
@@ -54,6 +54,8 @@ export function WaveformPlayer({
   const segCtxStartRef = useRef(0);
   const segTimelineStartRef = useRef(0);
   const rafUiRef = useRef<number | null>(null);
+  const scrubbingRef = useRef(false);
+  const resumeAfterScrubRef = useRef(false);
 
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -208,8 +210,32 @@ export function WaveformPlayer({
   function seekToRatio(ratio: number) {
     const dur = durationRef.current || 0;
     const t = Math.max(0, Math.min(1, ratio)) * dur;
-    if (playingRef.current) void startTransport(t);
-    else publishTime(t);
+    publishTime(t);
+  }
+
+  function onWavePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (!ready) return;
+    e.preventDefault();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+    resumeAfterScrubRef.current = playingRef.current;
+    scrubbingRef.current = true;
+    if (playingRef.current) pauseTransport(timelineNow());
+    seekToRatio(ratioFromClientX(e.currentTarget, e.clientX));
+  }
+
+  function onWavePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!scrubbingRef.current) return;
+    seekToRatio(ratioFromClientX(e.currentTarget, e.clientX));
+  }
+
+  function onWavePointerUp() {
+    if (!scrubbingRef.current) return;
+    scrubbingRef.current = false;
+    if (resumeAfterScrubRef.current) void startTransport(currentTimeRef.current);
   }
 
   useEffect(() => {
@@ -219,7 +245,7 @@ export function WaveformPlayer({
     paintWaveform({
       canvas,
       wrap,
-      peaks: [{ peaks, color: "rgba(91, 75, 255, 0.9)" }],
+      peaks: [{ peaks, role: "part" }],
       currentTime,
       duration,
       height: compact ? 64 : 80,
@@ -234,7 +260,7 @@ export function WaveformPlayer({
       paintWaveform({
         canvas,
         wrap,
-        peaks: [{ peaks, color: "rgba(91, 75, 255, 0.9)" }],
+        peaks: [{ peaks, role: "part" }],
         currentTime: currentTimeRef.current,
         duration: durationRef.current,
         height: compact ? 64 : 80,
@@ -276,11 +302,12 @@ export function WaveformPlayer({
         <div className="min-w-0 flex-1">
           <div
             ref={wrapRef}
-            className="relative cursor-pointer select-none"
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              seekToRatio((e.clientX - rect.left) / rect.width);
-            }}
+            className="wave-seek relative"
+            data-seek=""
+            onPointerDown={onWavePointerDown}
+            onPointerMove={onWavePointerMove}
+            onPointerUp={onWavePointerUp}
+            onPointerCancel={onWavePointerUp}
             role="slider"
             aria-label="Seek"
             aria-valuemin={0}

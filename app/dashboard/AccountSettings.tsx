@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { supabaseClient } from "@/lib/supabaseClient";
 
@@ -18,6 +16,7 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
   const [nameSaved, setNameSaved] = useState(false);
   const [emailMessage, setEmailMessage] = useState<string | null>(null);
   const [passwordSaved, setPasswordSaved] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   const [newEmail, setNewEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -39,45 +38,40 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
       .finally(() => setLoading(false));
   }, []);
 
-  async function saveName(e: React.FormEvent) {
+  async function saveName() {
+    const res = await fetch("/api/settings/account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(body?.error ?? "Could not save name");
+    setName(body.name);
+    onNameSaved?.(body.name);
+  }
+
+  async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
-    setSavingName(true);
     setError(null);
     setNameSaved(false);
+    setEmailMessage(null);
+    const nextEmail = newEmail.trim().toLowerCase();
+    const emailChanged = Boolean(nextEmail) && nextEmail !== email.toLowerCase();
+    setSavingName(true);
+    setSavingEmail(emailChanged);
     try {
-      const res = await fetch("/api/settings/account", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error ?? "Could not save name");
-      setName(body.name);
-      onNameSaved?.(body.name);
+      await saveName();
+      if (emailChanged) {
+        const { error: updateError } = await supabaseClient.auth.updateUser({ email: nextEmail });
+        if (updateError) throw updateError;
+        setEmailMessage("Check both your old and new inbox to confirm the email change.");
+      }
       setNameSaved(true);
       window.setTimeout(() => setNameSaved(false), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save name");
+      setError(err instanceof Error ? err.message : "Could not save");
     } finally {
       setSavingName(false);
-    }
-  }
-
-  async function saveEmail(e: React.FormEvent) {
-    e.preventDefault();
-    const next = newEmail.trim().toLowerCase();
-    if (!next || next === email.toLowerCase()) return;
-
-    setSavingEmail(true);
-    setError(null);
-    setEmailMessage(null);
-    try {
-      const { error: updateError } = await supabaseClient.auth.updateUser({ email: next });
-      if (updateError) throw updateError;
-      setEmailMessage("Check both your old and new inbox to confirm the email change.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update email");
-    } finally {
       setSavingEmail(false);
     }
   }
@@ -122,45 +116,24 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
   }
 
   if (loading) {
-    return (
-      <Card padding="md" id="account">
-        <p className="text-sm text-gray-500">Loading account…</p>
-      </Card>
-    );
+    return <p className="text-sm text-gray-500">Loading account…</p>;
   }
 
+  const busy = savingName || savingEmail;
+
   return (
-    <div id="account" className="space-y-5">
-      <Card padding="md">
-        <h3 className="text-base font-semibold text-gray-900">Display name</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          How you appear on jobs and submissions.
-        </p>
-        <form onSubmit={saveName} className="mt-5 space-y-4">
+    <div className="stack">
+      <form onSubmit={saveProfile} className="stack">
+        <div className="grid2">
           <Input
-            label="Name"
+            label="Display name"
             name="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
             maxLength={80}
-            disabled={savingName}
+            disabled={busy}
           />
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" disabled={savingName || !name.trim()}>
-              {savingName ? "Saving…" : "Save name"}
-            </Button>
-            {nameSaved && <p className="text-sm text-emerald-700">Saved</p>}
-          </div>
-        </form>
-      </Card>
-
-      <Card padding="md" id="email" className="scroll-mt-8">
-        <h3 className="text-base font-semibold text-gray-900">Email</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Used for sign-in and notifications. Changing it may require confirmation.
-        </p>
-        <form onSubmit={saveEmail} className="mt-5 space-y-4">
           <Input
             label="Email"
             name="email"
@@ -169,28 +142,27 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
             onChange={(e) => setNewEmail(e.target.value)}
             required
             autoComplete="email"
-            disabled={savingEmail}
+            disabled={busy}
           />
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="submit"
-              disabled={savingEmail || newEmail.trim().toLowerCase() === email.toLowerCase()}
-            >
-              {savingEmail ? "Updating…" : "Update email"}
-            </Button>
-            {emailMessage && (
-              <p className="text-sm text-emerald-700">{emailMessage}</p>
-            )}
-          </div>
-        </form>
-      </Card>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <button type="submit" className="btn primary" disabled={busy || !name.trim()}>
+            {busy ? "Saving…" : "Save changes"}
+          </button>
+          <button
+            type="button"
+            className="btn soft"
+            onClick={() => setPasswordOpen((open) => !open)}
+          >
+            Change password
+          </button>
+          {nameSaved && !emailMessage ? <p className="text-sm text-emerald-700">Saved</p> : null}
+          {emailMessage ? <p className="text-sm text-emerald-700">{emailMessage}</p> : null}
+        </div>
+      </form>
 
-      <Card padding="md" id="password" className="scroll-mt-8">
-        <h3 className="text-base font-semibold text-gray-900">Password</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Enter your current password, then choose a new one.
-        </p>
-        <form onSubmit={savePassword} className="mt-5 space-y-4">
+      {passwordOpen ? (
+        <form onSubmit={savePassword} className="stack" id="password">
           <Input
             label="Current password"
             name="currentPassword"
@@ -224,16 +196,14 @@ export function AccountSettings({ onNameSaved }: { onNameSaved?: (name: string) 
             autoComplete="new-password"
             disabled={savingPassword}
           />
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" disabled={savingPassword}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button type="submit" className="btn primary" disabled={savingPassword}>
               {savingPassword ? "Updating…" : "Update password"}
-            </Button>
-            {passwordSaved && (
-              <p className="text-sm text-emerald-700">Password updated</p>
-            )}
+            </button>
+            {passwordSaved ? <p className="text-sm text-emerald-700">Password updated</p> : null}
           </div>
         </form>
-      </Card>
+      ) : null}
 
       {error && <Alert variant="error">{error}</Alert>}
     </div>

@@ -40,6 +40,7 @@ type ExtraPart = {
   backingFileUrl: string | null;
   notes: string;
   durationSeconds: number | null;
+  fileDurationSeconds: number | null;
   deadlineDays: number;
   priceDollars: number;
 };
@@ -52,6 +53,7 @@ function blankPart(): ExtraPart {
     backingFileUrl: null,
     notes: "",
     durationSeconds: null,
+    fileDurationSeconds: null,
     deadlineDays: DEFAULT_DEADLINE_DAYS,
     priceDollars: SLIDER_MIN_USD,
   };
@@ -191,6 +193,7 @@ function PostJobFormInner({
   const [fixedTempo, setFixedTempo] = useState(true);
   const [instrumentId, setInstrumentId] = useState<string | null>(null);
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
+  const [partFileSeconds, setPartFileSeconds] = useState<number | null>(null);
   const durationUserSetRef = useRef(false);
   const [editLen, setEditLen] = useState(false);
   const [more, setMore] = useState<ExtraPart[]>([]);
@@ -575,9 +578,16 @@ function PostJobFormInner({
                 label="Part"
                 kind="demo"
                 accept={AUDIO_FILE_ACCEPT}
-                onClear={() => setDemoFileUrl(null)}
+                onClear={() => {
+                  setDemoFileUrl(null);
+                  setPartFileSeconds(null);
+                  if (!durationUserSetRef.current) setDurationSeconds(null);
+                }}
                 onUploaded={(url, meta) => {
                   setDemoFileUrl(url);
+                  if (typeof meta?.fileDurationSeconds === "number") {
+                    setPartFileSeconds(meta.fileDurationSeconds);
+                  }
                   const measured = meta?.durationSeconds;
                   if (
                     !durationUserSetRef.current &&
@@ -605,7 +615,7 @@ function PostJobFormInner({
           {durationSeconds ? (
             <div className="plays">
               <span className="dot" />
-              {instrumentId ? displayLabelForInstrumentId(instrumentId) : "Part"} plays{" "}
+              {instrumentId && !isTestJob ? labelForInstrumentId(instrumentId) : "Part"} plays{" "}
               {editLen ? (
                 <input
                   className="in xs"
@@ -624,6 +634,7 @@ function PostJobFormInner({
               ) : (
                 <b>{formatPartDuration(durationSeconds)}</b>
               )}
+              {partFileSeconds ? <span className="of">of {formatPartDuration(partFileSeconds)}</span> : null}
               <i
                 className="tip"
                 tabIndex={0}
@@ -802,11 +813,12 @@ function ExtraPartCard({
             label="Part"
             kind="demo"
             accept={AUDIO_FILE_ACCEPT}
-            onClear={() => onChange({ demoFileUrl: null })}
+            onClear={() => onChange({ demoFileUrl: null, fileDurationSeconds: null })}
             onUploaded={(url, meta) => {
               const measured = meta?.durationSeconds;
               onChange({
                 demoFileUrl: url,
+                fileDurationSeconds: meta?.fileDurationSeconds ?? null,
                 ...(typeof measured === "number" &&
                 measured >= MIN_DURATION_SECONDS &&
                 measured <= MAX_DURATION_SECONDS &&
@@ -826,6 +838,16 @@ function ExtraPartCard({
           />
         </div>
       </div>
+      {part.durationSeconds ? (
+        <div className="plays">
+          <span className="dot" />
+          {part.instrumentId ? labelForInstrumentId(part.instrumentId) : "Part"} plays{" "}
+          <b>{formatPartDuration(part.durationSeconds)}</b>
+          {part.fileDurationSeconds ? (
+            <span className="of">of {formatPartDuration(part.fileDurationSeconds)}</span>
+          ) : null}
+        </div>
+      ) : null}
       <Textarea
         label="Notes"
         name={`notes-${part.key}`}

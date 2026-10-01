@@ -7,9 +7,11 @@ import { Card } from "@/components/ui/Card";
 export function PayoutSetupCard({
   highlightReturn = false,
   allowManage = false,
+  compact = false,
 }: {
   highlightReturn?: boolean;
   allowManage?: boolean;
+  compact?: boolean;
 }) {
   const [snapshot, setSnapshot] = useState<PayoutSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,28 +50,37 @@ export function PayoutSetupCard({
   }, [highlightReturn]);
 
   if (snapshot === null) {
-    return (
+    return compact ? (
+      <p className="text-sm text-gray-500">Checking payout setup…</p>
+    ) : (
       <Card padding="md" className="border border-dashed border-gray-200 bg-white">
         <p className="text-sm text-gray-500">Checking payout setup…</p>
       </Card>
     );
   }
 
+  const panel = (
+    <PayoutSetupPanel
+      snapshot={snapshot}
+      error={error}
+      justReturned={justReturned}
+      allowManage={allowManage}
+      compact={compact}
+      onRefresh={loadStatus}
+      onError={setError}
+      onReady={setSnapshot}
+      idPrefix="payout-setup"
+    />
+  );
+
+  if (compact) return panel;
+
   return (
     <Card
       padding="md"
       className={snapshot.ready ? "border border-emerald-100 bg-emerald-50/60" : undefined}
     >
-      <PayoutSetupPanel
-        snapshot={snapshot}
-        error={error}
-        justReturned={justReturned}
-        allowManage={allowManage}
-        onRefresh={loadStatus}
-        onError={setError}
-        onReady={setSnapshot}
-        idPrefix="payout-setup"
-      />
+      {panel}
       {snapshot.ready && snapshot.provider === "stripe" && !allowManage ? (
         <p className="mt-3 text-xs text-emerald-800/70">
           Manage bank details anytime from the menu → Payouts.

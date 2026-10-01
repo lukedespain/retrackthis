@@ -316,8 +316,15 @@ button { cursor: pointer; }
 .w-ink { fill: var(--ink); }
 .plays { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 13px; color: var(--muted); margin-top: -8px; }
 .plays b { color: var(--ink); font-weight: 600; }
+.plays .of { color: var(--muted); font-weight: 400; }
 .plays .dot { width: 8px; height: 8px; border-radius: 3px; background: var(--accent); }
 .plays .link { margin-left: 4px; font-size: 13px; }
+.pw-key { display: flex; align-items: center; gap: 14px; margin-top: 6px; font-size: 12px; color: var(--muted); }
+.pw-key span { display: inline-flex; align-items: center; gap: 6px; }
+.pw-key i { width: 8px; height: 8px; border-radius: 50%; display: block; }
+.pw-key i.part { background: var(--accent); }
+.pw-key i.bed { background: #b9b8b3; }
+.wave-seek { cursor: pointer; touch-action: none; user-select: none; }
 
 /* budget */
 .range { margin-top: -6px; }
@@ -678,7 +685,7 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .count { font-size: 12px; background: var(--soft-2); color: var(--muted); padding: 1px 7px; border-radius: 999px; }
 .tabs [aria-current="page"] .count { background: var(--accent-soft); color: var(--accent-ink); }
 .section-title { font-size: 13px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 32px 0 12px; }
-.jobs-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 24px 0 12px; }
+.jobs-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 40px 0 16px; }
 .jobs-bar .section-title { margin: 0; }
 .jobs-bar .seg button { display: inline-flex; align-items: center; gap: 6px; }
 .seg-n { font-size: 11px; font-weight: 600; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; display: inline-grid; place-items: center; background: var(--soft-2); color: var(--muted); }
@@ -923,7 +930,9 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 
 /* settings */
 .settings { max-width: 760px; padding-bottom: 72px; }
-.settings > div { display: flex; flex-direction: column; gap: 16px; }
+.settings > div { display: flex; flex-direction: column; gap: 28px; }
+.settings > div > .card { margin-bottom: 0; }
+.settings .av-invite { margin-bottom: 0; }
 .settings section.card > .rounded-\[24px\],
 .settings section.card > div > .rounded-\[24px\] {
   box-shadow: none;

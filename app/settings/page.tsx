@@ -111,7 +111,7 @@ function SettingsPageInner() {
           <section className="card" id="payouts">
             <h2>Payouts</h2>
             <p>Where your winnings go when a producer picks your take.</p>
-            <PayoutSetupCard highlightReturn={payoutsHighlight} allowManage />
+            <PayoutSetupCard highlightReturn={payoutsHighlight} allowManage compact />
           </section>
 
           <section className="card" id="instruments">

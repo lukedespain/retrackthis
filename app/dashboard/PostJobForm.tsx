@@ -10,12 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { AUDIO_FILE_ACCEPT } from "@/lib/constants";
 import { formatCents } from "@/lib/format";
-import {
-  displayLabelForInstrumentId,
-  isTestInstrumentId,
-  labelForInstrumentId,
-  TEST_INSTRUMENT_ID,
-} from "@/lib/instruments";
+import { displayLabelForInstrumentId, labelForInstrumentId } from "@/lib/instruments";
 import { MUSICAL_KEYS } from "@/lib/musicalKeys";
 import {
   DEFAULT_DEADLINE_DAYS,
@@ -285,7 +280,7 @@ function PostJobFormInner({
     }
     setError(null);
 
-    if (!isTestJob && !instrumentId) {
+    if (!instrumentId) {
       setError("Pick an instrument for this job.");
       return;
     }
@@ -319,8 +314,8 @@ function PostJobFormInner({
       return;
     }
     for (const part of more) {
-      if ((!isTestJob && !part.instrumentId) || !part.demoFileUrl || !part.notes.trim()) {
-        setError(isTestJob ? "Each part needs a Part file and notes." : "Each part needs an instrument, a Part file, and notes.");
+      if (!part.instrumentId || !part.demoFileUrl || !part.notes.trim()) {
+        setError("Each part needs an instrument, a Part file, and notes.");
         return;
       }
       if (
@@ -354,7 +349,7 @@ function PostJobFormInner({
       const musicalKeyRaw = String(form.get("musicalKey") ?? "").trim();
       const invites = collectInviteEmails();
 
-      const postedInstrumentId = isTestJob ? TEST_INSTRUMENT_ID : (instrumentId ?? "");
+      const postedInstrumentId = instrumentId ?? "";
       const priced = (amount: number) =>
         Math.round((isTestJob ? Math.max(amount, SLIDER_MIN_USD) : amount) * 100);
       const firstPart = {
@@ -372,11 +367,12 @@ function PostJobFormInner({
               title: form.get("title"),
               musicalKey: musicalKeyRaw || null,
               bpm: fixedTempo ? Number(bpmRaw) : null,
+              isTest: isTestJob,
               inviteEmails: invites,
               parts: [
                 firstPart,
                 ...more.map((part) => ({
-                  instrumentId: isTestJob ? TEST_INSTRUMENT_ID : part.instrumentId,
+                  instrumentId: part.instrumentId,
                   description: part.notes,
                   demoFileUrl: part.demoFileUrl,
                   backingFileUrl: part.backingFileUrl,
@@ -401,6 +397,7 @@ function PostJobFormInner({
               bpm: fixedTempo ? Number(bpmRaw) : null,
               deadline: new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000).toISOString(),
               inviteEmails: invites,
+              isTest: isTestJob,
             };
       const res = await fetch("/api/jobs", {
         method: "POST",
@@ -485,7 +482,7 @@ function PostJobFormInner({
       return true;
     }
     if (n === 2) {
-      if ((!isTestJob && !instrumentId) || !demoFileUrl || !field("description")) return false;
+      if (!instrumentId || !demoFileUrl || !field("description")) return false;
       if (
         durationSeconds == null ||
         durationSeconds < MIN_DURATION_SECONDS ||
@@ -498,7 +495,7 @@ function PostJobFormInner({
       if (!isTestJob && (!Number.isFinite(priceDollars) || priceDollars < SLIDER_MIN_USD)) return false;
       return more.every(
         (part) =>
-          Boolean((isTestJob || part.instrumentId) && part.demoFileUrl && part.notes.trim()) &&
+          Boolean(part.instrumentId && part.demoFileUrl && part.notes.trim()) &&
           part.durationSeconds != null &&
           part.durationSeconds >= MIN_DURATION_SECONDS &&
           (isTestJob || part.priceDollars >= SLIDER_MIN_USD) &&
@@ -563,12 +560,7 @@ function PostJobFormInner({
                 type="button"
                 className={testMode ? "btn primary" : "btn soft"}
                 aria-pressed={testMode}
-                onClick={() => {
-                  setTestMode((on) => {
-                    if (!on) setInstrumentId(null);
-                    return !on;
-                  });
-                }}
+                onClick={() => setTestMode((on) => !on)}
               >
                 Test
               </button>
@@ -672,7 +664,6 @@ function PostJobFormInner({
           <div className="pcard-head">
             <span className="pnum">Part 1</span>
           </div>
-          {isTestJob ? null : (
           <div className="fld">
             <label className="lbl">
               Instrument<span className="req">*</span>
@@ -684,7 +675,6 @@ function PostJobFormInner({
               disabled={submitting}
             />
           </div>
-          )}
           <div className="fld">
             <div className="tiles">
               <FileUpload
@@ -730,7 +720,7 @@ function PostJobFormInner({
           {durationSeconds ? (
             <div className="plays">
               <span className="dot" />
-              {instrumentId && !isTestJob ? labelForInstrumentId(instrumentId) : "Part"} plays{" "}
+              {instrumentId ? labelForInstrumentId(instrumentId) : "Part"} plays{" "}
               {editLen ? (
                 <input
                   className="in xs"
@@ -802,7 +792,6 @@ function PostJobFormInner({
               setMore((list) => list.map((item) => (item.key === part.key ? { ...item, ...patch } : item)))
             }
             onRemove={() => setMore((list) => list.filter((item) => item.key !== part.key))}
-            testMode={isTestJob}
           />
         ))}
         <button
@@ -914,14 +903,12 @@ function ExtraPartCard({
   disabled,
   onChange,
   onRemove,
-  testMode = false,
 }: {
   index: number;
   part: ExtraPart;
   disabled: boolean;
   onChange: (patch: Partial<ExtraPart>) => void;
   onRemove: () => void;
-  testMode?: boolean;
 }) {
   return (
     <section className="pcard open">
@@ -931,7 +918,6 @@ function ExtraPartCard({
           Remove
         </button>
       </div>
-      {testMode ? null : (
       <div className="fld">
         <label className="lbl">
           Instrument<span className="req">*</span>
@@ -943,7 +929,6 @@ function ExtraPartCard({
           disabled={disabled}
         />
       </div>
-      )}
       <div className="fld">
         <div className="tiles">
           <FileUpload

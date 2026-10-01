@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { appBaseUrl } from "@/lib/appUrl";
 import { db } from "@/lib/db";
 import { CANCEL_GRACE_PERIOD_MS } from "@/lib/jobActions";
-import { notifyJobInvites, notifyNewJobPosted } from "@/lib/notify";
 import { stripe } from "@/lib/stripe";
 import { getSessionUserId } from "@/lib/supabaseServer";
 import { getAdminUser } from "@/lib/admin";
@@ -77,15 +76,19 @@ export async function POST(req: NextRequest) {
   let instrumentLabel = typeof instrument === "string" ? instrument.trim() : "";
   let resolvedInstrumentId = typeof instrumentId === "string" ? instrumentId.trim() : "";
 
-  const isTest = isTestInstrumentId(resolvedInstrumentId);
+  const requestedTest = body.isTest === true;
+  const isTest = requestedTest || isTestInstrumentId(resolvedInstrumentId);
   if (isTest) {
     if (!(await getAdminUser())) {
-      return NextResponse.json({ error: "Invalid instrument" }, { status: 400 });
+      return NextResponse.json({ error: "Test jobs are for admins only." }, { status: 403 });
     }
-    instrumentLabel = TEST_INSTRUMENT_LABEL;
-  } else if (resolvedInstrumentId) {
+    if (!requestedTest) {
+      instrumentLabel = TEST_INSTRUMENT_LABEL;
+    }
+  }
+  if (requestedTest || (!isTest && resolvedInstrumentId)) {
     if (!isAllowedInstrumentId(resolvedInstrumentId)) {
-      return NextResponse.json({ error: "Invalid instrument" }, { status: 400 });
+      return NextResponse.json({ error: "Pick an instrument for this job." }, { status: 400 });
     }
     instrumentLabel = labelForInstrumentId(resolvedInstrumentId);
   }
@@ -168,7 +171,7 @@ export async function POST(req: NextRequest) {
         creatorId,
         title: titleStr,
         instrument: instrumentLabel,
-        instrumentId: TEST_INSTRUMENT_ID,
+        instrumentId: requestedTest ? resolvedInstrumentId : TEST_INSTRUMENT_ID,
         description: descriptionStr,
         demoFileUrl: demoFileUrl.trim(),
         backingFileUrl: backing,
@@ -300,7 +303,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     }
     where = { creatorId };
-  } else if (!(await getAdminUser())) {
+  } else {
     where = { status: "OPEN", isTest: false };
   }
 
@@ -390,6 +393,10 @@ async function createPartBundle(
   }
 
   const admin = await getAdminUser();
+  const requestedTest = body.isTest === true;
+  if (requestedTest && !admin) {
+    return NextResponse.json({ error: "Test jobs are for admins only." }, { status: 403 });
+  }
   const ready: Array<{
     instrumentId: string;
     instrument: string;
@@ -404,11 +411,12 @@ async function createPartBundle(
 
   for (const part of parts) {
     const instrumentId = typeof part.instrumentId === "string" ? part.instrumentId.trim() : "";
-    const isTest = isTestInstrumentId(instrumentId);
-    if (isTest && !admin) {
+    const legacyTest = isTestInstrumentId(instrumentId);
+    const isTest = requestedTest || legacyTest;
+    if (legacyTest && !admin) {
       return NextResponse.json({ error: "Test jobs are for admins only." }, { status: 403 });
     }
-    if (!isTest && !isAllowedInstrumentId(instrumentId)) {
+    if (!isAllowedInstrumentId(instrumentId)) {
       return NextResponse.json({ error: "Pick an instrument for each part." }, { status: 400 });
     }
     const description = String(part.description ?? "").trim().slice(0, 5000);
@@ -449,8 +457,8 @@ async function createPartBundle(
     const storageError = assertAppStorageUrls([demoFileUrl, backing]);
     if (storageError) return NextResponse.json({ error: storageError }, { status: 400 });
     ready.push({
-      instrumentId: isTest ? TEST_INSTRUMENT_ID : instrumentId,
-      instrument: isTest ? TEST_INSTRUMENT_LABEL : labelForInstrumentId(instrumentId),
+      instrumentId: legacyTest ? TEST_INSTRUMENT_ID : instrumentId,
+      instrument: legacyTest ? TEST_INSTRUMENT_LABEL : labelForInstrumentId(instrumentId),
       description,
       demoFileUrl,
       backingFileUrl: backing,

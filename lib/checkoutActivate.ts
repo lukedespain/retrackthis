@@ -81,6 +81,8 @@ async function activateOneJob(session: Stripe.Checkout.Session, jobId: string) {
     data: { status: "OPEN" },
   });
 
+  if (opened.isTest) return;
+
   await notifyNewJobPosted(opened);
 
   const inviteRaw = session.metadata?.inviteEmails?.trim();

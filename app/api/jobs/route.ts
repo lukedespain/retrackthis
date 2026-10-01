@@ -372,6 +372,7 @@ async function createPartBundle(
     musicalKey?: unknown;
     bpm?: unknown;
     inviteEmails?: unknown;
+    isTest?: boolean;
     parts?: BundlePart[];
   }
 ) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { formatWaveTime, paintWaveform, ratioFromClientX, type WaveLayer } from "@/lib/waveformDraw";
 import { loadAudioForMixCached } from "@/lib/waveformPeaks";
 
@@ -38,6 +38,7 @@ export function WaveformMixPlayer({
   className = "",
   partTabLabel = "Part",
   headingLabel = "Reference",
+  heading,
   showNudge = false,
   initialMode = "part",
 }: {
@@ -49,6 +50,8 @@ export function WaveformMixPlayer({
   className?: string;
   partTabLabel?: string;
   headingLabel?: string;
+  /** Replaces the heading label. Sits on the left of Part / Bed / Both. */
+  heading?: ReactNode;
   /** Producer take review only - musicians / reference stay locked to the file. */
   showNudge?: boolean;
   initialMode?: ModeId;
@@ -460,12 +463,14 @@ export function WaveformMixPlayer({
   return (
     <div className={`ref ${className}`}>
       <div className="ref-head">
-        <strong className="ref-lbl">
-          {headingLabel}
-          <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
-            i
-          </i>
-        </strong>
+        {heading ?? (
+          <strong className="ref-lbl">
+            {headingLabel}
+            <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
+              i
+            </i>
+          </strong>
+        )}
         {hasAb && (
           <div className="seg" role="tablist" aria-label={headingLabel}>
             {modes.map((id) => (

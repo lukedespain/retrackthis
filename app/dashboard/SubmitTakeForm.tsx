@@ -8,7 +8,8 @@ import { formatCents } from "@/lib/format";
 import { formatPartDuration } from "@/lib/jobPricing";
 import { supabaseClient } from "@/lib/supabaseClient";
 import { MAX_AUDIO_TAKES, type TakeFileRecord } from "@/lib/takeFiles";
-import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
+import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
+import { audioFiles, listenUrl, masterUrl } from "@/lib/takeFiles";
 
 type TakeRow = {
   fileName: string;
@@ -25,6 +26,7 @@ export function SubmitTakeForm({
   existingTakeUrl,
   existingNote,
   existingFiles,
+  backingSrc = null,
   onSubmitted,
 }: {
   jobId: string;
@@ -35,6 +37,8 @@ export function SubmitTakeForm({
   existingTakeUrl?: string | null;
   existingNote?: string | null;
   existingFiles?: TakeFileRecord[];
+  /** Job bed, so a submitted take can be heard against it. */
+  backingSrc?: string | null;
   onSubmitted?: (take: { jobId: string; audioFileUrl: string; note?: string | null; files?: TakeFileRecord[] }) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,6 +51,7 @@ export function SubmitTakeForm({
   const [submittedFiles, setSubmittedFiles] = useState<TakeFileRecord[] | undefined>(existingFiles);
   const [submittedNote, setSubmittedNote] = useState(existingNote ?? "");
   const [replacing, setReplacing] = useState(false);
+  const [takeIndex, setTakeIndex] = useState(0);
   const [rows, setRows] = useState<TakeRow[]>([]);
   const [note, setNote] = useState(existingNote ?? "");
 
@@ -151,19 +156,58 @@ export function SubmitTakeForm({
   }
 
   if (submitted && !replacing) {
-    const n = submittedFiles?.length || (submittedUrl ? 1 : 0);
+    const audio = submittedFiles?.length
+      ? audioFiles(submittedFiles)
+      : submittedUrl
+        ? [{ id: "legacy", kind: "AUDIO" as const, label: "Take 1", fileUrl: submittedUrl, previewUrl: null, sortOrder: 0 }]
+        : [];
+    const index = Math.min(takeIndex, Math.max(0, audio.length - 1));
+    const current = audio[index];
+    const playSrc = current ? listenUrl(current) : null;
+    const downloadSrc = current ? masterUrl(current) : null;
     return (
       <div className="stack" style={{ gap: 14 }}>
         <h3>Your submission</h3>
-        <div className="banner">
-          <span className="status pending">Pending</span>
-          <span>
-            {n} take{n === 1 ? "" : "s"} submitted. You can replace them until the job closes.
-          </span>
-        </div>
-        {(submittedFiles?.length || submittedUrl) && (
-          <TakeSubmissionFiles files={submittedFiles} fallbackAudioUrl={submittedUrl ?? undefined} allowDownload />
-        )}
+        {current && playSrc ? (
+          <WaveformMixPlayer
+            key={current.id}
+            className="flat"
+            partSrc={playSrc}
+            partDownloadSrc={downloadSrc}
+            backingSrc={backingSrc}
+            partTabLabel="Part"
+            initialMode={backingSrc ? "both" : "part"}
+            allowDownload={false}
+            heading={
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {audio.length > 1 ? (
+                  <div className="seg" role="tablist" aria-label="Your takes">
+                    {audio.map((file, i) => (
+                      <button
+                        key={file.id}
+                        type="button"
+                        aria-pressed={i === index}
+                        onClick={() => setTakeIndex(i)}
+                      >
+                        Take {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                <p className="truncate" title={current.label} style={{ margin: audio.length > 1 ? "6px 0 0" : 0, fontSize: 13, fontWeight: 500 }}>
+                  {current.label}
+                </p>
+              </div>
+            }
+          />
+        ) : null}
+        {downloadSrc ? (
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <a className="btn text" href={downloadSrc} download={current?.label} target="_blank" rel="noopener noreferrer" style={{ height: 32, fontSize: 13 }}>
+              Download
+            </a>
+          </div>
+        ) : null}
         {submittedNote.trim() ? (
           <div className="sub-note">
             <span>Your note</span>

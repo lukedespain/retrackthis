@@ -248,6 +248,8 @@ function SubmissionCard({
                 alreadySubmitted
                 existingTakeUrl={liveTake.audioFileUrl}
                 existingFiles={liveTake.files}
+                existingNote={liveTake.note}
+                backingSrc={liveTake.job.backingFileUrl}
                 onSubmitted={(next) =>
                   setLiveTake((prev) => ({
                     ...prev,

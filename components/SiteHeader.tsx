@@ -152,6 +152,15 @@ export function SiteHeader() {
     return () => window.removeEventListener(OPEN_POST_JOB, openJob);
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("post") !== "1") return;
+    setPostOpen(true);
+    params.delete("post");
+    const qs = params.toString();
+    window.history.replaceState(null, "", qs ? `${pathname}?${qs}` : pathname);
+  }, [pathname]);
+
   async function signOut() {
     setOpen(false);
     await supabaseClient.auth.signOut();
@@ -240,9 +249,9 @@ export function SiteHeader() {
           </>
         ) : (
           <>
-            <Link className="btn primary" href="/producers?tab=post">
-              Post a job
-            </Link>
+            <button type="button" className="btn primary" onClick={() => setPostOpen(true)}>
+              {PLUS} Post a job
+            </button>
             <Link className="btn outline" href="/sign-in">
               Sign in
             </Link>

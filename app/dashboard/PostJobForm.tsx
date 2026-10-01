@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { FileUpload } from "@/components/FileUpload";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
@@ -25,9 +26,12 @@ import {
   SLIDER_MIN_USD,
   formatPartDuration,
 } from "@/lib/jobPricing";
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { InstrumentTypeahead } from "@/components/InstrumentTypeahead";
 import { SongPad } from "@/components/brand/SongPad";
 import { JOB_POSTED } from "@/components/MarketingHeroCtas";
+import { clearPostDraft, readPostDraft, writePostDraft } from "@/lib/postJobDraft";
+import { supabaseClient } from "@/lib/supabaseClient";
 import { JobCheckoutEmbed } from "./JobCheckoutEmbed";
 import { JobPricingFields } from "./JobPricingFields";
 
@@ -186,27 +190,49 @@ function PostJobFormInner({
   onCancel,
   onCheckoutReady,
 }: PostJobFormInnerProps) {
+  const router = useRouter();
+  const [saved] = useState(() => readPostDraft());
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [accountEmail, setAccountEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [demoFileUrl, setDemoFileUrl] = useState<string | null>(null);
-  const [backingFileUrl, setBackingFileUrl] = useState<string | null>(null);
-  const [fixedTempo, setFixedTempo] = useState(true);
-  const [instrumentId, setInstrumentId] = useState<string | null>(null);
-  const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
-  const [partFileSeconds, setPartFileSeconds] = useState<number | null>(null);
+  const [demoFileUrl, setDemoFileUrl] = useState<string | null>(saved?.demoFileUrl ?? null);
+  const [backingFileUrl, setBackingFileUrl] = useState<string | null>(saved?.backingFileUrl ?? null);
+  const [fixedTempo, setFixedTempo] = useState(saved?.fixedTempo ?? true);
+  const [instrumentId, setInstrumentId] = useState<string | null>(saved?.instrumentId ?? null);
+  const [durationSeconds, setDurationSeconds] = useState<number | null>(saved?.durationSeconds ?? null);
+  const [partFileSeconds, setPartFileSeconds] = useState<number | null>(saved?.partFileSeconds ?? null);
   const durationUserSetRef = useRef(false);
   const [editLen, setEditLen] = useState(false);
-  const [more, setMore] = useState<ExtraPart[]>([]);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [musicalKey, setMusicalKey] = useState("");
-  const [deadlineText, setDeadlineText] = useState(String(DEFAULT_DEADLINE_DAYS));
+  const [more, setMore] = useState<ExtraPart[]>(saved?.more ?? []);
+  const [inviteEmail, setInviteEmail] = useState(saved?.inviteEmail ?? "");
+  const [musicalKey, setMusicalKey] = useState(saved?.musicalKey ?? "");
+  const [deadlineText, setDeadlineText] = useState(saved?.deadlineText ?? String(DEFAULT_DEADLINE_DAYS));
   const [availableIds, setAvailableIds] = useState<Set<string>>(new Set());
   const [networkLoaded, setNetworkLoaded] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const isTestJob = isTestInstrumentId(instrumentId);
   const formRef = useRef<HTMLFormElement>(null);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(saved?.step && saved.step >= 1 && saved.step <= 4 ? saved.step : 1);
   const [tried, setTried] = useState(false);
+
+  useEffect(() => {
+    if (saved?.priceDollars) onPriceChange(saved.priceDollars);
+  }, [saved, onPriceChange]);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabaseClient.auth.getSession().then(({ data }) => {
+      if (!cancelled) setSignedIn(!!data.session);
+    });
+    const { data: sub } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      setSignedIn(!!session);
+    });
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -306,9 +332,17 @@ function PostJobFormInner({
       }
     }
 
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (!sessionData.session) {
+      saveDraft();
+      setTried(true);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
+      await ensureAppProfile();
       const form = new FormData(e.currentTarget);
       const price = Number(form.get("price"));
       const deadlineDays = Math.min(
@@ -376,6 +410,7 @@ function PostJobFormInner({
       }
 
       if (body?.clientSecret && typeof body.clientSecret === "string" && body.id) {
+        clearPostDraft();
         onCheckoutReady({
           clientSecret: body.clientSecret,
           jobId: body.id,
@@ -387,6 +422,7 @@ function PostJobFormInner({
         return;
       }
 
+      clearPostDraft();
       window.dispatchEvent(new Event(JOB_POSTED));
       onPosted();
     } catch (err) {
@@ -399,6 +435,43 @@ function PostJobFormInner({
   function field(name: string) {
     if (!formRef.current) return "";
     return String(new FormData(formRef.current).get(name) ?? "").trim();
+  }
+
+  function saveDraft() {
+    writePostDraft({
+      step,
+      title: field("title"),
+      musicalKey,
+      bpm: field("bpm"),
+      fixedTempo,
+      instrumentId,
+      demoFileUrl,
+      backingFileUrl,
+      description: field("description"),
+      durationSeconds,
+      partFileSeconds,
+      deadlineText,
+      priceDollars,
+      inviteEmail,
+      more,
+    });
+  }
+
+  async function ensureAppProfile() {
+    const me = await fetch("/api/auth/me");
+    if (!me.ok) return;
+    const body = await me.json().catch(() => null);
+    if (body?.profile) return;
+    const { data } = await supabaseClient.auth.getUser();
+    const meta = data.user?.user_metadata ?? {};
+    const name = String(
+      meta.full_name || meta.name || data.user?.email?.split("@")[0] || "New producer"
+    ).slice(0, 80);
+    await fetch("/api/auth/complete-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
   }
 
   function stepValid(n: number) {
@@ -438,7 +511,9 @@ function PostJobFormInner({
       return;
     }
     setTried(false);
-    setStep((n) => Math.min(4, n + 1));
+    const next = Math.min(4, step + 1);
+    if (next === 4) saveDraft();
+    setStep(next);
   }
 
   const previewTitle = step >= 3 ? field("title") : "";
@@ -452,7 +527,14 @@ function PostJobFormInner({
       onClose={onCancel}
       footer={
         <>
-          <button type="button" className="btn text" onClick={onCancel}>
+          <button
+            type="button"
+            className="btn text"
+            onClick={() => {
+              saveDraft();
+              onCancel();
+            }}
+          >
             Save & exit
           </button>
           <div className="mf-right">
@@ -481,7 +563,12 @@ function PostJobFormInner({
                 Continue
               </button>
             ) : (
-              <button type="submit" form="post-job-form" className="btn primary" disabled={submitting}>
+              <button
+                type="submit"
+                form="post-job-form"
+                className={`btn primary${signedIn === false ? " dim" : ""}`}
+                disabled={submitting}
+              >
                 {submitting
                   ? "Paying"
                   : isTestJob
@@ -498,6 +585,7 @@ function PostJobFormInner({
           <Input
             label="Title"
             name="title"
+            defaultValue={saved?.title ?? ""}
             placeholder="Song title"
             required
             className="[&_input]:!h-16 [&_input]:!rounded-2xl [&_input]:!px-[18px] [&_input]:!text-[26px] [&_input]:!font-medium [&_input]:tracking-[-0.025em]"
@@ -540,7 +628,7 @@ function PostJobFormInner({
                   name="bpm"
                   className="in"
                   inputMode="numeric"
-                  defaultValue="120"
+                  defaultValue={saved?.bpm || "120"}
                   placeholder={fixedTempo ? "120" : "—"}
                   disabled={!fixedTempo || submitting}
                   required={fixedTempo}
@@ -652,6 +740,7 @@ function PostJobFormInner({
           <Textarea
             label="Notes"
             name="description"
+            defaultValue={saved?.description ?? ""}
             required
             rows={2}
             placeholder="Feel, references, anything they should know"
@@ -738,6 +827,41 @@ function PostJobFormInner({
       </div>
 
       <div className="stack" hidden={step !== 4}>
+        {signedIn === false ? (
+          <div className={`pay-acct${tried ? " need" : ""}`}>
+            <div className="pa-t">
+              <strong>Create your account to post</strong>
+              <span>So you can hear submissions and pick a winner. Your job details are saved.</span>
+            </div>
+            <div onClickCapture={() => saveDraft()}>
+              <GoogleAuthButton nextPath="/?post=1" label="Continue with Google" />
+            </div>
+            <div className="pa-email">
+              <input
+                className="in"
+                type="email"
+                placeholder="or use your email"
+                value={accountEmail}
+                onChange={(e) => setAccountEmail(e.target.value)}
+                autoComplete="email"
+              />
+              <button
+                type="button"
+                className="btn soft"
+                onClick={() => {
+                  saveDraft();
+                  const next = "/?post=1";
+                  const email = accountEmail.trim();
+                  router.push(
+                    `/sign-up?next=${encodeURIComponent(next)}${email ? `&email=${encodeURIComponent(email)}` : ""}`
+                  );
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        ) : null}
         <div className="sum">
           <div className="sum-total">
             <span>{isTestJob ? "Test job, no charge" : "Due now"}</span>

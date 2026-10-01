@@ -28,16 +28,18 @@ const ALLOWED_MIME_TYPES = [
 // (bytes never pass through our server). kind namespaces the storage path.
 export async function POST(req: NextRequest) {
   const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
-  }
-
   const body = await req.json().catch(() => null);
   const fileName = body?.fileName;
   const kind = body?.kind;
 
   if (!fileName || !kind || !ALLOWED_KINDS.has(kind)) {
     return NextResponse.json({ error: "Missing fileName or kind" }, { status: 400 });
+  }
+  if (!userId && kind === "take") {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+  if (!userId && kind !== "demo" && kind !== "demo-backing") {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
   if (kind === "take" && !isTakeFileName(String(fileName))) {
     return NextResponse.json({ error: "Takes must be WAV or MP3 files." }, { status: 400 });
@@ -57,7 +59,8 @@ export async function POST(req: NextRequest) {
 
   const safeName = String(fileName).replace(/[^a-zA-Z0-9.\-_]/g, "_");
   // Namespace by user so uploads are attributable and paths aren't guessable globally.
-  const path = `${kind}/${userId}/${crypto.randomUUID()}-${safeName}`;
+  const owner = userId ?? "guest";
+  const path = `${kind}/${owner}/${crypto.randomUUID()}-${safeName}`;
 
   const { data, error } = await supabaseAdmin.storage.from(AUDIO_BUCKET).createSignedUploadUrl(path);
 

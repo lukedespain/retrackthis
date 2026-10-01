@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { OpenJobsBrowse } from "@/components/OpenJobsBrowse";
-import { POST_JOB_HREF, SIGN_UP_TO_POST_HREF } from "@/components/MarketingHeroCtas";
+import { requestPostJob } from "@/components/MarketingHeroCtas";
 import { Button } from "@/components/ui/Button";
 import { supabaseClient } from "@/lib/supabaseClient";
 
@@ -37,12 +36,9 @@ export function JobsMarketplace() {
               : "Browse gigs from producers and songwriters. Create a free account when you're ready to submit."}
           </p>
         </div>
-        <Link
-          href={signedIn ? POST_JOB_HREF : SIGN_UP_TO_POST_HREF}
-          className="w-full shrink-0 sm:w-auto"
-        >
-          <Button className="w-full sm:w-auto">Post a job</Button>
-        </Link>
+        <Button className="w-full shrink-0 sm:w-auto" onClick={requestPostJob}>
+          Post a job
+        </Button>
       </div>
 
       <div className="mt-8 sm:mt-10">

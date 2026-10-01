@@ -256,7 +256,9 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
               Post a job
             </button>
           ) : (
-            <Link href="/sign-up">Post a job</Link>
+            <button type="button" className="btn text" onClick={requestPostJob}>
+              Post a job
+            </button>
           )}
         </div>
       ) : filteredJobs.length === 0 ? (

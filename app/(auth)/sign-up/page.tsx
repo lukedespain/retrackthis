@@ -85,7 +85,15 @@ function SignUpForm() {
       <GoogleAuthButton nextPath={searchParams.get("next")} label="Continue with Google" />
       <AuthDivider />
       <form onSubmit={handleSubmit} className="stack" style={{ gap: 14 }}>
-        <Input label="Email" name="email" type="email" required autoComplete="email" placeholder="you@studio.com" />
+        <Input
+          label="Email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="you@studio.com"
+          defaultValue={searchParams.get("email") ?? ""}
+        />
         <Input
           label="Password"
           name="password"

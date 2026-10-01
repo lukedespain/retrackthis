@@ -12,6 +12,7 @@ export function ReferenceTracksPlayer({
   className = "",
   partTabLabel = "Part",
   flat = false,
+  fileName,
 }: {
   partSrc: string;
   backingSrc?: string | null;
@@ -20,6 +21,8 @@ export function ReferenceTracksPlayer({
   partTabLabel?: string;
   /** Sit inside an existing panel instead of drawing another card. */
   flat?: boolean;
+  /** Shown in place of the word Reference. */
+  fileName?: string;
 }) {
   return (
     <WaveformMixPlayer
@@ -28,7 +31,14 @@ export function ReferenceTracksPlayer({
       allowDownload={allowDownload}
       className={`${flat ? "flat" : ""} ${className}`.trim()}
       partTabLabel={partTabLabel}
-      headingLabel="Reference"
+      headingLabel={fileName || "Part"}
+      heading={
+        fileName ? (
+          <strong className="ref-lbl" title={fileName} style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {fileName}
+          </strong>
+        ) : undefined
+      }
       showNudge={false}
       initialMode="part"
     />

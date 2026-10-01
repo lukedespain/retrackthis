@@ -8,6 +8,7 @@ import { formatCents } from "@/lib/format";
 import { formatPartDuration } from "@/lib/jobPricing";
 import { supabaseClient } from "@/lib/supabaseClient";
 import { MAX_AUDIO_TAKES, type TakeFileRecord } from "@/lib/takeFiles";
+import { Avatar } from "@/components/brand/Avatar";
 import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
 import { audioFiles, listenUrl, masterUrl } from "@/lib/takeFiles";
 
@@ -27,6 +28,7 @@ export function SubmitTakeForm({
   existingNote,
   existingFiles,
   backingSrc = null,
+  submitter = null,
   onSubmitted,
 }: {
   jobId: string;
@@ -39,6 +41,7 @@ export function SubmitTakeForm({
   existingFiles?: TakeFileRecord[];
   /** Job bed, so a submitted take can be heard against it. */
   backingSrc?: string | null;
+  submitter?: { name: string; avatar: unknown } | null;
   onSubmitted?: (take: { jobId: string; audioFileUrl: string; note?: string | null; files?: TakeFileRecord[] }) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -167,7 +170,15 @@ export function SubmitTakeForm({
     const downloadSrc = current ? masterUrl(current) : null;
     return (
       <div className="stack" style={{ gap: 14 }}>
-        <h3>Your submission</h3>
+        {submitter ? (
+          <div className="by">
+            <Avatar avatar={submitter.avatar} name={submitter.name} size="sm" />
+            Submitted by <b>{submitter.name}</b>
+          </div>
+        ) : (
+          <h3>Your submission</h3>
+        )}
+        {submittedNote.trim() ? <p className="jnotes" style={{ color: "var(--ink-2)" }}>{submittedNote}</p> : null}
         {current && playSrc ? (
           <WaveformMixPlayer
             key={current.id}
@@ -176,8 +187,9 @@ export function SubmitTakeForm({
             partDownloadSrc={downloadSrc}
             backingSrc={backingSrc}
             partTabLabel="Part"
+            partCaption="Your submitted take"
             initialMode={backingSrc ? "both" : "part"}
-            allowDownload={false}
+            allowDownload
             heading={
               <div style={{ flex: 1, minWidth: 0 }}>
                 {audio.length > 1 ? (
@@ -200,19 +212,6 @@ export function SubmitTakeForm({
               </div>
             }
           />
-        ) : null}
-        {downloadSrc ? (
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <a className="btn text" href={downloadSrc} download={current?.label} target="_blank" rel="noopener noreferrer" style={{ height: 32, fontSize: 13 }}>
-              Download
-            </a>
-          </div>
-        ) : null}
-        {submittedNote.trim() ? (
-          <div className="sub-note">
-            <span>Your note</span>
-            {submittedNote}
-          </div>
         ) : null}
         <button type="button" className="btn soft" style={{ height: 38, fontSize: 13.5 }} onClick={() => setReplacing(true)}>
           Replace takes

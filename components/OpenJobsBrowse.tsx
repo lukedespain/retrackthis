@@ -38,6 +38,8 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [myTakesByJob, setMyTakesByJob] = useState<Record<string, MyTakeSummary>>({});
   const [payout, setPayout] = useState<PayoutSnapshot | null>(null);
   const [meId, setMeId] = useState<string | null>(null);
+  const [meName, setMeName] = useState<string | null>(null);
+  const [meAvatar, setMeAvatar] = useState<unknown>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -90,6 +92,8 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
       setMyTakesByJob({});
       setPayout(null);
       setMeId(null);
+      setMeName(null);
+      setMeAvatar(null);
       setIsAdmin(false);
       return;
     }
@@ -97,10 +101,14 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
       .then((res) => (res.ok ? res.json() : null))
       .then((body) => {
         setMeId(body?.profile?.id ?? null);
+        setMeName(body?.profile?.name ?? null);
+        setMeAvatar(body?.profile?.avatar ?? null);
         setIsAdmin(Boolean(body?.profile?.isAdmin));
       })
       .catch(() => {
         setMeId(null);
+        setMeName(null);
+        setMeAvatar(null);
         setIsAdmin(false);
       });
     fetch("/api/takes/mine")
@@ -289,6 +297,8 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
               payout={signedIn ? payout : null}
               adminTest={Boolean(isAdmin && job.isTest)}
               mine={Boolean(meId && job.creatorId === meId)}
+              meName={meName}
+              meAvatar={meAvatar}
               onTakeSubmitted={handleTakeSubmitted}
               onToggle={() => handleToggleJob(job.id)}
             />
@@ -345,6 +355,8 @@ function OpenJobCard({
   onTakeSubmitted,
   onToggle,
   mine,
+  meName,
+  meAvatar,
 }: {
   job: Job;
   signedIn: boolean;
@@ -354,6 +366,8 @@ function OpenJobCard({
   /** Admin on a test job can submit without payout setup. */
   adminTest?: boolean;
   mine: boolean;
+  meName: string | null;
+  meAvatar: unknown;
   onTakeSubmitted: (take: MyTakeSummary) => void;
   onToggle: () => void;
 }) {
@@ -401,6 +415,12 @@ function OpenJobCard({
                 ? "No submissions yet"
                 : `${job.takeCount} submission${job.takeCount === 1 ? "" : "s"}`}
             </span>
+            <span className="pill">{job.bpm ? `${job.bpm} BPM` : "Tempo not fixed"}</span>
+            {job.musicalKey ? <span className="pill">{job.musicalKey}</span> : null}
+            <span className="pill">
+              <InstrumentIcon instrument={job.instrument} />
+              {job.instrument}
+            </span>
           </div>
         </div>
         <button type="button" className="chip-btn" onClick={(e) => { e.stopPropagation(); onToggle(); }}>
@@ -416,19 +436,12 @@ function OpenJobCard({
               Posted by <b>{mine ? "you" : job.poster?.name ?? "a producer"}</b>
             </div>
             <p style={{ color: "var(--ink-2)" }}>{job.description}</p>
-            <div className="pills" style={{ margin: 0 }}>
-              <span className="pill">{job.bpm ? `${job.bpm} BPM` : "Tempo not fixed"}</span>
-              {job.musicalKey ? <span className="pill">{job.musicalKey}</span> : null}
-              <span className="pill">
-                <InstrumentIcon instrument={job.instrument} />
-                {job.instrument}
-              </span>
-            </div>
             <ReferenceTracksPlayer
               flat
               partSrc={job.demoFileUrl}
               backingSrc={job.backingFileUrl}
               allowDownload={signedIn}
+              fileName={fileNameFromUrl(job.demoFileUrl)}
             />
           </div>
           <div className="panel">
@@ -474,6 +487,7 @@ function OpenJobCard({
                 existingNote={myTake?.note}
                 existingFiles={myTake?.files}
                 backingSrc={job.backingFileUrl}
+                submitter={meName ? { name: meName, avatar: meAvatar } : null}
                 onSubmitted={onTakeSubmitted}
               />
             )}
@@ -482,6 +496,16 @@ function OpenJobCard({
       ) : null}
     </article>
   );
+}
+
+function fileNameFromUrl(src: string) {
+  try {
+    const segment = new URL(src).pathname.split("/").pop();
+    if (segment) return decodeURIComponent(segment);
+  } catch {
+    // ignore
+  }
+  return "Part";
 }
 
 function CheckIcon() {

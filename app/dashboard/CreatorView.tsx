@@ -434,8 +434,8 @@ function CreatorJobCard({
       </div>
 
       {expanded && !readOnly ? (
-        <div className="job-body" style={{ gridTemplateColumns: "1fr", paddingBottom: 0 }}>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="job-actions">
+          <div className="job-actions-row">
           {job.status === "PENDING_PAYMENT" && !readOnly && (
             <>
               <Button

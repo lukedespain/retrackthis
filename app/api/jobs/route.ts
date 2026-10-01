@@ -296,7 +296,13 @@ export async function POST(req: NextRequest) {
 //
 // Money sweeps (finalize, refund, reminders) run from /api/cron/jobs - not here.
 export async function GET(req: NextRequest) {
-  let where: { creatorId: string } | { status: "OPEN"; isTest?: false } = { status: "OPEN" };
+  let where:
+    | { creatorId: string }
+    | { status: "OPEN"; isTest: false }
+    | { status: "OPEN"; OR: Array<{ isTest: false } | { isTest: true; creatorId: { not: string } }> } = {
+    status: "OPEN",
+    isTest: false,
+  };
   if (req.nextUrl.searchParams.get("mine") === "true") {
     const creatorId = await getSessionUserId();
     if (!creatorId) {
@@ -304,7 +310,13 @@ export async function GET(req: NextRequest) {
     }
     where = { creatorId };
   } else {
-    where = { status: "OPEN", isTest: false };
+    const admin = await getAdminUser();
+    where = admin
+      ? {
+          status: "OPEN",
+          OR: [{ isTest: false }, { isTest: true, creatorId: { not: admin.id } }],
+        }
+      : { status: "OPEN", isTest: false };
   }
 
   const jobs = await db.job.findMany({

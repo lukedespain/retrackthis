@@ -721,6 +721,8 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .job-title { font-size: 16.5px; font-weight: 500; letter-spacing: -.015em; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .job .pills { margin-top: 8px; }
 .job-body { border-top: 1px solid var(--line); background: var(--soft); padding: 20px; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; animation: fade .3s ease both; }
+.job-actions { border-top: 1px solid var(--line); background: var(--surface); padding: 14px 18px; display: flex; align-items: center; }
+.job-actions-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .job-body .pill { background: #fff; box-shadow: 0 0 0 1px var(--line); }
 .panel { background: #fff; border-radius: 20px; padding: 18px; box-shadow: 0 0 0 1px var(--line); display: flex; flex-direction: column; gap: 14px; }
 .dl-files { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }

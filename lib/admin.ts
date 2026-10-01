@@ -6,6 +6,7 @@ const DEFAULT_ADMIN_EMAILS = [
   "music@lukedespain.com",
   "dabthenatural@gmail.com",
   "hazeldespain@gmail.com",
+  "hello@retrackthis.com",
 ];
 
 /** Comma-separated ADMIN_EMAILS env, plus the default bootstrap account. */

@@ -59,7 +59,7 @@ function blankPart(): ExtraPart {
     durationSeconds: null,
     fileDurationSeconds: null,
     deadlineDays: DEFAULT_DEADLINE_DAYS,
-    priceDollars: SLIDER_MIN_USD,
+    priceDollars: 0,
   };
 }
 
@@ -126,7 +126,7 @@ function ModalFrame({
 }
 
 export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCancel: () => void }) {
-  const [priceDollars, setPriceDollars] = useState(SLIDER_MIN_USD);
+  const [priceDollars, setPriceDollars] = useState(0);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [checkoutAmountCents, setCheckoutAmountCents] = useState<number | null>(null);
   const [pendingJobId, setPendingJobId] = useState<string | null>(null);
@@ -211,7 +211,8 @@ function PostJobFormInner({
   const [availableIds, setAvailableIds] = useState<Set<string>>(new Set());
   const [networkLoaded, setNetworkLoaded] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const isTestJob = isTestInstrumentId(instrumentId);
+  const [testMode, setTestMode] = useState(false);
+  const isTestJob = testMode && isAdmin;
   const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(saved?.step && saved.step >= 1 && saved.step <= 4 ? saved.step : 1);
   const [tried, setTried] = useState(false);
@@ -284,7 +285,7 @@ function PostJobFormInner({
     }
     setError(null);
 
-    if (!instrumentId) {
+    if (!isTestJob && !instrumentId) {
       setError("Pick an instrument for this job.");
       return;
     }
@@ -303,7 +304,7 @@ function PostJobFormInner({
       return;
     }
 
-    if (!Number.isFinite(priceDollars) || priceDollars < SLIDER_MIN_USD) {
+    if (!isTestJob && (!Number.isFinite(priceDollars) || priceDollars < SLIDER_MIN_USD)) {
       setError(`Price must be at least $${SLIDER_MIN_USD}.`);
       return;
     }
@@ -318,14 +319,14 @@ function PostJobFormInner({
       return;
     }
     for (const part of more) {
-      if (!part.instrumentId || !part.demoFileUrl || !part.notes.trim()) {
-        setError("Each part needs an instrument, a Part file, and notes.");
+      if ((!isTestJob && !part.instrumentId) || !part.demoFileUrl || !part.notes.trim()) {
+        setError(isTestJob ? "Each part needs a Part file and notes." : "Each part needs an instrument, a Part file, and notes.");
         return;
       }
       if (
         part.durationSeconds == null ||
         part.durationSeconds < MIN_DURATION_SECONDS ||
-        part.priceDollars < SLIDER_MIN_USD
+        (!isTestJob && part.priceDollars < SLIDER_MIN_USD)
       ) {
         setError("Each part needs a length and a budget.");
         return;
@@ -353,12 +354,15 @@ function PostJobFormInner({
       const musicalKeyRaw = String(form.get("musicalKey") ?? "").trim();
       const invites = collectInviteEmails();
 
+      const postedInstrumentId = isTestJob ? TEST_INSTRUMENT_ID : (instrumentId ?? "");
+      const priced = (amount: number) =>
+        Math.round((isTestJob ? Math.max(amount, SLIDER_MIN_USD) : amount) * 100);
       const firstPart = {
-        instrumentId,
+        instrumentId: postedInstrumentId,
         description: form.get("description"),
         demoFileUrl,
         backingFileUrl,
-        priceCents: Math.round(price * 100),
+        priceCents: priced(price),
         durationSeconds,
         deadline: new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000).toISOString(),
       };
@@ -372,11 +376,11 @@ function PostJobFormInner({
               parts: [
                 firstPart,
                 ...more.map((part) => ({
-                  instrumentId: part.instrumentId,
+                  instrumentId: isTestJob ? TEST_INSTRUMENT_ID : part.instrumentId,
                   description: part.notes,
                   demoFileUrl: part.demoFileUrl,
                   backingFileUrl: part.backingFileUrl,
-                  priceCents: Math.round(part.priceDollars * 100),
+                  priceCents: priced(part.priceDollars),
                   durationSeconds: part.durationSeconds,
                   deadline: new Date(
                     Date.now() + part.deadlineDays * 24 * 60 * 60 * 1000
@@ -386,12 +390,12 @@ function PostJobFormInner({
             }
           : {
               title: form.get("title"),
-              instrumentId,
-              instrument: labelForInstrumentId(instrumentId),
+              instrumentId: postedInstrumentId,
+              instrument: labelForInstrumentId(postedInstrumentId),
               description: form.get("description"),
               demoFileUrl,
               backingFileUrl,
-              priceCents: Math.round(price * 100),
+              priceCents: priced(price),
               durationSeconds,
               musicalKey: musicalKeyRaw || null,
               bpm: fixedTempo ? Number(bpmRaw) : null,
@@ -481,7 +485,7 @@ function PostJobFormInner({
       return true;
     }
     if (n === 2) {
-      if (!instrumentId || !demoFileUrl || !field("description")) return false;
+      if ((!isTestJob && !instrumentId) || !demoFileUrl || !field("description")) return false;
       if (
         durationSeconds == null ||
         durationSeconds < MIN_DURATION_SECONDS ||
@@ -491,13 +495,13 @@ function PostJobFormInner({
       }
       const days = Number(deadlineText);
       if (!Number.isFinite(days) || days < 1 || days > POST_DEADLINE_MAX_DAYS) return false;
-      if (!Number.isFinite(priceDollars) || priceDollars < SLIDER_MIN_USD) return false;
+      if (!isTestJob && (!Number.isFinite(priceDollars) || priceDollars < SLIDER_MIN_USD)) return false;
       return more.every(
         (part) =>
-          Boolean(part.instrumentId && part.demoFileUrl && part.notes.trim()) &&
+          Boolean((isTestJob || part.instrumentId) && part.demoFileUrl && part.notes.trim()) &&
           part.durationSeconds != null &&
           part.durationSeconds >= MIN_DURATION_SECONDS &&
-          part.priceDollars >= SLIDER_MIN_USD &&
+          (isTestJob || part.priceDollars >= SLIDER_MIN_USD) &&
           part.deadlineDays >= 1 &&
           part.deadlineDays <= POST_DEADLINE_MAX_DAYS
       );
@@ -554,6 +558,21 @@ function PostJobFormInner({
                 </svg>
               </button>
             ) : null}
+            {isAdmin && step === 1 ? (
+              <button
+                type="button"
+                className={testMode ? "btn primary" : "btn soft"}
+                aria-pressed={testMode}
+                onClick={() => {
+                  setTestMode((on) => {
+                    if (!on) setInstrumentId(null);
+                    return !on;
+                  });
+                }}
+              >
+                Test
+              </button>
+            ) : null}
             {step < 4 ? (
               <button
                 type="button"
@@ -581,6 +600,12 @@ function PostJobFormInner({
       }
     >
     <form id="post-job-form" ref={formRef} onSubmit={handleSubmit}>
+      {isTestJob ? (
+        <div className="banner" style={{ marginBottom: 14 }}>
+          <span className="status draft">Test</span>
+          <span>This is a test job. No payment, only admins can see it, and it never sends emails.</span>
+        </div>
+      ) : null}
       <SongPad hidden={step !== 1} musicalKey={musicalKey} fixedTempo={fixedTempo}>
           <Input
             label="Title"
@@ -647,17 +672,19 @@ function PostJobFormInner({
           <div className="pcard-head">
             <span className="pnum">Part 1</span>
           </div>
+          {isTestJob ? null : (
           <div className="fld">
             <label className="lbl">
               Instrument<span className="req">*</span>
             </label>
             <InstrumentTypeahead
               variant="combo"
-              selectedId={isTestJob ? null : instrumentId}
+              selectedId={instrumentId}
               onChange={setInstrumentId}
               disabled={submitting}
             />
           </div>
+          )}
           <div className="fld">
             <div className="tiles">
               <FileUpload
@@ -745,23 +772,6 @@ function PostJobFormInner({
             rows={2}
             placeholder="Feel, references, anything they should know"
           />
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => setInstrumentId(isTestJob ? null : TEST_INSTRUMENT_ID)}
-              disabled={submitting}
-              aria-pressed={isTestJob}
-              className="chip"
-              style={isTestJob ? { background: "var(--ink)", color: "#fff" } : undefined}
-            >
-              Test (admins only)
-            </button>
-          )}
-          {isTestJob && (
-            <Alert variant="warning">
-              This is a test job. It goes live with no payment, only admins can see it, and it never sends emails.
-            </Alert>
-          )}
           {showNetworkGap && instrumentId && (
             <Alert variant="warning">
               Nobody in the network currently plays {displayLabelForInstrumentId(instrumentId)}. You can still post.
@@ -792,6 +802,7 @@ function PostJobFormInner({
               setMore((list) => list.map((item) => (item.key === part.key ? { ...item, ...patch } : item)))
             }
             onRemove={() => setMore((list) => list.filter((item) => item.key !== part.key))}
+            testMode={isTestJob}
           />
         ))}
         <button
@@ -903,12 +914,14 @@ function ExtraPartCard({
   disabled,
   onChange,
   onRemove,
+  testMode = false,
 }: {
   index: number;
   part: ExtraPart;
   disabled: boolean;
   onChange: (patch: Partial<ExtraPart>) => void;
   onRemove: () => void;
+  testMode?: boolean;
 }) {
   return (
     <section className="pcard open">
@@ -918,6 +931,7 @@ function ExtraPartCard({
           Remove
         </button>
       </div>
+      {testMode ? null : (
       <div className="fld">
         <label className="lbl">
           Instrument<span className="req">*</span>
@@ -929,6 +943,7 @@ function ExtraPartCard({
           disabled={disabled}
         />
       </div>
+      )}
       <div className="fld">
         <div className="tiles">
           <FileUpload

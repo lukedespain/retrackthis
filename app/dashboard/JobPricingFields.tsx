@@ -51,7 +51,7 @@ export function JobPricingFields({
 }) {
   const [minutesText, setMinutesText] = useState("");
   const [secondsText, setSecondsText] = useState("");
-  const [priceText, setPriceText] = useState(String(priceDollars));
+  const [priceText, setPriceText] = useState(priceDollars > 0 ? String(priceDollars) : "");
   const [priceFocused, setPriceFocused] = useState(false);
   const priceDirtyRef = useRef(false);
   const lastAutoKeyRef = useRef<string>("");
@@ -70,7 +70,7 @@ export function JobPricingFields({
       deadlineDaysParsed > MAX_DEADLINE_DAYS);
 
   const suggestion = useMemo(() => {
-    if (!durationSeconds) return null;
+    if (!instrumentId || !durationSeconds) return null;
     return suggestJobPrice({ instrumentId, durationSeconds, deadlineDays });
   }, [instrumentId, durationSeconds, deadlineDays]);
 
@@ -109,7 +109,7 @@ export function JobPricingFields({
 
   useEffect(() => {
     if (priceFocused) return;
-    setPriceText(String(priceDollars));
+    setPriceText(priceDollars > 0 ? String(priceDollars) : "");
   }, [priceDollars, priceFocused]);
 
   function applyDuration(total: number) {
@@ -211,7 +211,7 @@ export function JobPricingFields({
                 value={priceText}
                 disabled={disabled}
                 required
-                placeholder={suggestion ? String(suggestion.defaultPrice) : "0"}
+                placeholder=""
                 onFocus={() => setPriceFocused(true)}
                 onChange={(e) => {
                   const next = e.target.value.replace(/[^\d]/g, "");

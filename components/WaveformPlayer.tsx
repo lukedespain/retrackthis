@@ -248,7 +248,7 @@ export function WaveformPlayer({
       peaks: [{ peaks, role: "part" }],
       currentTime,
       duration,
-      height: compact ? 64 : 80,
+      height: compact ? 80 : 80,
     });
   }, [peaks, currentTime, duration, loading, compact]);
 
@@ -263,7 +263,7 @@ export function WaveformPlayer({
         peaks: [{ peaks, role: "part" }],
         currentTime: currentTimeRef.current,
         duration: durationRef.current,
-        height: compact ? 64 : 80,
+        height: compact ? 80 : 80,
       });
     };
     window.addEventListener("resize", onResize);

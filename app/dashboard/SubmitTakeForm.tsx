@@ -23,6 +23,7 @@ export function SubmitTakeForm({
   payoutReady = true,
   alreadySubmitted = false,
   existingTakeUrl,
+  existingNote,
   existingFiles,
   onSubmitted,
 }: {
@@ -32,8 +33,9 @@ export function SubmitTakeForm({
   payoutReady?: boolean;
   alreadySubmitted?: boolean;
   existingTakeUrl?: string | null;
+  existingNote?: string | null;
   existingFiles?: TakeFileRecord[];
-  onSubmitted?: (take: { jobId: string; audioFileUrl: string; files?: TakeFileRecord[] }) => void;
+  onSubmitted?: (take: { jobId: string; audioFileUrl: string; note?: string | null; files?: TakeFileRecord[] }) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
@@ -43,9 +45,10 @@ export function SubmitTakeForm({
   const [submitted, setSubmitted] = useState(alreadySubmitted);
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(existingTakeUrl ?? null);
   const [submittedFiles, setSubmittedFiles] = useState<TakeFileRecord[] | undefined>(existingFiles);
+  const [submittedNote, setSubmittedNote] = useState(existingNote ?? "");
   const [replacing, setReplacing] = useState(false);
   const [rows, setRows] = useState<TakeRow[]>([]);
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(existingNote ?? "");
 
   const isReplace = replacing;
   const fileCount = rows.length;
@@ -132,10 +135,12 @@ export function SubmitTakeForm({
       setSubmitted(true);
       setSubmittedUrl(take.audioFileUrl);
       setSubmittedFiles(take.files);
+      setSubmittedNote(typeof take.note === "string" ? take.note : note);
       setRows([]);
       onSubmitted?.({
         jobId,
         audioFileUrl: take.audioFileUrl,
+        note: typeof take.note === "string" ? take.note : note,
         files: take.files,
       });
     } catch (err) {
@@ -159,6 +164,12 @@ export function SubmitTakeForm({
         {(submittedFiles?.length || submittedUrl) && (
           <TakeSubmissionFiles files={submittedFiles} fallbackAudioUrl={submittedUrl ?? undefined} allowDownload />
         )}
+        {submittedNote.trim() ? (
+          <div className="sub-note">
+            <span>Your note</span>
+            {submittedNote}
+          </div>
+        ) : null}
         <button type="button" className="btn soft" style={{ height: 38, fontSize: 13.5 }} onClick={() => setReplacing(true)}>
           Replace takes
         </button>
@@ -215,9 +226,13 @@ export function SubmitTakeForm({
           onClick={() => inputRef.current?.click()}
         >
           <span className="tile-ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 16V4M7 8l5-5 5 5M5 20h14" />
-            </svg>
+            {uploading ? (
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" />
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 16V4M7 8l5-5 5 5M5 20h14" />
+              </svg>
+            )}
           </span>
           <span className="drop-t">
             <strong>{uploading ? "Uploading…" : addLabel}</strong>
@@ -254,8 +269,16 @@ export function SubmitTakeForm({
       {error ? <Alert variant="error">{error}</Alert> : null}
 
       {payoutReady ? (
-        <button type="submit" className="btn primary" disabled={submitting || uploading || fileCount === 0}>
-          {submitting ? "Submitting…" : cta}
+        <button
+          type="submit"
+          className={`btn primary${submitting || uploading ? " busy" : ""}`}
+          disabled={submitting || uploading || fileCount === 0}
+          aria-busy={submitting || uploading}
+        >
+          {submitting || uploading ? (
+            <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent" aria-hidden="true" />
+          ) : null}
+          {uploading ? "Uploading…" : submitting ? "Submitting…" : cta}
         </button>
       ) : (
         <div className="pay-gate">

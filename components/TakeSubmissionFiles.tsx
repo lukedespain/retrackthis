@@ -208,6 +208,7 @@ export function TakeSubmissionFiles({
   }
 
   const rows = files?.length ? pairedTakeRows(files) : audioItems.map((a) => ({ audio: a, midi: null }));
+  const showMidiColumn = !hasBed && (hasPairing || allMidi.length > 0 || hasMidiMeta);
 
   const summaryParts: string[] = [];
   summaryParts.push(audioItems.length === 1 ? "1 take" : `${audioItems.length} takes`);
@@ -224,9 +225,11 @@ export function TakeSubmissionFiles({
 
         return (
           <div key={audioFile.id} className="rounded-xl border border-gray-200 bg-white p-3">
-            <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-start">
-              <div className={hasBed ? "md:col-span-3" : undefined}>
-                <p className="mb-1.5 text-xs font-medium text-blue-900">{audioFile.label}</p>
+            <div className={showMidiColumn ? "grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-start" : undefined}>
+              <div className={hasBed || !showMidiColumn ? "md:col-span-3" : undefined}>
+                <p className="mb-2 truncate text-sm font-medium text-gray-900" title={audioFile.label}>
+                  {audioFile.label}
+                </p>
                 {streamSrc ? (
                   <>
                     {hasBed && backingSrc ? (

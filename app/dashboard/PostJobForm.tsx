@@ -338,19 +338,25 @@ function PostJobFormInner({
 
     const formEl = formRef.current;
     if (!formEl) return;
+    const form = new FormData(formEl);
+    const bpmNum = Number((formEl.querySelector("#f-bpm") as HTMLInputElement | null)?.value);
+    const bpm =
+      fixedTempo && Number.isFinite(bpmNum) && bpmNum >= 1 && bpmNum <= 400 ? Math.round(bpmNum) : null;
+    if (fixedTempo && bpm == null) {
+      setError("BPM must be between 1 and 400.");
+      return;
+    }
 
     setSubmitting(true);
 
     try {
       await ensureAppProfile();
-      const form = new FormData(formEl);
-      const price = Number(form.get("price"));
+      const price = priceDollars;
       const deadlineDays = Math.min(
         POST_DEADLINE_MAX_DAYS,
         Math.max(1, Math.round(Number(deadlineText)))
       );
-      const bpmRaw = form.get("bpm");
-      const musicalKeyRaw = String(form.get("musicalKey") ?? "").trim();
+      const musicalKeyRaw = musicalKey.trim();
       const invites = collectInviteEmails();
 
       const postedInstrumentId = instrumentId ?? "";
@@ -370,7 +376,7 @@ function PostJobFormInner({
           ? {
               title: form.get("title"),
               musicalKey: musicalKeyRaw || null,
-              bpm: fixedTempo ? Number(bpmRaw) : null,
+              bpm,
               isTest: isTestJob,
               inviteEmails: invites,
               parts: [
@@ -398,7 +404,7 @@ function PostJobFormInner({
               priceCents: priced(price),
               durationSeconds,
               musicalKey: musicalKeyRaw || null,
-              bpm: fixedTempo ? Number(bpmRaw) : null,
+              bpm,
               deadline: new Date(Date.now() + deadlineDays * 24 * 60 * 60 * 1000).toISOString(),
               inviteEmails: invites,
               isTest: isTestJob,

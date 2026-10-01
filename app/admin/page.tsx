@@ -396,9 +396,9 @@ function AdminPageInner() {
               />
             </div>
 
-            <div className="overflow-x-auto rounded-2xl border border-gray-100">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+            <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+              <table className="min-w-full bg-white text-left text-sm">
+                <thead className="border-b border-gray-200 bg-white text-xs uppercase tracking-wide text-gray-500">
                   <tr>
                     <th className="px-4 py-3 font-medium">Member</th>
                     <th className="px-4 py-3 font-medium">Posted</th>
@@ -407,9 +407,9 @@ function AdminPageInner() {
                     <th className="px-4 py-3 font-medium">Instruments</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-200 bg-white">
                   {filteredMembers.map((m) => (
-                    <tr key={m.id} className="align-top">
+                    <tr key={m.id} className="bg-white align-top">
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-900">
                           {m.name}
@@ -663,25 +663,25 @@ function InstrumentTable({
   emphasizeGap?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-gray-100">
-      <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-4 py-2.5">
+    <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2.5">
         <h2 className="text-sm font-medium text-gray-800">{title}</h2>
         <span className="text-xs text-gray-400">{rows.length}</span>
       </div>
       {rows.length === 0 ? (
         <p className="px-4 py-8 text-sm text-gray-500">{empty}</p>
       ) : (
-        <table className="min-w-full text-left text-sm">
-          <thead className="text-xs uppercase tracking-wide text-gray-500">
+        <table className="min-w-full bg-white text-left text-sm">
+          <thead className="border-b border-gray-200 bg-white text-xs uppercase tracking-wide text-gray-500">
             <tr>
               <th className="px-4 py-2.5 font-medium">Instrument</th>
               <th className="px-4 py-2.5 font-medium">Group</th>
               <th className="px-4 py-2.5 font-medium">Musicians</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {rows.map((row) => (
-              <tr key={row.id}>
+              <tr key={row.id} className="bg-white">
                 <td className="px-4 py-2.5 text-gray-900">
                   {row.label}
                   {row.custom ? (

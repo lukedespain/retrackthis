@@ -326,10 +326,10 @@ export function AdminJobsPanel({
         </Card>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-gray-100">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-            <tr>
+      <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+        <table className="min-w-full bg-white text-left text-sm">
+          <thead className="border-b border-gray-200 bg-white text-xs uppercase tracking-wide text-gray-500">
+            <tr className="bg-white">
               <th className="px-4 py-3 font-medium">Job</th>
               <th className="px-4 py-3 font-medium">Creator</th>
               <th className="px-4 py-3 font-medium">Price</th>
@@ -337,9 +337,9 @@ export function AdminJobsPanel({
               <th className="px-4 py-3 font-medium" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {filtered.length === 0 ? (
-              <tr>
+              <tr className="bg-white">
                 <td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-500">
                   No jobs match.
                 </td>
@@ -348,7 +348,7 @@ export function AdminJobsPanel({
               filtered.map((job) => {
                 const takeCount = job.takeCount ?? 0;
                 return (
-                  <tr key={job.id} className="align-top">
+                  <tr key={job.id} className="bg-white align-top">
                     <td className="px-4 py-3">
                       <div
                         className="max-w-[11rem] truncate font-medium text-gray-900"

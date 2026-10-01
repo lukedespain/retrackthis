@@ -15,6 +15,8 @@ export type Job = {
   durationSeconds?: number | null;
   /** null = flexible tempo; number = fixed BPM */
   bpm: number | null;
+  musicalKey?: string | null;
+  poster?: { name: string; avatar: unknown } | null;
   deadline: string;
   deadlineExtendedAt?: string | null;
   isTest?: boolean;

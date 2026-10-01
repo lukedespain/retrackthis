@@ -243,10 +243,10 @@ function SubmissionCard({
             {canReplace ? (
               <SubmitTakeForm
                 jobId={liveTake.jobId}
+                priceCents={liveTake.job.priceCents}
                 alreadySubmitted
                 existingTakeUrl={liveTake.audioFileUrl}
                 existingFiles={liveTake.files}
-                backingSrc={liveTake.job.backingFileUrl}
                 onSubmitted={(next) =>
                   setLiveTake((prev) => ({
                     ...prev,

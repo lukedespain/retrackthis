@@ -311,6 +311,7 @@ export async function GET(req: NextRequest) {
       _count: { select: { takes: true } },
       takes: { where: { isWinner: true }, select: { id: true }, take: 1 },
       payment: { select: { status: true } },
+      creator: { select: { name: true, avatar: true } },
     },
   });
 
@@ -340,8 +341,9 @@ export async function GET(req: NextRequest) {
       : jobs;
 
   return NextResponse.json(
-    visible.map(({ _count, takes: winningTakes, payment, ...job }) => ({
+    visible.map(({ _count, takes: winningTakes, payment, creator, ...job }) => ({
       ...job,
+      poster: creator ? { name: creator.name, avatar: creator.avatar } : null,
       takeCount: _count.takes,
       hasSelectedWinner: winningTakes.length > 0,
       paymentStatus: payment?.status ?? null,

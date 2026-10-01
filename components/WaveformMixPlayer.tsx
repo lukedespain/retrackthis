@@ -92,6 +92,31 @@ export function WaveformMixPlayer({
   const [waveError, setWaveError] = useState<string | null>(null);
   const [loadingWave, setLoadingWave] = useState(true);
   const [ready, setReady] = useState(false);
+  const [fileSizes, setFileSizes] = useState<{ part?: string; bed?: string }>({});
+
+  useEffect(() => {
+    let cancel = false;
+    async function megabytes(url: string) {
+      try {
+        const res = await fetch(url, { method: "HEAD" });
+        const len = Number(res.headers.get("content-length"));
+        if (!Number.isFinite(len) || len <= 0) return undefined;
+        const mb = len / (1024 * 1024);
+        const n = mb >= 10 ? String(Math.round(mb)) : mb < 1 ? mb.toFixed(1) : String(Math.round(mb));
+        return `${n} MB`;
+      } catch {
+        return undefined;
+      }
+    }
+    void (async () => {
+      const part = await megabytes(partFileForDownload);
+      const bed = backingSrc ? await megabytes(backingSrc) : undefined;
+      if (!cancel) setFileSizes({ part, bed });
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [partFileForDownload, backingSrc]);
 
   modeRef.current = mode;
   offsetMsRef.current = showNudge ? offsetMs : 0;
@@ -566,7 +591,7 @@ export function WaveformMixPlayer({
               <strong>{partTabLabel}</strong>
               <span>{partTabLabel === "Take" ? "The submitted take" : "What you'll replace"}</span>
             </span>
-            <span className="dl-size">{fileKind(partName)}</span>
+            <span className="dl-size">{fileKind(partName)}{fileSizes.part ? ` · ${fileSizes.part}` : ""}</span>
           </a>
           {backingSrc ? (
             <a className="dl-file" href={backingSrc} download={bedName} target="_blank" rel="noopener noreferrer">
@@ -577,7 +602,7 @@ export function WaveformMixPlayer({
                 <strong>Bed</strong>
                 <span>The rest of the mix</span>
               </span>
-              <span className="dl-size">{fileKind(bedName)}</span>
+              <span className="dl-size">{fileKind(bedName)}{fileSizes.bed ? ` · ${fileSizes.bed}` : ""}</span>
             </a>
           ) : null}
         </div>

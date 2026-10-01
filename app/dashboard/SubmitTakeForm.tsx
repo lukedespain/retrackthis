@@ -1,153 +1,143 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { FileUpload } from "@/components/FileUpload";
-import { TakeMixPlayer } from "@/components/TakeMixPlayer";
-import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
-import { WaveformPlayer } from "@/components/WaveformPlayer";
+import { useRef, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Textarea } from "@/components/ui/Textarea";
-import { TAKE_FILE_ACCEPT, TAKE_UPLOAD_HINT } from "@/lib/constants";
+import { TAKE_FILE_ACCEPT } from "@/lib/constants";
+import { scanAudioFile } from "@/lib/audioScan";
+import { formatCents } from "@/lib/format";
+import { formatPartDuration } from "@/lib/jobPricing";
+import { supabaseClient } from "@/lib/supabaseClient";
 import { MAX_AUDIO_TAKES, type TakeFileRecord } from "@/lib/takeFiles";
+import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 
 type TakeRow = {
-  audioLabel: string;
-  audioFileUrl: string | null;
+  fileName: string;
+  audioFileUrl: string;
   audioPreviewUrl: string | null;
+  durationSeconds: number | null;
 };
-
-function emptyRow(index: number): TakeRow {
-  return {
-    audioLabel: `Take ${index + 1}`,
-    audioFileUrl: null,
-    audioPreviewUrl: null,
-  };
-}
 
 export function SubmitTakeForm({
   jobId,
+  priceCents,
+  payoutReady = true,
   alreadySubmitted = false,
   existingTakeUrl,
   existingFiles,
-  backingSrc = null,
   onSubmitted,
 }: {
   jobId: string;
+  priceCents?: number;
+  /** False shows the payout gate instead of the submit button. */
+  payoutReady?: boolean;
   alreadySubmitted?: boolean;
   existingTakeUrl?: string | null;
   existingFiles?: TakeFileRecord[];
-  /** Job bed — enables Take / Bed / Both after upload. */
-  backingSrc?: string | null;
   onSubmitted?: (take: { jobId: string; audioFileUrl: string; files?: TakeFileRecord[] }) => void;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(alreadySubmitted);
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(existingTakeUrl ?? null);
   const [submittedFiles, setSubmittedFiles] = useState<TakeFileRecord[] | undefined>(existingFiles);
   const [replacing, setReplacing] = useState(false);
-  const [rows, setRows] = useState<TakeRow[]>([emptyRow(0)]);
-  const [attestHuman, setAttestHuman] = useState(false);
-  const [burst, setBurst] = useState(false);
-
-  useEffect(() => {
-    if (alreadySubmitted) {
-      setSubmitted(true);
-      setReplacing(false);
-      if (existingTakeUrl) setSubmittedUrl(existingTakeUrl);
-      if (existingFiles?.length) setSubmittedFiles(existingFiles);
-    }
-  }, [alreadySubmitted, existingTakeUrl, existingFiles]);
+  const [rows, setRows] = useState<TakeRow[]>([]);
+  const [note, setNote] = useState("");
 
   const isReplace = replacing;
+  const fileCount = rows.length;
 
-  const readyAudioRows = rows.filter((row) => row.audioFileUrl && row.audioLabel.trim());
-
-  const canSubmit = attestHuman && readyAudioRows.length > 0;
-
-  function updateRow(index: number, patch: Partial<TakeRow>) {
-    setRows((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  function growNote(el: HTMLTextAreaElement) {
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
   }
 
-  function addRow() {
-    setRows((current) =>
-      current.length < MAX_AUDIO_TAKES ? [...current, emptyRow(current.length)] : current
-    );
+  async function uploadTakeFile(file: File): Promise<TakeRow> {
+    const scan = await scanAudioFile(file);
+    const signRes = await fetch("/api/uploads/sign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileName: file.name, kind: "take" }),
+    });
+    if (!signRes.ok) throw new Error("Couldn't prepare upload");
+    const { path, token, publicUrl } = await signRes.json();
+    const { error: uploadError } = await supabaseClient.storage
+      .from("audio-files")
+      .uploadToSignedUrl(path, token, file);
+    if (uploadError) throw new Error(uploadError.message || "Upload failed");
+
+    let previewUrl: string | null = null;
+    try {
+      const previewRes = await fetch("/api/uploads/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path, publicUrl, fileName: file.name }),
+      });
+      const previewBody = await previewRes.json().catch(() => null);
+      if (previewRes.ok && typeof previewBody?.previewUrl === "string") previewUrl = previewBody.previewUrl;
+    } catch {
+      // Preview is optional. The master still uploaded.
+    }
+
+    return {
+      fileName: file.name,
+      audioFileUrl: publicUrl,
+      audioPreviewUrl: previewUrl,
+      durationSeconds: scan?.fileDurationSeconds ?? null,
+    };
   }
 
-  function startReplace() {
-    setReplacing(true);
-    setSubmitted(false);
-    setRows([emptyRow(0)]);
-    setAttestHuman(false);
+  async function onPickFile(file: File | undefined) {
+    if (!file || rows.length >= MAX_AUDIO_TAKES) return;
+    setUploading(true);
     setError(null);
-    setBurst(false);
+    try {
+      const row = await uploadTakeFile(file);
+      setRows((current) => (current.length < MAX_AUDIO_TAKES ? [...current, row] : current));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
   }
 
-  function cancelReplace() {
-    setReplacing(false);
-    setSubmitted(true);
-    setRows([emptyRow(0)]);
-    setAttestHuman(false);
-    setError(null);
-  }
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!payoutReady || rows.length === 0) return;
     setSubmitting(true);
     setError(null);
-
-    if (!attestHuman) {
-      setError("Confirm this take is a real human performance before submitting.");
-      setSubmitting(false);
-      return;
-    }
-
-    if (readyAudioRows.length === 0) {
-      setError("Upload at least one take before submitting.");
-      setSubmitting(false);
-      return;
-    }
-
-    const formEl = e.currentTarget;
-    const form = new FormData(formEl);
-
-    const audioTakes = readyAudioRows.map(({ audioLabel, audioFileUrl, audioPreviewUrl }) => ({
-      label: audioLabel.trim(),
-      fileUrl: audioFileUrl as string,
-      previewUrl: audioPreviewUrl,
-    }));
-
     try {
       const res = await fetch(`/api/jobs/${jobId}/takes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          audioTakes,
-          note: form.get("note"),
-          attestHuman: true,
+          audioTakes: rows.map((row) => ({
+            label: row.fileName,
+            fileUrl: row.audioFileUrl,
+            previewUrl: row.audioPreviewUrl,
+          })),
+          note,
         }),
       });
-
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? `Request failed (${res.status})`);
       }
-
       const take = await res.json();
       setReplacing(false);
       setSubmitted(true);
       setSubmittedUrl(take.audioFileUrl);
       setSubmittedFiles(take.files);
-      setBurst(true);
+      setRows([]);
       onSubmitted?.({
         jobId,
         audioFileUrl: take.audioFileUrl,
         files: take.files,
       });
-      window.setTimeout(() => setBurst(false), 1800);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -156,190 +146,128 @@ export function SubmitTakeForm({
   }
 
   if (submitted && !replacing) {
+    const n = submittedFiles?.length || (submittedUrl ? 1 : 0);
     return (
-      <Card padding="md" className="relative overflow-hidden">
-        {burst && <SuccessBurst />}
-        <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+      <div className="stack" style={{ gap: 14 }}>
+        <h3>Your submission</h3>
+        <div className="banner">
+          <span className="status pending">Pending</span>
+          <span>
+            {n} take{n === 1 ? "" : "s"} submitted. You can replace them until the job closes.
           </span>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-base font-semibold text-gray-900">Take submitted</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              You&apos;re in. Status: <span className="font-medium text-gray-800">Pending</span>. The creator
-              will review takes and pick a winner. Jobs stay open until the deadline.
-            </p>
-            {(submittedFiles?.length || submittedUrl) && (
-              <div className="mt-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-                  Your submission
-                </p>
-                <TakeSubmissionFiles
-                  files={submittedFiles}
-                  fallbackAudioUrl={submittedUrl ?? undefined}
-                  allowDownload
-                />
-              </div>
-            )}
-            <div className="mt-4">
-              <Button type="button" variant="secondary" size="sm" onClick={startReplace}>
-                Replace take
-              </Button>
-              <p className="mt-2 text-xs text-gray-400">
-                Need a better file (e.g. WAV instead of MP3)? Upload a new version. It replaces what the
-                creator hears.
-              </p>
-            </div>
-          </div>
         </div>
-      </Card>
+        {(submittedFiles?.length || submittedUrl) && (
+          <TakeSubmissionFiles files={submittedFiles} fallbackAudioUrl={submittedUrl ?? undefined} allowDownload />
+        )}
+        <button type="button" className="btn soft" style={{ height: 38, fontSize: 13.5 }} onClick={() => setReplacing(true)}>
+          Replace takes
+        </button>
+      </div>
     );
   }
 
+  const addLabel = fileCount ? "Add a second take" : "Add your takes";
+  const addHint = fileCount ? `Optional · ${fileCount} of ${MAX_AUDIO_TAKES} added` : "WAV or MP3, up to 2";
+  const cta = fileCount
+    ? `Submit ${fileCount} take${fileCount === 1 ? "" : "s"}`
+    : "Add a take to submit";
+
   return (
-    <Card padding="md">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-gray-900">
-            {isReplace ? "Replace your take" : "Submit your take"}
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {isReplace
-              ? "Upload the new file(s). This replaces your previous submission for this job."
-              : `Multiple musicians can submit. You get one submission, up to ${MAX_AUDIO_TAKES} takes, and the producer picks who to pay.`}
-          </p>
-          {!isReplace && (
-            <p className="mt-2 text-xs text-gray-400">
-              One submission per job · up to {MAX_AUDIO_TAKES} takes · free to submit
-            </p>
-          )}
-        </div>
-        {isReplace && (
-          <Button type="button" variant="ghost" size="sm" onClick={cancelReplace}>
-            Cancel
-          </Button>
-        )}
+    <form className="stack" onSubmit={handleSubmit}>
+      <div className="sub-head">
+        <h3>{isReplace ? "Replace your takes" : "Submit your take"}</h3>
+        {typeof priceCents === "number" ? (
+          <span className="sub-pay">{formatCents(priceCents)} if picked</span>
+        ) : null}
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-        <div className="space-y-4">
+      {rows.length > 0 ? (
+        <div className="att-list">
           {rows.map((row, index) => (
-            <div
-              key={index}
-              className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4"
-            >
-              <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Take {index + 1}</p>
-              <label className="block text-xs font-medium text-gray-700">
-                Track name
-                <input
-                  type="text"
-                  value={row.audioLabel}
-                  onChange={(e) => updateRow(index, { audioLabel: e.target.value })}
-                  placeholder={`Take ${index + 1}`}
-                  className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-                />
-              </label>
-              <FileUpload
-                label={row.audioFileUrl ? "Replace audio" : "Upload audio"}
-                kind="take"
-                accept={TAKE_FILE_ACCEPT}
-                compact
-                hint={index === 0 ? TAKE_UPLOAD_HINT : undefined}
-                onUploaded={(url, meta) =>
-                  updateRow(index, {
-                    audioFileUrl: url,
-                    audioPreviewUrl: meta?.previewUrl ?? null,
-                  })
-                }
-              />
-              {row.audioFileUrl && (
-                <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-gray-500">
-                    {backingSrc ? "Check your take against the bed" : "Preview your take"}
-                  </p>
-                  {backingSrc ? (
-                    <TakeMixPlayer
-                      takeSrc={row.audioPreviewUrl || row.audioFileUrl}
-                      bedSrc={backingSrc}
-                      downloadSrc={row.audioFileUrl}
-                    />
-                  ) : (
-                    <WaveformPlayer
-                      src={row.audioPreviewUrl || row.audioFileUrl}
-                      downloadSrc={row.audioFileUrl}
-                      label={row.audioLabel}
-                      compact
-                    />
-                  )}
-                </div>
-              )}
+            <div className="att" key={`${row.audioFileUrl}-${index}`}>
+              <span className="att-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M5 12.5l5 5L19 7" />
+                </svg>
+              </span>
+              <span className="att-n">{row.fileName}</span>
+              {row.durationSeconds ? <span className="att-s">{formatPartDuration(row.durationSeconds)}</span> : null}
+              <button
+                type="button"
+                className="icon"
+                aria-label={`Remove ${row.fileName}`}
+                onClick={() => setRows((current) => current.filter((_, i) => i !== index))}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
             </div>
           ))}
-
-          {rows.length < MAX_AUDIO_TAKES && (
-            <Button type="button" variant="secondary" size="sm" onClick={addRow} className="w-full sm:w-auto">
-              Add another take
-            </Button>
-          )}
         </div>
+      ) : null}
 
-        <Textarea
-          label="Note"
-          name="note"
-          rows={2}
-          placeholder="Anything the creator should know about your take?"
-          hint="Optional"
-        />
-
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition-colors hover:border-gray-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/20">
-          <input
-            type="checkbox"
-            checked={attestHuman}
-            onChange={(e) => setAttestHuman(e.target.checked)}
-            required
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent focus:ring-accent/30"
-          />
-          <span className="text-sm leading-relaxed text-gray-700">
-            I confirm this take is a real, live human performance, not AI-generated, AI-assisted, or produced
-            by a generative music tool in any way.
+      {fileCount < MAX_AUDIO_TAKES ? (
+        <button
+          type="button"
+          className="drop-row"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          <span className="tile-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 16V4M7 8l5-5 5 5M5 20h14" />
+            </svg>
           </span>
-        </label>
+          <span className="drop-t">
+            <strong>{uploading ? "Uploading…" : addLabel}</strong>
+            <span>{addHint}</span>
+          </span>
+          <span className="drop-go">Browse</span>
+        </button>
+      ) : null}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={TAKE_FILE_ACCEPT}
+        hidden
+        onChange={(e) => void onPickFile(e.target.files?.[0])}
+      />
 
-        {error && <Alert variant="error">{error}</Alert>}
-
-        <Button type="submit" disabled={submitting || !canSubmit} className="w-full sm:w-auto">
-          {submitting
-            ? isReplace
-              ? "Replacing…"
-              : "Submitting…"
-            : isReplace
-              ? "Replace take"
-              : "Submit take"}
-        </Button>
-      </form>
-    </Card>
-  );
-}
-
-function SuccessBurst() {
-  const bits = Array.from({ length: 18 }, (_, i) => i);
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      {bits.map((i) => (
-        <span
-          key={i}
-          className="submit-confetti absolute left-1/2 top-6 h-2 w-2 rounded-sm"
-          style={{
-            backgroundColor: i % 3 === 0 ? "#5F4AFF" : i % 3 === 1 ? "#10B981" : "#F59E0B",
-            ["--dx" as string]: `${((i * 47) % 160) - 80}px`,
-            ["--dy" as string]: `${40 + ((i * 31) % 70)}px`,
-            ["--rot" as string]: `${(i * 40) % 360}deg`,
-            animationDelay: `${(i % 6) * 40}ms`,
+      <div className="note-box">
+        <textarea
+          ref={noteRef}
+          className="in ta note"
+          name="note"
+          rows={4}
+          maxLength={600}
+          value={note}
+          placeholder="Notes for the producer: how you approached it, gear, alternate ideas…"
+          onChange={(e) => {
+            setNote(e.target.value);
+            growNote(e.target);
           }}
         />
-      ))}
-    </div>
+        <span className="note-count">{note.length}/600</span>
+      </div>
+
+      {error ? <Alert variant="error">{error}</Alert> : null}
+
+      {payoutReady ? (
+        <button type="submit" className="btn primary" disabled={submitting || uploading || fileCount === 0}>
+          {submitting ? "Submitting…" : cta}
+        </button>
+      ) : (
+        <div className="pay-gate">
+          <span className="pg-t">
+            <strong>Set up payouts to submit</strong>
+            <span>So we can pay you if you&apos;re picked. About 2 minutes.</span>
+          </span>
+          <a className="btn primary" href="/settings#payouts">
+            Set up
+          </a>
+        </div>
+      )}
+    </form>
   );
 }

@@ -11,19 +11,22 @@ export function ReferenceTracksPlayer({
   allowDownload = false,
   className = "",
   partTabLabel = "Part",
+  flat = false,
 }: {
   partSrc: string;
   backingSrc?: string | null;
   allowDownload?: boolean;
   className?: string;
   partTabLabel?: string;
+  /** Sit inside an existing panel instead of drawing another card. */
+  flat?: boolean;
 }) {
   return (
     <WaveformMixPlayer
       partSrc={partSrc}
       backingSrc={backingSrc}
       allowDownload={allowDownload}
-      className={className}
+      className={`${flat ? "flat" : ""} ${className}`.trim()}
       partTabLabel={partTabLabel}
       headingLabel="Reference"
       showNudge={false}

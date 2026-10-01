@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { PayoutSetupPanel, type PayoutSnapshot } from "@/components/PayoutSetupPanel";
-import { TempoTag } from "@/components/JobMetaTags";
+import { type PayoutSnapshot } from "@/components/PayoutSetupPanel";
 import { TestJobBadge } from "@/components/TestJobBadge";
+import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
-import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { requestPostJob } from "@/components/MarketingHeroCtas";
 import { formatCents, formatDeadline } from "@/lib/format";
@@ -33,7 +32,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const searchParams = useSearchParams();
   const [myTakesByJob, setMyTakesByJob] = useState<Record<string, MyTakeSummary>>({});
   const [payout, setPayout] = useState<PayoutSnapshot | null>(null);
-  const [payoutError, setPayoutError] = useState<string | null>(null);
+  const [meId, setMeId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,7 +67,6 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.error ?? "Could not load payout status");
       setPayout(body as PayoutSnapshot);
-      setPayoutError(null);
     } catch {
       setPayout({
         ready: false,
@@ -85,8 +83,13 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
     if (!signedIn) {
       setMyTakesByJob({});
       setPayout(null);
+      setMeId(null);
       return;
     }
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => setMeId(body?.profile?.id ?? null))
+      .catch(() => setMeId(null));
     fetch("/api/takes/mine")
       .then((res) => (res.ok ? res.json() : []))
       .then((takes: Array<{ jobId: string; audioFileUrl: string; files?: MyTakeSummary["files"] }>) => {
@@ -268,10 +271,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
               expanded={expandedJobId === job.id}
               myTake={myTakesByJob[job.id]}
               payout={signedIn ? payout : null}
-              payoutError={payoutError}
-              onPayoutError={setPayoutError}
-              onPayoutReady={setPayout}
-              onPayoutRefresh={loadPayoutStatus}
+              mine={Boolean(meId && job.creatorId === meId)}
               onTakeSubmitted={handleTakeSubmitted}
               onToggle={() => handleToggleJob(job.id)}
             />
@@ -324,22 +324,16 @@ function OpenJobCard({
   expanded,
   myTake,
   payout,
-  payoutError,
-  onPayoutError,
-  onPayoutReady,
-  onPayoutRefresh,
   onTakeSubmitted,
   onToggle,
+  mine,
 }: {
   job: Job;
   signedIn: boolean;
   expanded: boolean;
   myTake?: MyTakeSummary;
   payout: PayoutSnapshot | null;
-  payoutError: string | null;
-  onPayoutError: (message: string | null) => void;
-  onPayoutReady: (snapshot: PayoutSnapshot) => void;
-  onPayoutRefresh: () => Promise<void> | void;
+  mine: boolean;
   onTakeSubmitted: (take: MyTakeSummary) => void;
   onToggle: () => void;
 }) {
@@ -396,61 +390,70 @@ function OpenJobCard({
       {expanded ? (
         <div className="job-body">
           <div className="panel">
-            <p>{job.description}</p>
+            <div className="by">
+              <Avatar avatar={job.poster?.avatar} name={mine ? "You" : job.poster?.name ?? "Producer"} size="sm" />
+              Posted by <b>{mine ? "you" : job.poster?.name ?? "a producer"}</b>
+            </div>
+            <p style={{ color: "var(--ink-2)" }}>{job.description}</p>
             <div className="pills" style={{ margin: 0 }}>
-              <TempoTag bpm={job.bpm} />
-              <span className="pill">{job.instrument}</span>
+              <span className="pill">{job.bpm ? `${job.bpm} BPM` : "Tempo not fixed"}</span>
+              {job.musicalKey ? <span className="pill">{job.musicalKey}</span> : null}
+              <span className="pill">
+                <InstrumentIcon instrument={job.instrument} />
+                {job.instrument}
+              </span>
             </div>
             <ReferenceTracksPlayer
+              flat
               partSrc={job.demoFileUrl}
               backingSrc={job.backingFileUrl}
               allowDownload={signedIn}
             />
           </div>
           <div className="panel">
-                {!signedIn ? (
-                  <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 text-center sm:px-6">
-                    <p className="text-sm text-gray-600">
-                      Like this gig? Create a free account to submit your take.
-                    </p>
-                    <Link href={signUpHref} className="mt-3 inline-block">
-                      <Button size="sm">Sign up to submit</Button>
-                    </Link>
-                    <p className="mt-2 text-xs text-gray-400">
-                      Already have an account?{" "}
-                      <Link
-                        href={`/sign-in?next=${encodeURIComponent("/musicians")}`}
-                        className="font-medium text-gray-600 underline-offset-2 hover:text-gray-900 hover:underline"
-                      >
-                        Sign in
-                      </Link>
-                    </p>
-                  </div>
-                ) : payout === null ? (
-                  <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-5 sm:px-6">
-                    <p className="text-sm text-gray-500">Checking payout setup…</p>
-                  </div>
-                ) : !payout.ready && !myTake ? (
-                  <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50/50 px-4 py-5 sm:px-6">
-                    <PayoutSetupPanel
-                      snapshot={payout}
-                      error={payoutError}
-                      onRefresh={onPayoutRefresh}
-                      onError={onPayoutError}
-                      onReady={onPayoutReady}
-                      idPrefix={`job-${job.id}-payout`}
-                    />
-                  </div>
-                ) : (
-                  <SubmitTakeForm
-                    jobId={job.id}
-                    alreadySubmitted={Boolean(myTake)}
-                    existingTakeUrl={myTake?.audioFileUrl}
-                    existingFiles={myTake?.files}
-                    backingSrc={job.backingFileUrl}
-                    onSubmitted={onTakeSubmitted}
-                  />
-                )}
+            {mine ? (
+              <div className="stack" style={{ gap: 12 }}>
+                <h3>This is your job</h3>
+                <p>This is how musicians see it. Listen to submissions and pick a winner in My jobs.</p>
+                <Link href="/producers" className="btn soft" style={{ height: 38, fontSize: 13.5, alignSelf: "flex-start" }}>
+                  Go to My jobs
+                </Link>
+              </div>
+            ) : !signedIn ? (
+              <div className="stack" style={{ gap: 14 }}>
+                <div className="sub-head">
+                  <h3>Submit your take</h3>
+                  <span className="sub-pay">{formatCents(job.priceCents)} if picked</span>
+                </div>
+                <div className="pay-gate">
+                  <span className="pg-t">
+                    <strong>Create an account to submit</strong>
+                    <span>Free to send a take. Set up payouts after you sign up.</span>
+                  </span>
+                  <Link href={signUpHref} className="btn primary">
+                    Sign up
+                  </Link>
+                </div>
+              </div>
+            ) : payout === null && !myTake ? (
+              <div className="stack" style={{ gap: 14 }}>
+                <div className="sub-head">
+                  <h3>Submit your take</h3>
+                  <span className="sub-pay">{formatCents(job.priceCents)} if picked</span>
+                </div>
+                <p>Checking payout setup…</p>
+              </div>
+            ) : (
+              <SubmitTakeForm
+                jobId={job.id}
+                priceCents={job.priceCents}
+                payoutReady={Boolean(payout?.ready) || Boolean(myTake)}
+                alreadySubmitted={Boolean(myTake)}
+                existingTakeUrl={myTake?.audioFileUrl}
+                existingFiles={myTake?.files}
+                onSubmitted={onTakeSubmitted}
+              />
+            )}
           </div>
         </div>
       ) : null}

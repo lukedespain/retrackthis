@@ -120,14 +120,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
   }
 
   const body = await req.json();
-  const { note, attestHuman, audioFileUrl: legacyAudioUrl } = body;
-
-  if (!attestHuman) {
-    return NextResponse.json(
-      { error: "You must confirm this take is a real human performance, not AI-generated." },
-      { status: 400 }
-    );
-  }
+  const { note, audioFileUrl: legacyAudioUrl } = body;
 
   if (Array.isArray(body.audioTakes) && body.audioTakes.length > MAX_AUDIO_TAKES) {
     return NextResponse.json(
@@ -208,7 +201,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         data: {
           audioFileUrl: primaryAudioUrl,
           note: note || null,
-          humanAttestedAt: new Date(),
+          humanAttestedAt: null,
           submittedAt: new Date(),
           files: { create: fileCreates },
         },
@@ -238,7 +231,6 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
       musicianId,
       audioFileUrl: primaryAudioUrl,
       note: note || null,
-      humanAttestedAt: new Date(),
       files: { create: fileCreates },
     },
     include: takeInclude,

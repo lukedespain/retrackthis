@@ -29,7 +29,7 @@
   --dir: 1;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "ss01", "tnum";
+  font-feature-settings: "tnum";
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); min-height: 100%; }

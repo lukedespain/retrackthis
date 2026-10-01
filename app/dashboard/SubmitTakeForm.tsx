@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { TAKE_FILE_ACCEPT } from "@/lib/constants";
@@ -29,6 +30,7 @@ export function SubmitTakeForm({
   existingFiles,
   backingSrc = null,
   submitter = null,
+  summaryOnly = false,
   onSubmitted,
 }: {
   jobId: string;
@@ -42,6 +44,8 @@ export function SubmitTakeForm({
   /** Job bed, so a submitted take can be heard against it. */
   backingSrc?: string | null;
   submitter?: { name: string; avatar: unknown } | null;
+  /** Find work: a short receipt, with the full player on My submissions. */
+  summaryOnly?: boolean;
   onSubmitted?: (take: { jobId: string; audioFileUrl: string; note?: string | null; files?: TakeFileRecord[] }) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -156,6 +160,44 @@ export function SubmitTakeForm({
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (submitted && !replacing && summaryOnly) {
+    const audio = submittedFiles?.length
+      ? audioFiles(submittedFiles)
+      : submittedUrl
+        ? [{ id: "legacy", kind: "AUDIO" as const, label: "Take 1", fileUrl: submittedUrl, previewUrl: null, sortOrder: 0 }]
+        : [];
+    const n = audio.length;
+    return (
+      <div className="stack" style={{ gap: 14 }}>
+        <div className="sub-head">
+          <h3>Your submission</h3>
+          {typeof priceCents === "number" ? (
+            <span className="sub-pay">{formatCents(priceCents)} if picked</span>
+          ) : null}
+        </div>
+        {n > 0 ? (
+          <div className="att-list">
+            {audio.map((file) => (
+              <div className="att" key={file.id}>
+                <span className="att-ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12.5l5 5L19 7" />
+                  </svg>
+                </span>
+                <span className="att-n" title={file.label}>{file.label}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>{n === 1 ? "1 take attached" : `${n} takes attached`}</p>
+        )}
+        <Link href={`/submissions?job=${jobId}`} className="btn soft" style={{ height: 38, fontSize: 13.5, width: "100%" }}>
+          View or edit my submission
+        </Link>
+      </div>
+    );
   }
 
   if (submitted && !replacing) {

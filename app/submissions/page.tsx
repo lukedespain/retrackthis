@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { CompleteProfileForm } from "@/app/dashboard/CompleteProfileForm";
 import { MySubmissions } from "@/app/dashboard/MySubmissions";
 import { AccountHead } from "@/components/brand/AccountHead";
@@ -61,7 +61,9 @@ export default function SubmissionsPage() {
           avatar={profile.avatar}
           current="submissions"
         />
-        <MySubmissions />
+        <Suspense fallback={null}>
+          <MySubmissions />
+        </Suspense>
       </main>
       <MarketingFooter />
     </>

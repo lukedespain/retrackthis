@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
@@ -49,6 +50,7 @@ function whenLabel(take: MyTake, status: string) {
 }
 
 export function MySubmissions() {
+  const focusJobId = useSearchParams().get("job");
   const [takes, setTakes] = useState<MyTake[] | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<SubFilter>("all");
@@ -58,6 +60,12 @@ export function MySubmissions() {
       .then((res) => res.json())
       .then(setTakes);
   }, []);
+
+  useEffect(() => {
+    if (!takes || !focusJobId) return;
+    const match = takes.find((take) => take.jobId === focusJobId);
+    if (match) setExpandedId(match.id);
+  }, [takes, focusJobId]);
 
   if (takes === null) {
     return (

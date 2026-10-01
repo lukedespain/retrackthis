@@ -466,27 +466,29 @@ export function WaveformMixPlayer({
   return (
     <div className={`ref ${className}`}>
       <div className="ref-head">
-        {heading ?? <strong className="ref-lbl">{headingLabel}</strong>}
-        <div className="ref-tools">
-          <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
-            i
-          </i>
-          {hasAb && (
-            <div className="seg" role="tablist" aria-label={headingLabel}>
-              {modes.map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-pressed={mode === id}
-                  onClick={() => void switchMode(id)}
-                >
-                  {id === "part" ? partTabLabel : id === "backing" ? "Bed" : "Both"}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {heading ?? (
+          <strong className="ref-lbl">
+            {headingLabel}
+            <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
+              i
+            </i>
+          </strong>
+        )}
+        {hasAb && (
+          <div className="seg" role="tablist" aria-label={headingLabel}>
+            {modes.map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-pressed={mode === id}
+                onClick={() => void switchMode(id)}
+              >
+                {id === "part" ? partTabLabel : id === "backing" ? "Bed" : "Both"}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="player">
@@ -599,9 +601,10 @@ export function WaveformMixPlayer({
               <DownIcon />
             </span>
             <span className="dl-t">
-              <span className="dl-size">{fileKind(partName)}{fileSizes.part ? ` · ${fileSizes.part}` : ""}</span>
-              <span className="dl-desc">{partCaption ?? (partTabLabel === "Take" ? "Your submitted take" : "What you'll replace")}</span>
+              <strong>{partTabLabel}</strong>
+              <span>{partCaption ?? (partTabLabel === "Take" ? "Your submitted take" : "What you'll replace")}</span>
             </span>
+            <span className="dl-size">{fileKind(partName)}{fileSizes.part ? ` · ${fileSizes.part}` : ""}</span>
           </a>
           {backingSrc ? (
             <a className="dl-file" href={backingSrc} download={bedName} target="_blank" rel="noopener noreferrer">
@@ -609,9 +612,10 @@ export function WaveformMixPlayer({
                 <DownIcon />
               </span>
               <span className="dl-t">
-                <span className="dl-size">{fileKind(bedName)}{fileSizes.bed ? ` · ${fileSizes.bed}` : ""}</span>
-                <span className="dl-desc">The rest of the mix</span>
+                <strong>Bed</strong>
+                <span>The rest of the mix</span>
               </span>
+              <span className="dl-size">{fileKind(bedName)}{fileSizes.bed ? ` · ${fileSizes.bed}` : ""}</span>
             </a>
           ) : null}
         </div>

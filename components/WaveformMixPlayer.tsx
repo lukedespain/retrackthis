@@ -440,11 +440,16 @@ export function WaveformMixPlayer({
     paint();
   }, [partPeaks, bedPeaks, mode, offsetMs, currentTime, duration, loadingWave, showNudge]);
 
+  const paintRef = useRef(paint);
+  paintRef.current = paint;
+
   useEffect(() => {
-    const onResize = () => paint();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [partPeaks, bedPeaks, showNudge]);
+    const wrap = wrapRef.current;
+    if (!wrap || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => paintRef.current());
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, [partSrc, backingSrc]);
 
   const partName = guessFilename(
     partFileForDownload,

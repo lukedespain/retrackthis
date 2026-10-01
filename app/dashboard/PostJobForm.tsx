@@ -211,6 +211,7 @@ function PostJobFormInner({
   const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(saved?.step && saved.step >= 1 && saved.step <= 4 ? saved.step : 1);
   const [tried, setTried] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(0);
 
   useEffect(() => {
     if (saved?.priceDollars) onPriceChange(saved.priceDollars);
@@ -335,11 +336,14 @@ function PostJobFormInner({
       return;
     }
 
+    const formEl = formRef.current;
+    if (!formEl) return;
+
     setSubmitting(true);
 
     try {
       await ensureAppProfile();
-      const form = new FormData(e.currentTarget);
+      const form = new FormData(formEl);
       const price = Number(form.get("price"));
       const deadlineDays = Math.min(
         POST_DEADLINE_MAX_DAYS,
@@ -595,7 +599,7 @@ function PostJobFormInner({
       {isTestJob ? (
         <div className="banner" style={{ marginBottom: 14 }}>
           <span className="status draft">Test</span>
-          <span>This is a test job. No payment, only admins can see it, and it never sends emails.</span>
+          <span>This is a test job. No payment, it stays off Find work, and it never sends emails.</span>
         </div>
       ) : null}
       <SongPad hidden={step !== 1} musicalKey={musicalKey} fixedTempo={fixedTempo}>
@@ -804,26 +808,99 @@ function PostJobFormInner({
       </div>
 
       <div className="stack" hidden={step !== 3}>
-        <div className="jcard">
-          <div className="jhead">
-            <div>
-              <div className="jtitle">{previewTitle || "Untitled"}</div>
-              <div className="pills">
-                <span className="pill money">${priceDollars}</span>
-                {instrumentId ? <span className="pill">{displayLabelForInstrumentId(instrumentId)}</span> : null}
-                {previewKey ? <span className="pill">{previewKey}</span> : null}
-                {previewBpm ? <span className="pill">{previewBpm} BPM</span> : <span className="pill quiet">Free tempo</span>}
-                {durationSeconds ? <span className="pill quiet">{durationSeconds}s part</span> : null}
-                <span className="pill">{deadlineText || "7"} days</span>
-              </div>
-            </div>
-          </div>
-          {demoFileUrl ? (
-            <div className="jbody">
-              <ReferenceTracksPlayer partSrc={demoFileUrl} backingSrc={backingFileUrl} allowDownload={false} />
-            </div>
-          ) : null}
-        </div>
+        {step === 3
+          ? (() => {
+              const parts = [
+                {
+                  key: "part-1",
+                  instrumentId,
+                  priceDollars,
+                  durationSeconds,
+                  deadlineDays: Number(deadlineText) || DEFAULT_DEADLINE_DAYS,
+                  demoFileUrl,
+                  backingFileUrl,
+                },
+                ...more.map((part) => ({
+                  key: part.key,
+                  instrumentId: part.instrumentId,
+                  priceDollars: part.priceDollars,
+                  durationSeconds: part.durationSeconds,
+                  deadlineDays: part.deadlineDays,
+                  demoFileUrl: part.demoFileUrl,
+                  backingFileUrl: part.backingFileUrl,
+                })),
+              ];
+              const several = parts.length > 1;
+              const openIndex = Math.min(previewOpen, parts.length - 1);
+              return (
+                <>
+                  {several ? <p className="kicker">{previewTitle || "Untitled"}</p> : null}
+                  {parts.map((part, index) => {
+                    const open = !several || openIndex === index;
+                    const instrument = part.instrumentId
+                      ? displayLabelForInstrumentId(part.instrumentId)
+                      : "Part";
+                    const pills = (
+                      <div className="pills">
+                        <span className="pill money">${part.priceDollars || 0}</span>
+                        {several ? null : instrumentId ? (
+                          <span className="pill">{instrument}</span>
+                        ) : null}
+                        {previewKey ? <span className="pill">{previewKey}</span> : null}
+                        {previewBpm ? (
+                          <span className="pill">{previewBpm} BPM</span>
+                        ) : (
+                          <span className="pill quiet">Free tempo</span>
+                        )}
+                        {part.durationSeconds ? (
+                          <span className="pill quiet">{part.durationSeconds}s part</span>
+                        ) : null}
+                        <span className="pill">{part.deadlineDays} days</span>
+                      </div>
+                    );
+                    return (
+                      <div className="jcard" key={part.key}>
+                        {several ? (
+                          <button
+                            type="button"
+                            className="jhead"
+                            aria-expanded={open}
+                            onClick={() => setPreviewOpen(index)}
+                          >
+                            <div>
+                              <div className="jtitle">{instrument}</div>
+                              {pills}
+                            </div>
+                            <span className="pc-chev" style={{ transform: open ? "rotate(90deg)" : undefined }}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 6l6 6-6 6" />
+                              </svg>
+                            </span>
+                          </button>
+                        ) : (
+                          <div className="jhead">
+                            <div>
+                              <div className="jtitle">{previewTitle || "Untitled"}</div>
+                              {pills}
+                            </div>
+                          </div>
+                        )}
+                        {open && part.demoFileUrl ? (
+                          <div className="jbody">
+                            <ReferenceTracksPlayer
+                              partSrc={part.demoFileUrl}
+                              backingSrc={part.backingFileUrl}
+                              allowDownload={false}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </>
+              );
+            })()
+          : null}
       </div>
 
       <div className="stack" hidden={step !== 4}>
@@ -874,22 +951,24 @@ function PostJobFormInner({
         </div>
         <p className="hint">
           {isTestJob
-            ? "This posts immediately. No card, no emails, and only admins can see it."
+            ? "This posts immediately. No card, no emails, and it does not show on Find work."
             : more.length > 0
               ? "One charge covers every part. Each part is its own job. Cancel a part before you pick a winner and that part is refunded."
               : "A secure Stripe checkout opens next. Card, Apple Pay, Link, and more. Cancel before a winner is paid for a full refund."}
         </p>
-        <Input
-          label="Invite someone (optional)"
-          name="inviteEmail"
-          type="email"
-          value={inviteEmail}
-          onChange={(e) => setInviteEmail(e.target.value)}
-          placeholder="musician@email.com"
-          autoComplete="email"
-          disabled={submitting}
-          hint="We'll email them a link to submit on this job."
-        />
+        {isTestJob ? null : (
+          <Input
+            label="Invite someone (optional)"
+            name="inviteEmail"
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="musician@email.com"
+            autoComplete="email"
+            disabled={submitting}
+            hint="We'll email them a link to submit on this job."
+          />
+        )}
         {error && <Alert variant="error">{error}</Alert>}
       </div>
     </form>

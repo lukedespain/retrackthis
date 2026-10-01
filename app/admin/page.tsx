@@ -108,6 +108,35 @@ function money(cents: number) {
   }).format(cents / 100);
 }
 
+function MemberSortHeader({
+  label,
+  active,
+  dir,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  dir: "asc" | "desc" | null;
+  onClick: () => void;
+}) {
+  return (
+    <th className="px-4 py-3 font-medium" aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={`inline-flex items-center gap-1 uppercase tracking-wide ${
+          active ? "text-gray-900" : "text-gray-500 hover:text-gray-800"
+        }`}
+      >
+        {label}
+        <span aria-hidden="true" className={active ? "text-gray-900" : "text-gray-300"}>
+          {active && dir === "asc" ? "↑" : active && dir === "desc" ? "↓" : "↕"}
+        </span>
+      </button>
+    </th>
+  );
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, {
     month: "short",
@@ -140,6 +169,10 @@ function AdminPageInner() {
   const [period, setPeriod] = useState<Period>("30d");
   const [members, setMembers] = useState<Member[] | null>(null);
   const [memberQuery, setMemberQuery] = useState("");
+  const [memberSort, setMemberSort] = useState<{
+    key: "name" | "posted" | "submitted" | "won";
+    dir: "asc" | "desc";
+  } | null>(null);
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [openMemberId, setOpenMemberId] = useState<string | null>(null);
   const [adminJobs, setAdminJobs] = useState<AdminJobRow[] | null>(null);
@@ -256,14 +289,40 @@ function AdminPageInner() {
   const filteredMembers = useMemo(() => {
     if (!members) return [];
     const q = memberQuery.trim().toLowerCase();
-    if (!q) return members;
-    return members.filter(
-      (m) =>
-        m.name.toLowerCase().includes(q) ||
-        m.email.toLowerCase().includes(q) ||
-        m.instruments.some((i) => i.label.toLowerCase().includes(q))
-    );
-  }, [members, memberQuery]);
+    const list = q
+      ? members.filter(
+          (m) =>
+            m.name.toLowerCase().includes(q) ||
+            m.email.toLowerCase().includes(q) ||
+            m.instruments.some((i) => i.label.toLowerCase().includes(q))
+        )
+      : [...members];
+    if (!memberSort) return list;
+    const dir = memberSort.dir === "asc" ? 1 : -1;
+    const value = (m: Member) => {
+      if (memberSort.key === "name") return m.name;
+      if (memberSort.key === "posted") return m.jobsPosted;
+      if (memberSort.key === "submitted") return m.takesSubmitted;
+      return m.jobsWon;
+    };
+    return list.sort((a, b) => {
+      const left = value(a);
+      const right = value(b);
+      if (typeof left === "string" && typeof right === "string") {
+        return left.localeCompare(right, undefined, { sensitivity: "base" }) * dir;
+      }
+      return ((left as number) - (right as number)) * dir;
+    });
+  }, [members, memberQuery, memberSort]);
+
+  function toggleMemberSort(key: "name" | "posted" | "submitted" | "won") {
+    setMemberSort((current) => {
+      if (!current || current.key !== key) {
+        return { key, dir: key === "name" ? "asc" : "desc" };
+      }
+      return { key, dir: current.dir === "asc" ? "desc" : "asc" };
+    });
+  }
 
   async function resetMemberPayouts(m: Member) {
     try {
@@ -396,10 +455,30 @@ function AdminPageInner() {
               <table className="min-w-full bg-white text-left text-sm">
                 <thead className="border-b border-gray-200 bg-white text-xs uppercase tracking-wide text-gray-500">
                   <tr>
-                    <th className="px-4 py-3 font-medium">Member</th>
-                    <th className="px-4 py-3 font-medium">Posted</th>
-                    <th className="px-4 py-3 font-medium">Submitted</th>
-                    <th className="px-4 py-3 font-medium">Won</th>
+                    <MemberSortHeader
+                      label="Member"
+                      active={memberSort?.key === "name"}
+                      dir={memberSort?.key === "name" ? memberSort.dir : null}
+                      onClick={() => toggleMemberSort("name")}
+                    />
+                    <MemberSortHeader
+                      label="Posted"
+                      active={memberSort?.key === "posted"}
+                      dir={memberSort?.key === "posted" ? memberSort.dir : null}
+                      onClick={() => toggleMemberSort("posted")}
+                    />
+                    <MemberSortHeader
+                      label="Submitted"
+                      active={memberSort?.key === "submitted"}
+                      dir={memberSort?.key === "submitted" ? memberSort.dir : null}
+                      onClick={() => toggleMemberSort("submitted")}
+                    />
+                    <MemberSortHeader
+                      label="Won"
+                      active={memberSort?.key === "won"}
+                      dir={memberSort?.key === "won" ? memberSort.dir : null}
+                      onClick={() => toggleMemberSort("won")}
+                    />
                     <th className="px-4 py-3 font-medium">Instruments</th>
                     <th className="px-4 py-3 text-center font-medium">Payout</th>
                   </tr>

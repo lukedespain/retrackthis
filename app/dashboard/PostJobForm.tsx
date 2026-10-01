@@ -125,6 +125,31 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [checkoutAmountCents, setCheckoutAmountCents] = useState<number | null>(null);
   const [pendingJobId, setPendingJobId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [postingTest, setPostingTest] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => setIsAdmin(Boolean(body?.profile?.isAdmin)))
+      .catch(() => setIsAdmin(false));
+  }, []);
+
+  async function postPendingAsTest() {
+    if (!pendingJobId || postingTest) return;
+    setPostingTest(true);
+    try {
+      const res = await fetch(`/api/jobs/${pendingJobId}/post-as-test`, { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Could not post the test job");
+      clearPostDraft();
+      window.dispatchEvent(new Event(JOB_POSTED));
+      onPosted();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Could not post the test job");
+      setPostingTest(false);
+    }
+  }
 
   async function discardDraft() {
     if (pendingJobId) {
@@ -150,6 +175,8 @@ export function PostJobForm({ onPosted, onCancel }: { onPosted: () => void; onCa
             onPosted();
           }}
           onDiscard={discardDraft}
+          onPostAsTest={isAdmin ? () => void postPendingAsTest() : undefined}
+          postingTest={postingTest}
         />
       </ModalFrame>
     );
@@ -212,6 +239,43 @@ function PostJobFormInner({
   const [step, setStep] = useState(saved?.step && saved.step >= 1 && saved.step <= 4 ? saved.step : 1);
   const [tried, setTried] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(0);
+  const [payReady, setPayReady] = useState(false);
+  const pointerHeld = useRef(false);
+
+  useEffect(() => {
+    const down = () => {
+      pointerHeld.current = true;
+    };
+    const up = () => {
+      pointerHeld.current = false;
+    };
+    window.addEventListener("pointerdown", down);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (step !== 4) {
+      setPayReady(false);
+      return;
+    }
+    if (!pointerHeld.current) {
+      setPayReady(true);
+      return;
+    }
+    const arm = () => setPayReady(true);
+    window.addEventListener("pointerup", arm, { once: true });
+    window.addEventListener("keyup", arm, { once: true });
+    return () => {
+      window.removeEventListener("pointerup", arm);
+      window.removeEventListener("keyup", arm);
+    };
+  }, [step]);
 
   useEffect(() => {
     if (saved?.priceDollars) onPriceChange(saved.priceDollars);
@@ -565,7 +629,7 @@ function PostJobFormInner({
                 </svg>
               </button>
             ) : null}
-            {isAdmin && step === 1 ? (
+            {isAdmin && (step === 1 || step === 4) ? (
               <button
                 type="button"
                 className={testMode ? "btn primary" : "btn soft"}
@@ -588,7 +652,7 @@ function PostJobFormInner({
                 type="submit"
                 form="post-job-form"
                 className={`btn primary${signedIn === false ? " dim" : ""}`}
-                disabled={submitting}
+                disabled={submitting || !payReady}
               >
                 {submitting
                   ? "Paying"

@@ -255,6 +255,8 @@ function CreatorJobCard({
   const [resumingCheckout, setResumingCheckout] = useState(false);
   const [restoringDraft, setRestoringDraft] = useState(false);
   const [checkoutClientSecret, setCheckoutClientSecret] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [postingTest, setPostingTest] = useState(false);
   const [editing, setEditing] = useState(false);
   const [extending, setExtending] = useState(false);
   const isPastDeadline = job.status === "OPEN" && new Date(job.deadline).getTime() < Date.now();
@@ -271,6 +273,39 @@ function CreatorJobCard({
   useEffect(() => {
     setHasProvisionalWinner(!!job.hasSelectedWinner);
   }, [job.hasSelectedWinner, job.id]);
+
+  useEffect(() => {
+    if (readOnly || job.status !== "PENDING_PAYMENT") return;
+    let cancelled = false;
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        if (!cancelled) setIsAdmin(Boolean(body?.profile?.isAdmin));
+      })
+      .catch(() => {
+        if (!cancelled) setIsAdmin(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [job.status, readOnly]);
+
+  async function postAsTest(e?: React.MouseEvent) {
+    e?.stopPropagation();
+    if (readOnly || postingTest) return;
+    setPostingTest(true);
+    setCancelError(null);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/post-as-test`, { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Could not post the test job");
+      setCheckoutClientSecret(null);
+      onChanged();
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Could not post the test job");
+      setPostingTest(false);
+    }
+  }
 
   async function cancelJob(e?: React.MouseEvent) {
     e?.stopPropagation();
@@ -411,6 +446,17 @@ function CreatorJobCard({
               >
                 {resumingCheckout ? "Opening…" : "Finish payment"}
               </Button>
+              {isAdmin ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={postAsTest}
+                  disabled={postingTest || resumingCheckout || cancelling || editing}
+                  className="w-full sm:w-auto"
+                >
+                  {postingTest ? "Posting test…" : "Post as test"}
+                </Button>
+              ) : null}
               <Button
                 variant="secondary"
                 size="sm"
@@ -515,6 +561,8 @@ function CreatorJobCard({
               setCheckoutClientSecret(null);
               void cancelJob();
             }}
+            onPostAsTest={isAdmin ? () => void postAsTest() : undefined}
+            postingTest={postingTest}
           />
         </div>
       )}

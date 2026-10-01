@@ -8,11 +8,15 @@ export function JobCheckoutEmbed({
   amountLabel,
   onSaveForLater,
   onDiscard,
+  onPostAsTest,
+  postingTest = false,
 }: {
   clientSecret: string;
   amountLabel?: string;
   onSaveForLater?: () => void;
   onDiscard?: () => void;
+  onPostAsTest?: () => void;
+  postingTest?: boolean;
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -30,8 +34,18 @@ export function JobCheckoutEmbed({
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>
       </div>
-      {(onSaveForLater || onDiscard) && (
+      {(onSaveForLater || onDiscard || onPostAsTest) && (
         <div className="flex flex-col gap-2 border-t border-gray-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          {onPostAsTest ? (
+            <button
+              type="button"
+              onClick={onPostAsTest}
+              disabled={postingTest}
+              className="text-left text-sm font-medium text-accent underline-offset-2 hover:underline disabled:opacity-50"
+            >
+              {postingTest ? "Posting test…" : "Post as a test job instead"}
+            </button>
+          ) : null}
           {onSaveForLater ? (
             <button
               type="button"

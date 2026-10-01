@@ -33,6 +33,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
   const [myTakesByJob, setMyTakesByJob] = useState<Record<string, MyTakeSummary>>({});
   const [payout, setPayout] = useState<PayoutSnapshot | null>(null);
   const [meId, setMeId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,12 +85,19 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
       setMyTakesByJob({});
       setPayout(null);
       setMeId(null);
+      setIsAdmin(false);
       return;
     }
     fetch("/api/auth/me")
       .then((res) => (res.ok ? res.json() : null))
-      .then((body) => setMeId(body?.profile?.id ?? null))
-      .catch(() => setMeId(null));
+      .then((body) => {
+        setMeId(body?.profile?.id ?? null);
+        setIsAdmin(Boolean(body?.profile?.isAdmin));
+      })
+      .catch(() => {
+        setMeId(null);
+        setIsAdmin(false);
+      });
     fetch("/api/takes/mine")
       .then((res) => (res.ok ? res.json() : []))
       .then((takes: Array<{ jobId: string; audioFileUrl: string; files?: MyTakeSummary["files"] }>) => {
@@ -273,6 +281,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
               expanded={expandedJobId === job.id}
               myTake={myTakesByJob[job.id]}
               payout={signedIn ? payout : null}
+              adminTest={Boolean(isAdmin && job.isTest)}
               mine={Boolean(meId && job.creatorId === meId)}
               onTakeSubmitted={handleTakeSubmitted}
               onToggle={() => handleToggleJob(job.id)}
@@ -326,6 +335,7 @@ function OpenJobCard({
   expanded,
   myTake,
   payout,
+  adminTest = false,
   onTakeSubmitted,
   onToggle,
   mine,
@@ -335,6 +345,8 @@ function OpenJobCard({
   expanded: boolean;
   myTake?: MyTakeSummary;
   payout: PayoutSnapshot | null;
+  /** Admin on a test job can submit without payout setup. */
+  adminTest?: boolean;
   mine: boolean;
   onTakeSubmitted: (take: MyTakeSummary) => void;
   onToggle: () => void;
@@ -438,7 +450,7 @@ function OpenJobCard({
                   </Link>
                 </div>
               </div>
-            ) : payout === null && !myTake ? (
+            ) : payout === null && !myTake && !adminTest ? (
               <div className="stack" style={{ gap: 14 }}>
                 <div className="sub-head">
                   <h3>Submit your take</h3>
@@ -450,7 +462,7 @@ function OpenJobCard({
               <SubmitTakeForm
                 jobId={job.id}
                 priceCents={musicianFacingPriceCents(job)}
-                payoutReady={Boolean(payout?.ready) || Boolean(myTake)}
+                payoutReady={Boolean(payout?.ready) || Boolean(myTake) || adminTest}
                 alreadySubmitted={Boolean(myTake)}
                 existingTakeUrl={myTake?.audioFileUrl}
                 existingFiles={myTake?.files}

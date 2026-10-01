@@ -147,7 +147,6 @@ export const INSTRUMENT_GROUPS: InstrumentGroup[] = [
           "mezzo soprano",
         ],
       },
-      { id: "background-vocals", label: "Background vocals / harmonies", emoji: "🎤", aliases: ["background vocal", "bgv", "harmonies"] },
       { id: "topliner", label: "Topliner / songwriter", emoji: "🎤", aliases: ["topline", "topliner", "songwriter vocal"] },
       { id: "spoken-word", label: "Spoken word / voiceover", emoji: "🎤", aliases: ["spoken word", "voiceover", "narration"] },
     ],

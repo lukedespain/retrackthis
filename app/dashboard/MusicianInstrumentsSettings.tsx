@@ -19,7 +19,6 @@ const POPULAR = [
   "synthesizer",
   "vocal-male",
   "vocal-female",
-  "background-vocals",
   "drum-kit",
   "violin",
   "cello",

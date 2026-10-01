@@ -66,7 +66,6 @@ const INSTRUMENT_BAND: Record<string, PricingBandId> = {
   congas: "core",
   bongos: "core",
   djembe: "core",
-  "background-vocals": "core",
 
   // Session-heavy
   "drum-kit": "session-heavy",

@@ -275,7 +275,9 @@ function CreatorJobCard({
   }, [job.hasSelectedWinner, job.id]);
 
   useEffect(() => {
-    if (readOnly || job.status !== "PENDING_PAYMENT") return;
+    const needsAdmin =
+      job.status === "PENDING_PAYMENT" || (job.status === "CANCELLED" && job.isTest);
+    if (readOnly || !needsAdmin) return;
     let cancelled = false;
     fetch("/api/auth/me")
       .then((res) => (res.ok ? res.json() : null))
@@ -288,7 +290,7 @@ function CreatorJobCard({
     return () => {
       cancelled = true;
     };
-  }, [job.status, readOnly]);
+  }, [job.status, job.isTest, readOnly]);
 
   async function postAsTest(e?: React.MouseEvent) {
     e?.stopPropagation();
@@ -323,6 +325,22 @@ function CreatorJobCard({
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
+      setCancelling(false);
+    }
+  }
+
+  async function discardCancelledTest(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (readOnly || cancelling) return;
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      const res = await fetch(`/api/admin/jobs/${job.id}`, { method: "DELETE" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Could not discard this test job");
+      onChanged();
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Could not discard this test job");
       setCancelling(false);
     }
   }
@@ -482,10 +500,21 @@ function CreatorJobCard({
             <Button
               size="sm"
               onClick={restoreDraft}
-              disabled={restoringDraft}
+              disabled={restoringDraft || cancelling}
               className="w-full sm:w-auto"
             >
               {restoringDraft ? "Restoring…" : "Restore as draft"}
+            </Button>
+          )}
+          {job.status === "CANCELLED" && job.isTest && isAdmin && !readOnly && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={discardCancelledTest}
+              disabled={cancelling || restoringDraft}
+              className="w-full sm:w-auto"
+            >
+              {cancelling ? "Discarding…" : "Discard"}
             </Button>
           )}
           {job.status === "OPEN" && !readOnly && (

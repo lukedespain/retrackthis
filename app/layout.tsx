@@ -8,19 +8,18 @@ export const metadata = {
   icons: {
     icon: [
       {
-        url: "/brand/retrackthis-icon-light-32.png?v=20260921",
+        url: "/brand/loop-spin-light-32.png?v=20260930",
         media: "(prefers-color-scheme: light)",
         type: "image/png",
       },
       {
-        url: "/brand/retrackthis-icon-dark-32.png?v=20260921",
+        url: "/brand/loop-spin-dark-32.png?v=20260930",
         media: "(prefers-color-scheme: dark)",
         type: "image/png",
       },
-      // Fallback for browsers that ignore media
-      { url: "/brand/retrackthis-icon-light-32.png?v=20260921", type: "image/png" },
+      { url: "/brand/loop-spin-light-32.png?v=20260930", type: "image/png" },
     ],
-    apple: "/brand/retrackthis-apple-touch-180.png?v=20260921",
+    apple: "/brand/loop-spin-apple-180.png?v=20260930",
   },
 };
 

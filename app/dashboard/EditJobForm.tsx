@@ -31,6 +31,7 @@ export function EditJobForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadKey, setUploadKey] = useState(0);
+  const partReplaced = demoFileUrl !== job.demoFileUrl;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -210,11 +211,13 @@ export function EditJobForm({
                 1 · Part being retracked
               </p>
               <p className="mt-0.5 text-xs text-gray-500">
-                Currently saved. Musicians hear this as the part to replace.
+                {partReplaced
+                  ? "New file ready. Save to update what musicians hear."
+                  : "Currently saved. Musicians hear this as the part to replace."}
               </p>
             </div>
             <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-              Kept
+              {partReplaced ? "Replaced" : "Kept"}
             </span>
           </div>
           <FileUpload

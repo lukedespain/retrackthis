@@ -103,6 +103,8 @@ export async function POST(req: Request, { params }: { params: { jobId: string }
           priceCents: job.priceCents,
           deadline: newDeadline,
           creatorId: job.creatorId,
+          isTest: job.isTest,
+          createdAt: job.createdAt,
         },
         days
       );

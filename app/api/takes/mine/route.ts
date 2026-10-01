@@ -19,6 +19,8 @@ export async function GET() {
           title: true,
           instrument: true,
           priceCents: true,
+          isTest: true,
+          createdAt: true,
           durationSeconds: true,
           bpm: true,
           status: true,

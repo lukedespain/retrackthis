@@ -21,6 +21,30 @@ export const POST_DEADLINE_MAX_DAYS = 30;
  * Charge-upfront means there is no card-hold timer forcing a short window.
  */
 export const MAX_DEADLINE_DAYS = 365;
+/** Real jobs created before this keep the producer total on musician surfaces. */
+export const MUSICIAN_NET_PRICE_SINCE = Date.parse("2026-10-01T19:45:00.000Z");
+
+/** What the musician is paid: producer total minus the 10% platform fee. */
+export function musicianPayoutCents(priceCents: number) {
+  return priceCents - Math.round(priceCents * 0.1);
+}
+
+/**
+ * Amount to show musicians. Test jobs and posts from MUSICIAN_NET_PRICE_SINCE
+ * onward use the payout. Earlier real jobs keep the number already published.
+ */
+export function musicianFacingPriceCents(job: {
+  priceCents: number;
+  isTest?: boolean | null;
+  createdAt?: string | Date | null;
+}) {
+  const created = job.createdAt ? new Date(job.createdAt).getTime() : NaN;
+  const alreadyPublished =
+    !job.isTest && Number.isFinite(created) && created < MUSICIAN_NET_PRICE_SINCE;
+  if (alreadyPublished || (!job.isTest && !Number.isFinite(created))) return job.priceCents;
+  return musicianPayoutCents(job.priceCents);
+}
+
 /** Per-click range when a producer extends an open job's deadline. */
 export const MIN_EXTENSION_DAYS = 1;
 export const MAX_EXTENSION_DAYS = 14;

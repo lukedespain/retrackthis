@@ -11,7 +11,7 @@ import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Spinner } from "@/components/ui/Spinner";
 import { requestPostJob } from "@/components/MarketingHeroCtas";
 import { formatCents, formatDeadline } from "@/lib/format";
-import { formatPartDuration } from "@/lib/jobPricing";
+import { formatPartDuration, musicianFacingPriceCents } from "@/lib/jobPricing";
 import type { Job } from "@/lib/types";
 import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 
@@ -155,7 +155,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
       instrument === "All" ? [...jobs] : jobs.filter((job) => job.instrument === instrument);
     filtered.sort((a, b) => {
       if (sort === "soon") return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-      if (sort === "pay") return b.priceCents - a.priceCents;
+      if (sort === "pay") return musicianFacingPriceCents(b) - musicianFacingPriceCents(a);
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
     return filtered;
@@ -349,6 +349,7 @@ function OpenJobCard({
   }, [expanded]);
 
   const due = formatDeadline(job.deadline, { extended: Boolean(job.deadlineExtendedAt) });
+  const payLabel = formatCents(musicianFacingPriceCents(job));
   const closes = new Date(job.deadline).toLocaleString("en-US", {
     weekday: "short",
     month: "short",
@@ -370,7 +371,7 @@ function OpenJobCard({
             {myTake ? <span className="status mine">Your take · pending</span> : null}
           </div>
           <div className="pills">
-            <span className="pill money">{formatCents(job.priceCents)}</span>
+            <span className="pill money">{payLabel}</span>
             {job.durationSeconds ? (
               <span className="pill">Part {formatPartDuration(job.durationSeconds)}</span>
             ) : null}
@@ -425,7 +426,7 @@ function OpenJobCard({
               <div className="stack" style={{ gap: 14 }}>
                 <div className="sub-head">
                   <h3>Submit your take</h3>
-                  <span className="sub-pay">{formatCents(job.priceCents)} if picked</span>
+                  <span className="sub-pay">{payLabel} if picked</span>
                 </div>
                 <div className="pay-gate">
                   <span className="pg-t">
@@ -441,14 +442,14 @@ function OpenJobCard({
               <div className="stack" style={{ gap: 14 }}>
                 <div className="sub-head">
                   <h3>Submit your take</h3>
-                  <span className="sub-pay">{formatCents(job.priceCents)} if picked</span>
+                  <span className="sub-pay">{payLabel} if picked</span>
                 </div>
                 <p>Checking payout setup…</p>
               </div>
             ) : (
               <SubmitTakeForm
                 jobId={job.id}
-                priceCents={job.priceCents}
+                priceCents={musicianFacingPriceCents(job)}
                 payoutReady={Boolean(payout?.ready) || Boolean(myTake)}
                 alreadySubmitted={Boolean(myTake)}
                 existingTakeUrl={myTake?.audioFileUrl}

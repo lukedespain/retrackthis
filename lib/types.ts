@@ -55,6 +55,8 @@ export type MyTake = {
     title: string;
     instrument: string;
     priceCents: number;
+    isTest?: boolean;
+    createdAt?: string;
     durationSeconds?: number | null;
     bpm: number | null;
     status: "PENDING_PAYMENT" | "OPEN" | "AWARDING" | "CANCELLING" | "AWARDED" | "CANCELLED";

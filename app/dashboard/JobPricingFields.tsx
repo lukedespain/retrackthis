@@ -9,6 +9,7 @@ import {
   MAX_DEADLINE_DAYS,
   MAX_DURATION_SECONDS,
   MIN_DURATION_SECONDS,
+  musicianPayoutCents,
   POST_DEADLINE_MAX_DAYS,
   roundToTen,
   SLIDER_MIN_USD,
@@ -176,7 +177,7 @@ export function JobPricingFields({
         ? ((sliderValue - recMin) / (recMax - recMin)) * 100
         : 0;
     const cents = Math.round(priceDollars * 100);
-    const musicianGets = priceDollars > 0 ? Math.round((cents - Math.round(cents * 0.1)) / 100) : 0;
+    const musicianGets = priceDollars > 0 ? Math.round(musicianPayoutCents(cents) / 100) : 0;
     return (
       <>
         <div className="grid2">

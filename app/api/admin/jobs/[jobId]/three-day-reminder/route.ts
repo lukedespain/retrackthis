@@ -20,6 +20,7 @@ export async function POST(
       instrumentId: true,
       description: true,
       priceCents: true,
+      createdAt: true,
       deadline: true,
       creatorId: true,
       status: true,

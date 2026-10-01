@@ -9,6 +9,7 @@ import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { formatCents, formatDeadline } from "@/lib/format";
+import { musicianFacingPriceCents } from "@/lib/jobPricing";
 import { audioFiles } from "@/lib/takeFiles";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
@@ -68,8 +69,8 @@ export function MySubmissions() {
 
   const picked = takes.filter((take) => take.isWinner && take.job.status === "AWARDED");
   const pending = takes.filter((take) => subStatus(take).cls === "pending");
-  const earned = picked.reduce((sum, take) => sum + take.job.priceCents, 0);
-  const waiting = pending.reduce((sum, take) => sum + take.job.priceCents, 0);
+  const earned = picked.reduce((sum, take) => sum + musicianFacingPriceCents(take.job), 0);
+  const waiting = pending.reduce((sum, take) => sum + musicianFacingPriceCents(take.job), 0);
   const counts = takes.reduce<Record<string, number>>((acc, take) => {
     const key = subStatus(take).cls;
     acc[key] = (acc[key] ?? 0) + 1;
@@ -217,7 +218,7 @@ function SubmissionCard({
             {liveTake.job.title} <span className={`status ${status.cls}`}>{status.label}</span>
           </div>
           <div className="pills">
-            <span className="pill money">{formatCents(liveTake.job.priceCents)}</span>
+            <span className="pill money">{formatCents(musicianFacingPriceCents(liveTake.job))}</span>
             {whenLabel(liveTake, status.cls) ? (
               <span className="pill quiet">{whenLabel(liveTake, status.cls)}</span>
             ) : null}
@@ -243,7 +244,7 @@ function SubmissionCard({
             {canReplace ? (
               <SubmitTakeForm
                 jobId={liveTake.jobId}
-                priceCents={liveTake.job.priceCents}
+                priceCents={musicianFacingPriceCents(liveTake.job)}
                 alreadySubmitted
                 existingTakeUrl={liveTake.audioFileUrl}
                 existingFiles={liveTake.files}

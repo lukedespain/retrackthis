@@ -1,6 +1,7 @@
 import { appBaseUrl } from "@/lib/appUrl";
 import { emailConfigured, sendEmail } from "@/lib/email";
 import { formatCents, formatDeadline } from "@/lib/format";
+import { musicianFacingPriceCents } from "@/lib/jobPricing";
 import { jobMatchesAlertFilters } from "@/lib/instruments";
 import { db } from "@/lib/db";
 
@@ -13,7 +14,13 @@ type JobLite = {
   priceCents: number;
   deadline: Date;
   creatorId: string;
+  isTest?: boolean;
+  createdAt?: Date | string;
 };
+
+function shownPay(job: JobLite) {
+  return formatCents(musicianFacingPriceCents(job));
+}
 
 function jobUrl() {
   return `${appBaseUrl()}/musicians`;
@@ -66,7 +73,7 @@ export async function notifyNewJobPosted(job: JobLite): Promise<number> {
           subject: `New ${job.instrument} gig: ${job.title}`,
           heading: "A new job matches your instruments",
           bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(user.name.split(" ")[0] || "there")},</p>
-            <p style="margin:0 0 10px;"><strong>${escape(job.title)}</strong> · ${escape(job.instrument)} · ${escape(formatCents(job.priceCents))} · ${escape(formatDeadline(job.deadline))}</p>
+            <p style="margin:0 0 10px;"><strong>${escape(job.title)}</strong> · ${escape(job.instrument)} · ${escape(shownPay(job))} · ${escape(formatDeadline(job.deadline))}</p>
             <p style="margin:0;">${escape(snippet(job.description))}</p>`,
           ctaLabel: "View job",
           ctaHref: jobUrl(),
@@ -113,7 +120,7 @@ export async function notifyJobThreeDaysLeft(job: JobLite): Promise<number> {
           heading: "Only 3 days left to submit",
           bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(user.name.split(" ")[0] || "there")},</p>
             <p style="margin:0 0 10px;">Only 3 days left to submit to this <strong>${escape(job.instrument)}</strong> job:</p>
-            <p style="margin:0 0 10px;"><strong>${escape(job.title)}</strong> · ${escape(formatCents(job.priceCents))} · ${escape(formatDeadline(job.deadline))}</p>
+            <p style="margin:0 0 10px;"><strong>${escape(job.title)}</strong> · ${escape(shownPay(job))} · ${escape(formatDeadline(job.deadline))}</p>
             <p style="margin:0;">${escape(snippet(job.description))}</p>`,
           ctaLabel: "View open jobs",
           ctaHref: jobUrl(),
@@ -176,7 +183,7 @@ export async function notifyJobDeadlineExtended(job: JobLite, extraDays: number)
         subject: `More time to submit: ${job.title}`,
         heading: "This job just got more time",
         bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(user.name.split(" ")[0] || "there")},</p>
-          <p style="margin:0 0 10px;">The producer added ${extraDays === 1 ? "1 more day" : `${extraDays} more days`} to <strong>${escape(job.title)}</strong> (${escape(job.instrument)} · ${escape(formatCents(job.priceCents))}). ${escape(timeLeftLine)}</p>
+          <p style="margin:0 0 10px;">The producer added ${extraDays === 1 ? "1 more day" : `${extraDays} more days`} to <strong>${escape(job.title)}</strong> (${escape(job.instrument)} · ${escape(shownPay(job))}). ${escape(timeLeftLine)}</p>
           <p style="margin:0 0 10px;">${nextStep}</p>
           <p style="margin:0;">Once the new deadline passes, the producer still has the usual 48 hours to pick a winner.</p>`,
         ctaLabel: user.submitted ? "Update your take" : "View job",
@@ -208,7 +215,7 @@ export async function notifyJobInvites(opts: {
           heading: "You're invited to submit a take",
           bodyHtml: `<p style="margin:0 0 10px;">Hi there,</p>
             <p style="margin:0 0 10px;"><strong>${escape(opts.creatorName)}</strong> posted a job and invited you to send a take:</p>
-            <p style="margin:0 0 10px;"><strong>${escape(opts.job.title)}</strong> · ${escape(opts.job.instrument)} · ${escape(formatCents(opts.job.priceCents))}</p>
+            <p style="margin:0 0 10px;"><strong>${escape(opts.job.title)}</strong> · ${escape(opts.job.instrument)} · ${escape(shownPay(opts.job))}</p>
             <p style="margin:0;">${escape(snippet(opts.job.description))}</p>
             <p style="margin:12px 0 0;">Create a free account (or sign in), browse jobs, and submit your take.</p>`,
           ctaLabel: "View open jobs",

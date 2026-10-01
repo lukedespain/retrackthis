@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { formatCents, formatDeadline } from "@/lib/format";
-import { formatPartDuration } from "@/lib/jobPricing";
+import { formatPartDuration, musicianFacingPriceCents } from "@/lib/jobPricing";
 import type { Job } from "@/lib/types";
 
 function closesAt(deadline: string) {
@@ -27,7 +27,7 @@ export function OpenNow() {
         const now = Date.now();
         const picks = (body as Job[])
           .filter((j) => j.status === "OPEN" && !j.isTest && new Date(j.deadline).getTime() > now)
-          .sort((a, b) => b.priceCents - a.priceCents)
+          .sort((a, b) => musicianFacingPriceCents(b) - musicianFacingPriceCents(a))
           .slice(0, 3);
         setJobs(picks);
       })
@@ -74,7 +74,7 @@ export function OpenNow() {
                 </span>
               </div>
               <div className="pills">
-                <span className="pill money">{formatCents(job.priceCents)}</span>
+                <span className="pill money">{formatCents(musicianFacingPriceCents(job))}</span>
                 <span className="pill due" tabIndex={0} data-due={due} aria-label={`${left}. ${due}`}>
                   {left}
                 </span>

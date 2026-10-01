@@ -535,7 +535,7 @@ function PostJobFormInner({
               onCancel();
             }}
           >
-            Save & exit
+            {signedIn ? "Save & exit" : "Exit"}
           </button>
           <div className="mf-right">
             {step > 1 ? (

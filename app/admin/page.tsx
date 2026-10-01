@@ -266,10 +266,6 @@ function AdminPageInner() {
   }, [members, memberQuery]);
 
   async function resetMemberPayouts(m: Member) {
-    const ok = window.confirm(
-      `Clear payout setup for ${m.name} (${m.email})?\n\nThis unlinks Stripe and any PayPal/Wise details. They’ll need to set up payouts again.`
-    );
-    if (!ok) return;
     try {
       const res = await fetch(`/api/admin/members/${m.id}/reset-payouts`, {
         method: "POST",
@@ -476,7 +472,7 @@ function AdminPageInner() {
                     locked={editingMemberId === open.id}
                     onClose={() => setOpenMemberId(null)}
                     onEditInstruments={() => setEditingMemberId(open.id)}
-                    onResetPayouts={() => void resetMemberPayouts(open)}
+                    onResetPayouts={() => resetMemberPayouts(open)}
                   />
                 );
               })()}
@@ -811,13 +807,20 @@ function MemberDetail({
   locked?: boolean;
   onClose: () => void;
   onEditInstruments: () => void;
-  onResetPayouts: () => void;
+  onResetPayouts: () => Promise<void>;
 }) {
   const kind = payoutKind(member);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !locked) onClose();
+      if (e.key !== "Escape" || locked) return;
+      if (confirmReset) {
+        if (!resetting) setConfirmReset(false);
+        return;
+      }
+      onClose();
     }
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -826,7 +829,7 @@ function MemberDetail({
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [onClose, locked]);
+  }, [onClose, locked, confirmReset, resetting]);
 
   return (
     <div
@@ -904,11 +907,55 @@ function MemberDetail({
           {member.hasPayouts ? (
             <button
               type="button"
-              onClick={onResetPayouts}
+              onClick={() => setConfirmReset(true)}
               className="mt-3 text-sm font-medium text-amber-700 hover:underline"
             >
               Reset payout setup
             </button>
+          ) : null}
+          {confirmReset ? (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+              role="presentation"
+              onClick={() => {
+                if (!resetting) setConfirmReset(false);
+              }}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="reset-payout-title"
+                className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <p id="reset-payout-title" className="text-sm leading-relaxed text-gray-900">
+                  Are you sure? This will reset the musician&apos;s payout settings and cannot be undone.
+                </p>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    disabled={resetting}
+                    onClick={() => setConfirmReset(false)}
+                    className="rounded-full px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={resetting}
+                    onClick={() => {
+                      setResetting(true);
+                      void onResetPayouts()
+                        .then(() => setConfirmReset(false))
+                        .finally(() => setResetting(false));
+                    }}
+                    className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                  >
+                    {resetting ? "Resetting…" : "Reset payout"}
+                  </button>
+                </div>
+              </div>
+            </div>
           ) : null}
         </div>
 

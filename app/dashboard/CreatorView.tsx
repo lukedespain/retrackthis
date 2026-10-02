@@ -460,7 +460,7 @@ function CreatorJobCard({
         )}
       </div>
 
-      {expanded && !readOnly ? (
+      {expanded && !readOnly && (job.status === "PENDING_PAYMENT" || job.status === "CANCELLED") ? (
         <div className="job-actions">
           <div className="job-actions-row">
           {job.status === "PENDING_PAYMENT" && !readOnly && (

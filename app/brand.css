@@ -323,11 +323,6 @@ button { cursor: pointer; }
 .plays .of { color: var(--muted); font-weight: 400; }
 .plays .dot { width: 8px; height: 8px; border-radius: 3px; background: var(--accent); }
 .plays .link { margin-left: 4px; font-size: 13px; }
-.pw-key { display: flex; align-items: center; gap: 14px; margin-top: 6px; font-size: 12px; color: var(--muted); }
-.pw-key span { display: inline-flex; align-items: center; gap: 6px; }
-.pw-key i { width: 8px; height: 8px; border-radius: 50%; display: block; }
-.pw-key i.part { background: var(--accent); }
-.pw-key i.bed { background: #b9b8b3; }
 .wave-seek { cursor: pointer; touch-action: none; user-select: none; }
 
 /* budget */
@@ -369,6 +364,10 @@ button.jhead .pc-chev { margin-top: 2px; transition: transform .2s var(--ease); 
 .seg { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
 .seg button { border: 0; background: none; border-radius: 999px; height: 28px; padding: 0 12px; font-size: 12.5px; color: var(--muted); transition: background .2s, color .2s, box-shadow .2s; }
 .seg button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(17,17,19,.12); }
+.seg button.mix-mode { display: inline-flex; align-items: center; gap: 6px; }
+.seg button.mix-mode .dot { width: 8px; height: 8px; border-radius: 50%; display: block; flex: none; }
+.seg button.mix-mode .dot.part { background: var(--accent); }
+.seg button.mix-mode .dot.bed { background: #b9b8b3; }
 .player { display: flex; align-items: flex-start; gap: 14px; }
 .play { width: 44px; height: 44px; margin-top: 2px; border-radius: 50%; border: 0; background: var(--ink); color: #fff; display: grid; place-items: center; flex: none; transition: transform .15s var(--ease); }
 .play:active { transform: scale(.92); }

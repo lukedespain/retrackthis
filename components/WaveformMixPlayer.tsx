@@ -495,9 +495,12 @@ export function WaveformMixPlayer({
                   key={id}
                   type="button"
                   role="tab"
+                  className="mix-mode"
                   aria-pressed={mode === id}
                   onClick={() => void switchMode(id)}
                 >
+                  {id === "part" ? <i className="dot part" aria-hidden /> : null}
+                  {id === "backing" ? <i className="dot bed" aria-hidden /> : null}
                   {id === "part" ? partTabLabel : id === "backing" ? "Bed" : "Both"}
                 </button>
               ))}
@@ -560,18 +563,6 @@ export function WaveformMixPlayer({
             <span>{formatWaveTime(currentTime)}</span>
             <span>{formatWaveTime(duration)}</span>
           </div>
-          {mode === "both" && hasAb && (
-            <div className="pw-key">
-              <span>
-                <i className="part" />
-                {partTabLabel}
-              </span>
-              <span>
-                <i className="bed" />
-                Bed
-              </span>
-            </div>
-          )}
         </div>
       </div>
 

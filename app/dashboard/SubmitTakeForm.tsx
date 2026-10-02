@@ -193,6 +193,7 @@ export function SubmitTakeForm({
         ) : (
           <p>{n === 1 ? "1 take attached" : `${n} takes attached`}</p>
         )}
+        {submittedNote.trim() ? <p className="jnotes" style={{ color: "var(--ink-2)" }}>{submittedNote}</p> : null}
         <Link href={`/submissions?job=${jobId}`} className="btn soft" style={{ height: 38, fontSize: 13.5, width: "100%" }}>
           View or edit my submission
         </Link>

@@ -468,7 +468,7 @@ export function WaveformMixPlayer({
       <div className="ref-head">
         {heading ?? (
           <strong className="ref-lbl">
-            {headingLabel}
+            {mode === "backing" ? "Bed" : mode === "both" ? "Both" : partTabLabel}
             <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
               i
             </i>
@@ -601,10 +601,12 @@ export function WaveformMixPlayer({
               <DownIcon />
             </span>
             <span className="dl-t">
-              <strong>{partTabLabel}</strong>
-              <span>{partCaption ?? (partTabLabel === "Take" ? "Your submitted take" : "What you'll replace")}</span>
+              <span className="dl-top">
+                <strong>{partTabLabel}</strong>
+                <span className="dl-size">{fileKind(partName)}{fileSizes.part ? ` · ${fileSizes.part}` : ""}</span>
+              </span>
+              <span className="dl-desc">{partCaption ?? (partTabLabel === "Take" ? "Your submitted take" : "What you'll replace")}</span>
             </span>
-            <span className="dl-size">{fileKind(partName)}{fileSizes.part ? ` · ${fileSizes.part}` : ""}</span>
           </a>
           {backingSrc ? (
             <a className="dl-file" href={backingSrc} download={bedName} target="_blank" rel="noopener noreferrer">
@@ -612,10 +614,12 @@ export function WaveformMixPlayer({
                 <DownIcon />
               </span>
               <span className="dl-t">
-                <strong>Bed</strong>
-                <span>The rest of the mix</span>
+                <span className="dl-top">
+                  <strong>Bed</strong>
+                  <span className="dl-size">{fileKind(bedName)}{fileSizes.bed ? ` · ${fileSizes.bed}` : ""}</span>
+                </span>
+                <span className="dl-desc">The rest of the mix</span>
               </span>
-              <span className="dl-size">{fileKind(bedName)}{fileSizes.bed ? ` · ${fileSizes.bed}` : ""}</span>
             </a>
           ) : null}
         </div>

@@ -163,12 +163,12 @@ button { cursor: pointer; }
 }
 .tip.sm { width: 12px; height: 12px; font-size: 8px; }
 .tip::after {
-  content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translate(-50%, 4px);
-  width: max-content; max-width: 220px; padding: 8px 10px; border-radius: 10px; background: var(--ink); color: #fff;
+  content: attr(data-tip); position: absolute; left: 0; bottom: calc(100% + 8px); transform: translate(0, 4px);
+  width: max-content; max-width: 240px; padding: 8px 10px; border-radius: 10px; background: var(--ink); color: #fff;
   font-size: 12px; font-weight: 500; line-height: 1.4; text-align: left; white-space: normal; letter-spacing: 0;
-  opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s var(--ease); z-index: 10;
+  opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s var(--ease); z-index: 30;
 }
-.tip:hover::after, .tip:focus::after, .tip.on::after { opacity: 1; transform: translate(-50%, 0); }
+.tip:hover::after, .tip:focus::after, .tip.on::after { opacity: 1; transform: translate(0, 0); }
 .pill.due { position: relative; cursor: default; outline: none; }
 .pill.due::after {
   content: attr(data-due); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translate(-50%, 4px);
@@ -727,17 +727,18 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .job-body .pill { background: #fff; box-shadow: 0 0 0 1px var(--line); }
 .panel { background: #fff; border-radius: 20px; padding: 18px; box-shadow: 0 0 0 1px var(--line); display: flex; flex-direction: column; gap: 14px; }
 .dl-files { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
-.dl-file { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 14px 12px 12px; border-radius: 16px; background: var(--soft); transition: background .2s, box-shadow .2s, transform .15s var(--ease); }
+.dl-file { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; min-width: 0; padding: 12px 14px 12px 12px; border-radius: 16px; background: var(--soft); transition: background .2s, box-shadow .2s, transform .15s var(--ease); }
 .dl-file:hover { background: #fff; box-shadow: 0 0 0 1px var(--line-2), 0 10px 24px -14px rgba(17,17,19,.3); transform: translateY(-1px); }
 .dl-file:active { transform: scale(.98); }
 .dl-file:focus-visible { box-shadow: 0 0 0 3px rgba(var(--accent-rgb),.35); }
 .dl-ic { width: 38px; height: 38px; border-radius: 12px; flex: none; display: grid; place-items: center; background: #fff; color: var(--accent-ink); box-shadow: 0 0 0 1px var(--line); transition: background .2s, color .2s; }
 .dl-ic svg { width: 17px; height: 17px; }
 .dl-file:hover .dl-ic { background: var(--accent); color: #fff; box-shadow: none; }
-.dl-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dl-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.dl-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .dl-t strong { font-size: 14px; font-weight: 600; color: var(--ink); }
-.dl-t span { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dl-size { margin-left: auto; flex: none; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; align-self: flex-start; margin-top: 2px; }
+.dl-desc { font-size: 12.5px; color: var(--muted); line-height: 1.35; white-space: normal; }
+.dl-size { margin: 0; flex: none; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
 @media (max-width: 560px) { .dl-files { grid-template-columns: 1fr; } }
 .panel h3 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .panel p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }

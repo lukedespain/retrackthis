@@ -60,6 +60,7 @@ export default async function BrandKitPage() {
               files={[
                 { href: "/brand/kit/badge.svg", label: "SVG", detail: "Design tools" },
                 { href: "/brand/kit/badge-profile-720.png", label: "PNG · 720×720", detail: "Google profile, Instagram, TikTok, YouTube" },
+                { href: "/brand/kit/badge-press.gif", label: "GIF · 360×360", detail: "Animated Google profile. Inbox often stays still" },
                 { href: "/brand/kit/badge-google-signin-120.png", label: "PNG · 120×120", detail: "Google sign-in" },
                 { href: "/brand/kit/badge-stripe-512.png", label: "PNG · 512×512", detail: "Stripe icon" },
               ]}

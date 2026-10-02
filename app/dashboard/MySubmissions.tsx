@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
-import { TempoTag } from "@/components/JobMetaTags";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -248,7 +247,14 @@ function SubmissionCard({
                 {liveTake.note}
               </div>
             ) : null}
-            <TempoTag bpm={liveTake.job.bpm} />
+            <div className="pills" style={{ margin: 0 }}>
+              <span className="pill">{liveTake.job.bpm ? `${liveTake.job.bpm} BPM` : "Tempo not fixed"}</span>
+              {liveTake.job.musicalKey ? <span className="pill">{liveTake.job.musicalKey}</span> : null}
+              <span className="pill">
+                <InstrumentIcon instrument={liveTake.job.instrument} />
+                {liveTake.job.instrument}
+              </span>
+            </div>
             {canReplace ? (
               <SubmitTakeForm
                 jobId={liveTake.jobId}

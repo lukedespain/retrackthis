@@ -59,6 +59,7 @@ export type MyTake = {
     createdAt?: string;
     durationSeconds?: number | null;
     bpm: number | null;
+    musicalKey?: string | null;
     status: "PENDING_PAYMENT" | "OPEN" | "AWARDING" | "CANCELLING" | "AWARDED" | "CANCELLED";
     backingFileUrl?: string | null;
     deadline?: string;

@@ -23,6 +23,7 @@ export async function GET() {
           createdAt: true,
           durationSeconds: true,
           bpm: true,
+          musicalKey: true,
           status: true,
           backingFileUrl: true,
           deadline: true,

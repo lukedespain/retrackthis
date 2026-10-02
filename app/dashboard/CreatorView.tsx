@@ -584,7 +584,7 @@ function CreatorJobCard({
         }`}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-gray-100 bg-surface px-4 py-4 sm:px-6 sm:py-5">
+          <div className="job-open">
             {editing && !readOnly ? (
               <EditJobForm
                 job={job}

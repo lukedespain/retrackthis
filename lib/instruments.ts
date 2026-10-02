@@ -224,6 +224,44 @@ export function catalogWithApproved(extras: ApprovedInstrumentLite[]): Instrumen
   );
 }
 
+export type InstrumentAdjustments = {
+  labels: Record<string, string>;
+  hidden: string[];
+};
+
+/** Approved extras, plus admin renames and hides. */
+export function presentInstrumentGroups(
+  extras: ApprovedInstrumentLite[],
+  adjustments: InstrumentAdjustments = { labels: {}, hidden: [] }
+): InstrumentGroup[] {
+  const hidden = new Set(adjustments.hidden);
+  return groupsWithApproved(extras)
+    .map((group) => ({
+      ...group,
+      items: group.items
+        .filter((item) => !hidden.has(item.id))
+        .map((item) => {
+          const label = adjustments.labels[item.id];
+          if (!label || label === item.label) return item;
+          return { ...item, label, aliases: Array.from(new Set([...item.aliases, item.label.toLowerCase()])) };
+        }),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+export function presentInstrumentCatalog(
+  extras: ApprovedInstrumentLite[],
+  adjustments: InstrumentAdjustments = { labels: {}, hidden: [] }
+): InstrumentCategory[] {
+  return presentInstrumentGroups(extras, adjustments).flatMap((group) =>
+    group.items.map((item) => ({
+      ...item,
+      groupId: group.id,
+      groupLabel: group.label,
+    }))
+  );
+}
+
 export function catalogHasLabel(label: string, extras: ApprovedInstrumentLite[] = []): boolean {
   const key = label.trim().toLowerCase();
   if (!key) return false;

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
+import { isHiddenInstrument, listInstrumentAdjustments, visibleLabels } from "@/lib/instrumentOverrides";
 import {
-  catalogHasLabel,
   isAllowedInstrumentId,
   labelForInstrumentId,
   makeCustomInstrumentId,
@@ -14,24 +14,30 @@ export async function listApprovedInstruments() {
   });
 }
 
-/** Catalog id, or an instrument an admin has added. */
+/** Catalog id, or an instrument an admin has added. Hidden instruments are not postable. */
 export async function resolvePostableInstrument(id: string): Promise<{ id: string; label: string } | null> {
+  const adjustments = await listInstrumentAdjustments();
+  if (isHiddenInstrument(id, adjustments)) return null;
   if (isAllowedInstrumentId(id)) {
-    return { id, label: labelForInstrumentId(id) };
+    return { id, label: adjustments.labels[id] ?? labelForInstrumentId(id) };
   }
   if (!parseCustomInstrumentId(id)) return null;
   const row = await db.approvedInstrument.findUnique({
     where: { id },
     select: { id: true, label: true },
   });
-  return row;
+  if (!row) return null;
+  return { id: row.id, label: adjustments.labels[row.id] ?? row.label };
 }
 
 export async function labelAlreadyOnSite(label: string): Promise<boolean> {
-  if (catalogHasLabel(label)) return true;
   const key = label.trim().toLowerCase();
-  const approved = await db.approvedInstrument.findMany({ select: { label: true } });
-  return approved.some((row) => row.label.toLowerCase() === key);
+  if (!key) return false;
+  const labels = await visibleLabels();
+  for (const name of labels.values()) {
+    if (name.toLowerCase() === key) return true;
+  }
+  return false;
 }
 
 export function instrumentIdForApproval(groupId: string, label: string): string | null {

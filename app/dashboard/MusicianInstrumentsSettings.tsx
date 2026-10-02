@@ -4,13 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { InstrumentTypeahead } from "@/components/InstrumentTypeahead";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { Alert } from "@/components/ui/Alert";
-import {
-  catalogWithApproved,
-  groupsWithApproved,
-  labelForInstrumentId,
-  type InstrumentGroup,
-} from "@/lib/instruments";
-import { useApprovedInstruments } from "@/lib/useApprovedInstruments";
+import { labelForInstrumentId, type InstrumentGroup } from "@/lib/instruments";
+import { useInstrumentCatalog } from "@/lib/useApprovedInstruments";
 
 const POPULAR = [
   "electric-guitar",
@@ -98,7 +93,7 @@ export function MusicianInstrumentsSettings() {
   const [addingGroup, setAddingGroup] = useState<string | null>(null);
   const [suggesting, setSuggesting] = useState(false);
   const [suggested, setSuggested] = useState<Set<string>>(new Set());
-  const extras = useApprovedInstruments();
+  const { extras, adjustments, groups: catalogGroups, catalog } = useInstrumentCatalog();
 
   useEffect(() => {
     fetch("/api/suggestions/mine")
@@ -127,20 +122,21 @@ export function MusicianInstrumentsSettings() {
   }, []);
 
   const groups = useMemo(() => {
-    const byId = new Map(groupsWithApproved(extras).map((group) => [group.id, group]));
+    const byId = new Map(catalogGroups.map((group) => [group.id, group]));
     return GROUP_ORDER.map((id) => byId.get(id)).filter((group): group is InstrumentGroup => Boolean(group));
-  }, [extras]);
+  }, [catalogGroups]);
 
   const hits = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return catalogWithApproved(extras).filter((item) => {
+    return catalog.filter((item) => {
       if (item.label.toLowerCase().includes(q)) return true;
       return item.aliases.some((alias) => alias.includes(q));
     });
-  }, [query, extras]);
+  }, [query, catalog]);
 
-  const labelFor = (id: string) => extras.find((item) => item.id === id)?.label ?? labelForInstrumentId(id);
+  const labelFor = (id: string) =>
+    adjustments.labels[id] ?? extras.find((item) => item.id === id)?.label ?? labelForInstrumentId(id);
 
   async function suggest(label: string, groupId?: string) {
     const name = label.trim().replace(/\s+/g, " ");

@@ -5,13 +5,8 @@ import { AuthLayout } from "@/components/AuthLayout";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
-import {
-  catalogWithApproved,
-  groupsWithApproved,
-  labelForInstrumentId,
-  type InstrumentGroup,
-} from "@/lib/instruments";
-import { useApprovedInstruments } from "@/lib/useApprovedInstruments";
+import { labelForInstrumentId, type InstrumentGroup } from "@/lib/instruments";
+import { useInstrumentCatalog } from "@/lib/useApprovedInstruments";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 const GROUP_ORDER = [
@@ -67,20 +62,22 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
     };
   }, []);
 
-  const extras = useApprovedInstruments();
+  const { adjustments, groups: catalogGroups, catalog } = useInstrumentCatalog();
+  const labelFor = (id: string) =>
+    catalog.find((item) => item.id === id)?.label ?? adjustments.labels[id] ?? labelForInstrumentId(id);
   const groups = useMemo(() => {
-    const byId = new Map(groupsWithApproved(extras).map((group) => [group.id, group]));
+    const byId = new Map(catalogGroups.map((group) => [group.id, group]));
     return GROUP_ORDER.map((id) => byId.get(id)).filter((group): group is InstrumentGroup => Boolean(group));
-  }, [extras]);
+  }, [catalogGroups]);
 
   const hits = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return catalogWithApproved(extras).filter(
+    return catalog.filter(
       (item) =>
         item.label.toLowerCase().includes(q) || item.aliases.some((alias) => alias.includes(q))
     );
-  }, [query, extras]);
+  }, [query, catalog]);
 
   function toggle(id: string) {
     setLater(false);
@@ -90,7 +87,7 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
   }
 
   function tile(id: string) {
-    const label = labelForInstrumentId(id);
+    const label = labelFor(id);
     return (
       <button
         key={id}
@@ -174,7 +171,7 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
                   onClick={() => toggle(id)}
                   disabled={submitting}
                 >
-                  {labelForInstrumentId(id)}
+                  {labelFor(id)}
                 </button>
               ))}
             </div>

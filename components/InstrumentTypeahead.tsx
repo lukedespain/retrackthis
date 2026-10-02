@@ -3,12 +3,12 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import {
-  catalogWithApproved,
   displayLabelForInstrumentId,
   labelForInstrumentId,
+  presentInstrumentCatalog,
   type InstrumentCategory,
 } from "@/lib/instruments";
-import { useApprovedInstruments } from "@/lib/useApprovedInstruments";
+import { useInstrumentCatalog } from "@/lib/useApprovedInstruments";
 
 type InstrumentTypeaheadProps = {
   selectedId: string | null;
@@ -34,7 +34,7 @@ function scoreMatch(item: InstrumentCategory, query: string): number {
   return 0;
 }
 
-export function searchInstruments(query: string, limit = 8, catalog: InstrumentCategory[] = catalogWithApproved([])): InstrumentCategory[] {
+export function searchInstruments(query: string, limit = 8, catalog: InstrumentCategory[] = presentInstrumentCatalog([])): InstrumentCategory[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
@@ -59,8 +59,7 @@ export function InstrumentTypeahead({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
-  const extras = useApprovedInstruments();
-  const catalog = useMemo(() => catalogWithApproved(extras), [extras]);
+  const { catalog } = useInstrumentCatalog();
 
   const suggestions = useMemo(() => searchInstruments(query, 8, catalog), [query, catalog]);
 

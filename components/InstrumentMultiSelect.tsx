@@ -2,12 +2,11 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
-  groupsWithApproved,
   displayLabelForInstrumentId,
   isCustomInstrumentId,
   makeCustomInstrumentId,
 } from "@/lib/instruments";
-import { useApprovedInstruments } from "@/lib/useApprovedInstruments";
+import { useInstrumentCatalog } from "@/lib/useApprovedInstruments";
 
 type InstrumentMultiSelectProps = {
   selectedIds: string[];
@@ -51,8 +50,7 @@ export function InstrumentMultiSelect({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listId = useId();
   const unavailable = new Set(unavailableIds);
-  const extras = useApprovedInstruments();
-  const groups = useMemo(() => groupsWithApproved(extras), [extras]);
+  const { groups } = useInstrumentCatalog();
 
   const selectedByGroup = useMemo(() => {
     const map = new Map<string, number>();

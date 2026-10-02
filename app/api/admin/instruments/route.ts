@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
+import { displayLabel, listInstrumentAdjustments } from "@/lib/instrumentOverrides";
 import { getMusicianCountsByInstrument } from "@/lib/instrumentNetwork";
 import {
   INSTRUMENT_CATALOG,
   groupForInstrumentId,
   isCustomInstrumentId,
-  labelForInstrumentId,
 } from "@/lib/instruments";
 
 // GET /api/admin/instruments - coverage across catalog + custom write-ins
@@ -13,7 +13,11 @@ export async function GET() {
   const { error } = await requireAdmin();
   if (error) return error;
 
-  const counts = await getMusicianCountsByInstrument();
+  const [counts, adjustments] = await Promise.all([
+    getMusicianCountsByInstrument(),
+    listInstrumentAdjustments(),
+  ]);
+  const hidden = new Set(adjustments.hidden);
 
   const covered: Array<{
     id: string;
@@ -25,11 +29,12 @@ export async function GET() {
   const needed: typeof covered = [];
 
   for (const item of INSTRUMENT_CATALOG) {
+    if (hidden.has(item.id)) continue;
     const musicianCount = counts[item.id] ?? 0;
     const group = groupForInstrumentId(item.id);
     const row = {
       id: item.id,
-      label: item.label,
+      label: displayLabel(item.id, adjustments),
       groupLabel: group?.label ?? "Other",
       musicianCount,
       custom: false,
@@ -41,11 +46,12 @@ export async function GET() {
   // Custom instruments musicians added that aren't in the catalog
   for (const [id, musicianCount] of Object.entries(counts)) {
     if (!isCustomInstrumentId(id)) continue;
+    if (hidden.has(id)) continue;
     if (musicianCount <= 0) continue;
     const group = groupForInstrumentId(id);
     covered.push({
       id,
-      label: labelForInstrumentId(id),
+      label: displayLabel(id, adjustments),
       groupLabel: group?.label ?? "Other",
       musicianCount,
       custom: true,

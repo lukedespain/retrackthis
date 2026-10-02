@@ -6,6 +6,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
+import { AdminInstrumentEditor } from "./AdminInstrumentEditor";
 import { AdminEmailsPanel } from "./AdminEmailsPanel";
 import { AdminRequestsPanel } from "./AdminRequestsPanel";
 import { AdminFinanceWaterfall } from "./AdminFinanceWaterfall";
@@ -178,6 +179,8 @@ function AdminPageInner() {
   const [openMemberId, setOpenMemberId] = useState<string | null>(null);
   const [adminJobs, setAdminJobs] = useState<AdminJobRow[] | null>(null);
   const [jobsReloadToken, setJobsReloadToken] = useState(0);
+  const [instrumentsReloadToken, setInstrumentsReloadToken] = useState(0);
+  const [editingInstrumentId, setEditingInstrumentId] = useState<string | null>(null);
   const [instruments, setInstruments] = useState<{
     covered: InstrumentRow[];
     needed: InstrumentRow[];
@@ -286,7 +289,7 @@ function AdminPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [profile, tab, period, router, jobsReloadToken]);
+  }, [profile, tab, period, router, jobsReloadToken, instrumentsReloadToken]);
 
   const filteredMembers = useMemo(() => {
     if (!members) return [];
@@ -614,7 +617,7 @@ function AdminPageInner() {
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-gray-500">
-                Sorted by musician count for covered; by group for gaps.
+                Click an instrument to rename it, remove it, or see who plays it.
               </p>
               <SegmentedControl
                 value={instrumentFilter}
@@ -632,6 +635,7 @@ function AdminPageInner() {
                 title="Covered"
                 rows={instruments.covered}
                 empty="No musicians have listed instruments yet."
+                onOpen={setEditingInstrumentId}
               />
             )}
             {(instrumentFilter === "all" || instrumentFilter === "needed") && (
@@ -640,8 +644,16 @@ function AdminPageInner() {
                 rows={instruments.needed}
                 empty="Every catalog instrument has at least one musician."
                 emphasizeGap
+                onOpen={setEditingInstrumentId}
               />
             )}
+            {editingInstrumentId ? (
+              <AdminInstrumentEditor
+                instrumentId={editingInstrumentId}
+                onClose={() => setEditingInstrumentId(null)}
+                onChanged={() => setInstrumentsReloadToken((n) => n + 1)}
+              />
+            ) : null}
           </section>
         )}
 
@@ -754,11 +766,13 @@ function InstrumentTable({
   rows,
   empty,
   emphasizeGap = false,
+  onOpen,
 }: {
   title: string;
   rows: InstrumentRow[];
   empty: string;
   emphasizeGap?: boolean;
+  onOpen: (id: string) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
@@ -779,7 +793,18 @@ function InstrumentTable({
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
             {rows.map((row) => (
-              <tr key={row.id} className="bg-white hover:bg-gray-50">
+              <tr
+                key={row.id}
+                className="cursor-pointer bg-white hover:bg-gray-50"
+                tabIndex={0}
+                onClick={() => onOpen(row.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onOpen(row.id);
+                  }
+                }}
+              >
                 <td className="px-4 py-2.5 text-gray-900">
                   {row.label}
                   {row.custom ? (

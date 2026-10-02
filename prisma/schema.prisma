@@ -93,6 +93,14 @@ model ApprovedInstrument {
   createdAt    DateTime              @default(now())
 }
 
+// Admin rename or hide for a catalog (or approved) instrument id.
+model InstrumentOverride {
+  id        String   @id
+  label     String?
+  hidden    Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
+
 model FeatureRequest {
   id           String       @id @default(cuid())
   title        String

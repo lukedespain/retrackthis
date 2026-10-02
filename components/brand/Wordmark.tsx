@@ -1,34 +1,33 @@
 import Link from "next/link";
 
-/** Loop · Spin: two arcs chasing a dot. Ink on top, accent underneath. */
-export function LoopSpinMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
-      <path
-        d="M9 24 A15 15 0 0 1 29.13 9.9 L26.4 4.1"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="5.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M39 24 A15 15 0 0 1 18.87 38.1 L21.6 43.9"
-        fill="none"
-        stroke="var(--accent)"
-        strokeWidth="5.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="24" cy="24" r="5.4" fill="currentColor" />
-    </svg>
-  );
-}
-
+/**
+ * Badge · Offset: brand fill, clean line, circle frame.
+ * The black disc sits down-right; the purple face presses into it on hover.
+ */
 export function BadgeMark() {
   return (
     <span className="mark" aria-hidden="true">
-      <LoopSpinMark />
+      <svg viewBox="0 0 48 48" overflow="visible">
+        <g className="mark-shadow">
+          <circle cx="24" cy="24" r="22" fill="currentColor" transform="translate(2.6 2.6)" />
+        </g>
+        <g className="mark-face">
+          <circle cx="24" cy="24" r="22" fill="var(--mark-accent, var(--accent))" />
+          <g transform="translate(9.25 5.25) scale(.75)">
+            <path
+              d="M7 13h2.5a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V15a2 2 0 0 1 2-2z"
+              fill="var(--mark-on-accent, #fff)"
+            />
+            <path
+              d="M14 25L35 13L35 37Z"
+              fill="var(--mark-on-accent, #fff)"
+              stroke="var(--mark-on-accent, #fff)"
+              strokeWidth="3.4"
+              strokeLinejoin="round"
+            />
+          </g>
+        </g>
+      </svg>
     </span>
   );
 }

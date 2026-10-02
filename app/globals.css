@@ -61,16 +61,6 @@
     }
   }
 
-  /* Exact Figma mark - slow spin only (no redraw / no color remapping) */
-  .retrack-loader-spin {
-    animation: retrack-loader-spin 2.4s linear infinite;
-  }
-
-  @keyframes retrack-loader-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
 }
 
 /* Homepage hero: MIDI piano-roll → thin line → DAW waveform (seamless loops) */

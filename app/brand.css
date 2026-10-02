@@ -531,9 +531,18 @@ a { color: inherit; }
 .wordmark:active img { transform: scale(.95); }
 .wordmark b { font-weight: 600; color: var(--accent); }
 .wordmark.sm img { width: 24px; height: 24px; }
-.wordmark .mark { display: block; width: 28px; height: 28px; transition: transform .15s ease-out; }
-.wordmark .mark svg { width: 100%; height: 100%; display: block; }
-.wordmark:hover .mark { transform: scale(1.05); }
+.wordmark .mark { display: block; width: 28px; height: 28px; overflow: visible; }
+.wordmark .mark svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.wordmark .mark-face {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  transition: transform .18s cubic-bezier(.2, .7, .2, 1);
+}
+.wordmark:hover .mark-face,
+.wordmark:focus-visible .mark-face {
+  transform: translate(5.42%, 5.42%);
+  transition-duration: .11s;
+}
 .wordmark.sm .mark { width: 24px; height: 24px; }
 .nav .wordmark { font-size: 21px !important; gap: 11px; }
 .nav .wordmark .mark, .nav .wordmark img { width: 36px; height: 36px; }

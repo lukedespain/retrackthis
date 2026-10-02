@@ -2,11 +2,12 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
-  INSTRUMENT_GROUPS,
+  groupsWithApproved,
   displayLabelForInstrumentId,
   isCustomInstrumentId,
   makeCustomInstrumentId,
 } from "@/lib/instruments";
+import { useApprovedInstruments } from "@/lib/useApprovedInstruments";
 
 type InstrumentMultiSelectProps = {
   selectedIds: string[];
@@ -50,11 +51,13 @@ export function InstrumentMultiSelect({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listId = useId();
   const unavailable = new Set(unavailableIds);
+  const extras = useApprovedInstruments();
+  const groups = useMemo(() => groupsWithApproved(extras), [extras]);
 
   const selectedByGroup = useMemo(() => {
     const map = new Map<string, number>();
     for (const id of selectedIds) {
-      const group = INSTRUMENT_GROUPS.find(
+      const group = groups.find(
         (entry) =>
           entry.items.some((item) => item.id === id) ||
           (isCustomInstrumentId(id) && id.startsWith(`custom:${entry.id}:`))
@@ -62,7 +65,7 @@ export function InstrumentMultiSelect({
       if (group) map.set(group.id, (map.get(group.id) ?? 0) + 1);
     }
     return map;
-  }, [selectedIds]);
+  }, [selectedIds, groups]);
 
   useEffect(() => {
     if (!open || panel) return;
@@ -91,11 +94,11 @@ export function InstrumentMultiSelect({
   useEffect(() => {
     if (!open) return;
     const next = new Set<string>();
-    for (const group of INSTRUMENT_GROUPS) {
+    for (const group of groups) {
       if ((selectedByGroup.get(group.id) ?? 0) > 0) next.add(group.id);
     }
     setExpandedGroups(next);
-  }, [open, selectedByGroup]);
+  }, [open, selectedByGroup, groups]);
 
   function toggleGroup(groupId: string) {
     setExpandedGroups((current) => {
@@ -209,7 +212,7 @@ export function InstrumentMultiSelect({
               : "absolute z-50 mt-1.5 max-h-[min(420px,70vh)] w-full overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg shadow-gray-900/10"
           }
         >
-          {INSTRUMENT_GROUPS.map((group) => {
+          {groups.map((group) => {
             const expanded = expandedGroups.has(group.id);
             const selectedCount = selectedByGroup.get(group.id) ?? 0;
 

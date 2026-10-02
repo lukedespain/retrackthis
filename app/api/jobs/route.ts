@@ -5,10 +5,9 @@ import { CANCEL_GRACE_PERIOD_MS } from "@/lib/jobActions";
 import { stripe } from "@/lib/stripe";
 import { getSessionUserId } from "@/lib/supabaseServer";
 import { getAdminUser } from "@/lib/admin";
+import { resolvePostableInstrument } from "@/lib/approvedInstruments";
 import {
-  isAllowedInstrumentId,
   isTestInstrumentId,
-  labelForInstrumentId,
   TEST_INSTRUMENT_ID,
   TEST_INSTRUMENT_LABEL,
 } from "@/lib/instruments";
@@ -87,10 +86,12 @@ export async function POST(req: NextRequest) {
     }
   }
   if (requestedTest || (!isTest && resolvedInstrumentId)) {
-    if (!isAllowedInstrumentId(resolvedInstrumentId)) {
+    const postable = await resolvePostableInstrument(resolvedInstrumentId);
+    if (!postable) {
       return NextResponse.json({ error: "Pick an instrument for this job." }, { status: 400 });
     }
-    instrumentLabel = labelForInstrumentId(resolvedInstrumentId);
+    resolvedInstrumentId = postable.id;
+    instrumentLabel = postable.label;
   }
 
   if (!instrumentLabel) {
@@ -429,7 +430,8 @@ async function createPartBundle(
     if (legacyTest && !admin) {
       return NextResponse.json({ error: "Test jobs are for admins only." }, { status: 403 });
     }
-    if (!isAllowedInstrumentId(instrumentId)) {
+    const postable = await resolvePostableInstrument(instrumentId);
+    if (!postable) {
       return NextResponse.json({ error: "Pick an instrument for each part." }, { status: 400 });
     }
     const description = String(part.description ?? "").trim().slice(0, 5000);
@@ -470,8 +472,8 @@ async function createPartBundle(
     const storageError = assertAppStorageUrls([demoFileUrl, backing]);
     if (storageError) return NextResponse.json({ error: storageError }, { status: 400 });
     ready.push({
-      instrumentId: legacyTest ? TEST_INSTRUMENT_ID : instrumentId,
-      instrument: legacyTest ? TEST_INSTRUMENT_LABEL : labelForInstrumentId(instrumentId),
+      instrumentId: legacyTest ? TEST_INSTRUMENT_ID : postable.id,
+      instrument: legacyTest ? TEST_INSTRUMENT_LABEL : postable.label,
       description,
       demoFileUrl,
       backingFileUrl: backing,

@@ -11,6 +11,7 @@ import { avatarSvg, cleanAvatar, randomAvatar } from "@/lib/avatar";
 import { Spinner } from "@/components/ui/Spinner";
 import { AccountSettings } from "@/app/dashboard/AccountSettings";
 import { MusicianInstrumentsSettings } from "@/app/dashboard/MusicianInstrumentsSettings";
+import { FeatureRequestSettings } from "@/app/dashboard/FeatureRequestSettings";
 import { NotificationSettings } from "@/app/dashboard/NotificationSettings";
 
 type Profile = {
@@ -124,6 +125,12 @@ function SettingsPageInner() {
             <h2>Notifications</h2>
             <p>Choose what we keep you posted on. Changes save automatically.</p>
             <NotificationSettings />
+          </section>
+
+          <section className="card" id="ideas">
+            <h2>Request a feature</h2>
+            <p>Anything you’d like on the site. We’ll review it and leave a note here.</p>
+            <FeatureRequestSettings />
           </section>
 
           <section className="card" id="account">

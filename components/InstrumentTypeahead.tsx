@@ -3,11 +3,12 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import {
-  INSTRUMENT_CATALOG,
+  catalogWithApproved,
   displayLabelForInstrumentId,
   labelForInstrumentId,
   type InstrumentCategory,
 } from "@/lib/instruments";
+import { useApprovedInstruments } from "@/lib/useApprovedInstruments";
 
 type InstrumentTypeaheadProps = {
   selectedId: string | null;
@@ -33,11 +34,11 @@ function scoreMatch(item: InstrumentCategory, query: string): number {
   return 0;
 }
 
-export function searchInstruments(query: string, limit = 8): InstrumentCategory[] {
+export function searchInstruments(query: string, limit = 8, catalog: InstrumentCategory[] = catalogWithApproved([])): InstrumentCategory[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
-  return INSTRUMENT_CATALOG.map((item) => ({ item, score: scoreMatch(item, q) }))
+  return catalog.map((item) => ({ item, score: scoreMatch(item, q) }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
     .slice(0, limit)
@@ -58,8 +59,10 @@ export function InstrumentTypeahead({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
+  const extras = useApprovedInstruments();
+  const catalog = useMemo(() => catalogWithApproved(extras), [extras]);
 
-  const suggestions = useMemo(() => searchInstruments(query), [query]);
+  const suggestions = useMemo(() => searchInstruments(query, 8, catalog), [query, catalog]);
 
   useEffect(() => {
     if (!open) return;
@@ -155,7 +158,7 @@ export function InstrumentTypeahead({
           {query.trim() && suggestions.length === 0 ? (
             <div className="combo-none">No matches. Try bass, keys, sax…</div>
           ) : (
-            (query.trim() ? suggestions : INSTRUMENT_CATALOG.slice(0, 8)).map((item, index) => (
+            (query.trim() ? suggestions : catalog.slice(0, 8)).map((item, index) => (
               <div
                 key={item.id}
                 className={`combo-opt${index === activeIndex ? " on" : ""}`}

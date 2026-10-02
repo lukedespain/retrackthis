@@ -7,11 +7,12 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminEmailsPanel } from "./AdminEmailsPanel";
+import { AdminRequestsPanel } from "./AdminRequestsPanel";
 import { AdminFinanceWaterfall } from "./AdminFinanceWaterfall";
 import { AdminJobsPanel, type AdminJobRow } from "./AdminJobsPanel";
 import { AdminMemberInstrumentsEditor } from "./AdminMemberInstrumentsEditor";
 
-type Tab = "members" | "jobs" | "instruments" | "income" | "emails";
+type Tab = "members" | "jobs" | "instruments" | "income" | "emails" | "requests";
 type Period = "7d" | "30d" | "90d" | "all";
 
 type Profile = {
@@ -200,7 +201,8 @@ function AdminPageInner() {
       t === "jobs" ||
       t === "instruments" ||
       t === "income" ||
-      t === "emails"
+      t === "emails" ||
+      t === "requests"
     )
       setTab(t);
     const p = searchParams.get("period");
@@ -261,8 +263,8 @@ function AdminPageInner() {
           if (!res.ok) throw new Error("Could not load instruments");
           const body = await res.json();
           if (!cancelled) setInstruments(body);
-        } else if (tab === "emails") {
-          // AdminEmailsPanel loads its own data.
+        } else if (tab === "emails" || tab === "requests") {
+          // Those panels load their own data.
         } else {
           const res = await fetch(`/api/admin/stats?period=${period}`);
           if (res.status === 403) {
@@ -401,7 +403,7 @@ function AdminPageInner() {
               Operations
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              Members, jobs, instruments, income, and emails.
+              Members, jobs, instruments, requests, income, and emails.
             </p>
           </div>
           <SegmentedControl
@@ -411,6 +413,7 @@ function AdminPageInner() {
               { value: "members", label: "Members" },
               { value: "jobs", label: "Jobs" },
               { value: "instruments", label: "Instruments" },
+              { value: "requests", label: "Requests" },
               { value: "income", label: "Income" },
               { value: "emails", label: "Emails" },
             ]}
@@ -429,7 +432,8 @@ function AdminPageInner() {
           (tab === "jobs" && adminJobs) ||
           (tab === "instruments" && instruments) ||
           (tab === "income" && stats) ||
-          tab === "emails"
+          tab === "emails" ||
+          tab === "requests"
         ) ? (
           <div className="flex justify-center py-20">
             <Spinner />
@@ -717,6 +721,8 @@ function AdminPageInner() {
         )}
 
         {tab === "emails" && <AdminEmailsPanel />}
+
+        {tab === "requests" && <AdminRequestsPanel />}
 
         <p className="text-xs text-gray-400">
           <Link href="/producers" className="underline-offset-2 hover:underline">

@@ -6,11 +6,12 @@ import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import {
-  INSTRUMENT_CATALOG,
-  INSTRUMENT_GROUPS,
+  catalogWithApproved,
+  groupsWithApproved,
   labelForInstrumentId,
   type InstrumentGroup,
 } from "@/lib/instruments";
+import { useApprovedInstruments } from "@/lib/useApprovedInstruments";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 const GROUP_ORDER = [
@@ -66,19 +67,20 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
     };
   }, []);
 
+  const extras = useApprovedInstruments();
   const groups = useMemo(() => {
-    const byId = new Map(INSTRUMENT_GROUPS.map((group) => [group.id, group]));
+    const byId = new Map(groupsWithApproved(extras).map((group) => [group.id, group]));
     return GROUP_ORDER.map((id) => byId.get(id)).filter((group): group is InstrumentGroup => Boolean(group));
-  }, []);
+  }, [extras]);
 
   const hits = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return INSTRUMENT_CATALOG.filter(
+    return catalogWithApproved(extras).filter(
       (item) =>
         item.label.toLowerCase().includes(q) || item.aliases.some((alias) => alias.includes(q))
     );
-  }, [query]);
+  }, [query, extras]);
 
   function toggle(id: string) {
     setLater(false);

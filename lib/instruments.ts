@@ -181,6 +181,62 @@ function buildFlatCatalog(): InstrumentCategory[] {
 
 export const INSTRUMENT_CATALOG = buildFlatCatalog();
 
+export type ApprovedInstrumentLite = {
+  id: string;
+  label: string;
+  groupId: string;
+};
+
+/** Static catalog plus instruments an admin has approved. */
+export function groupsWithApproved(extras: ApprovedInstrumentLite[]): InstrumentGroup[] {
+  if (extras.length === 0) return INSTRUMENT_GROUPS;
+  const byGroup = new Map<string, ApprovedInstrumentLite[]>();
+  for (const extra of extras) {
+    const list = byGroup.get(extra.groupId) ?? [];
+    list.push(extra);
+    byGroup.set(extra.groupId, list);
+  }
+  return INSTRUMENT_GROUPS.map((group) => {
+    const add = byGroup.get(group.id);
+    if (!add?.length) return group;
+    const seen = new Set(group.items.map((item) => item.id));
+    const items = [...group.items];
+    for (const extra of add) {
+      if (seen.has(extra.id)) continue;
+      items.push({
+        id: extra.id,
+        label: extra.label,
+        emoji: group.emoji,
+        aliases: [extra.label.toLowerCase()],
+      });
+    }
+    return { ...group, items };
+  });
+}
+
+export function catalogWithApproved(extras: ApprovedInstrumentLite[]): InstrumentCategory[] {
+  return groupsWithApproved(extras).flatMap((group) =>
+    group.items.map((item) => ({
+      ...item,
+      groupId: group.id,
+      groupLabel: group.label,
+    }))
+  );
+}
+
+export function catalogHasLabel(label: string, extras: ApprovedInstrumentLite[] = []): boolean {
+  const key = label.trim().toLowerCase();
+  if (!key) return false;
+  if (
+    INSTRUMENT_CATALOG.some(
+      (item) => item.label.toLowerCase() === key || item.aliases.some((alias) => alias === key)
+    )
+  ) {
+    return true;
+  }
+  return extras.some((extra) => extra.label.toLowerCase() === key);
+}
+
 /** @deprecated Use INSTRUMENT_CATALOG */
 export const INSTRUMENT_CATEGORIES = INSTRUMENT_CATALOG;
 

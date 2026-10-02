@@ -5,11 +5,12 @@ import { InstrumentTypeahead } from "@/components/InstrumentTypeahead";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { Alert } from "@/components/ui/Alert";
 import {
-  INSTRUMENT_CATALOG,
-  INSTRUMENT_GROUPS,
+  catalogWithApproved,
+  groupsWithApproved,
   labelForInstrumentId,
   type InstrumentGroup,
 } from "@/lib/instruments";
+import { useApprovedInstruments } from "@/lib/useApprovedInstruments";
 
 const POPULAR = [
   "electric-guitar",
@@ -62,6 +63,22 @@ function CloseIcon() {
   );
 }
 
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12.5l4.5 4.5L19 7" />
+    </svg>
+  );
+}
+
 function Chevron() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -78,6 +95,24 @@ export function MusicianInstrumentsSettings() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<Set<string>>(new Set());
+  const [addingGroup, setAddingGroup] = useState<string | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggested, setSuggested] = useState<Set<string>>(new Set());
+  const extras = useApprovedInstruments();
+
+  useEffect(() => {
+    fetch("/api/suggestions/mine")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        const labels = Array.isArray(body?.instruments)
+          ? body.instruments
+              .filter((item: { status?: string; label?: string }) => item.status === "PENDING" && item.label)
+              .map((item: { label: string }) => item.label.toLowerCase())
+          : [];
+        if (labels.length) setSuggested(new Set(labels));
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/settings/instruments")
@@ -92,18 +127,42 @@ export function MusicianInstrumentsSettings() {
   }, []);
 
   const groups = useMemo(() => {
-    const byId = new Map(INSTRUMENT_GROUPS.map((group) => [group.id, group]));
+    const byId = new Map(groupsWithApproved(extras).map((group) => [group.id, group]));
     return GROUP_ORDER.map((id) => byId.get(id)).filter((group): group is InstrumentGroup => Boolean(group));
-  }, []);
+  }, [extras]);
 
   const hits = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return INSTRUMENT_CATALOG.filter((item) => {
+    return catalogWithApproved(extras).filter((item) => {
       if (item.label.toLowerCase().includes(q)) return true;
       return item.aliases.some((alias) => alias.includes(q));
     });
-  }, [query]);
+  }, [query, extras]);
+
+  const labelFor = (id: string) => extras.find((item) => item.id === id)?.label ?? labelForInstrumentId(id);
+
+  async function suggest(label: string, groupId?: string) {
+    const name = label.trim().replace(/\s+/g, " ");
+    if (name.length < 2 || suggesting) return;
+    setSuggesting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/suggestions/instruments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: name, groupId }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Could not send that suggestion");
+      setSuggested((prev) => new Set(prev).add(name.toLowerCase()));
+      setAddingGroup(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send that suggestion");
+    } finally {
+      setSuggesting(false);
+    }
+  }
 
   async function commit(next: string[]) {
     setDraft(next);
@@ -134,7 +193,7 @@ export function MusicianInstrumentsSettings() {
   }
 
   function tile(id: string) {
-    const label = labelForInstrumentId(id);
+    const label = labelFor(id);
     return (
       <button
         key={id}
@@ -183,11 +242,11 @@ export function MusicianInstrumentsSettings() {
               key={id}
               type="button"
               className="ip-chip"
-              aria-label={`Remove ${labelForInstrumentId(id)}`}
+              aria-label={`Remove ${labelFor(id)}`}
               disabled={saving}
               onClick={() => toggle(id)}
             >
-              {labelForInstrumentId(id)}
+              {labelFor(id)}
               <CloseIcon />
             </button>
           ))}
@@ -199,7 +258,10 @@ export function MusicianInstrumentsSettings() {
           <div className="ip-lbl">
             {hits.length ? `${hits.length} match${hits.length === 1 ? "" : "es"}` : "No matches yet"}
           </div>
-          <div className="inst-grid">{hits.map((item) => tile(item.id))}</div>
+          <div className="inst-grid">
+            {hits.map((item) => tile(item.id))}
+            {hits.length === 0 ? <SuggestTile query={q} sent={suggested.has(q.toLowerCase())} busy={suggesting} onSuggest={() => void suggest(q)} /> : null}
+          </div>
         </>
       ) : (
         <>
@@ -236,6 +298,28 @@ export function MusicianInstrumentsSettings() {
                   {isOpen ? (
                     <div className="ip-grp-b">
                       <div className="inst-grid">{group.items.map((item) => tile(item.id))}</div>
+                      {addingGroup === group.id ? (
+                        <form
+                          className="ip-add"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const value = String(new FormData(e.currentTarget).get("v") ?? "");
+                            void suggest(value, group.id);
+                          }}
+                        >
+                          <input className="in" name="v" maxLength={48} placeholder="What should we add?" required />
+                          <button className="btn primary" type="submit" disabled={suggesting}>
+                            Suggest
+                          </button>
+                          <button type="button" className="btn text" onClick={() => setAddingGroup(null)}>
+                            Cancel
+                          </button>
+                        </form>
+                      ) : (
+                        <button type="button" className="ip-other" onClick={() => setAddingGroup(group.id)}>
+                          <PlusIcon /> Suggest an instrument
+                        </button>
+                      )}
                     </div>
                   ) : null}
                 </div>
@@ -251,6 +335,37 @@ export function MusicianInstrumentsSettings() {
         </Alert>
       ) : null}
     </div>
+  );
+}
+
+function SuggestTile({
+  query,
+  sent,
+  busy,
+  onSuggest,
+}: {
+  query: string;
+  sent: boolean;
+  busy: boolean;
+  onSuggest: () => void;
+}) {
+  if (sent) {
+    return (
+      <div className="inst-pick ip-else sent">
+        <CheckIcon />
+        <span>
+          Suggested <b>We&apos;ll review it</b>
+        </span>
+      </div>
+    );
+  }
+  return (
+    <button type="button" className="inst-pick ip-else" disabled={busy} aria-label={`Suggest adding ${query}`} onClick={onSuggest}>
+      <PlusIcon />
+      <span>
+        Not here? <b>Suggest adding</b>
+      </span>
+    </button>
   );
 }
 

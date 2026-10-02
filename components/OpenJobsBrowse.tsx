@@ -435,7 +435,7 @@ function OpenJobCard({
             {mine ? (
               <div className="stack" style={{ gap: 12 }}>
                 <h3>This is your job</h3>
-                <p>This is how musicians see it. Listen to submissions and pick a winner in My jobs.</p>
+                <p>This is how musicians see it. Listen to submissions and make the pick in My jobs.</p>
                 <Link href="/producers" className="btn soft" style={{ height: 38, fontSize: 13.5, alignSelf: "flex-start" }}>
                   Go to My jobs
                 </Link>

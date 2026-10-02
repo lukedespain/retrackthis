@@ -680,7 +680,7 @@ function AdminPageInner() {
               <StatCard
                 label="Picked volume"
                 value={money(stats.income.volumeCapturedCents)}
-                hint="Jobs that closed with a winner"
+                hint="Jobs that closed with a pick"
               />
               <StatCard
                 label="Platform fees"

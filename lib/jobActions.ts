@@ -298,7 +298,7 @@ async function finalizeTestAward(
 ): Promise<FinalizeAwardResult> {
   const claim = await claimJobForAward(jobId);
   if (claim === "busy") {
-    return { ok: false, error: "Award already in progress. Refresh in a moment.", status: 409 };
+    return { ok: false, error: "A pick is already in progress. Refresh in a moment.", status: 409 };
   }
   if (claim === "closed") {
     return { ok: false, error: "Only open jobs can be awarded", status: 400 };

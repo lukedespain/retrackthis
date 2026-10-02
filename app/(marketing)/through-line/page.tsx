@@ -255,7 +255,7 @@ function MusicianThroughLine() {
             },
             {
               pill: "Job cancelled",
-              meaning: "Producer cancelled / refunded, or cron refunded with no winner.",
+              meaning: "Producer cancelled / refunded, or cron refunded with no pick.",
             },
           ]}
         />
@@ -293,8 +293,7 @@ function MusicianThroughLine() {
         </Callout>
         <Callout tone="yes">
           <strong>While waiting.</strong> Replace files while Open. Favorites are private to the
-          producer. Previews stream as lighter MP3s; WAV masters unlock only for the winner after
-          Picked.
+          producer. Previews stream as lighter MP3s. WAV masters unlock for the musician who was picked.
         </Callout>
         <ul className="list-disc space-y-1.5 pl-5">
           <li>

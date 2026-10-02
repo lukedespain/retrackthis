@@ -114,6 +114,7 @@ const INSTRUMENT_BAND: Record<string, PricingBandId> = {
   trumpet: "specialist",
   flugelhorn: "specialist",
   trombone: "specialist",
+  saxophone: "specialist",
   "sax-alto": "specialist",
   "sax-tenor": "specialist",
   "sax-baritone": "specialist",

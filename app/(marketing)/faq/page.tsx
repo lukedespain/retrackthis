@@ -42,11 +42,11 @@ const faqItems: FaqItem[] = [
       <>
         <p>
           When a producer posts a job, they pay the full amount up front on Stripe Checkout (card,
-          Apple Pay, and other methods Stripe enables). Funds sit on the platform until a winner is
-          paid.
+          Apple Pay, and other methods Stripe enables). Funds sit on the platform until you pick
+          someone.
         </p>
         <p>
-          If you cancel an open job, or if the job expires without a winner, you get a full refund.
+          If you cancel an open job, or if the job closes with no pick, you get a full refund.
         </p>
         <p>
           When you pick a musician after the deadline (or we auto-pick your favorite after 48
@@ -119,7 +119,7 @@ const faqItems: FaqItem[] = [
           <span className="font-medium">Pick</span> a musician. That pays them and unlocks masters.
           Payment was already collected when you posted.
         </p>
-        <p>Make sure you have compared every take in each submission before you lock in a winner.</p>
+        <p>Make sure you have compared every take in each submission before you make the pick.</p>
       </>
     ),
   },

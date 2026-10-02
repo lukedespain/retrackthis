@@ -197,7 +197,7 @@ function outcomeCopy(take: MyTake, status: string) {
   }
   if (status === "lost") return "The producer picked another take. Thanks for playing.";
   if (status === "cancel") return "The producer cancelled before picking. Your takes weren't used.";
-  return "The producer picks a winner after the job closes.";
+  return "The producer picks after the job closes.";
 }
 
 function SubmissionPlayer({

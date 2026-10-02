@@ -978,7 +978,7 @@ function PostJobFormInner({
           <div className={`pay-acct${tried ? " need" : ""}`}>
             <div className="pa-t">
               <strong>Create your account to post</strong>
-              <span>So you can hear submissions and pick a winner. Your job details are saved.</span>
+              <span>So you can hear submissions and make the pick. Your job details are saved.</span>
             </div>
             <div onClickCapture={() => saveDraft()}>
               <GoogleAuthButton nextPath="/?post=1" label="Continue with Google" />
@@ -1023,8 +1023,8 @@ function PostJobFormInner({
           {isTestJob
             ? "This posts immediately. No card, no emails, and it does not show on Find work."
             : more.length > 0
-              ? "One charge covers every part. Each part is its own job. Cancel a part before you pick a winner and that part is refunded."
-              : "A secure Stripe checkout opens next. Card, Apple Pay, Link, and more. Cancel before a winner is paid for a full refund."}
+              ? "One charge covers every part. Each part is its own job. Cancel a part before you make the pick and that part is refunded."
+              : "A secure Stripe checkout opens next. Card, Apple Pay, Link, and more. Cancel before a pick is paid for a full refund."}
         </p>
         {isTestJob ? null : (
           <Input

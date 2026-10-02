@@ -185,7 +185,7 @@ export async function notifyJobDeadlineExtended(job: JobLite, extraDays: number)
         bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(user.name.split(" ")[0] || "there")},</p>
           <p style="margin:0 0 10px;">The producer added ${extraDays === 1 ? "1 more day" : `${extraDays} more days`} to <strong>${escape(job.title)}</strong> (${escape(job.instrument)} · ${escape(shownPay(job))}). ${escape(timeLeftLine)}</p>
           <p style="margin:0 0 10px;">${nextStep}</p>
-          <p style="margin:0;">Once the new deadline passes, the producer still has the usual 48 hours to pick a winner.</p>`,
+          <p style="margin:0;">Once the new deadline passes, the producer still has the usual 48 hours to make the pick.</p>`,
         ctaLabel: user.submitted ? "Update your take" : "View job",
         ctaHref: jobUrl(),
       })

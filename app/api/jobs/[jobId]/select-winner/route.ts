@@ -34,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     return NextResponse.json({ error: "Job or take not found" }, { status: 404 });
   }
   if (job.creatorId !== sessionUserId) {
-    return NextResponse.json({ error: "Not authorized to select a winner for this job" }, { status: 403 });
+    return NextResponse.json({ error: "Not authorized to pick for this job" }, { status: 403 });
   }
   if (job.status === "AWARDED" || job.status === "AWARDING") {
     if (job.status === "AWARDED") {

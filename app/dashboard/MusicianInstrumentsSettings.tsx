@@ -18,7 +18,7 @@ const POPULAR = [
   "drum-kit",
   "violin",
   "cello",
-  "sax-tenor",
+  "saxophone",
 ];
 
 const GROUP_ORDER = [

@@ -13,7 +13,7 @@ export default function TermsOfServicePage() {
         <p>
           Retrack This lets creators post jobs with a demo file, description, price, and deadline.
           Payment is charged up front via Stripe Checkout when a job is posted. Canceling an open
-          job (or expiring with no winner) triggers a refund. When a winner is finalized, the
+          job (or closing with no pick) triggers a refund. When a pick is finalized, the
           musician is paid through Stripe Connect (or an approved alternate payout) minus the
           platform fee. Musicians may browse open jobs and submit takes for free.
         </p>

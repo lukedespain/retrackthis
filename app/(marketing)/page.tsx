@@ -14,8 +14,8 @@ const PRODUCER_STEPS = [
     body: "Listen to all of the submissions and favorite the one you love.",
   },
   {
-    title: "Pick a winner",
-    body: "Pick within 48 hours of the deadline, or your favorite wins. No favorite? Full refund.",
+    title: "Make the pick",
+    body: "Pick within 48 hours of the deadline, or your favorite is picked. No favorite? Full refund.",
   },
 ] as const;
 

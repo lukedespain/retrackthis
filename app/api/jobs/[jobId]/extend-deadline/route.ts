@@ -51,7 +51,7 @@ export async function POST(req: Request, { params }: { params: { jobId: string }
   }
   if (job.deadline.getTime() <= Date.now()) {
     return NextResponse.json(
-      { error: "This job’s deadline already passed. Award a take or let it close." },
+      { error: "This job’s deadline already passed. Make the pick or let it close." },
       { status: 400 }
     );
   }

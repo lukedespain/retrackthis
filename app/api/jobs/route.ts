@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
         custom_text: {
           submit: {
             message:
-              "You're charged now. The musician is paid when you pick a winner. Cancel before that for a full refund.",
+              "You're charged now. The musician is paid when you make the pick. Cancel before that for a full refund.",
           },
         },
         line_items: [
@@ -248,7 +248,7 @@ export async function POST(req: NextRequest) {
               unit_amount: priceCents,
               product_data: {
                 name: `Retrack This: ${titleStr}`.slice(0, 120),
-                description: `${instrumentLabel} · paid upfront; musician is paid when you pick a winner`.slice(
+                description: `${instrumentLabel} · paid upfront; musician is paid when you make the pick`.slice(
                   0,
                   500
                 ),
@@ -567,7 +567,7 @@ async function createPartBundle(
       custom_text: {
         submit: {
           message:
-            "One charge covers every part. Each part is its own job. Cancel a part before you pick a winner and that part is refunded.",
+            "One charge covers every part. Each part is its own job. Cancel a part before you make the pick and that part is refunded.",
         },
       },
       line_items: created.map((job) => ({
@@ -577,7 +577,7 @@ async function createPartBundle(
           unit_amount: job.priceCents,
           product_data: {
             name: `Retrack This: ${job.title}`.slice(0, 120),
-            description: `${job.instrument} · paid upfront; musician is paid when you pick a winner`.slice(0, 500),
+            description: `${job.instrument} · paid upfront; musician is paid when you make the pick`.slice(0, 500),
           },
         },
       })),

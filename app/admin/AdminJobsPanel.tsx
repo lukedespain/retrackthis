@@ -476,7 +476,7 @@ function AdminTakesList({
     <div className="space-y-3">
       <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
         {takes.length} {takes.length === 1 ? "submission" : "submissions"}
-        {!jobOpen ? " · showing winner only" : ""}
+        {!jobOpen ? " · showing the pick only" : ""}
       </p>
       {visibleTakes.map((take) => {
         const audioCount = take.files?.length ? audioFiles(take.files).length : 1;

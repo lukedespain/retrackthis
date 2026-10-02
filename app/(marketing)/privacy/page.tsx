@@ -34,7 +34,7 @@ export default function PrivacyPolicyPage() {
 
       <LegalSection title="How we use information">
         <ul className="list-disc space-y-2 pl-5">
-          <li>Operate the marketplace (posting jobs, submitting takes, picking winners).</li>
+          <li>Operate the marketplace (posting jobs, submitting takes, making a pick).</li>
           <li>Process charges, refunds, and musician payouts via Stripe.</li>
           <li>Enforce our human-performance rules and Terms of Service.</li>
           <li>Secure the service, prevent fraud, and debug outages.</li>

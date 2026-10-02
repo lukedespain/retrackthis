@@ -84,7 +84,7 @@ export function NotificationSettings() {
           />
           <PrefRow
             title="Take outcomes"
-            description="When a producer picks a winner on a job you submitted to"
+            description="When a producer picks your take"
             checked={prefs.notifyTakeOutcome}
             disabled={saving}
             onChange={(checked) => void save({ ...prefs, notifyTakeOutcome: checked })}

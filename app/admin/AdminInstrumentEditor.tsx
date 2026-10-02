@@ -24,7 +24,7 @@ type Confirm =
 
 function jobStatus(status: string) {
   if (status === "OPEN") return "Open";
-  if (status === "AWARDING") return "Picking a winner";
+  if (status === "AWARDING") return "Making the pick";
   if (status === "PENDING_PAYMENT") return "Waiting for payment";
   return status;
 }

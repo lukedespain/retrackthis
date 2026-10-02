@@ -26,7 +26,7 @@ export function JobCheckoutEmbed({
           {amountLabel
             ? `Secure checkout for ${amountLabel}. Card, Apple Pay, Link, and other methods Stripe enables.`
             : "Secure checkout - card, Apple Pay, Link, and other methods Stripe enables."}{" "}
-          The musician is paid when you pick a winner.
+          The musician is paid when you make the pick.
         </p>
       </div>
       <div className="min-h-[420px] px-2 py-3 sm:px-4">

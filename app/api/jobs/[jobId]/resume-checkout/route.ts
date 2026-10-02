@@ -70,7 +70,7 @@ export async function POST(_req: NextRequest, { params }: { params: { jobId: str
         custom_text: {
           submit: {
             message:
-              "You're charged now. The musician is paid when you pick a winner. Cancel before that for a full refund.",
+              "You're charged now. The musician is paid when you make the pick. Cancel before that for a full refund.",
           },
         },
         line_items: [
@@ -81,7 +81,7 @@ export async function POST(_req: NextRequest, { params }: { params: { jobId: str
               unit_amount: job.payment.amountCents,
               product_data: {
                 name: `Retrack This: ${job.title}`.slice(0, 120),
-                description: `${instrumentLabel} · paid upfront; musician is paid when you pick a winner`.slice(
+                description: `${instrumentLabel} · paid upfront; musician is paid when you make the pick`.slice(
                   0,
                   500
                 ),

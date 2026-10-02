@@ -126,7 +126,7 @@ function jobBucket(job: Job): JobBucket {
 }
 
 const BUCKET_LABEL: Record<JobBucket, string> = {
-  review: "Pick a winner",
+  review: "Ready to pick",
   open: "Open",
   awarded: "Picked",
   cancel: "Cancelled",

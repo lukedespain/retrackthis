@@ -1,8 +1,9 @@
-/** Loading status with no spinning mark. The offset badge is the logo, not a loader. */
-export function Spinner({ className = "" }: { size?: "sm" | "md"; className?: string }) {
+/** Quiet wait. The offset badge is the logo, not a loader. */
+export function Spinner({ size = "md", className = "" }: { size?: "sm" | "md"; className?: string }) {
+  const text = size === "sm" ? "text-xs text-gray-400" : "text-sm text-gray-500";
   return (
-    <span className={`sr-only ${className}`} role="status">
-      Loading
-    </span>
+    <p className={`${text} ${className}`} role="status">
+      Loading…
+    </p>
   );
 }

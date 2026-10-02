@@ -258,6 +258,7 @@ function SubmissionCard({
                 existingFiles={liveTake.files}
                 existingNote={liveTake.note}
                 backingSrc={liveTake.job.backingFileUrl}
+                viewJobHref={`/musicians?job=${liveTake.jobId}`}
                 onSubmitted={(next) =>
                   setLiveTake((prev) => ({
                     ...prev,
@@ -267,15 +268,17 @@ function SubmissionCard({
                 }
               />
             ) : (
-              <TakeSubmissionFiles
-                files={liveTake.files}
-                fallbackAudioUrl={liveTake.audioFileUrl}
-                allowDownload
-              />
+              <>
+                <TakeSubmissionFiles
+                  files={liveTake.files}
+                  fallbackAudioUrl={liveTake.audioFileUrl}
+                  allowDownload
+                />
+                <Link href={`/musicians?job=${liveTake.jobId}`} className="btn soft" style={{ height: 38, fontSize: 13.5 }}>
+                  View job
+                </Link>
+              </>
             )}
-            <Link href={`/musicians?job=${liveTake.jobId}`} className="btn soft" style={{ height: 38, fontSize: 13.5 }}>
-              View job
-            </Link>
           </div>
         </div>
       ) : null}

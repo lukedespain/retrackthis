@@ -31,6 +31,7 @@ export function SubmitTakeForm({
   backingSrc = null,
   submitter = null,
   summaryOnly = false,
+  viewJobHref,
   onSubmitted,
 }: {
   jobId: string;
@@ -46,6 +47,7 @@ export function SubmitTakeForm({
   submitter?: { name: string; avatar: unknown } | null;
   /** Find work: a short receipt, with the full player on My submissions. */
   summaryOnly?: boolean;
+  viewJobHref?: string;
   onSubmitted?: (take: { jobId: string; audioFileUrl: string; note?: string | null; files?: TakeFileRecord[] }) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -256,9 +258,16 @@ export function SubmitTakeForm({
             }
           />
         ) : null}
-        <button type="button" className="btn soft" style={{ height: 38, fontSize: 13.5 }} onClick={() => setReplacing(true)}>
-          Replace takes
-        </button>
+        <div className="pair-btns">
+          <button type="button" className="btn soft" onClick={() => setReplacing(true)}>
+            Edit submission / Replace takes
+          </button>
+          {viewJobHref ? (
+            <Link href={viewJobHref} className="btn soft">
+              View job
+            </Link>
+          ) : null}
+        </div>
       </div>
     );
   }

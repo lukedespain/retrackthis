@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -11,11 +10,10 @@ import { Spinner } from "@/components/ui/Spinner";
 import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
 import { TestJobBadge } from "@/components/TestJobBadge";
 import { audioFiles, listenUrl, masterUrl } from "@/lib/takeFiles";
-import { TempoTag } from "@/components/JobMetaTags";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import type { Job, Take } from "@/lib/types";
-import { formatCents, formatDeadline } from "@/lib/format";
+import { daysUntilDeadline, formatCents, formatDeadline } from "@/lib/format";
 import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
 import { EditJobForm } from "./EditJobForm";
 import { JobCheckoutEmbed } from "./JobCheckoutEmbed";
@@ -262,8 +260,8 @@ function CreatorJobCard({
   const isPastDeadline = job.status === "OPEN" && new Date(job.deadline).getTime() < Date.now();
   const canExtend = job.status === "OPEN" && !isPastDeadline && job.paymentStatus === "captured";
   const missingBacking = job.status === "OPEN" && !job.backingFileUrl;
-  const flexibleTempo = job.status === "OPEN" && job.bpm == null;
-  const [hasProvisionalWinner, setHasProvisionalWinner] = useState(!!job.hasSelectedWinner);
+  const [favoriteName, setFavoriteName] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const unpaidCancelled =
     job.status === "CANCELLED" &&
     (job.paymentStatus == null ||
@@ -362,6 +360,21 @@ function CreatorJobCard({
     } finally {
       setRestoringDraft(false);
     }
+  }
+
+  async function shareGig() {
+    const url = `${window.location.origin}/musicians?job=${job.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: job.title, url });
+        return;
+      }
+    } catch {
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
   }
 
   async function resumeCheckout(e: React.MouseEvent) {
@@ -517,50 +530,6 @@ function CreatorJobCard({
               {cancelling ? "Discarding…" : "Discard"}
             </Button>
           )}
-          {job.status === "OPEN" && !readOnly && (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={startEdit}
-                className="w-full sm:w-auto"
-              >
-                {editing ? "Editing…" : "Edit job"}
-              </Button>
-              {canExtend && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCancelError(null);
-                    setExtending(true);
-                  }}
-                  disabled={cancelling || editing}
-                  className="w-full sm:w-auto"
-                >
-                  Extend deadline
-                </Button>
-              )}
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={cancelJob}
-                disabled={cancelling || editing || extending}
-                className="w-full sm:w-auto"
-                aria-label="Cancel and refund"
-              >
-                {cancelling ? (
-                  "Cancelling…"
-                ) : (
-                  <>
-                    <span className="sm:hidden">Cancel</span>
-                    <span className="hidden sm:inline">Cancel & refund</span>
-                  </>
-                )}
-              </Button>
-            </>
-          )}
           </div>
         </div>
       ) : null}
@@ -607,65 +576,6 @@ function CreatorJobCard({
         </div>
       )}
 
-      {expanded && (missingBacking || flexibleTempo) && !editing && job.status === "OPEN" && (
-        <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
-          <Alert variant="warning">
-            <p className="font-medium">
-              {missingBacking && flexibleTempo
-                ? "Finish setting up this job"
-                : missingBacking
-                  ? "Add a background / instrumental track"
-                  : "Set a fixed tempo if you want one"}
-            </p>
-            <p className="mt-1">
-              {missingBacking
-                ? "Your existing scratch stays as the part being retracked. Use Edit job to upload the bed without that part"
-                : "This job is currently flexible tempo. Use Edit job to turn on Fixed tempo and enter a BPM"}
-              {missingBacking && flexibleTempo
-                ? ", and to switch from flexible tempo to a fixed BPM"
-                : null}
-              .
-            </p>
-            {!readOnly && (
-              <div className="mt-3">
-                <Button size="sm" onClick={() => startEdit()}>
-                  Edit job
-                </Button>
-              </div>
-            )}
-          </Alert>
-        </div>
-      )}
-
-      {expanded && job.status === "OPEN" && hasProvisionalWinner && !isPastDeadline && (
-        <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
-          <Alert variant="info">
-            Favorite saved - only one submission at a time (favoriting another replaces this one,
-            including all its takes). Submissions stay open until the deadline. After it ends you’ll
-            have 48 hours to <span className="font-medium">Pick</span> a musician; we’ll auto-pick
-            your current favorite if you don’t.
-          </Alert>
-        </div>
-      )}
-
-      {expanded && isPastDeadline && !hasProvisionalWinner && (
-        <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
-          <Alert variant="warning">
-            Deadline ended - submissions are closed. You have 48 hours to pick a musician. If you
-            don’t pick anyone, the job cancels automatically and you’re refunded.
-          </Alert>
-        </div>
-      )}
-
-      {expanded && isPastDeadline && hasProvisionalWinner && (
-        <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
-          <Alert variant="warning">
-            Deadline ended - submissions are closed. Pick your favorite (or switch first) within 48
-            hours. Left alone, we’ll auto-pick your current favorite.
-          </Alert>
-        </div>
-      )}
-
       {cancelError && (
         <div className="border-t border-gray-100 px-4 py-3 sm:px-6">
           <Alert variant="error">{cancelError}</Alert>
@@ -690,31 +600,26 @@ function CreatorJobCard({
               />
             ) : (
               <>
-                {job.description && (
-                  <p className="text-sm leading-relaxed text-gray-600">{job.description}</p>
-                )}
-                <div className={job.description ? "mt-3 mb-4" : "mb-4"}>
-                  <TempoTag bpm={job.bpm} />
-                </div>
-                <div className="mb-6 space-y-3">
-                  <ReferenceTracksPlayer
-                    partSrc={job.demoFileUrl}
-                    backingSrc={job.backingFileUrl}
-                    allowDownload
-                  />
-                  {!job.backingFileUrl && job.status === "OPEN" && !readOnly ? (
-                    <p className="text-sm text-amber-700">
-                      No background track yet.{" "}
-                      <button
-                        type="button"
-                        onClick={() => startEdit()}
-                        className="font-medium underline underline-offset-2"
-                      >
-                        Add one
-                      </button>
-                    </p>
-                  ) : null}
-                </div>
+                {job.status === "OPEN" && !isPastDeadline && favoriteName ? (
+                  <div className="banner">
+                    <StarIcon />
+                    <span>
+                      <b>{favoriteName}</b> is your favorite. Picking opens when it closes in{" "}
+                      {closesInPhrase(job.deadline)}.
+                    </span>
+                  </div>
+                ) : null}
+                {isPastDeadline ? (
+                  <div className="banner warm">
+                    <ClockIcon />
+                    <span>
+                      Pick by {pickByPhrase(job.deadline)}.{" "}
+                      {favoriteName
+                        ? `Otherwise we’ll pick ${favoriteName}, your favorite.`
+                        : "If you don’t pick anyone, the job is refunded."}
+                    </span>
+                  </div>
+                ) : null}
                 <TakesList
                   jobId={job.id}
                   jobOpen={job.status === "OPEN" || job.status === "AWARDING"}
@@ -723,9 +628,41 @@ function CreatorJobCard({
                   paying={job.status === "AWARDING"}
                   jobBackingUrl={job.backingFileUrl}
                   onAwarded={onChanged}
-                  onSelectionChange={setHasProvisionalWinner}
+                  onSelectionChange={setFavoriteName}
                   readOnly={readOnly}
                 />
+                {job.status === "OPEN" && !readOnly ? (
+                  <div className="job-foot">
+                    <button type="button" className="btn text" onClick={startEdit} disabled={cancelling}>
+                      Edit job
+                    </button>
+                    {canExtend ? (
+                      <button
+                        type="button"
+                        className="btn text"
+                        disabled={cancelling || editing}
+                        onClick={() => {
+                          setCancelError(null);
+                          setExtending(true);
+                        }}
+                      >
+                        Extend deadline
+                      </button>
+                    ) : null}
+                    <button type="button" className="btn text" onClick={() => void shareGig()}>
+                      {copied ? "Link copied" : "Share gig"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn text"
+                      style={{ marginLeft: "auto" }}
+                      disabled={cancelling || editing || extending}
+                      onClick={cancelJob}
+                    >
+                      {cancelling ? "Cancelling…" : "Cancel & refund"}
+                    </button>
+                  </div>
+                ) : null}
               </>
             )}
           </div>
@@ -753,7 +690,7 @@ function TakesList({
   paying?: boolean;
   jobBackingUrl?: string | null;
   onAwarded: () => void;
-  onSelectionChange?: (hasSelection: boolean) => void;
+  onSelectionChange?: (winnerName: string | null) => void;
   readOnly?: boolean;
 }) {
   const [takes, setTakes] = useState<Take[] | null>(null);
@@ -766,7 +703,7 @@ function TakesList({
     const body = await res.json();
     const list = Array.isArray(body) ? body : [];
     setTakes(list);
-    onSelectionChange?.(list.some((t: Take) => t.isWinner));
+    onSelectionChange?.(list.find((t: Take) => t.isWinner)?.musician.name ?? null);
   }
 
   useEffect(() => {
@@ -905,13 +842,25 @@ function TakeCard({
             {jobAwarded && isWinner ? " · Picked" : ""}
           </span>
         </span>
-        {jobOpen && !paying && !jobAwarded ? (
+        {jobOpen && !paying && !pastDeadline ? (
+          <button
+            type="button"
+            className="fav-btn"
+            aria-pressed={isWinner}
+            disabled={disabled || isWinner}
+            onClick={onPick}
+          >
+            <StarIcon filled={isWinner} />
+            {selecting ? "Saving…" : "Favorite"}
+          </button>
+        ) : null}
+        {jobOpen && pastDeadline && !jobAwarded ? (
           <button
             type="button"
             className={`btn ${isWinner ? "primary" : "soft"}`}
             style={{ height: 34, padding: "0 14px", fontSize: 13 }}
-            disabled={disabled || (!pastDeadline && isWinner)}
-            onClick={pastDeadline ? onFinalize : onPick}
+            disabled={disabled}
+            onClick={onFinalize}
           >
             {selecting ? "Picking…" : `Pick ${first}`}
           </button>
@@ -947,5 +896,40 @@ function TakeCard({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function closesInPhrase(deadline: string) {
+  const days = daysUntilDeadline(deadline);
+  if (days <= 0) return "today";
+  if (days === 1) return "1 day";
+  return `${days} days`;
+}
+
+function pickByPhrase(deadline: string) {
+  const end = new Date(new Date(deadline).getTime() + 48 * 60 * 60 * 1000);
+  const time = end.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const start = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diff = Math.round((start(end) - start(new Date())) / 86400000);
+  if (diff <= 0) return `today, ${time}`;
+  if (diff === 1) return `tomorrow, ${time}`;
+  const date = end.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return `${date}, ${time}`;
+}
+
+function StarIcon({ filled = false }: { filled?: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M12 3.2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 15.8 7.2 18.1l.9-5.4L4.2 8.9l5.4-.8L12 3.2z" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 8v5l3 2" strokeLinecap="round" />
+    </svg>
   );
 }

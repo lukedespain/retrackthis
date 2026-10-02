@@ -474,11 +474,16 @@ export function WaveformMixPlayer({
         {heading ?? (
           <strong className="ref-lbl">
             {mode === "backing" ? "Bed" : mode === "both" ? "Both" : partTabLabel}
+            {showModeTip ? (
+              <i className="tip sm lead" tabIndex={0} data-tip={modeCopy[mode].hint}>
+                i
+              </i>
+            ) : null}
           </strong>
         )}
         <div className="ref-tools">
           {beforeModes}
-          {showModeTip ? (
+          {heading && showModeTip ? (
             <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
               i
             </i>

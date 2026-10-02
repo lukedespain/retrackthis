@@ -725,8 +725,8 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .job-open { border-top: 1px solid var(--line); background: var(--soft); padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
 .job-actions { border-top: 1px solid var(--line); background: var(--surface); padding: 14px 18px; display: flex; align-items: center; }
 .job-actions-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.job-foot { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding-top: 4px; }
-.job-foot .btn.text { height: 36px; }
+.job-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.job-foot .btn { height: 38px; font-size: 13.5px; }
 .job-body .pill { background: #fff; box-shadow: 0 0 0 1px var(--line); }
 .panel { background: #fff; border-radius: 20px; padding: 18px; box-shadow: 0 0 0 1px var(--line); display: flex; flex-direction: column; gap: 14px; }
 .dl-files { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }

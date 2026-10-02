@@ -629,13 +629,13 @@ function CreatorJobCard({
                 />
                 {job.status === "OPEN" && !readOnly ? (
                   <div className="job-foot">
-                    <button type="button" className="btn text" onClick={startEdit} disabled={cancelling}>
+                    <button type="button" className="btn soft" onClick={startEdit} disabled={cancelling}>
                       Edit job
                     </button>
                     {canExtend ? (
                       <button
                         type="button"
-                        className="btn text"
+                        className="btn soft"
                         disabled={cancelling || editing}
                         onClick={() => {
                           setCancelError(null);
@@ -645,7 +645,8 @@ function CreatorJobCard({
                         Extend deadline
                       </button>
                     ) : null}
-                    <button type="button" className="btn text" onClick={() => void shareGig()}>
+                    <button type="button" className="btn soft" onClick={() => void shareGig()}>
+                      {copied ? null : <ShareIcon />}
                       {copied ? "Link copied" : "Share gig"}
                     </button>
                     <button
@@ -917,6 +918,15 @@ function StarIcon({ filled = false }: { filled?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <path d="M12 3.2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 15.8 7.2 18.1l.9-5.4L4.2 8.9l5.4-.8L12 3.2z" />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 15V4M8 8l4-4 4 4" />
+      <path d="M6 12v6.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V12" />
     </svg>
   );
 }

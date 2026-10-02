@@ -269,10 +269,6 @@ function CreatorJobCard({
       job.paymentStatus === "cancelled");
 
   useEffect(() => {
-    setHasProvisionalWinner(!!job.hasSelectedWinner);
-  }, [job.hasSelectedWinner, job.id]);
-
-  useEffect(() => {
     const needsAdmin =
       job.status === "PENDING_PAYMENT" || (job.status === "CANCELLED" && job.isTest);
     if (readOnly || !needsAdmin) return;

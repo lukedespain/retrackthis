@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/SiteHeader";
 
 export function AuthLayout({
   title,
@@ -14,7 +13,6 @@ export function AuthLayout({
 }) {
   return (
     <>
-      <SiteHeader />
       <main className="auth">
         <div className="auth-card">
           <h1>{title}</h1>

@@ -6,7 +6,6 @@ import { CompleteProfileForm } from "@/app/dashboard/CompleteProfileForm";
 import { MySubmissions } from "@/app/dashboard/MySubmissions";
 import { AccountHead } from "@/components/brand/AccountHead";
 import { MarketingFooter } from "@/components/MarketingFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Spinner } from "@/components/ui/Spinner";
 
 type Profile = {
@@ -39,7 +38,6 @@ export default function SubmissionsPage() {
   if (profile === undefined) {
     return (
       <>
-        <SiteHeader />
         <main className="wrap">
           <div className="flex justify-center py-24">
             <Spinner />
@@ -53,7 +51,6 @@ export default function SubmissionsPage() {
 
   return (
     <>
-      <SiteHeader />
       <main className="wrap">
         <AccountHead
           name={profile.name}

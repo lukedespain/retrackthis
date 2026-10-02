@@ -73,9 +73,11 @@ export function SiteHeader() {
 
   useEffect(() => {
     let cancelled = false;
+    let ticket = 0;
     async function load() {
+      const mine = ++ticket;
       const { data } = await supabaseClient.auth.getSession();
-      if (cancelled) return;
+      if (cancelled || mine !== ticket) return;
       if (!data.session) {
         setSignedIn(false);
         setProfile(null);
@@ -84,27 +86,33 @@ export function SiteHeader() {
         setReady(true);
         return;
       }
+      const meta = data.session.user.user_metadata ?? {};
+      const sessionName =
+        (typeof meta.full_name === "string" && meta.full_name) ||
+        (typeof meta.name === "string" && meta.name) ||
+        data.session.user.email ||
+        "";
       setSignedIn(true);
-      try {
-        let next = await fetchProfile();
-        if (!next) {
-          // Cookie/session can lag the client session briefly after auth events.
-          await new Promise((r) => setTimeout(r, 200));
-          if (cancelled) return;
-          next = await fetchProfile();
-        }
-        if (cancelled) return;
-        setProfile(next);
-        if (next) {
-          setToPick(await fetchToPick().catch(() => 0));
-          const takes = await fetch("/api/takes/mine")
-            .then((res) => (res.ok ? res.json() : []))
-            .catch(() => []);
-          if (!cancelled) setSubmissions(Array.isArray(takes) ? takes.length : 0);
-        }
-      } finally {
-        if (!cancelled) setReady(true);
+      setProfile((current) => current ?? { name: sessionName, email: data.session?.user.email ?? "" });
+      setReady(true);
+      let next = await fetchProfile();
+      if (!next) {
+        await new Promise((r) => setTimeout(r, 200));
+        if (cancelled || mine !== ticket) return;
+        next = await fetchProfile();
       }
+      if (cancelled || mine !== ticket) return;
+      if (next) setProfile(next);
+      if (!next) return;
+      const [pickCount, takes] = await Promise.all([
+        fetchToPick().catch(() => 0),
+        fetch("/api/takes/mine")
+          .then((res) => (res.ok ? res.json() : []))
+          .catch(() => []),
+      ]);
+      if (cancelled || mine !== ticket) return;
+      setToPick(pickCount);
+      setSubmissions(Array.isArray(takes) ? takes.length : 0);
     }
     void load();
     const { data: sub } = supabaseClient.auth.onAuthStateChange(() => void load());

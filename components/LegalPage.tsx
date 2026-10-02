@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { MarketingFooter } from "@/components/MarketingFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 
 export function LegalPage({
   title,
@@ -13,8 +12,6 @@ export function LegalPage({
 }) {
   return (
     <div className="min-h-screen">
-      <SiteHeader />
-
       <main className="mx-auto max-w-3xl px-5 pb-16 sm:px-6 sm:pb-24">
         <h1 className="text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">{title}</h1>
         <p className="mt-2 text-sm text-gray-400">Last updated {updated}</p>

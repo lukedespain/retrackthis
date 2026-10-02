@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { CreatorView } from "@/app/dashboard/CreatorView";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Spinner } from "@/components/ui/Spinner";
 
 type CreatorInfo = { id: string; name: string; email: string };
@@ -14,7 +13,6 @@ export default function AdminProducerPreviewPage() {
     <Suspense
       fallback={
         <div className="min-h-screen">
-          <SiteHeader />
           <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
             <div className="flex justify-center py-24">
               <Spinner />
@@ -57,7 +55,6 @@ function AdminProducerPreviewInner() {
 
   return (
     <div className="min-h-screen">
-      <SiteHeader />
       <main className="mx-auto max-w-5xl px-5 pb-16 pt-2 sm:px-6 sm:pb-24 sm:pt-4">
         <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
           <p className="text-sm font-medium text-amber-900">

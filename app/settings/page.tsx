@@ -5,7 +5,6 @@ import { Suspense, useEffect, useId, useMemo, useState, type CSSProperties } fro
 import { AccountHead } from "@/components/brand/AccountHead";
 import { AvatarBuilder } from "@/components/brand/AvatarBuilder";
 import { MarketingFooter } from "@/components/MarketingFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import { PayoutSetupCard } from "@/components/PayoutSetupCard";
 import { avatarSvg, cleanAvatar, randomAvatar } from "@/lib/avatar";
 import { Spinner } from "@/components/ui/Spinner";
@@ -77,7 +76,6 @@ function SettingsPageInner() {
   if (profile === undefined) {
     return (
       <div className="min-h-screen">
-        <SiteHeader />
         <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
           <div className="flex items-center justify-center py-24">
             <Spinner />
@@ -93,8 +91,6 @@ function SettingsPageInner() {
 
   return (
     <>
-      <SiteHeader />
-
       <main className="wrap">
         <AccountHead
           name={profile.name}
@@ -189,7 +185,6 @@ export default function SettingsPage() {
     <Suspense
       fallback={
         <div className="min-h-screen">
-          <SiteHeader />
           <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
             <div className="flex items-center justify-center py-24">
               <Spinner />

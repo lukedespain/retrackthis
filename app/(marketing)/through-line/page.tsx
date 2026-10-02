@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingFooter } from "@/components/MarketingFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import { PLATFORM_FEE_PERCENT } from "@/lib/stripe";
 
 export const metadata: Metadata = {
@@ -323,8 +322,6 @@ function MusicianThroughLine() {
 export default function ThroughLinePage() {
   return (
     <div className="min-h-screen bg-[#f7f6f3]">
-      <SiteHeader />
-
       <main className="mx-auto max-w-6xl px-5 pb-16 sm:px-6 sm:pb-24">
         <div className="max-w-2xl">
           <h1 className="text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">

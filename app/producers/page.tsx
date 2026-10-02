@@ -7,7 +7,6 @@ import { CreatorView } from "@/app/dashboard/CreatorView";
 import { AccountHead } from "@/components/brand/AccountHead";
 import { JOB_POSTED, requestPostJob } from "@/components/MarketingHeroCtas";
 import { MarketingFooter } from "@/components/MarketingFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Spinner } from "@/components/ui/Spinner";
 
 type Profile = {
@@ -25,7 +24,6 @@ export default function ProducersPage() {
     <Suspense
       fallback={
         <div className="min-h-screen">
-          <SiteHeader />
           <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
             <div className="flex items-center justify-center py-24">
               <Spinner />
@@ -93,7 +91,6 @@ function ProducersPageInner() {
   if (profile === undefined) {
     return (
       <div className="min-h-screen">
-        <SiteHeader />
         <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
           <div className="flex items-center justify-center py-24">
             <Spinner />
@@ -109,7 +106,6 @@ function ProducersPageInner() {
 
   return (
     <div className="min-h-screen">
-      <SiteHeader />
       <main className="wrap">
         <AccountHead
           name={profile.name}

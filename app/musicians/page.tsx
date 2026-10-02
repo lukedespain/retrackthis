@@ -5,8 +5,6 @@ import { Suspense, useEffect, useState } from "react";
 import { CompleteProfileForm } from "@/app/dashboard/CompleteProfileForm";
 import { OpenJobsBrowse } from "@/components/OpenJobsBrowse";
 import { MarketingFooter } from "@/components/MarketingFooter";
-import { SiteHeader } from "@/components/SiteHeader";
-import { Spinner } from "@/components/ui/Spinner";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 type Profile = {
@@ -19,18 +17,7 @@ type Profile = {
 
 export default function MusiciansPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen">
-          <SiteHeader />
-          <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
-            <div className="flex items-center justify-center py-24">
-              <Spinner />
-            </div>
-          </main>
-        </div>
-      }
-    >
+    <Suspense fallback={null}>
       <MusiciansPageInner />
     </Suspense>
   );
@@ -39,7 +26,6 @@ export default function MusiciansPage() {
 function MusiciansPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [sessionReady, setSessionReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
 
@@ -48,11 +34,9 @@ function MusiciansPageInner() {
     supabaseClient.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       setSignedIn(!!data.session);
-      setSessionReady(true);
     });
     const { data: sub } = supabaseClient.auth.onAuthStateChange((_event, session) => {
       setSignedIn(!!session);
-      setSessionReady(true);
     });
     return () => {
       cancelled = true;
@@ -61,11 +45,7 @@ function MusiciansPageInner() {
   }, []);
 
   useEffect(() => {
-    if (!sessionReady) return;
-    if (!signedIn) {
-      setProfile(null);
-      return;
-    }
+    if (!signedIn) return;
     let cancelled = false;
     fetch("/api/auth/me")
       .then(async (res) => {
@@ -82,7 +62,7 @@ function MusiciansPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [sessionReady, signedIn]);
+  }, [signedIn]);
 
   useEffect(() => {
     const payouts = searchParams.get("payouts");
@@ -103,39 +83,12 @@ function MusiciansPageInner() {
     setProfile(body?.profile ?? null);
   }
 
-  if (!sessionReady) {
-    return (
-      <div className="min-h-screen">
-        <SiteHeader />
-        <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
-          <div className="flex items-center justify-center py-24">
-            <Spinner />
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (signedIn && profile === undefined) {
-    return (
-      <div className="min-h-screen">
-        <SiteHeader />
-        <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
-          <div className="flex items-center justify-center py-24">
-            <Spinner />
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   if (signedIn && profile === null) {
     return <CompleteProfileForm onDone={reloadProfile} />;
   }
 
   return (
     <>
-      <SiteHeader />
       <main className="wrap">
         <OpenJobsBrowse signedIn={signedIn} />
       </main>

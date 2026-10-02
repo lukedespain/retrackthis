@@ -2,7 +2,6 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
-import { SiteHeader } from "@/components/SiteHeader";
 import { Spinner } from "@/components/ui/Spinner";
 
 /** Legacy /dashboard URLs → Producers / Musicians hubs. */
@@ -11,7 +10,6 @@ export default function DashboardRedirectPage() {
     <Suspense
       fallback={
         <div className="min-h-screen">
-          <SiteHeader />
           <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
             <div className="flex items-center justify-center py-24">
               <Spinner />
@@ -54,7 +52,6 @@ function DashboardRedirectInner() {
 
   return (
     <div className="min-h-screen">
-      <SiteHeader />
       <main className="mx-auto max-w-5xl px-5 py-16 sm:px-6">
         <div className="flex items-center justify-center py-24">
           <Spinner />

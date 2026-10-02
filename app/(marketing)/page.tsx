@@ -3,7 +3,6 @@ import { HomeHeroCtas } from "@/components/home/HomeHeroCtas";
 import { MissionSection } from "@/components/home/MissionSection";
 import { OpenNow } from "@/components/home/OpenNow";
 import { MarketingFooter } from "@/components/MarketingFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 
 const PRODUCER_STEPS = [
   {
@@ -38,8 +37,6 @@ const MUSICIAN_STEPS = [
 export default function LandingPage() {
   return (
     <>
-      <SiteHeader />
-
       <main className="wrap">
         <section className="hero">
           <h1>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { SiteHeader } from "@/components/SiteHeader";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminInstrumentEditor } from "./AdminInstrumentEditor";
@@ -381,7 +380,6 @@ function AdminPageInner() {
   if (profile === undefined) {
     return (
       <div className="min-h-screen">
-        <SiteHeader />
         <main className="mx-auto max-w-6xl px-5 py-16 sm:px-6">
           <div className="flex items-center justify-center py-24">
             <Spinner />
@@ -395,8 +393,6 @@ function AdminPageInner() {
 
   return (
     <div className="min-h-screen">
-      <SiteHeader />
-
       <main className="mx-auto max-w-6xl px-5 pb-16 sm:px-6 sm:pb-24">
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

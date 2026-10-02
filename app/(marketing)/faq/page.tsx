@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FaqBrowse, type FaqItem } from "@/components/FaqBrowse";
 import { MarketingFooter } from "@/components/MarketingFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import { SLIDER_MIN_USD } from "@/lib/jobPricing";
 import { PLATFORM_FEE_PERCENT } from "@/lib/stripe";
 import "./faq.css";
@@ -333,8 +332,6 @@ const faqItems: FaqItem[] = [
 export default function FaqPage() {
   return (
     <>
-      <SiteHeader />
-
       <main className="wrap narrow">
         <div className="page-head">
           <div>

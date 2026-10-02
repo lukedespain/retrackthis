@@ -31,6 +31,7 @@ export function SubmitTakeForm({
   backingSrc = null,
   submitter = null,
   summaryOnly = false,
+  startReplacing = false,
   viewJobHref,
   onSubmitted,
 }: {
@@ -47,6 +48,8 @@ export function SubmitTakeForm({
   submitter?: { name: string; avatar: unknown } | null;
   /** Find work: a short receipt, with the full player on My submissions. */
   summaryOnly?: boolean;
+  /** Open straight into replacing the takes. */
+  startReplacing?: boolean;
   viewJobHref?: string;
   onSubmitted?: (take: { jobId: string; audioFileUrl: string; note?: string | null; files?: TakeFileRecord[] }) => void;
 }) {
@@ -59,7 +62,7 @@ export function SubmitTakeForm({
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(existingTakeUrl ?? null);
   const [submittedFiles, setSubmittedFiles] = useState<TakeFileRecord[] | undefined>(existingFiles);
   const [submittedNote, setSubmittedNote] = useState(existingNote ?? "");
-  const [replacing, setReplacing] = useState(false);
+  const [replacing, setReplacing] = useState(startReplacing);
   const [takeIndex, setTakeIndex] = useState(0);
   const [rows, setRows] = useState<TakeRow[]>([]);
   const [note, setNote] = useState(existingNote ?? "");

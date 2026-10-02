@@ -64,5 +64,6 @@ export type MyTake = {
     backingFileUrl?: string | null;
     deadline?: string;
     moneyClaimedAt?: string | null;
+    creator?: { name: string; avatar: unknown } | null;
   };
 };

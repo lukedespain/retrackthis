@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
-import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
+import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
+import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { formatCents, formatDeadline } from "@/lib/format";
 import { musicianFacingPriceCents } from "@/lib/jobPricing";
-import { audioFiles } from "@/lib/takeFiles";
+import { audioFiles, listenUrl } from "@/lib/takeFiles";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import type { MyTake } from "@/lib/types";
@@ -188,6 +189,75 @@ function JobAlertNudge() {
   );
 }
 
+function outcomeCopy(take: MyTake, status: string) {
+  const pay = formatCents(musicianFacingPriceCents(take.job));
+  if (status === "awarded") {
+    const when = take.job.moneyClaimedAt ? monthDay(take.job.moneyClaimedAt) : null;
+    return when ? `${pay} was sent on ${when}.` : `${pay} is on the way to your payout account.`;
+  }
+  if (status === "lost") return "The producer picked another take. Thanks for playing.";
+  if (status === "cancel") return "The producer cancelled before picking. Your takes weren't used.";
+  return "The producer picks a winner after the job closes.";
+}
+
+function SubmissionPlayer({
+  take,
+  takeIndex,
+  onTakeIndex,
+}: {
+  take: MyTake;
+  takeIndex: number;
+  onTakeIndex: (index: number) => void;
+}) {
+  const audio = take.files?.length ? audioFiles(take.files) : [];
+  const index = Math.min(takeIndex, Math.max(0, audio.length - 1));
+  const current = audio[index];
+  const playSrc = current ? listenUrl(current) : take.audioFileUrl;
+  if (!playSrc) return null;
+  return (
+    <>
+      <WaveformMixPlayer
+        key={current?.id ?? playSrc}
+        className="flat"
+        partSrc={playSrc}
+        backingSrc={take.job.backingFileUrl}
+        initialMode={take.job.backingFileUrl ? "part" : "part"}
+        allowDownload={false}
+        heading={
+          <strong className="ref-lbl">
+            Your take{audio.length > 1 ? "s" : ""}
+            <i
+              className="tip sm"
+              tabIndex={0}
+              data-tip="Part is your take on its own. Bed is the rest of the song. Both plays them together."
+            >
+              i
+            </i>
+          </strong>
+        }
+        showModeTip={false}
+        beforeModes={
+          audio.length > 1 ? (
+            <div className="seg" role="tablist" aria-label="Your takes">
+              {audio.map((file, i) => (
+                <button key={file.id} type="button" aria-pressed={i === index} onClick={() => onTakeIndex(i)}>
+                  Take {i + 1}
+                </button>
+              ))}
+            </div>
+          ) : null
+        }
+      />
+      {take.note ? (
+        <div className="sub-note">
+          <span>Your note</span>
+          {take.note}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 function SubmissionCard({
   take,
   expanded,
@@ -199,6 +269,8 @@ function SubmissionCard({
 }) {
   const cardRef = useRef<HTMLElement>(null);
   const [liveTake, setLiveTake] = useState(take);
+  const [replacing, setReplacing] = useState(false);
+  const [takeIndex, setTakeIndex] = useState(0);
   const canReplace = !liveTake.isWinner && liveTake.job.status === "OPEN";
 
   useEffect(() => {
@@ -239,46 +311,55 @@ function SubmissionCard({
         </button>
       </div>
       {expanded ? (
-        <div className="job-body" style={{ gridTemplateColumns: "1fr" }}>
+        <div className="job-body">
           <div className="panel">
-            <div className="pills" style={{ margin: 0 }}>
-              <span className="pill">{liveTake.job.bpm ? `${liveTake.job.bpm} BPM` : "Tempo not fixed"}</span>
-              {liveTake.job.musicalKey ? <span className="pill">{liveTake.job.musicalKey}</span> : null}
-              <span className="pill">
-                <InstrumentIcon instrument={liveTake.job.instrument} />
-                {liveTake.job.instrument}
-              </span>
-            </div>
-            {canReplace ? (
+            {replacing ? (
               <SubmitTakeForm
                 jobId={liveTake.jobId}
                 priceCents={musicianFacingPriceCents(liveTake.job)}
                 alreadySubmitted
+                startReplacing
                 existingTakeUrl={liveTake.audioFileUrl}
                 existingFiles={liveTake.files}
                 existingNote={liveTake.note}
                 backingSrc={liveTake.job.backingFileUrl}
-                viewJobHref={`/musicians?job=${liveTake.jobId}`}
-                onSubmitted={(next) =>
+                onSubmitted={(next) => {
                   setLiveTake((prev) => ({
                     ...prev,
                     audioFileUrl: next.audioFileUrl,
                     files: next.files,
-                  }))
-                }
+                    note: next.note ?? prev.note,
+                  }));
+                  setReplacing(false);
+                }}
               />
             ) : (
-              <>
-                <TakeSubmissionFiles
-                  files={liveTake.files}
-                  fallbackAudioUrl={liveTake.audioFileUrl}
-                  allowDownload
-                />
-                <Link href={`/musicians?job=${liveTake.jobId}`} className="btn soft" style={{ height: 38, fontSize: 13.5 }}>
-                  View job
-                </Link>
-              </>
+              <SubmissionPlayer take={liveTake} takeIndex={takeIndex} onTakeIndex={setTakeIndex} />
             )}
+          </div>
+          <div className="panel">
+            <div className="by">
+              <Avatar avatar={liveTake.job.creator?.avatar} name={liveTake.job.creator?.name ?? "Producer"} size="sm" />
+              Posted by <b>{liveTake.job.creator?.name ?? "a producer"}</b>
+            </div>
+            <div className={`banner${status.cls === "awarded" ? " win" : ""}`}>
+              <span>{outcomeCopy(liveTake, status.cls)}</span>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {canReplace ? (
+                <button type="button" className="btn soft" style={{ height: 38, fontSize: 13.5 }} onClick={() => setReplacing(true)}>
+                  Replace takes
+                </button>
+              ) : null}
+              <Link href={`/musicians?job=${liveTake.jobId}`} className="btn soft" style={{ height: 38, fontSize: 13.5 }}>
+                View job
+              </Link>
+              {status.cls === "awarded" ? (
+                <Link href="/settings#payouts" className="btn soft" style={{ height: 38, fontSize: 13.5 }}>
+                  Payout settings
+                </Link>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}

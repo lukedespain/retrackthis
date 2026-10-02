@@ -28,6 +28,7 @@ export async function GET() {
           backingFileUrl: true,
           deadline: true,
           moneyClaimedAt: true,
+          creator: { select: { name: true, avatar: true } },
         },
       },
       files: { orderBy: { sortOrder: "asc" } },

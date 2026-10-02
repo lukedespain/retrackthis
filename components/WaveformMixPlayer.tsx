@@ -40,6 +40,8 @@ export function WaveformMixPlayer({
   partCaption,
   headingLabel = "Reference",
   heading,
+  beforeModes,
+  showModeTip = true,
   showNudge = false,
   initialMode = "part",
 }: {
@@ -55,6 +57,9 @@ export function WaveformMixPlayer({
   headingLabel?: string;
   /** Replaces the heading label. Sits on the left of Part / Bed / Both. */
   heading?: ReactNode;
+  /** Extra controls just left of Part / Bed / Both. */
+  beforeModes?: ReactNode;
+  showModeTip?: boolean;
   /** Producer take review only - musicians / reference stay locked to the file. */
   showNudge?: boolean;
   initialMode?: ModeId;
@@ -472,9 +477,12 @@ export function WaveformMixPlayer({
           </strong>
         )}
         <div className="ref-tools">
-          <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
-            i
-          </i>
+          {beforeModes}
+          {showModeTip ? (
+            <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
+              i
+            </i>
+          ) : null}
           {hasAb ? (
             <div className="seg" role="tablist" aria-label={headingLabel}>
               {modes.map((id) => (

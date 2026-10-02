@@ -469,26 +469,28 @@ export function WaveformMixPlayer({
         {heading ?? (
           <strong className="ref-lbl">
             {mode === "backing" ? "Bed" : mode === "both" ? "Both" : partTabLabel}
-            <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
-              i
-            </i>
           </strong>
         )}
-        {hasAb && (
-          <div className="seg" role="tablist" aria-label={headingLabel}>
-            {modes.map((id) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-pressed={mode === id}
-                onClick={() => void switchMode(id)}
-              >
-                {id === "part" ? partTabLabel : id === "backing" ? "Bed" : "Both"}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="ref-tools">
+          <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
+            i
+          </i>
+          {hasAb ? (
+            <div className="seg" role="tablist" aria-label={headingLabel}>
+              {modes.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-pressed={mode === id}
+                  onClick={() => void switchMode(id)}
+                >
+                  {id === "part" ? partTabLabel : id === "backing" ? "Bed" : "Both"}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="player">

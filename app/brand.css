@@ -163,7 +163,7 @@ button { cursor: pointer; }
 }
 .tip.sm { width: 12px; height: 12px; font-size: 8px; }
 .tip::after {
-  content: attr(data-tip); position: absolute; left: 0; bottom: calc(100% + 8px); transform: translate(0, 4px);
+  content: attr(data-tip); position: absolute; left: auto; right: 0; bottom: calc(100% + 8px); transform: translate(0, 4px);
   width: max-content; max-width: 240px; padding: 8px 10px; border-radius: 10px; background: var(--ink); color: #fff;
   font-size: 12px; font-weight: 500; line-height: 1.4; text-align: left; white-space: normal; letter-spacing: 0;
   opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s var(--ease); z-index: 30;
@@ -570,10 +570,10 @@ a { color: inherit; }
 .wrap { width: min(1080px, 100% - 48px); margin: 0 auto; }
 .wrap.narrow { width: min(780px, 100% - 48px); }
 .acct { position: relative; }
-button.avatar { border: 0; cursor: pointer; padding: 0; transition: box-shadow .2s, transform .15s; }
+button.avatar { border: 0; cursor: pointer; padding: 0; overflow: visible; transition: box-shadow .2s, transform .15s; }
 button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px rgba(var(--accent-rgb),.35); }
 .avatar { position: relative; }
-.avatar .dot { position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--bg); }
+.avatar .dot { position: absolute; top: -2px; right: -2px; z-index: 2; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--bg); }
 .avatar .dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--accent); animation: ping 2.4s var(--ease) infinite; }
 @keyframes ping { 0% { transform: scale(1); opacity: .6; } 70%, 100% { transform: scale(2.4); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .avatar .dot::after { animation: none; } }
@@ -739,6 +739,7 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .dl-t strong { font-size: 14px; font-weight: 600; color: var(--ink); }
 .dl-desc { font-size: 12.5px; color: var(--muted); line-height: 1.35; white-space: normal; }
 .dl-size { margin: 0; flex: none; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ref-tools { display: flex; align-items: center; gap: 8px; flex: none; }
 @media (max-width: 560px) { .dl-files { grid-template-columns: 1fr; } }
 .panel h3 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .panel p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }

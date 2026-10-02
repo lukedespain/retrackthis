@@ -20,6 +20,8 @@ type Profile = {
 type MineJob = {
   status: string;
   deadline: string;
+  takeCount?: number;
+  hasSelectedWinner?: boolean;
   _count?: { takes: number };
   takes?: { id: string }[];
 };
@@ -37,13 +39,15 @@ async function fetchToPick(): Promise<number> {
   const jobs = (await res.json().catch(() => [])) as MineJob[];
   if (!Array.isArray(jobs)) return 0;
   const now = Date.now();
-  return jobs.filter(
-    (j) =>
-      j.status === "OPEN" &&
-      new Date(j.deadline).getTime() <= now &&
-      (j._count?.takes ?? 0) > 0 &&
-      !(j.takes && j.takes.length)
-  ).length;
+  return jobs.filter((j) => {
+    if (j.status !== "OPEN") return false;
+    const takes = j.takeCount ?? j._count?.takes ?? 0;
+    if (takes === 0) return false;
+    const chosen = Boolean(j.hasSelectedWinner || (j.takes && j.takes.length));
+    const past = new Date(j.deadline).getTime() <= now;
+    // New takes still need a listen, or the deadline passed and a winner still has to be picked.
+    return !chosen || past;
+  }).length;
 }
 
 const PLUS = (

@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
-import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
+import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
 import { TestJobBadge } from "@/components/TestJobBadge";
-import { audioFiles, midiFiles } from "@/lib/takeFiles";
+import { audioFiles, listenUrl, masterUrl } from "@/lib/takeFiles";
 import { TempoTag } from "@/components/JobMetaTags";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
@@ -831,12 +831,7 @@ function TakesList({
   }
 
   return (
-    <div className="space-y-3">
-      {jobOpen && (
-        <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
-          {takes.length} {takes.length === 1 ? "submission" : "submissions"}
-        </p>
-      )}
+    <div className="takes">
       {visibleTakes.map((take) => (
         <TakeCard
           key={take.id}
@@ -888,9 +883,14 @@ function TakeCard({
   onFinalize: () => void;
 }) {
   const isWinner = take.isWinner;
-  const audioCount = take.files?.length ? audioFiles(take.files).length : 1;
-  const hasMidi = take.files?.length ? midiFiles(take.files).length > 0 : false;
-  // Full WAV downloads only after the job is finalized (AWARDED), not on provisional select.
+  const audio = take.files?.length ? audioFiles(take.files) : [];
+  const [takeIndex, setTakeIndex] = useState(0);
+  const index = Math.min(takeIndex, Math.max(0, audio.length - 1));
+  const current = audio[index];
+  const playSrc = current ? listenUrl(current) : take.audioFileUrl;
+  const downloadSrc = current ? masterUrl(current) : take.audioFileUrl;
+  const audioCount = Math.max(1, audio.length || (take.audioFileUrl ? 1 : 0));
+  const first = take.musician.name.split(" ")[0];
   const allowDownload = jobAwarded && isWinner;
 
   return (
@@ -902,29 +902,50 @@ function TakeCard({
           <span>
             {audioCount} take{audioCount === 1 ? "" : "s"}
             {isWinner && !jobAwarded ? " · Your favorite" : ""}
-            {jobAwarded && isWinner ? " · Winner" : ""}
-            {hasMidi ? " · MIDI" : ""}
+            {jobAwarded && isWinner ? " · Picked" : ""}
           </span>
         </span>
-        {jobOpen && !paying && !pastDeadline ? (
-          <button type="button" className="fav-btn" aria-pressed={isWinner} disabled={disabled || isWinner} onClick={onPick}>
-            {selecting ? "Saving…" : "Favorite"}
-          </button>
-        ) : null}
-        {jobOpen && pastDeadline && !jobAwarded ? (
-          <button type="button" className={`btn ${isWinner ? "primary" : "soft"}`} style={{ height: 34, padding: "0 14px", fontSize: 13 }} disabled={disabled} onClick={onFinalize}>
-            {selecting ? "Picking…" : `Pick ${take.musician.name.split(" ")[0]}`}
+        {jobOpen && !paying && !jobAwarded ? (
+          <button
+            type="button"
+            className={`btn ${isWinner ? "primary" : "soft"}`}
+            style={{ height: 34, padding: "0 14px", fontSize: 13 }}
+            disabled={disabled || (!pastDeadline && isWinner)}
+            onClick={pastDeadline ? onFinalize : onPick}
+          >
+            {selecting ? "Picking…" : `Pick ${first}`}
           </button>
         ) : null}
       </div>
-        {take.note ? <p className="take-note">{take.note}</p> : null}
-        <TakeSubmissionFiles
-          files={take.files}
-          fallbackAudioUrl={take.audioFileUrl}
-          allowDownload={allowDownload}
-          collapsible={audioCount > 1}
-          backingSrc={jobBackingUrl}
-        />
+      {take.note ? <p className="take-note">{take.note}</p> : null}
+      {playSrc ? (
+        <div className="take-listen">
+          <WaveformMixPlayer
+            key={current?.id ?? playSrc}
+            className="flat"
+            partSrc={playSrc}
+            partDownloadSrc={downloadSrc}
+            backingSrc={jobBackingUrl}
+            partTabLabel="Part"
+            partCaption="Your submitted take"
+            initialMode={jobBackingUrl ? "both" : "part"}
+            allowDownload={allowDownload}
+            heading={
+              audio.length > 1 ? (
+                <div className="seg" role="tablist" aria-label="Takes">
+                  {audio.map((file, i) => (
+                    <button key={file.id} type="button" aria-pressed={i === index} onClick={() => setTakeIndex(i)}>
+                      Take {i + 1}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <strong className="ref-lbl">{current?.label ?? "Take"}</strong>
+              )
+            }
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

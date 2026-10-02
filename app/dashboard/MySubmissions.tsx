@@ -241,12 +241,6 @@ function SubmissionCard({
       {expanded ? (
         <div className="job-body" style={{ gridTemplateColumns: "1fr" }}>
           <div className="panel">
-            {liveTake.note ? (
-              <div className="sub-note">
-                <span>Your note</span>
-                {liveTake.note}
-              </div>
-            ) : null}
             <div className="pills" style={{ margin: 0 }}>
               <span className="pill">{liveTake.job.bpm ? `${liveTake.job.bpm} BPM` : "Tempo not fixed"}</span>
               {liveTake.job.musicalKey ? <span className="pill">{liveTake.job.musicalKey}</span> : null}

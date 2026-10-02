@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { KitAsset } from "@/app/brand-kit/KitAsset";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
-import { Wordmark } from "@/components/brand/Wordmark";
 import { MarketingFooter } from "@/components/MarketingFooter";
 import { getAdminUser } from "@/lib/admin";
 import { getSessionUserId } from "@/lib/supabaseServer";
@@ -32,24 +32,6 @@ const TYPE = [
   { name: "Small", sample: "Footer, hints, and file labels.", style: { fontSize: 13, color: "var(--muted)" } },
 ];
 
-const CURRENT = [
-  { href: "/brand/badge-offset.svg", label: "Badge · offset", meta: "SVG · use this for anything new" },
-];
-
-const EARLIER = [
-  { href: "/brand/retrackthis-logo-wordmark-light.png", label: "Wordmark, light", meta: "PNG" },
-  { href: "/brand/retrackthis-logo-wordmark-dark.png", label: "Wordmark, dark", meta: "PNG" },
-  { href: "/brand/retrackthis-banner-1360.png", label: "Banner", meta: "1360px wide" },
-  { href: "/brand/retrackthis-banner-680.png", label: "Banner", meta: "680px wide" },
-  { href: "/brand/retrackthis-icon-light-512.png", label: "Icon, light", meta: "512" },
-  { href: "/brand/retrackthis-icon-dark-512.png", label: "Icon, dark", meta: "512" },
-  { href: "/brand/retrackthis-google-oauth-120.png", label: "Google sign-in", meta: "120" },
-  { href: "/brand/retrackthis-workspace-512.png", label: "Workspace", meta: "512" },
-  { href: "/brand/retrackthis-email-64.png", label: "Email mark", meta: "64" },
-  { href: "/brand/retrackthis-apple-touch-180.png", label: "Apple touch", meta: "180" },
-  { href: "/brand/retrackthis-hero-email.gif", label: "Email hero", meta: "GIF" },
-];
-
 const ICONS = ["Electric guitar", "Bass guitar", "Piano", "Saxophone", "Drum kit", "Violin", "Vocal"];
 
 export default async function BrandKitPage() {
@@ -70,14 +52,27 @@ export default async function BrandKitPage() {
 
         <section className="card">
           <h2>Logo</h2>
-          <p>This is the mark on the site. The purple face sits on a black shadow, down and to the right. Leave that shadow in the frame.</p>
-          <div style={{ display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap", padding: "8px 0 20px" }}>
-            <Wordmark href="/brand-kit" />
-            <img src="/brand/badge-offset.svg" alt="Offset badge" width={64} height={64} />
-            <img src="/brand/badge-offset.svg" alt="" width={36} height={36} />
-            <img src="/brand/badge-offset.svg" alt="" width={24} height={24} />
+          <p>Hover a mark and click it. Pick SVG for design tools, or the PNG named for the account you are updating. Google needs a PNG. The SVG came in under 98×98, which is why the profile photo was rejected.</p>
+          <div className="kit-assets">
+            <KitAsset
+              title="Badge"
+              preview="/brand/kit/badge-profile-720.png"
+              files={[
+                { href: "/brand/kit/badge.svg", label: "SVG", detail: "Design tools" },
+                { href: "/brand/kit/badge-profile-720.png", label: "PNG · 720×720", detail: "Google profile, Instagram, TikTok, YouTube" },
+                { href: "/brand/kit/badge-google-signin-120.png", label: "PNG · 120×120", detail: "Google sign-in" },
+                { href: "/brand/kit/badge-stripe-512.png", label: "PNG · 512×512", detail: "Stripe icon" },
+              ]}
+            />
+            <KitAsset
+              title="Wordmark"
+              preview="/brand/kit/wordmark.png"
+              files={[
+                { href: "/brand/kit/wordmark.svg", label: "SVG", detail: "Design tools" },
+                { href: "/brand/kit/wordmark.png", label: "PNG", detail: "Stripe logo, email signature" },
+              ]}
+            />
           </div>
-          <FileGrid files={CURRENT} />
         </section>
 
         <section className="card">
@@ -123,12 +118,6 @@ export default async function BrandKitPage() {
         </section>
 
         <section className="card">
-          <h2>Earlier files</h2>
-          <p>These are the previous loop mark. Emails still load some of them, so the files stay up. Use the badge above for new profiles, ads, and social.</p>
-          <FileGrid files={EARLIER} />
-        </section>
-
-        <section className="card">
           <h2>Name and line</h2>
           <p style={{ marginBottom: 8 }}>Retrack This. “This” is Iris. The line is “Retrack your demo with real musicians.”</p>
           <p style={{ marginBottom: 0 }}>The product word is pick. While a job is still open, the button says Favorite.</p>
@@ -136,32 +125,5 @@ export default async function BrandKitPage() {
       </main>
       <MarketingFooter />
     </>
-  );
-}
-
-function FileGrid({ files }: { files: Array<{ href: string; label: string; meta: string }> }) {
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8 }}>
-      {files.map((file) => (
-        <a
-          key={file.href}
-          href={file.href}
-          download
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            padding: "12px 14px",
-            borderRadius: 14,
-            background: "var(--soft)",
-            textDecoration: "none",
-            color: "inherit",
-          }}
-        >
-          <strong style={{ fontSize: 14, fontWeight: 500 }}>{file.label}</strong>
-          <span style={{ fontSize: 12, color: "var(--muted)" }}>{file.meta}</span>
-        </a>
-      ))}
-    </div>
   );
 }

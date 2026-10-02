@@ -229,10 +229,10 @@ export function SubmitTakeForm({
         {submittedNote.trim() ? <p className="jnotes" style={{ color: "var(--ink-2)" }}>{submittedNote}</p> : null}
         {current && playSrc ? (
           <WaveformMixPlayer
-            key={current.id}
             className="flat"
             partSrc={playSrc}
             partDownloadSrc={downloadSrc}
+            preloadSrcs={audio.map((file) => listenUrl(file)).filter((url): url is string => Boolean(url))}
             backingSrc={backingSrc}
             partTabLabel="Part"
             partCaption="Your submitted take"

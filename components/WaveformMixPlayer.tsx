@@ -9,6 +9,7 @@ type ModeId = "part" | "backing" | "both";
 const OFFSET_MIN_MS = -2000;
 const OFFSET_MAX_MS = 2000;
 const START_AHEAD_SEC = 0.04;
+const NO_PRELOAD: string[] = [];
 
 function guessFilename(src: string, fallback: string) {
   try {
@@ -33,6 +34,7 @@ function formatOffset(ms: number) {
 export function WaveformMixPlayer({
   partSrc,
   partDownloadSrc = null,
+  preloadSrcs = NO_PRELOAD,
   backingSrc = null,
   allowDownload = false,
   className = "",
@@ -48,6 +50,8 @@ export function WaveformMixPlayer({
   partSrc: string;
   /** Master download URL when streaming a lighter preview. */
   partDownloadSrc?: string | null;
+  /** Other part files to decode ahead of time, so a take switch can keep playing. */
+  preloadSrcs?: string[];
   backingSrc?: string | null;
   allowDownload?: boolean;
   className?: string;
@@ -77,6 +81,7 @@ export function WaveformMixPlayer({
   const currentTimeRef = useRef(0);
   const durationRef = useRef(0);
   const playingRef = useRef(false);
+  const resumeRef = useRef(false);
 
   const ctxRef = useRef<AudioContext | null>(null);
   const partBufRef = useRef<AudioBuffer | null>(null);
@@ -302,9 +307,28 @@ export function WaveformMixPlayer({
   }
 
   useEffect(() => {
+    for (const url of preloadSrcs) {
+      if (!url || url === partSrc) continue;
+      void loadAudioForMixCached(url).catch(() => undefined);
+    }
+  }, [preloadSrcs, partSrc]);
+
+  useEffect(() => {
     let cancelled = false;
-    setLoadingWave(true);
-    setReady(false);
+    const wasPlaying = playingRef.current || resumeRef.current;
+    const at = timelineNow();
+    const swapping = Boolean(partBufRef.current);
+
+    if (wasPlaying) {
+      resumeRef.current = true;
+      stopSources();
+      stopUiLoop();
+      playingRef.current = false;
+    }
+    if (!swapping) {
+      setLoadingWave(true);
+      setReady(false);
+    }
     setWaveError(null);
 
     const loads = [loadAudioForMixCached(partSrc)];
@@ -325,13 +349,23 @@ export function WaveformMixPlayer({
           bedBufRef.current = null;
           setBedPeaks(null);
         }
+        const next = Math.max(0, Math.min(at, dur));
         setDuration(dur);
         durationRef.current = dur;
         setLoadingWave(false);
         setReady(true);
+        if (wasPlaying && resumeRef.current) {
+          resumeRef.current = false;
+          void startTransport(next);
+        } else {
+          resumeRef.current = false;
+          setPlaying(false);
+          publishTime(next);
+        }
       })
       .catch((err) => {
         if (cancelled) return;
+        setPlaying(false);
         setWaveError(err instanceof Error ? err.message : "Couldn’t load audio");
         setLoadingWave(false);
         setReady(false);
@@ -340,6 +374,8 @@ export function WaveformMixPlayer({
     return () => {
       cancelled = true;
     };
+    // startTransport reads the latest buffers via refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partSrc, backingSrc]);
 
   useEffect(() => {
@@ -357,6 +393,7 @@ export function WaveformMixPlayer({
   }
 
   function pause() {
+    resumeRef.current = false;
     pauseTransport();
   }
 

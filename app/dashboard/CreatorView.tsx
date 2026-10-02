@@ -867,10 +867,10 @@ function TakeCard({
       {playSrc ? (
         <div className="take-listen">
           <WaveformMixPlayer
-            key={current?.id ?? playSrc}
             className="flat"
             partSrc={playSrc}
             partDownloadSrc={downloadSrc}
+            preloadSrcs={audio.map((file) => listenUrl(file)).filter((url): url is string => Boolean(url))}
             backingSrc={jobBackingUrl}
             partTabLabel="Part"
             partCaption="Your submitted take"

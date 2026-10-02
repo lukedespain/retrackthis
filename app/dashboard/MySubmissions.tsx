@@ -217,9 +217,9 @@ function SubmissionPlayer({
   return (
     <>
       <WaveformMixPlayer
-        key={current?.id ?? playSrc}
         className="flat"
         partSrc={playSrc}
+        preloadSrcs={audio.map((file) => listenUrl(file)).filter((url): url is string => Boolean(url))}
         backingSrc={take.job.backingFileUrl}
         initialMode={take.job.backingFileUrl ? "part" : "part"}
         allowDownload={false}

@@ -70,6 +70,7 @@ export default async function BrandKitPage() {
               files={[
                 { href: "/brand/kit/wordmark.svg", label: "SVG", detail: "Design tools" },
                 { href: "/brand/kit/wordmark.png", label: "PNG", detail: "Stripe logo, email signature" },
+                { href: "/brand/kit/wordmark-workspace-320x132.png", label: "PNG · 320×132", detail: "Google Workspace logo" },
               ]}
             />
           </div>

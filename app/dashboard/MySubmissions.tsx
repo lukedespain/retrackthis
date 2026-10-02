@@ -227,7 +227,7 @@ function SubmissionPlayer({
           <strong className="ref-lbl">
             Your take{audio.length > 1 ? "s" : ""}
             <i
-              className="tip sm"
+              className="tip sm lead"
               tabIndex={0}
               data-tip="Part is your take on its own. Bed is the rest of the song. Both plays them together."
             >

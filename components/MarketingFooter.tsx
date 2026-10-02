@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminBrandLink } from "@/components/AdminBrandLink";
 import { Wordmark } from "@/components/brand/Wordmark";
 
 export function MarketingFooter() {
@@ -11,6 +12,7 @@ export function MarketingFooter() {
         <Link href="/faq">FAQ</Link>
         <Link href="/terms">Terms</Link>
         <Link href="/privacy">Privacy</Link>
+        <AdminBrandLink />
       </nav>
     </footer>
   );

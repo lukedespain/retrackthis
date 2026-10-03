@@ -4,6 +4,7 @@ import { KitAsset } from "@/app/brand-kit/KitAsset";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { MarketingFooter } from "@/components/MarketingFooter";
 import { getAdminUser } from "@/lib/admin";
+import { MOTTO, MOTTO_LINE, MOTTO_STEPS } from "@/lib/motto";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
 export const metadata: Metadata = {
@@ -137,9 +138,21 @@ export default async function BrandKitPage() {
         </section>
 
         <section className="card">
-          <h2>Name and line</h2>
-          <p style={{ marginBottom: 8 }}>Retrack This. “This” is Iris. The line is “Retrack your demo with real musicians.”</p>
-          <p style={{ marginBottom: 0 }}>The product word is pick. While a job is still open, the button says Favorite.</p>
+          <h2>Motto</h2>
+          <p>Retrack This. “This” is Iris. Use the full motto when there is room. The shorter lines are the same words, cut down.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {[
+              { name: "Full", text: MOTTO, use: "Page bios, link text, and anywhere with a sentence of room." },
+              { name: "Line", text: MOTTO_LINE, use: "Homepage, footer, and the link preview image." },
+              { name: "Steps", text: MOTTO_STEPS, use: "Ads and short bios." },
+            ].map((line) => (
+              <div key={line.name}>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>{line.name} · {line.use}</div>
+                <div style={{ fontSize: 18, fontWeight: 500, letterSpacing: "-0.03em", lineHeight: 1.35 }}>{line.text}</div>
+              </div>
+            ))}
+          </div>
+          <p style={{ marginBottom: 0, marginTop: 16 }}>The product word is pick. While a job is still open, the button says Favorite.</p>
         </section>
       </main>
       <MarketingFooter />

@@ -1,15 +1,16 @@
 import { GeistSans } from "geist/font/sans";
 import { SiteHeader } from "@/components/SiteHeader";
+import { MOTTO } from "@/lib/motto";
 import "./globals.css";
 import "./brand.css";
 
 export const metadata = {
   metadataBase: new URL("https://retrackthis.com"),
   title: "retrackthis.com",
-  description: "Post the part you need. Real musicians send a take. Pick your favorite, or get a full refund.",
+  description: MOTTO,
   openGraph: {
     title: "Retrack This",
-    description: "Retrack your demo with real musicians. Pay up front. Full refund if you don't pick.",
+    description: MOTTO,
     url: "https://retrackthis.com",
     siteName: "Retrack This",
     type: "website",
@@ -18,7 +19,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Retrack This",
-    description: "Retrack your demo with real musicians. Pay up front. Full refund if you don't pick.",
+    description: MOTTO,
     images: ["/brand/kit/link-preview.png"],
   },
   icons: {

@@ -80,10 +80,9 @@ export default async function BrandKitPage() {
           <div style={{ marginTop: 12 }}>
             <KitAsset
               title="Covers"
-              preview="/brand/kit/facebook-cover-steps.png"
+              preview="/brand/kit/facebook-cover.png"
               files={[
-                { href: "/brand/kit/facebook-cover-steps.png", label: "PNG · 1702×630", detail: "Facebook cover, three steps" },
-                { href: "/brand/kit/facebook-cover.png", label: "PNG · 1702×630", detail: "Facebook cover, wordmark and line" },
+                { href: "/brand/kit/facebook-cover.png", label: "PNG · 1702×630", detail: "Facebook Page cover" },
                 { href: "/brand/kit/youtube-banner-2560x1440.png", label: "PNG · 2560×1440", detail: "YouTube channel banner" },
                 { href: "/brand/kit/link-preview.png", label: "PNG · 1200×630", detail: "Link preview when the site is pasted" },
               ]}

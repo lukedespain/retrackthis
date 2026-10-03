@@ -70,7 +70,7 @@ export function FeatureRequestSettings() {
           onChange={(e) => setTitle(e.target.value)}
         />
         <textarea
-          className="in"
+          className="in ta"
           value={details}
           maxLength={2000}
           rows={4}

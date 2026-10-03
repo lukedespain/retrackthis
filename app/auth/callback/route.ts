@@ -13,8 +13,12 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type");
   // OAuth / magic links should land in the app; password reset always passes next=/reset-password.
   const next = safeInternalPath(searchParams.get("next"), "/producers");
+  const destination = new URL(next, origin);
+  if (searchParams.get("signup") === "1" || type === "signup") {
+    destination.searchParams.set("signedup", "1");
+  }
 
-  const redirect = NextResponse.redirect(new URL(next, origin));
+  const redirect = NextResponse.redirect(destination);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

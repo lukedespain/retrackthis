@@ -8,6 +8,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
+import { trackMeta } from "@/lib/metaPixel";
 import { safeInternalPath } from "@/lib/safeRedirect";
 import { supabaseClient } from "@/lib/supabaseClient";
 
@@ -50,6 +51,7 @@ function SignUpForm() {
     }
 
     if (data.session) {
+      trackMeta("CompleteRegistration");
       router.push(safeInternalPath(searchParams.get("next"), "/producers"));
     } else {
       setNeedsConfirmation(true);
@@ -82,7 +84,7 @@ function SignUpForm() {
         </>
       }
     >
-      <GoogleAuthButton nextPath={searchParams.get("next")} label="Continue with Google" />
+      <GoogleAuthButton nextPath={searchParams.get("next")} label="Continue with Google" signUp />
       <AuthDivider />
       <form onSubmit={handleSubmit} className="stack" style={{ gap: 14 }}>
         <Input

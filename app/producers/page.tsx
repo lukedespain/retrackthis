@@ -8,6 +8,7 @@ import { AccountHead } from "@/components/brand/AccountHead";
 import { JOB_POSTED, requestPostJob } from "@/components/MarketingHeroCtas";
 import { MarketingFooter } from "@/components/MarketingFooter";
 import { Spinner } from "@/components/ui/Spinner";
+import { trackMeta } from "@/lib/metaPixel";
 
 type Profile = {
   id: string;
@@ -81,7 +82,11 @@ function ProducersPageInner() {
 
     if (posted && jobId) {
       void fetch(`/api/jobs/${jobId}/confirm-checkout`, { method: "POST" })
-        .then(() => setJobsKey((k) => k + 1))
+        .then(async (res) => {
+          const body = await res.json().catch(() => null);
+          if (body?.status === "OPEN") trackMeta("JobPosted", { custom: true });
+          setJobsKey((k) => k + 1);
+        })
         .catch(() => {});
     }
 

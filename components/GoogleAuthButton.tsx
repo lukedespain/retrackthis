@@ -30,9 +30,11 @@ function GoogleMark({ className = "" }: { className?: string }) {
 export function GoogleAuthButton({
   nextPath,
   label = "Continue with Google",
+  signUp = false,
 }: {
   nextPath?: string | null;
   label?: string;
+  signUp?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +43,7 @@ export function GoogleAuthButton({
     setLoading(true);
     setError(null);
     const next = safeInternalPath(nextPath ?? null, "/producers");
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}${signUp ? "&signup=1" : ""}`;
 
     const { error: oauthError } = await supabaseClient.auth.signInWithOAuth({
       provider: "google",

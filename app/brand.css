@@ -1103,8 +1103,15 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
     .mission { padding: 48px 28px; }
   .side { position: static; flex-direction: row; overflow: auto; }
 }
+@media (max-width: 520px) {
+  .job-head { flex-wrap: wrap; align-items: flex-start; row-gap: 12px; }
+  .job-main { flex: 1 1 calc(100% - 70px); }
+  .job-head > .chip-btn { flex-basis: 100%; width: fit-content; margin-left: auto; }
+  .job .pill { max-width: 100%; }
+}
 @media (max-width: 440px) {
   .nav .wordmark > span:not(.mark) { display: none; }
   .nav .wordmark .mark, .nav .wordmark img { width: 32px; height: 32px; }
   .nav .btn.primary svg { display: none; }
+  .foot nav a { padding: 8px 0; }
 }

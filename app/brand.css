@@ -660,7 +660,21 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .av-invite-go { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 18px; border-radius: 999px; background: #fff; color: var(--accent-ink); font-weight: 600; font-size: 14.5px; }
 .av-invite-go svg { width: 16px; height: 16px; transition: transform .2s var(--ease); }
 .av-invite:hover .av-invite-go svg { transform: translateX(3px); }
-@media (max-width: 620px) { .av-invite { flex-wrap: wrap; } .av-invite-faces i { width: 52px; height: 52px; } }
+@media (max-width: 620px) {
+  .av-invite {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "faces faces" "copy go";
+    align-items: center;
+    gap: 14px 12px;
+    padding: 18px;
+  }
+  .av-invite-faces { grid-area: faces; }
+  .av-invite-copy { grid-area: copy; min-width: 0; }
+  .av-invite-go { grid-area: go; }
+  .av-invite-faces i { width: 52px; height: 52px; }
+  .av-invite-copy strong { font-size: 18px; }
+}
 @media (prefers-reduced-motion: reduce) { .av-invite-faces i { animation: none; } }
 
 
@@ -712,7 +726,28 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .av-credit input { width: 16px; height: 16px; accent-color: var(--ink); margin: 0; }
 .av-suggest-foot { display: flex; justify-content: flex-end; gap: 6px; }
 .av-suggest-foot .btn { height: 36px; padding: 0 16px; font-size: 13.5px; }
-@media (max-width: 760px) { .av-dialog { grid-template-columns: 1fr; height: calc(100vh - 32px); } .av-side { padding: 18px; flex-direction: row; } .av-big { width: 96px; height: 96px; } }
+@media (max-width: 760px) {
+  .av-scrim { padding: 12px; align-items: flex-end; }
+  .av-dialog {
+    width: 100%;
+    height: min(680px, calc(100dvh - 24px));
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    grid-template-columns: 1fr;
+  }
+  .av-side { padding: 16px 56px 16px 16px; flex-direction: row; justify-content: flex-start; gap: 14px; }
+  .av-big { width: 72px; height: 72px; }
+  .av-shuffle { margin-top: 0; }
+  .av-main { padding-top: 16px; }
+  .av-main h2 { margin: 0 16px 10px; font-size: 20px; }
+  .av-tabs { margin: 0 16px 8px; }
+  .av-body { padding: 8px 16px 16px; }
+  .av-opt > span:last-child { white-space: normal; text-align: center; line-height: 1.15; }
+}
+@media (max-width: 520px) {
+  .acct-tabs { display: flex; width: 100%; max-width: 100%; overflow-x: auto; }
+  .acct-tabs a { flex: none; white-space: nowrap; }
+}
 .acct-tabs { margin-bottom: 24px; }
 .page-head { padding: 48px 0 28px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
 .page-head h1 { margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -.045em; line-height: 1; }

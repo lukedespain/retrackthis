@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
+import { StripeMark } from "@/components/brand/StripeMark";
 import { AdminInstrumentEditor } from "./AdminInstrumentEditor";
 import { AdminEmailsPanel } from "./AdminEmailsPanel";
 import { AdminRequestsPanel } from "./AdminRequestsPanel";
@@ -849,23 +850,11 @@ function PayoutMark({ member }: { member: Member }) {
   const label = payoutLabel(kind);
   return (
     <span className="inline-flex" title={label} aria-label={label}>
-      {kind === "stripe" ? <StripeMark /> : null}
+      {kind === "stripe" ? <StripeMark size={22} /> : null}
       {kind === "paypal" ? <PayPalMark /> : null}
       {kind === "wise" ? <WiseMark /> : null}
       {kind === "none" ? <EmptyPayoutMark /> : null}
     </span>
-  );
-}
-
-function StripeMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
-      <rect width="24" height="24" rx="7" fill="#635BFF" />
-      <path
-        fill="#fff"
-        d="M11.1 9.3c0-.6.5-.9 1.3-.9 1.2 0 2.6.4 3.6 1V6.7A9 9 0 0 0 12.4 6C9.9 6 8.2 7.3 8.2 9.5c0 3.5 4.8 2.9 4.8 4.4 0 .7-.6 1-1.5 1-1.3 0-2.9-.5-4.2-1.3v2.8A9.6 9.6 0 0 0 11.6 18c2.6 0 4.4-1.3 4.4-3.5 0-3.8-4.9-3.1-4.9-4.5Z"
-      />
-    </svg>
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { StripeMark } from "@/components/brand/StripeMark";
 import { PayoutCountrySelect } from "@/components/ConnectCountrySelect";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -220,9 +221,11 @@ export function PayoutSetupPanel({
     return (
       <div>
         <div className="payout">
-          <span className="logo" style={{ color: stripe ? "#635bff" : undefined }}>
-            {stripe ? "S" : providerLabel.slice(0, 1)}
-          </span>
+          {stripe ? (
+            <StripeMark size={44} />
+          ) : (
+            <span className="logo">{providerLabel.slice(0, 1)}</span>
+          )}
           <div style={{ flex: 1 }}>
             <strong style={{ fontWeight: 500 }}>{stripe ? "Stripe Express" : providerLabel}</strong>
             <div style={{ fontSize: 13, color: "var(--muted)" }}>{detail}</div>

@@ -86,6 +86,13 @@ export default async function BrandKitPage() {
               ]}
             />
             <KitAsset
+              title="Facebook cover"
+              preview="/brand/kit/facebook-cover.png"
+              files={[
+                { href: "/brand/kit/facebook-cover.png", label: "PNG · 1702×630", detail: "Facebook Page cover. The profile photo covers the bottom left." },
+              ]}
+            />
+            <KitAsset
               title="Link preview"
               preview="/brand/kit/link-preview.png"
               files={[

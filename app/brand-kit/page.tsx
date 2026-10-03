@@ -76,6 +76,15 @@ export default async function BrandKitPage() {
               ]}
             />
           </div>
+          <div style={{ marginTop: 12 }}>
+            <KitAsset
+              title="YouTube banner"
+              preview="/brand/kit/youtube-banner-2560x1440.png"
+              files={[
+                { href: "/brand/kit/youtube-banner-2560x1440.png", label: "PNG · 2560×1440", detail: "YouTube channel banner" },
+              ]}
+            />
+          </div>
         </section>
 
         <section className="card">

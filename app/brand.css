@@ -1044,6 +1044,20 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .inst-pick .ii { width: 22px; height: 22px; }
 .inst-pick[aria-pressed="true"] { background: #fff; box-shadow: 0 0 0 1.5px var(--ink); }
 .inst-pick > span:last-child { min-width: 0; }
+.inst-pick.mine { position: relative; padding-right: 40px; cursor: default; }
+.inst-pick.mine > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inst-pick.mine .inst-x {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 26px; height: 26px; border: 0; border-radius: 50%; background: #fff; color: var(--ink);
+  display: grid; place-items: center; opacity: 0; box-shadow: 0 0 0 1px var(--line);
+  transition: opacity .15s;
+}
+.inst-pick.mine .inst-x svg { width: 12px; height: 12px; }
+.inst-pick.mine:hover .inst-x,
+.inst-pick.mine:focus-within .inst-x { opacity: 1; }
+@media (hover: none) {
+  .inst-pick.mine .inst-x { opacity: 1; }
+}
 .ip-search { position: relative; margin-bottom: 24px; }
 .ip-mine + .ip-lbl { margin-top: 28px; }
 .ip-else { background: none; box-shadow: inset 0 0 0 1.5px var(--line-2); color: var(--muted); font-weight: 400; }

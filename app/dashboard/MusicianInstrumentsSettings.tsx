@@ -7,20 +7,6 @@ import { Alert } from "@/components/ui/Alert";
 import { labelForInstrumentId, type InstrumentGroup } from "@/lib/instruments";
 import { useInstrumentCatalog } from "@/lib/useApprovedInstruments";
 
-const POPULAR = [
-  "electric-guitar",
-  "acoustic-guitar-steel",
-  "bass-guitar-electric",
-  "piano-grand",
-  "synthesizer",
-  "vocal-male",
-  "vocal-female",
-  "drum-kit",
-  "violin",
-  "cello",
-  "saxophone",
-];
-
 const GROUP_ORDER = [
   "fretted",
   "keyboards",
@@ -231,22 +217,29 @@ export function MusicianInstrumentsSettings() {
       </div>
 
       {draft.length > 0 ? (
-        <div className="ip-mine">
-          <span className="ip-lbl">You play {draft.length}</span>
-          {draft.map((id) => (
-            <button
-              key={id}
-              type="button"
-              className="ip-chip"
-              aria-label={`Remove ${labelFor(id)}`}
-              disabled={saving}
-              onClick={() => toggle(id)}
-            >
-              {labelFor(id)}
-              <CloseIcon />
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="ip-lbl">You play</div>
+          <div className="inst-grid">
+            {draft.map((id) => {
+              const label = labelFor(id);
+              return (
+                <div key={id} className="inst-pick mine">
+                  <InstrumentIcon instrument={label} />
+                  <span>{label}</span>
+                  <button
+                    type="button"
+                    className="inst-x"
+                    aria-label={`Remove ${label}`}
+                    disabled={saving}
+                    onClick={() => toggle(id)}
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>
       ) : null}
 
       {q ? (
@@ -261,8 +254,6 @@ export function MusicianInstrumentsSettings() {
         </>
       ) : (
         <>
-          <div className="ip-lbl">Popular</div>
-          <div className="inst-grid">{POPULAR.map((id) => tile(id))}</div>
           <div className="ip-lbl">All instruments</div>
           <div className="ip-groups">
             {groups.map((group) => {

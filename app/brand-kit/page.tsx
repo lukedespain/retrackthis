@@ -84,6 +84,13 @@ export default async function BrandKitPage() {
                 { href: "/brand/kit/youtube-banner-2560x1440.png", label: "PNG · 2560×1440", detail: "YouTube channel banner" },
               ]}
             />
+            <KitAsset
+              title="Link preview"
+              preview="/brand/kit/link-preview.png"
+              files={[
+                { href: "/brand/kit/link-preview.png", label: "PNG · 1200×630", detail: "What shows when the site link is pasted" },
+              ]}
+            />
           </div>
         </section>
 

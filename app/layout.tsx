@@ -4,8 +4,23 @@ import "./globals.css";
 import "./brand.css";
 
 export const metadata = {
+  metadataBase: new URL("https://retrackthis.com"),
   title: "retrackthis.com",
-  description: "Real musicians. Real takes. You pick your favorite.",
+  description: "Post the part you need. Real musicians send a take. Pick your favorite, or get a full refund.",
+  openGraph: {
+    title: "Retrack This",
+    description: "Retrack your demo with real musicians. Pay up front. Full refund if you don't pick.",
+    url: "https://retrackthis.com",
+    siteName: "Retrack This",
+    type: "website",
+    images: [{ url: "/brand/kit/link-preview.png", width: 1200, height: 630, alt: "Retrack This" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Retrack This",
+    description: "Retrack your demo with real musicians. Pay up front. Full refund if you don't pick.",
+    images: ["/brand/kit/link-preview.png"],
+  },
   icons: {
     icon: [
       { url: "/brand/kit/favicon-32.png?v=20261002b", sizes: "32x32", type: "image/png" },

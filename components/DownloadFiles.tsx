@@ -24,6 +24,8 @@ export function DownloadFiles({
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [phase, setPhase] = useState<"pack" | "download" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,6 +49,8 @@ export function DownloadFiles({
   async function download() {
     if (selected.length === 0 || busy) return;
     setBusy(true);
+    setPhase("pack");
+    setProgress(null);
     setError(null);
     try {
       const only = selected.length === 1 ? selected[0] : null;
@@ -77,7 +81,21 @@ export function DownloadFiles({
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? "Could not download those files.");
       }
-      const blob = await res.blob();
+      const total = Number(res.headers.get("content-length")) || 0;
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("Could not download those files.");
+      setPhase("download");
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        chunks.push(value);
+        received += value.length;
+        setProgress(total > 0 ? Math.min(1, received / total) : null);
+      }
+      const blob = new Blob(chunks as BlobPart[]);
       const header = res.headers.get("Content-Disposition") ?? "";
       const match = /filename="([^"]+)"/.exec(header);
       const filename = match?.[1] || (selected.some((item) => item.lyrics) && selected.length === 1 ? "lyrics.pdf" : "files.zip");
@@ -92,6 +110,8 @@ export function DownloadFiles({
       setError(err instanceof Error ? err.message : "Could not download those files.");
     } finally {
       setBusy(false);
+      setPhase(null);
+      setProgress(null);
     }
   }
 
@@ -128,6 +148,18 @@ export function DownloadFiles({
                 </li>
               ))}
             </ul>
+            {busy ? (
+              <div className="dl-wait">
+                <div className={`dl-bar${progress == null ? " indeterminate" : ""}`}>
+                  <i style={progress == null ? undefined : { width: `${Math.round(progress * 100)}%` }} />
+                </div>
+                <span>
+                  {phase === "download" && progress != null
+                    ? `Downloading ${Math.round(progress * 100)}%`
+                    : "Packing the files…"}
+                </span>
+              </div>
+            ) : null}
             {error ? <p className="dl-err">{error}</p> : null}
             <div className="dl-actions">
               <button type="button" className="btn text" onClick={() => setOpen(false)}>

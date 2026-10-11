@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/admin";
 import { db } from "@/lib/db";
-import { cleanLyrics, isVocalPart } from "@/lib/lyrics";
+import { formatTranscribedLyrics, isVocalPart } from "@/lib/lyrics";
 import { transcribePartLyrics } from "@/lib/transcribeLyrics";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
@@ -28,7 +28,7 @@ export async function POST(_req: NextRequest, { params }: { params: { jobId: str
 
   try {
     const text = await transcribePartLyrics(job.demoFileUrl);
-    const lyrics = cleanLyrics(text);
+    const lyrics = formatTranscribedLyrics(text ?? "");
     const current = await db.job.findUnique({ where: { id: job.id }, select: { lyricsEdited: true } });
     if (current?.lyricsEdited) return NextResponse.json({ lyrics: job.lyrics, edited: true });
     const updated = await db.job.update({

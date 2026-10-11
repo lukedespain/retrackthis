@@ -7,7 +7,6 @@ import { type PayoutSnapshot } from "@/components/PayoutSetupPanel";
 import { TestJobBadge } from "@/components/TestJobBadge";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
-import { JobLyrics } from "@/components/JobLyrics";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Spinner } from "@/components/ui/Spinner";
 import { requestPostJob } from "@/components/MarketingHeroCtas";
@@ -435,15 +434,6 @@ function OpenJobCard({
               backingSrc={job.backingFileUrl}
               allowDownload={signedIn}
               downloadJob={{ id: job.id, title: job.title, lyrics }}
-            />
-            <JobLyrics
-              jobId={job.id}
-              instrumentId={job.instrumentId}
-              instrument={job.instrument}
-              lyrics={lyrics}
-              lyricsEdited={job.lyricsEdited}
-              canEdit={mine}
-              onChange={setLyrics}
             />
           </div>
           <div className="panel">

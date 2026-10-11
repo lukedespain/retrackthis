@@ -2,16 +2,22 @@ import { spawn } from "child_process";
 import { existsSync, promises as fs } from "fs";
 import os from "os";
 import path from "path";
+import ffmpegStatic from "ffmpeg-static";
 import { isAppStoragePublicUrl } from "@/lib/storageUrls";
 
 const MAX_BYTES = 24 * 1024 * 1024;
 
 function ffmpegPath(): string | null {
   const candidates = [
+    ffmpegStatic,
     path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg"),
     path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg.exe"),
   ];
-  return candidates.find((candidate) => existsSync(candidate)) ?? null;
+  return candidates.find((candidate): candidate is string => Boolean(candidate) && existsSync(candidate)) ?? null;
+}
+
+function speechUrlFor(fileUrl: string): string {
+  return fileUrl.replace(/\.[^./?]+(?=(\?|$))/, ".speech.mp3");
 }
 
 async function toSpeechMp3(input: Buffer, name: string): Promise<{ bytes: Buffer; filename: string }> {
@@ -54,10 +60,22 @@ export async function transcribePartLyrics(fileUrl: string): Promise<string | nu
   const key = process.env.OPENAI_API_KEY;
   if (!key || !isAppStoragePublicUrl(fileUrl)) return null;
 
-  const audio = await fetch(fileUrl);
+  const head = await fetch(fileUrl, { method: "HEAD" });
+  const length = Number(head.headers.get("content-length"));
+  let sourceUrl = fileUrl;
+  if (Number.isFinite(length) && length > MAX_BYTES) {
+    const lighter = speechUrlFor(fileUrl);
+    const speech = await fetch(lighter, { method: "HEAD" });
+    const speechLength = Number(speech.headers.get("content-length"));
+    if (speech.ok && Number.isFinite(speechLength) && speechLength > 0 && speechLength <= MAX_BYTES) {
+      sourceUrl = lighter;
+    }
+  }
+
+  const audio = await fetch(sourceUrl);
   if (!audio.ok) throw new Error("Could not read the vocal part.");
   const original = Buffer.from(await audio.arrayBuffer());
-  const name = fileUrl.split("?")[0].split("/").pop() || "part.mp3";
+  const name = sourceUrl.split("?")[0].split("/").pop() || "part.mp3";
   const prepared = await toSpeechMp3(original, name);
   if (prepared.bytes.byteLength > MAX_BYTES) throw new Error("That vocal part is too long to transcribe.");
 

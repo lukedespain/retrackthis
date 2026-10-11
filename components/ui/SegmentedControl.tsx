@@ -11,7 +11,7 @@ export function SegmentedControl<T extends string>({
 }) {
   return (
     <div
-      className={`seg max-w-full ${className}`}
+      className={`seg seg-scroll max-w-full ${className}`}
     >
       {options.map((option) => (
         <button
@@ -19,7 +19,7 @@ export function SegmentedControl<T extends string>({
           type="button"
           onClick={() => onChange(option.value)}
           aria-pressed={value === option.value}
-          className="flex-1 whitespace-nowrap sm:flex-none"
+          className="whitespace-nowrap"
         >
           {option.label}
         </button>

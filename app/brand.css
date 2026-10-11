@@ -362,6 +362,9 @@ button.jhead .pc-chev { margin-top: 2px; transition: transform .2s var(--ease); 
 .ref-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .ref-head strong { font-weight: 500; font-size: 14px; }
 .seg { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.seg.seg-scroll { max-width: 100%; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.seg.seg-scroll::-webkit-scrollbar { display: none; }
+.seg.seg-scroll button { flex: none; }
 .seg button { border: 0; background: none; border-radius: 999px; height: 28px; padding: 0 12px; font-size: 12.5px; color: var(--muted); transition: background .2s, color .2s, box-shadow .2s; }
 .seg button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(17,17,19,.12); }
 .seg button.mix-mode { display: inline-flex; align-items: center; gap: 6px; }
@@ -1153,6 +1156,9 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
   .side { position: static; flex-direction: row; overflow: auto; }
 }
 @media (max-width: 520px) {
+  .ref-head { flex-wrap: wrap; row-gap: 8px; }
+  .ref-head > strong, .ref-head .ref-lbl { flex: 1 0 auto; white-space: nowrap; }
+  .ref-tools { max-width: 100%; }
   .job-head { flex-wrap: wrap; align-items: flex-start; row-gap: 12px; }
   .job-main { flex: 1 1 calc(100% - 70px); }
   .job-head > .chip-btn { flex-basis: 100%; width: fit-content; margin-left: auto; }

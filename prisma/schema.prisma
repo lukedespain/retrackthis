@@ -127,6 +127,9 @@ model Job {
   description    String
   demoFileUrl    String    // part being retracked (e.g. vocal demo only)
   backingFileUrl String?   // background without that part (e.g. instrumental)
+  // Words for a vocal part. The producer can edit them; that edit is what musicians see.
+  lyrics         String?   @db.Text
+  lyricsEdited   Boolean   @default(false)
   priceCents     Int
   // How long the musician will play (part length), not the bed/song file.
   durationSeconds Int?

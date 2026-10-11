@@ -13,6 +13,7 @@ export function ReferenceTracksPlayer({
   partTabLabel = "Part",
   flat = false,
   fileName,
+  downloadJob = null,
 }: {
   partSrc: string;
   backingSrc?: string | null;
@@ -23,12 +24,14 @@ export function ReferenceTracksPlayer({
   flat?: boolean;
   /** Shown in place of the word Reference. */
   fileName?: string;
+  downloadJob?: { id: string; title: string; lyrics?: string | null } | null;
 }) {
   return (
     <WaveformMixPlayer
       partSrc={partSrc}
       backingSrc={backingSrc}
       allowDownload={allowDownload}
+      downloadJob={downloadJob}
       className={`${flat ? "flat" : ""} ${className}`.trim()}
       partTabLabel={partTabLabel}
       headingLabel={fileName || "Part"}

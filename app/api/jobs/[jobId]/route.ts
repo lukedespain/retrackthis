@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/admin";
 import { db } from "@/lib/db";
+import { cleanLyrics, isVocalPart } from "@/lib/lyrics";
 import { assertAppStorageUrls } from "@/lib/storageUrls";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
@@ -53,6 +54,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { jobId: str
     demoFileUrl?: string;
     backingFileUrl?: string | null;
     bpm?: number | null;
+    lyrics?: string | null;
+    lyricsEdited?: boolean;
   } = {};
 
   if (body.title !== undefined) {
@@ -76,6 +79,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { jobId: str
     const err = assertAppStorageUrls([body.demoFileUrl.trim()]);
     if (err) return NextResponse.json({ error: err }, { status: 400 });
     data.demoFileUrl = body.demoFileUrl.trim();
+    if (data.demoFileUrl !== job.demoFileUrl) {
+      data.lyrics = null;
+      data.lyricsEdited = false;
+    }
   }
 
   if (body.backingFileUrl !== undefined) {
@@ -89,6 +96,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { jobId: str
       if (err) return NextResponse.json({ error: err }, { status: 400 });
       data.backingFileUrl = trimmed;
     }
+  }
+
+  if (body.lyrics !== undefined) {
+    if (!isVocalPart(job)) {
+      return NextResponse.json({ error: "Lyrics are for vocal jobs." }, { status: 400 });
+    }
+    const next = cleanLyrics(body.lyrics);
+    data.lyrics = next || null;
+    data.lyricsEdited = true;
   }
 
   if (body.bpm !== undefined) {

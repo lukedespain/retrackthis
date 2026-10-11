@@ -7,6 +7,7 @@ import { type PayoutSnapshot } from "@/components/PayoutSetupPanel";
 import { TestJobBadge } from "@/components/TestJobBadge";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
+import { JobLyrics } from "@/components/JobLyrics";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { Spinner } from "@/components/ui/Spinner";
 import { requestPostJob } from "@/components/MarketingHeroCtas";
@@ -358,7 +359,11 @@ function OpenJobCard({
   onToggle: () => void;
 }) {
   const cardRef = useRef<HTMLElement>(null);
+  const [lyrics, setLyrics] = useState<string | null>(job.lyrics ?? null);
   const signUpHref = `/sign-up?next=${encodeURIComponent("/musicians")}`;
+  useEffect(() => {
+    setLyrics(job.lyrics ?? null);
+  }, [job.lyrics]);
 
   useEffect(() => {
     if (expanded) {
@@ -429,6 +434,16 @@ function OpenJobCard({
               partSrc={job.demoFileUrl}
               backingSrc={job.backingFileUrl}
               allowDownload={signedIn}
+              downloadJob={{ id: job.id, title: job.title, lyrics }}
+            />
+            <JobLyrics
+              jobId={job.id}
+              instrumentId={job.instrumentId}
+              instrument={job.instrument}
+              lyrics={lyrics}
+              lyricsEdited={job.lyricsEdited}
+              canEdit={mine}
+              onChange={setLyrics}
             />
           </div>
           <div className="panel">
@@ -474,6 +489,8 @@ function OpenJobCard({
                 existingNote={myTake?.note}
                 existingFiles={myTake?.files}
                 backingSrc={job.backingFileUrl}
+                jobTitle={job.title}
+                lyrics={lyrics}
                 summaryOnly
                 onSubmitted={onTakeSubmitted}
               />

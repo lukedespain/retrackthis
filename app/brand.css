@@ -800,6 +800,27 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .job-foot .btn { height: 38px; font-size: 13.5px; }
 .job-body .pill { background: #fff; box-shadow: 0 0 0 1px var(--line); }
 .panel { background: #fff; border-radius: 20px; padding: 18px; box-shadow: 0 0 0 1px var(--line); display: flex; flex-direction: column; gap: 14px; }
+.dl-open {
+  margin-top: 4px; width: 100%; height: 44px; border: 0; border-radius: 14px; background: var(--ink); color: #fff;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+}
+.dl-open:hover { background: #2a2a2e; }
+.dl-pop { position: fixed; inset: 0; z-index: 80; background: rgba(17,17,19,.35); display: grid; place-items: center; padding: 20px; }
+.dl-sheet { width: min(440px, 100%); background: #fff; border-radius: 22px; padding: 22px; box-shadow: 0 24px 60px -30px rgba(17,17,19,.45); }
+.dl-sheet h3 { margin: 0 0 6px; font-size: 20px; letter-spacing: -.03em; }
+.dl-sheet > p { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+.dl-sheet ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dl-sheet li label { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 14px; background: var(--soft); cursor: pointer; }
+.dl-sheet input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ink); flex: none; }
+.dl-sheet strong { display: block; font-weight: 500; }
+.dl-sheet small { display: block; color: var(--muted); font-size: 13px; line-height: 1.4; margin-top: 2px; }
+.dl-err { color: #9f1239; font-size: 13px; }
+.dl-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.lyrics { display: flex; flex-direction: column; gap: 8px; }
+.lyrics-head, .lyrics-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.lyrics h3 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -.02em; }
+.lyrics pre { margin: 0; white-space: pre-wrap; font: inherit; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+.lyrics > p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .dl-files { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
 .dl-file { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; min-width: 0; padding: 12px 14px 12px 12px; border-radius: 16px; background: var(--soft); transition: background .2s, box-shadow .2s, transform .15s var(--ease); }
 .dl-file:hover { background: #fff; box-shadow: 0 0 0 1px var(--line-2), 0 10px 24px -14px rgba(17,17,19,.3); transform: translateY(-1px); }

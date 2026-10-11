@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { AUDIO_FILE_ACCEPT } from "@/lib/constants";
+import { isVocalPart } from "@/lib/lyrics";
 import type { Job } from "@/lib/types";
 
 export function EditJobForm({
@@ -28,6 +29,8 @@ export function EditJobForm({
   const [backingFileUrl, setBackingFileUrl] = useState<string | null>(job.backingFileUrl ?? null);
   const [fixedTempo, setFixedTempo] = useState(job.bpm != null);
   const [bpm, setBpm] = useState(job.bpm != null ? String(job.bpm) : "120");
+  const [lyrics, setLyrics] = useState(job.lyrics ?? "");
+  const vocal = isVocalPart(job);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadKey, setUploadKey] = useState(0);
@@ -71,6 +74,7 @@ export function EditJobForm({
           demoFileUrl,
           backingFileUrl,
           bpm: nextBpm,
+          ...(vocal ? { lyrics } : {}),
         }),
       });
       if (!res.ok) {
@@ -153,6 +157,17 @@ export function EditJobForm({
         required
         disabled={saving}
       />
+      {vocal ? (
+        <Textarea
+          label="Lyrics"
+          name="edit-lyrics"
+          value={lyrics}
+          onChange={(e) => setLyrics(e.target.value)}
+          rows={6}
+          disabled={saving}
+          placeholder="The words to sing. Musicians see this on the job."
+        />
+      ) : null}
 
       <div className="space-y-3 rounded-xl border border-gray-100 bg-white px-4 py-4">
         <div className="flex items-center justify-between gap-4">
@@ -314,6 +329,7 @@ export function EditJobForm({
               partSrc={demoFileUrl}
               backingSrc={backingFileUrl}
               allowDownload
+              downloadJob={{ id: job.id, title, lyrics }}
             />
           </div>
         )}

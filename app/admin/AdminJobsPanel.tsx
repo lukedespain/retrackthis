@@ -321,6 +321,8 @@ export function AdminJobsPanel({
               jobId={listeningJob.id}
               jobOpen={listeningJob.status === "OPEN"}
               jobBackingUrl={listeningJob.backingFileUrl}
+              jobTitle={listeningJob.title}
+              lyrics={listeningJob.lyrics}
             />
           </div>
         </Card>
@@ -415,10 +417,14 @@ function AdminTakesList({
   jobId,
   jobOpen,
   jobBackingUrl = null,
+  jobTitle = "",
+  lyrics = null,
 }: {
   jobId: string;
   jobOpen: boolean;
   jobBackingUrl?: string | null;
+  jobTitle?: string;
+  lyrics?: string | null;
 }) {
   const [takes, setTakes] = useState<Take[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -513,6 +519,7 @@ function AdminTakesList({
                 allowDownload
                 collapsible={audioCount > 1}
                 backingSrc={jobBackingUrl}
+                downloadJob={{ id: jobId, title: jobTitle, lyrics }}
               />
             </div>
           </Card>

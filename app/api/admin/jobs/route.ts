@@ -56,6 +56,7 @@ export async function GET() {
         description: job.description,
         demoFileUrl: job.demoFileUrl,
         backingFileUrl: job.backingFileUrl,
+        lyrics: job.lyrics,
         priceCents: job.priceCents,
         priceLabel: formatCents(job.priceCents),
         bpm: job.bpm,

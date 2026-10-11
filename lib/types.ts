@@ -10,6 +10,8 @@ export type Job = {
   demoFileUrl: string;
   /** Background / instrumental without the part being retracked */
   backingFileUrl?: string | null;
+  lyrics?: string | null;
+  lyricsEdited?: boolean;
   priceCents: number;
   /** Part length in seconds (how long the musician will play). */
   durationSeconds?: number | null;

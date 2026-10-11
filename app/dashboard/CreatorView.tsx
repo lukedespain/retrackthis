@@ -15,6 +15,7 @@ import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import type { Job, Take } from "@/lib/types";
 import { daysUntilDeadline, formatCents, formatDeadline } from "@/lib/format";
 import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
+import { JobLyrics } from "@/components/JobLyrics";
 import { EditJobForm } from "./EditJobForm";
 import { JobCheckoutEmbed } from "./JobCheckoutEmbed";
 import { JOB_POSTED, requestPostJob } from "@/components/MarketingHeroCtas";
@@ -261,6 +262,10 @@ function CreatorJobCard({
   const canExtend = job.status === "OPEN" && !isPastDeadline && job.paymentStatus === "captured";
   const missingBacking = job.status === "OPEN" && !job.backingFileUrl;
   const [favoriteName, setFavoriteName] = useState<string | null>(null);
+  const [lyrics, setLyrics] = useState<string | null>(job.lyrics ?? null);
+  useEffect(() => {
+    setLyrics(job.lyrics ?? null);
+  }, [job.lyrics]);
   const [copied, setCopied] = useState(false);
   const unpaidCancelled =
     job.status === "CANCELLED" &&
@@ -616,6 +621,15 @@ function CreatorJobCard({
                     </span>
                   </div>
                 ) : null}
+                <JobLyrics
+                  jobId={job.id}
+                  instrumentId={job.instrumentId}
+                  instrument={job.instrument}
+                  lyrics={lyrics}
+                  lyricsEdited={job.lyricsEdited}
+                  canEdit={!readOnly}
+                  onChange={setLyrics}
+                />
                 <TakesList
                   jobId={job.id}
                   jobOpen={job.status === "OPEN" || job.status === "AWARDING"}
@@ -623,6 +637,7 @@ function CreatorJobCard({
                   pastDeadline={isPastDeadline}
                   paying={job.status === "AWARDING"}
                   jobBackingUrl={job.backingFileUrl}
+                  downloadJob={{ id: job.id, title: job.title, lyrics }}
                   onAwarded={onChanged}
                   onSelectionChange={setFavoriteName}
                   readOnly={readOnly}
@@ -676,6 +691,7 @@ function TakesList({
   pastDeadline = false,
   paying = false,
   jobBackingUrl = null,
+  downloadJob = null,
   onAwarded,
   onSelectionChange,
   readOnly = false,
@@ -686,6 +702,7 @@ function TakesList({
   pastDeadline?: boolean;
   paying?: boolean;
   jobBackingUrl?: string | null;
+  downloadJob?: { id: string; title: string; lyrics?: string | null } | null;
   onAwarded: () => void;
   onSelectionChange?: (winnerName: string | null) => void;
   readOnly?: boolean;
@@ -776,6 +793,7 @@ function TakesList({
           paying={paying}
           hasOtherSelection={hasSelection && !take.isWinner}
           jobBackingUrl={jobBackingUrl}
+          downloadJob={downloadJob}
           selecting={selectingId === take.id}
           disabled={selectingId !== null || readOnly}
           readOnly={readOnly}
@@ -797,6 +815,7 @@ function TakeCard({
   paying = false,
   hasOtherSelection,
   jobBackingUrl = null,
+  downloadJob = null,
   selecting,
   disabled,
   readOnly = false,
@@ -810,6 +829,7 @@ function TakeCard({
   paying?: boolean;
   hasOtherSelection: boolean;
   jobBackingUrl?: string | null;
+  downloadJob?: { id: string; title: string; lyrics?: string | null } | null;
   selecting: boolean;
   disabled: boolean;
   readOnly?: boolean;
@@ -872,10 +892,11 @@ function TakeCard({
             partDownloadSrc={downloadSrc}
             preloadSrcs={audio.map((file) => listenUrl(file)).filter((url): url is string => Boolean(url))}
             backingSrc={jobBackingUrl}
-            partTabLabel="Part"
+            partTabLabel="Take"
             partCaption="Your submitted take"
             initialMode={jobBackingUrl ? "both" : "part"}
             allowDownload={allowDownload}
+            downloadJob={downloadJob}
             heading={
               audio.length > 1 ? (
                 <div className="seg" role="tablist" aria-label="Takes">

@@ -29,6 +29,8 @@ export function SubmitTakeForm({
   existingNote,
   existingFiles,
   backingSrc = null,
+  jobTitle = "Take",
+  lyrics = null,
   submitter = null,
   summaryOnly = false,
   startReplacing = false,
@@ -45,6 +47,8 @@ export function SubmitTakeForm({
   existingFiles?: TakeFileRecord[];
   /** Job bed, so a submitted take can be heard against it. */
   backingSrc?: string | null;
+  jobTitle?: string;
+  lyrics?: string | null;
   submitter?: { name: string; avatar: unknown } | null;
   /** Find work: a short receipt, with the full player on My submissions. */
   summaryOnly?: boolean;
@@ -238,6 +242,7 @@ export function SubmitTakeForm({
             partCaption="Your submitted take"
             initialMode={backingSrc ? "both" : "part"}
             allowDownload
+            downloadJob={{ id: jobId, title: jobTitle, lyrics }}
             heading={
               <div style={{ flex: 1, minWidth: 0 }}>
                 {audio.length > 1 ? (

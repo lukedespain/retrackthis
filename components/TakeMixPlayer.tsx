@@ -12,6 +12,7 @@ export function TakeMixPlayer({
   className = "",
   allowDownload = false,
   downloadSrc = null,
+  downloadJob = null,
 }: {
   takeSrc: string;
   bedSrc: string;
@@ -19,6 +20,7 @@ export function TakeMixPlayer({
   allowDownload?: boolean;
   /** Master file for download (WAV etc). Defaults to takeSrc when omitted. */
   downloadSrc?: string | null;
+  downloadJob?: { id: string; title: string; lyrics?: string | null } | null;
 }) {
   return (
     <WaveformMixPlayer
@@ -27,7 +29,9 @@ export function TakeMixPlayer({
       backingSrc={bedSrc}
       className={className}
       allowDownload={allowDownload}
+      downloadJob={downloadJob}
       partTabLabel="Take"
+      partCaption="Your submitted take"
       headingLabel="Submission"
       showNudge
       initialMode="both"

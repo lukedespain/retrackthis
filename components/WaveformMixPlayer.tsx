@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { DownloadFiles, type DownloadItem } from "@/components/DownloadFiles";
+import { hasLyrics } from "@/lib/lyrics";
 import { formatWaveTime, paintWaveform, ratioFromClientX, type WaveLayer } from "@/lib/waveformDraw";
 import { loadAudioForMixCached } from "@/lib/waveformPeaks";
 
@@ -37,6 +39,7 @@ export function WaveformMixPlayer({
   preloadSrcs = NO_PRELOAD,
   backingSrc = null,
   allowDownload = false,
+  downloadJob = null,
   className = "",
   partTabLabel = "Part",
   partCaption,
@@ -54,6 +57,8 @@ export function WaveformMixPlayer({
   preloadSrcs?: string[];
   backingSrc?: string | null;
   allowDownload?: boolean;
+  /** When set, Part, Bed, and lyrics download from one list. */
+  downloadJob?: { id: string; title: string; lyrics?: string | null } | null;
   className?: string;
   partTabLabel?: string;
   /** Sentence on the part download tile. */
@@ -504,6 +509,39 @@ export function WaveformMixPlayer({
     partTabLabel === "Take" ? "take.wav" : "part.mp3"
   );
   const bedName = backingSrc ? guessFilename(backingSrc, "bed.mp3") : "";
+  const partDetail = partCaption ?? (partTabLabel === "Take" ? "Your submitted take" : "The part being retracked");
+
+  function downloadItems(): DownloadItem[] {
+    if (!downloadJob) return [];
+    const items: DownloadItem[] = [
+      {
+        id: "part",
+        name: partTabLabel,
+        detail: [partDetail, fileKind(partName), fileSizes.part].filter(Boolean).join(" · "),
+        url: partFileForDownload,
+        filename: partName,
+      },
+    ];
+    if (backingSrc) {
+      items.push({
+        id: "bed",
+        name: "Bed",
+        detail: ["The music you record over", fileKind(bedName), fileSizes.bed].filter(Boolean).join(" · "),
+        url: backingSrc,
+        filename: bedName,
+      });
+    }
+    if (hasLyrics(downloadJob.lyrics)) {
+      items.push({
+        id: "lyrics",
+        name: "Lyrics",
+        detail: "The words, as a PDF",
+        lyrics: true,
+        filename: "lyrics.pdf",
+      });
+    }
+    return items;
+  }
 
   return (
     <div className={`ref ${className}`}>
@@ -637,36 +675,9 @@ export function WaveformMixPlayer({
         </div>
       )}
 
-      {allowDownload && (
-        <div className="dl-files">
-          <a className="dl-file" href={partFileForDownload} download={partName} target="_blank" rel="noopener noreferrer">
-            <span className="dl-ic">
-              <DownIcon />
-            </span>
-            <span className="dl-t">
-              <span className="dl-top">
-                <strong>{partTabLabel}</strong>
-                <span className="dl-size">{fileKind(partName)}{fileSizes.part ? ` · ${fileSizes.part}` : ""}</span>
-              </span>
-              <span className="dl-desc">{partCaption ?? (partTabLabel === "Take" ? "Your submitted take" : "What you'll replace")}</span>
-            </span>
-          </a>
-          {backingSrc ? (
-            <a className="dl-file" href={backingSrc} download={bedName} target="_blank" rel="noopener noreferrer">
-              <span className="dl-ic">
-                <DownIcon />
-              </span>
-              <span className="dl-t">
-                <span className="dl-top">
-                  <strong>Bed</strong>
-                  <span className="dl-size">{fileKind(bedName)}{fileSizes.bed ? ` · ${fileSizes.bed}` : ""}</span>
-                </span>
-                <span className="dl-desc">The rest of the mix</span>
-              </span>
-            </a>
-          ) : null}
-        </div>
-      )}
+      {allowDownload && downloadJob ? (
+        <DownloadFiles title={downloadJob.title} jobId={downloadJob.id} items={downloadItems()} />
+      ) : null}
 
       {waveError && <p className="mt-2 text-xs text-amber-700">{waveError}</p>}
     </div>
@@ -677,12 +688,4 @@ function fileKind(name: string) {
   const ext = name.split(".").pop()?.toUpperCase();
   if (ext === "MP3" || ext === "WAV") return ext;
   return "Audio";
-}
-
-function DownIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 4v11M7 11l5 5 5-5M5 20h14" />
-    </svg>
-  );
 }

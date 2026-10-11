@@ -15,10 +15,11 @@ function ffmpegPath(): string | null {
 }
 
 async function toSpeechMp3(input: Buffer, name: string): Promise<{ bytes: Buffer; filename: string }> {
-  const bin = ffmpegPath();
-  if (!bin || input.byteLength <= MAX_BYTES) {
+  if (input.byteLength <= MAX_BYTES) {
     return { bytes: input, filename: name };
   }
+  const bin = ffmpegPath();
+  if (!bin) throw new Error("ffmpeg binary is not available on this server");
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lyrics-"));
   const src = path.join(dir, name.replace(/[^\w.]+/g, "-") || "part");
   const out = path.join(dir, "speech.mp3");

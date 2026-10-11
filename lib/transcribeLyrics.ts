@@ -13,7 +13,7 @@ function ffmpegPath(): string | null {
     path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg"),
     path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg.exe"),
   ];
-  return candidates.find((candidate): candidate is string => Boolean(candidate) && existsSync(candidate)) ?? null;
+  return candidates.find((candidate) => typeof candidate === "string" && existsSync(candidate)) ?? null;
 }
 
 function speechUrlFor(fileUrl: string): string {

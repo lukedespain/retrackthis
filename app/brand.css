@@ -1179,9 +1179,12 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .ip-lbl { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin: 20px 0 10px; }
 .ip-mine { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .ip-mine .ip-lbl { width: 100%; margin: 0 0 4px; }
-.ip-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 8px 0 12px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-size: 13px; font-weight: 500; }
-.ip-chip svg { width: 13px; height: 13px; opacity: .6; }
-.ip-chip:hover svg { opacity: 1; }
+/* Same pill as the Find Work instrument picks (.fw-mine). */
+.ip-chip { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border: 0; border-radius: 999px; background: rgba(var(--accent-rgb), .08); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .22); color: var(--ink); font-family: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
+.ip-chip .ii { width: 20px; height: 20px; }
+.ip-chip > svg:last-child { width: 13px; height: 13px; color: var(--muted); }
+.ip-chip:hover { background: rgba(var(--accent-rgb), .14); }
+.ip-chip:hover > svg:last-child { color: var(--ink); }
 .ip-groups { border-radius: 16px; box-shadow: 0 0 0 1px var(--line); overflow: hidden; }
 .ip-grp + .ip-grp { border-top: 1px solid var(--line); }
 .ip-grp-h { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border: 0; background: none; text-align: left; font-size: 14.5px; }

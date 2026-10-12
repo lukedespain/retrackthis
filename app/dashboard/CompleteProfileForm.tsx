@@ -38,7 +38,8 @@ function Chevron() {
   );
 }
 
-export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
+/** `preview` (localhost only) renders the form without saving anything. */
+export function CompleteProfileForm({ onDone, preview = false }: { onDone: () => void; preview?: boolean }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [instruments, setInstruments] = useState<string[]>([]);
@@ -113,6 +114,10 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (preview) {
+      onDone();
+      return;
+    }
     setSubmitting(true);
     setError(null);
     const form = new FormData(e.currentTarget);
@@ -177,10 +182,15 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
                   key={id}
                   type="button"
                   className="ip-chip"
+                  aria-label={`Remove ${labelFor(id)}`}
                   onClick={() => toggle(id)}
                   disabled={submitting}
                 >
+                  <InstrumentIcon instrument={labelFor(id)} />
                   {labelFor(id)}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
                 </button>
               ))}
             </div>

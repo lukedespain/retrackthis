@@ -86,6 +86,10 @@ function MusiciansPageInner() {
   if (signedIn && profile === null) {
     return <CompleteProfileForm onDone={reloadProfile} />;
   }
+  // Localhost: ?onboarding=preview shows the onboarding step without an account.
+  if (process.env.NODE_ENV === "development" && searchParams.get("onboarding") === "preview") {
+    return <CompleteProfileForm preview onDone={() => router.push("/musicians")} />;
+  }
 
   return (
     <>

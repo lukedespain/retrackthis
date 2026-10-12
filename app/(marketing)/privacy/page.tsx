@@ -64,8 +64,8 @@ export default function PrivacyPolicyPage() {
           <li>When required by law, or to protect rights, safety, and the integrity of the service.</li>
         </ul>
         <p className="mt-3">
-          Creators can hear takes submitted to their jobs. Picked takes may be downloaded by the
-          creator. We do not sell your personal information.
+          Producers can hear takes submitted to their jobs. Picked takes may be downloaded by the
+          producer. We do not sell your personal information.
         </p>
       </LegalSection>
 

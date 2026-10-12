@@ -1179,6 +1179,11 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .ip-lbl { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin: 20px 0 10px; }
 .ip-mine { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .ip-mine .ip-lbl { width: 100%; margin: 0 0 4px; }
+/* Small-print agreement lines (sign-up, submit take, post job). */
+.fine-terms { margin: 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.fine-terms.center { margin-top: 14px; text-align: center; }
+.fine-terms a { white-space: nowrap; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 2px; }
+.fine-terms a:hover { text-decoration-color: var(--ink); }
 /* Same pill as the Find Work instrument picks (.fw-mine). */
 .ip-chip { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border: 0; border-radius: 999px; background: rgba(var(--accent-rgb), .08); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .22); color: var(--ink); font-family: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
 .ip-chip .ii { width: 20px; height: 20px; }

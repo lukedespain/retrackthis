@@ -1040,6 +1040,9 @@ function PostJobFormInner({
           />
         )}
         {error && <Alert variant="error">{error}</Alert>}
+        <p className="fine-terms">
+          By posting, you agree to our <a href="/terms" target="_blank" rel="noopener">Terms of Service</a>.
+        </p>
       </div>
     </form>
     </ModalFrame>

@@ -123,6 +123,9 @@ function SignUpForm() {
           {submitting ? "Creating account…" : "Create account"}
         </Button>
       </form>
+      <p className="fine-terms center">
+        By creating an account, you agree to our <a href="/terms" target="_blank" rel="noopener">Terms of Service</a>.
+      </p>
     </AuthLayout>
   );
 }

@@ -310,8 +310,8 @@ function MusicianThroughLine() {
           in-product yet.
         </Callout>
         <Callout tone="edit">
-          <strong>Unhappy after winning?</strong> No self-serve reverse. Support / admin only. License
-          to the producer kicks in on pick (see Terms).
+          <strong>Unhappy after winning?</strong> No self-serve reverse. Support / admin only. The take
+          transfers to the producer outright once it&apos;s picked and paid (see Terms).
         </Callout>
       </Section>
     </article>

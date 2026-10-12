@@ -268,7 +268,7 @@ export function PayoutSetupPanel({
           <p className="text-sm font-medium text-emerald-900">Payouts ready</p>
           <p className="mt-0.5 text-sm text-emerald-800/80">
             {snapshot.provider === "stripe"
-              ? "When a creator picks your take, payment goes to your Stripe Express account."
+              ? "When a producer picks your take, payment goes to your Stripe Express account."
               : `Paid via ${providerLabel}${
                   snapshot.payoutEmail ? ` · ${snapshot.payoutEmail}` : ""
                 }${snapshot.payoutAccountName ? ` · ${snapshot.payoutAccountName}` : ""}${

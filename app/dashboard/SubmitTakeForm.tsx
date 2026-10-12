@@ -371,6 +371,10 @@ export function SubmitTakeForm({
 
       {error ? <Alert variant="error">{error}</Alert> : null}
 
+      <p className="fine-terms">
+        By submitting, you agree to our <a href="/terms" target="_blank" rel="noopener">Terms of Service</a>.
+      </p>
+
       {payoutReady ? (
         <button
           type="submit"

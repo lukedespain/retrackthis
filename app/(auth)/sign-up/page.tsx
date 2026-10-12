@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthFooterLink, AuthLayout } from "@/components/AuthLayout";
 import { AuthDivider, GoogleAuthButton } from "@/components/GoogleAuthButton";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Spinner } from "@/components/ui/Spinner";
 import { trackMeta } from "@/lib/metaPixel";
+import { parseInstrumentParam, savePendingInstruments } from "@/lib/pendingInstruments";
 import { safeInternalPath } from "@/lib/safeRedirect";
 import { supabaseClient } from "@/lib/supabaseClient";
 
@@ -32,6 +33,13 @@ function SignUpForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  // Instruments picked on Find Work before signing up; onboarding pre-ticks them.
+  const instruments = parseInstrumentParam(searchParams.get("instruments"));
+  const instrumentsKey = instruments.join(",");
+
+  useEffect(() => {
+    if (instrumentsKey) savePendingInstruments(instrumentsKey.split(","));
+  }, [instrumentsKey]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -42,7 +50,11 @@ function SignUpForm() {
     const email = String(form.get("email"));
     const password = String(form.get("password"));
 
-    const { data, error: signUpError } = await supabaseClient.auth.signUp({ email, password });
+    const { data, error: signUpError } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: instruments.length ? { data: { instruments } } : undefined,
+    });
 
     if (signUpError) {
       setError(signUpError.message);

@@ -8,6 +8,7 @@ import { TestJobBadge } from "@/components/TestJobBadge";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
+import { FindWorkNext } from "@/components/FindWorkNext";
 import { Spinner } from "@/components/ui/Spinner";
 import { requestPostJob } from "@/components/MarketingHeroCtas";
 import { formatCents, formatDeadline } from "@/lib/format";
@@ -263,18 +264,7 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
       </div>
 
       {jobs.length === 0 ? (
-        <div className="empty">
-          No open jobs right now.{" "}
-          {signedIn ? (
-            <button type="button" className="btn text" onClick={requestPostJob}>
-              Post a job
-            </button>
-          ) : (
-            <button type="button" className="btn text" onClick={requestPostJob}>
-              Post a job
-            </button>
-          )}
-        </div>
+        <div className="empty">No open jobs right now.</div>
       ) : filteredJobs.length === 0 ? (
         <div className="empty">No jobs for this instrument.</div>
       ) : (
@@ -295,6 +285,8 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
           ))}
         </div>
       )}
+
+      {signedIn ? null : <FindWorkNext />}
     </>
   );
 }

@@ -6,6 +6,7 @@ import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { labelForInstrumentId, type InstrumentGroup } from "@/lib/instruments";
+import { clearPendingInstruments, readPendingInstruments } from "@/lib/pendingInstruments";
 import { useInstrumentCatalog } from "@/lib/useApprovedInstruments";
 import { supabaseClient } from "@/lib/supabaseClient";
 
@@ -56,6 +57,13 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
         (typeof meta.name === "string" && meta.name) ||
         "";
       setDefaultName(fromGoogle.trim());
+      // Instruments picked on Find Work before signing up (metadata survives a
+      // confirm link opened in another browser; localStorage covers Google).
+      const fromSignUp = Array.isArray(meta.instruments)
+        ? meta.instruments.filter((id: unknown): id is string => typeof id === "string")
+        : [];
+      const carried = Array.from(new Set([...fromSignUp, ...readPendingInstruments()]));
+      if (carried.length) setInstruments((current) => (current.length ? current : carried));
     });
     return () => {
       cancelled = true;
@@ -121,6 +129,7 @@ export function CompleteProfileForm({ onDone }: { onDone: () => void }) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? `Request failed (${res.status})`);
       }
+      clearPendingInstruments();
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");

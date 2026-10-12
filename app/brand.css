@@ -892,6 +892,53 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .fw-tick svg { width: 16px; height: 16px; }
 .fw-opt[aria-checked="true"] { font-weight: 600; }
 .fw-opt[aria-checked="true"] .fw-tick { visibility: visible; }
+/* Under the Find Work list (signed out): instrument search for job alerts + recent jobs (FindWorkNext). */
+/* grid, not flex column: a flex column mis-measures the instrument menu and leaves gaps */
+.fw-next { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 28px 32px; margin: 0 0 72px; border-radius: 24px; box-shadow: inset 0 0 0 1px var(--line-2); }
+.empty + .fw-next { margin-top: 16px; }
+.jobs + .fw-next { margin-top: -40px; } /* .jobs carries 64px bottom padding; sit 24px under the last card */
+.fw-next h2 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.03em; line-height: 1.15; }
+.fw-next p { margin: 6px 0 0; color: var(--muted); line-height: 1.5; max-width: 460px; }
+.fw-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); align-items: start; gap: 28px 48px; }
+.fw-split-copy { display: flex; flex-direction: column; align-items: flex-start; }
+.fw-picks-search { width: 100%; max-width: 440px; margin-top: 18px; }
+.btn.primary.fw-cta-iris { margin-top: 14px; background: var(--accent); box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, 0 6px 16px -6px rgba(var(--accent-rgb), .6); }
+.btn.primary.fw-cta-iris:hover { background: var(--accent-hover); }
+
+.fw-find-wrap { display: grid; gap: 10px; }
+.fw-find-field { position: relative; }
+.fw-find-field .in { width: 100%; height: 48px; padding-left: 42px; background: #fff; border-color: var(--line-2); box-shadow: 0 1px 2px rgba(17,17,19,.04); }
+.fw-find-field .in:hover { background: #fff; border-color: rgba(17,17,19,.22); }
+.fw-find-field .in:focus { border-color: var(--ink); box-shadow: 0 0 0 4px rgba(17,17,19,.06); }
+.fw-find-field > svg { position: absolute; left: 15px; top: 24px; transform: translateY(-50%); width: 17px; height: 17px; color: var(--muted); pointer-events: none; z-index: 1; }
+.fw-find-menu { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 6px); background: #fff; border-radius: 16px; padding: 6px; box-shadow: 0 0 0 1px var(--line), 0 24px 48px -20px rgba(17,17,19,.35); color: var(--ink); }
+.fw-find-menu button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px; border: 0; border-radius: 10px; background: none; font-size: 14px; text-align: left; }
+.fw-find-menu button:hover { background: var(--soft); }
+.fw-find-menu .ii { width: 22px; height: 22px; }
+.fw-find-grp { margin-left: auto; font-size: 12px; color: var(--faint); }
+
+.fw-feed { background: #fff; border-radius: 20px; padding: 8px; box-shadow: 0 0 0 1px var(--line), 0 18px 40px -28px rgba(17,17,19,.3); color: var(--ink); }
+.fw-feed-h { padding: 8px 10px 6px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.fw-feed-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; }
+.fw-feed-row + .fw-feed-row { border-top: 1px solid var(--line); }
+.fw-feed-row > div { flex: 1; min-width: 0; }
+.fw-feed-row strong { display: block; font-size: 14px; font-weight: 500; letter-spacing: -.01em; }
+.fw-feed-row div > span { display: block; font-size: 12.5px; color: var(--muted); }
+.fw-feed-ico { width: 36px; height: 36px; border-radius: 50%; background: var(--soft); display: grid; place-items: center; flex: none; }
+.fw-feed-ico .ii { width: 24px; height: 24px; }
+
+.fw-next-foot { padding-top: 16px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+.fw-next-foot button { border: 0; background: none; padding: 0; font: inherit; color: var(--ink); font-weight: 500; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
+.fw-next-foot button:hover { text-decoration-color: var(--ink); }
+
+@media (max-width: 760px) {
+  .fw-split { grid-template-columns: 1fr; }
+  .fw-picks-search { max-width: none; }
+}
+@media (max-width: 640px) {
+  .fw-next { padding: 24px 20px; }
+  .btn.primary.fw-cta-iris { width: 100%; }
+}
 @media (max-width: 560px) { .fw-tools { width: 100%; } .fw-menu-sort { right: 0; } }
 .note-box { position: relative; }
 .in.ta.note { width: 100%; max-width: 100%; overflow-wrap: anywhere; overflow-y: auto; resize: none; min-height: calc(4lh + 22px + 2px); max-height: calc(9lh + 22px + 2px); padding-bottom: 28px; font-size: 14px; }

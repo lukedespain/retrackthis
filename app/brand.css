@@ -935,8 +935,14 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .btn.outline.fw-cta-quiet { margin-top: 14px; }
 /* Signed-in, link version: the instruments alerts match on, plus a smaller feed. */
 .fw-mine { list-style: none; margin: 16px 0 4px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; max-width: 460px; }
-.fw-mine li { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 8px; border-radius: 999px; background: rgba(var(--accent-rgb), .08); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .22); font-size: 13.5px; font-weight: 500; color: var(--ink); }
-.fw-mine li .ii { width: 20px; height: 20px; }
+.fw-mine li, .fw-mine.edit button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 8px; border-radius: 999px; background: rgba(var(--accent-rgb), .08); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .22); font-size: 13.5px; font-weight: 500; color: var(--ink); }
+.fw-mine li .ii, .fw-mine.edit button .ii { width: 20px; height: 20px; }
+/* Signed-out picks: the same pills, removable. */
+.fw-find-wrap .fw-mine { margin: 0; }
+.fw-mine.edit button { border: 0; padding-right: 8px; font-family: inherit; cursor: pointer; }
+.fw-mine.edit button > svg:last-child { width: 13px; height: 13px; color: var(--muted); }
+.fw-mine.edit button:hover { background: rgba(var(--accent-rgb), .14); }
+.fw-mine.edit button:hover > svg:last-child { color: var(--ink); }
 .fw-mine li.more { padding: 0 12px; background: none; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); }
 .fw-mine.off li { background: #fff; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); }
 .fw-mine.off li .ii { opacity: .45; filter: grayscale(1); }

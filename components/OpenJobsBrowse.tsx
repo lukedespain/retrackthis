@@ -8,7 +8,7 @@ import { TestJobBadge } from "@/components/TestJobBadge";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
-import { FindWorkNext } from "@/components/FindWorkNext";
+import { FindWorkAlerts, FindWorkNext } from "@/components/FindWorkNext";
 import { Spinner } from "@/components/ui/Spinner";
 import { requestPostJob } from "@/components/MarketingHeroCtas";
 import { formatCents, formatDeadline } from "@/lib/format";
@@ -286,7 +286,8 @@ export function OpenJobsBrowse({ signedIn }: { signedIn: boolean }) {
         </div>
       )}
 
-      {signedIn ? null : <FindWorkNext />}
+      {/* Localhost: ?alerts=on|off|empty previews the signed-in block even when signed out. */}
+      {signedIn || (process.env.NODE_ENV === "development" && searchParams.get("alerts")) ? <FindWorkAlerts /> : <FindWorkNext />}
     </>
   );
 }

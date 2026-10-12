@@ -927,6 +927,28 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .fw-feed-ico { width: 36px; height: 36px; border-radius: 50%; background: var(--soft); display: grid; place-items: center; flex: none; }
 .fw-feed-ico .ii { width: 24px; height: 24px; }
 
+/* Localhost-only state preview switcher (FindWorkAlerts). */
+.fw-proto { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 2px; padding: 5px 6px 5px 14px; border-radius: 999px; background: var(--ink); color: rgba(255,255,255,.5); font-size: 12px; box-shadow: 0 8px 24px -8px rgba(17,17,19,.5); white-space: nowrap; }
+.fw-proto > span { margin-right: 8px; }
+.fw-proto a { height: 28px; padding: 0 10px; display: grid; place-items: center; border-radius: 999px; color: #fff; text-decoration: none; font-weight: 500; }
+.fw-proto a[aria-current="true"] { background: var(--accent); }
+.btn.outline.fw-cta-quiet { margin-top: 14px; }
+/* Signed-in, link version: the instruments alerts match on, plus a smaller feed. */
+.fw-mine { list-style: none; margin: 16px 0 4px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; max-width: 460px; }
+.fw-mine li { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 8px; border-radius: 999px; background: rgba(var(--accent-rgb), .08); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .22); font-size: 13.5px; font-weight: 500; color: var(--ink); }
+.fw-mine li .ii { width: 20px; height: 20px; }
+.fw-mine li.more { padding: 0 12px; background: none; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); }
+.fw-mine.off li { background: #fff; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); }
+.fw-mine.off li .ii { opacity: .45; filter: grayscale(1); }
+.fw-split.compact { grid-template-columns: minmax(0, 1fr) minmax(0, 280px); }
+.fw-feed.compact { padding: 4px 6px; box-shadow: 0 0 0 1px var(--line); }
+.fw-feed.compact .fw-feed-h { padding: 8px 8px 4px; font-size: 11px; }
+.fw-feed.compact .fw-feed-row { gap: 10px; padding: 7px 8px; }
+.fw-feed.compact .fw-feed-row strong { font-size: 13px; }
+.fw-feed.compact .fw-feed-row div > span { font-size: 12px; }
+.fw-feed.compact .fw-feed-ico { width: 28px; height: 28px; }
+.fw-feed.compact .fw-feed-ico .ii { width: 18px; height: 18px; }
+.fw-feed.compact .pill { height: 22px; padding: 0 8px; font-size: 12px; }
 .fw-next-foot { padding-top: 16px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
 .fw-next-foot button { border: 0; background: none; padding: 0; font: inherit; color: var(--ink); font-weight: 500; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
 .fw-next-foot button:hover { text-decoration-color: var(--ink); }

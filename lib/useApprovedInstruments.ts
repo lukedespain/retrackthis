@@ -13,6 +13,9 @@ const EMPTY: InstrumentAdjustments = { labels: {}, hidden: [] };
 export function useInstrumentCatalog() {
   const [extras, setExtras] = useState<ApprovedInstrumentLite[]>([]);
   const [adjustments, setAdjustments] = useState<InstrumentAdjustments>(EMPTY);
+  // Hold results until admin removals and renames are known, so a removed
+  // instrument never flashes up (and can't be picked) while this loads.
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let cancel = false;
@@ -33,14 +36,23 @@ export function useInstrumentCatalog() {
         const hidden = Array.isArray(body.hidden) ? body.hidden.filter((id: unknown) => typeof id === "string") : [];
         setAdjustments({ labels, hidden });
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancel) setLoaded(true);
+      });
     return () => {
       cancel = true;
     };
   }, []);
 
-  const groups = useMemo(() => presentInstrumentGroups(extras, adjustments), [extras, adjustments]);
-  const catalog = useMemo(() => presentInstrumentCatalog(extras, adjustments), [extras, adjustments]);
+  const groups = useMemo(
+    () => (loaded ? presentInstrumentGroups(extras, adjustments) : []),
+    [loaded, extras, adjustments]
+  );
+  const catalog = useMemo(
+    () => (loaded ? presentInstrumentCatalog(extras, adjustments) : []),
+    [loaded, extras, adjustments]
+  );
 
-  return { extras, adjustments, groups, catalog };
+  return { extras, adjustments, groups, catalog, loaded };
 }

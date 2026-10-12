@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { listApprovedInstruments } from "@/lib/approvedInstruments";
 import { listInstrumentAdjustments } from "@/lib/instrumentOverrides";
 
+// Read on every request: admin renames, removals and restores must show up
+// right away. Without this, Next caches the response at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const [instruments, adjustments] = await Promise.all([
     listApprovedInstruments(),

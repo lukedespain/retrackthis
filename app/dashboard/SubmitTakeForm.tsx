@@ -58,7 +58,6 @@ export function SubmitTakeForm({
   onSubmitted?: (take: { jobId: string; audioFileUrl: string; note?: string | null; files?: TakeFileRecord[] }) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const noteRef = useRef<HTMLTextAreaElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,11 +72,6 @@ export function SubmitTakeForm({
 
   const isReplace = replacing;
   const fileCount = rows.length;
-
-  function growNote(el: HTMLTextAreaElement) {
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }
 
   async function uploadTakeFile(file: File): Promise<TakeRow> {
     const scan = await scanAudioFile(file);
@@ -354,17 +348,13 @@ export function SubmitTakeForm({
 
       <div className="note-box">
         <textarea
-          ref={noteRef}
           className="in ta note"
           name="note"
           rows={4}
           maxLength={600}
           value={note}
           placeholder="Notes for the producer: how you approached it, gear, alternate ideas…"
-          onChange={(e) => {
-            setNote(e.target.value);
-            growNote(e.target);
-          }}
+          onChange={(e) => setNote(e.target.value)}
         />
         <span className="note-count">{note.length}/600</span>
       </div>

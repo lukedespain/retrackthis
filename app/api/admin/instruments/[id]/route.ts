@@ -12,6 +12,7 @@ import {
   isTestInstrumentId,
   labelForInstrumentId,
   normalizeInstrumentId,
+  parseCustomInstrumentId,
 } from "@/lib/instruments";
 
 type Ctx = { params: { id: string } };
@@ -229,4 +230,44 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
   });
 
   return NextResponse.json({ ok: true });
+}
+
+/** Restore a removed instrument so it shows in pickers again. Profiles it was
+ *  removed from are not restored (nothing records who had it). */
+export async function POST(_req: NextRequest, { params }: Ctx) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  const id = decodeURIComponent(params.id);
+  const adjustments = await listInstrumentAdjustments();
+  const group = groupForInstrumentId(id);
+  if (!adjustments.hidden.includes(id) || !group) {
+    return NextResponse.json({ error: "That instrument isn’t removed." }, { status: 404 });
+  }
+
+  const label = labelForInstrumentId(id);
+  const labels = await visibleLabels();
+  for (const name of labels.values()) {
+    if (name.toLowerCase() === label.toLowerCase()) {
+      return NextResponse.json(
+        { error: `Another instrument is already called “${label}”. Rename it first.` },
+        { status: 409 }
+      );
+    }
+  }
+
+  const custom = parseCustomInstrumentId(id);
+  await db.$transaction(async (tx) => {
+    await tx.instrumentOverride.delete({ where: { id } });
+    // Custom instruments live in ApprovedInstrument, which removal deleted.
+    if (custom) {
+      await tx.approvedInstrument.upsert({
+        where: { id },
+        create: { id, label, groupId: custom.groupId },
+        update: { label, groupId: custom.groupId },
+      });
+    }
+  });
+
+  return NextResponse.json({ ok: true, label });
 }

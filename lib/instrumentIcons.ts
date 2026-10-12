@@ -122,6 +122,7 @@ const BY_ID: Record<string, string> = {
   clarinet: "flute",
   "tin-whistle": "flute",
   ocarina: "flute",
+  harmonica: "note",
 };
 
 const BY_GROUP: Record<string, string> = {

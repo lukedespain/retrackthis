@@ -6,6 +6,7 @@ import {
   INSTRUMENT_CATALOG,
   groupForInstrumentId,
   isCustomInstrumentId,
+  labelForInstrumentId,
 } from "@/lib/instruments";
 
 // GET /api/admin/instruments - coverage across catalog + custom write-ins
@@ -61,9 +62,16 @@ export async function GET() {
   covered.sort((a, b) => b.musicianCount - a.musicianCount || a.label.localeCompare(b.label));
   needed.sort((a, b) => a.groupLabel.localeCompare(b.groupLabel) || a.label.localeCompare(b.label));
 
+  // Removed (hidden) instruments, so an admin can restore one.
+  const removed = adjustments.hidden
+    .filter((id) => groupForInstrumentId(id))
+    .map((id) => ({ id, label: labelForInstrumentId(id), groupLabel: groupForInstrumentId(id)?.label ?? "Other" }))
+    .sort((a, b) => a.groupLabel.localeCompare(b.groupLabel) || a.label.localeCompare(b.label));
+
   return NextResponse.json({
     covered,
     needed,
+    removed,
     summary: {
       catalogTotal: INSTRUMENT_CATALOG.length,
       coveredCount: covered.filter((c) => !c.custom).length,

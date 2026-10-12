@@ -67,7 +67,6 @@ const INSTRUMENT_BAND: Record<string, PricingBandId> = {
   // Aux
   shaker: "aux",
   tambourine: "aux",
-  "aux-percussion": "aux",
   ocarina: "aux",
   "tin-whistle": "aux",
   harmonica: "aux",

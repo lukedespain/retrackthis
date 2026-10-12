@@ -52,6 +52,8 @@ type InstrumentRow = {
   custom: boolean;
 };
 
+type RemovedInstrumentRow = { id: string; label: string; groupLabel: string };
+
 type StatsPayload = {
   period: Period;
   income: {
@@ -184,6 +186,7 @@ function AdminPageInner() {
   const [instruments, setInstruments] = useState<{
     covered: InstrumentRow[];
     needed: InstrumentRow[];
+    removed?: RemovedInstrumentRow[];
     summary: {
       catalogTotal: number;
       coveredCount: number;
@@ -644,6 +647,12 @@ function AdminPageInner() {
                 onOpen={setEditingInstrumentId}
               />
             )}
+            {instruments.removed && instruments.removed.length > 0 ? (
+              <RemovedInstrumentsTable
+                rows={instruments.removed}
+                onRestored={() => setInstrumentsReloadToken((n) => n + 1)}
+              />
+            ) : null}
             {editingInstrumentId ? (
               <AdminInstrumentEditor
                 instrumentId={editingInstrumentId}
@@ -825,6 +834,69 @@ function InstrumentTable({
           </tbody>
         </table>
       )}
+    </div>
+  );
+}
+
+/** Instruments an admin removed. Restoring puts one back in every picker; it is
+ *  not re-added to the profiles it was removed from. */
+function RemovedInstrumentsTable({
+  rows,
+  onRestored,
+}: {
+  rows: RemovedInstrumentRow[];
+  onRestored: () => void;
+}) {
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function restore(id: string) {
+    setBusyId(id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/instruments/${encodeURIComponent(id)}`, { method: "POST" });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Couldn’t restore that instrument.");
+      onRestored();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn’t restore that instrument.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2.5">
+        <h2 className="text-sm font-medium text-gray-800">Removed</h2>
+        <span className="text-xs text-gray-400">{rows.length}</span>
+      </div>
+      <p className="border-b border-gray-200 px-4 py-2.5 text-xs text-gray-500">
+        Hidden from every picker. Restoring brings it back, but musicians who had it need to add it
+        to their profile again.
+      </p>
+      {error ? <p className="px-4 py-2.5 text-sm text-red-600">{error}</p> : null}
+      <table className="min-w-full bg-white text-left text-sm">
+        <tbody className="divide-y divide-gray-200 bg-white">
+          {rows.map((row) => (
+            <tr key={row.id}>
+              <td className="px-4 py-2.5 text-gray-900">{row.label}</td>
+              <td className="px-4 py-2.5 text-gray-500">{row.groupLabel}</td>
+              <td className="px-4 py-2.5 text-right">
+                <button
+                  type="button"
+                  className="btn soft"
+                  style={{ height: 32, fontSize: 13, padding: "0 14px" }}
+                  disabled={busyId !== null}
+                  onClick={() => void restore(row.id)}
+                >
+                  {busyId === row.id ? "Restoring…" : "Restore"}
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

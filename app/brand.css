@@ -960,7 +960,7 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .fw-next-foot button:hover { text-decoration-color: var(--ink); }
 
 @media (max-width: 760px) {
-  .fw-split { grid-template-columns: 1fr; }
+  .fw-split, .fw-split.compact { grid-template-columns: 1fr; }
   .fw-picks-search { max-width: none; }
 }
 @media (max-width: 640px) {
@@ -1215,6 +1215,11 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .ip-add { display: flex; gap: 8px; margin-top: 12px; }
 .ip-add .in { flex: 1; }
 .payout { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; background: var(--soft); }
+/* Phones: Manage drops to its own full-width row instead of spilling off the card. */
+@media (max-width: 560px) {
+  .payout { flex-wrap: wrap; }
+  .payout > .btn { flex: 1 0 100%; }
+}
 .payout .logo { width: 44px; height: 44px; border-radius: 12px; background: #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; box-shadow: 0 0 0 1px var(--line); }
 
 /* auth */

@@ -56,8 +56,11 @@ export function DownloadFiles({
       const only = selected.length === 1 ? selected[0] : null;
       if (only?.url && !only.lyrics) {
         const link = document.createElement("a");
-        link.href = only.url;
-        link.download = only.filename || only.name;
+        const name = only.filename || only.name;
+        link.href = only.url.includes("/storage/v1/object/")
+          ? `${only.url}${only.url.includes("?") ? "&" : "?"}download=${encodeURIComponent(name)}`
+          : only.url;
+        link.download = name;
         link.rel = "noopener";
         link.target = "_blank";
         link.click();

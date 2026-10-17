@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DownloadFiles, type DownloadItem } from "@/components/DownloadFiles";
+import { jobFileName } from "@/lib/downloadNames";
 import { hasLyrics } from "@/lib/lyrics";
 import { formatWaveTime, paintWaveform, ratioFromClientX, type WaveLayer } from "@/lib/waveformDraw";
 import { loadAudioForMixCached } from "@/lib/waveformPeaks";
@@ -504,11 +505,10 @@ export function WaveformMixPlayer({
     return () => ro.disconnect();
   }, [partSrc, backingSrc]);
 
-  const partName = guessFilename(
-    partFileForDownload,
-    partTabLabel === "Take" ? "take.wav" : "part.mp3"
-  );
-  const bedName = backingSrc ? guessFilename(backingSrc, "bed.mp3") : "";
+  const partName = downloadJob
+    ? jobFileName(downloadJob.title, partTabLabel, partFileForDownload)
+    : guessFilename(partFileForDownload, partTabLabel === "Take" ? "take.wav" : "part.mp3");
+  const bedName = !backingSrc ? "" : downloadJob ? jobFileName(downloadJob.title, "Bed", backingSrc) : guessFilename(backingSrc, "bed.mp3");
   const partDetail = partCaption ?? (partTabLabel === "Take" ? "Your submitted take" : "The part being retracked");
 
   function downloadItems(): DownloadItem[] {

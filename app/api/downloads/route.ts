@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hasLyrics } from "@/lib/lyrics";
 import { lyricsPdf } from "@/lib/lyricsPdf";
+import { cleanFileName } from "@/lib/downloadNames";
 import { assertAppStorageUrls } from "@/lib/storageUrls";
 import { getSessionUserId } from "@/lib/supabaseServer";
 import { zipFiles } from "@/lib/zipFiles";
@@ -9,11 +10,6 @@ import { zipFiles } from "@/lib/zipFiles";
 export const maxDuration = 60;
 
 type Item = { id?: string; url?: string; filename?: string; lyrics?: boolean };
-
-function safeName(name: string, fallback: string) {
-  const cleaned = name.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
-  return (cleaned || fallback).slice(0, 80);
-}
 
 // POST /api/downloads — one file, or a zip of the part, the bed, and a lyric sheet.
 export async function POST(req: NextRequest) {
@@ -39,7 +35,7 @@ export async function POST(req: NextRequest) {
     if (item.lyrics) {
       if (!hasLyrics(job.lyrics)) continue;
       packed.push({
-        name: `${safeName(job.title, "lyrics")}-lyrics.pdf`,
+        name: cleanFileName(`${job.title} - Lyrics.pdf`, "lyrics.pdf"),
         data: lyricsPdf(job.title, job.lyrics as string),
       });
       continue;
@@ -52,7 +48,7 @@ export async function POST(req: NextRequest) {
     if (!audio.ok) return NextResponse.json({ error: "Could not read a file." }, { status: 502 });
     const data = new Uint8Array(await audio.arrayBuffer());
     const fallback = url.split("?")[0].split("/").pop() || "file";
-    packed.push({ name: safeName(typeof item.filename === "string" ? item.filename : fallback, fallback), data });
+    packed.push({ name: cleanFileName(typeof item.filename === "string" ? item.filename : fallback, fallback), data });
   }
 
   if (packed.length === 0) return NextResponse.json({ error: "Nothing to download" }, { status: 400 });
@@ -67,7 +63,7 @@ export async function POST(req: NextRequest) {
   }
 
   const zip = zipFiles(packed);
-  const zipName = `${safeName(title || job.title, "retrack-this")}.zip`;
+  const zipName = cleanFileName(`${title || job.title}.zip`, "retrack-this.zip");
   return new NextResponse(Buffer.from(zip), {
     headers: {
       "Content-Type": "application/zip",

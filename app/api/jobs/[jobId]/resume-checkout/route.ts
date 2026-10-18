@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { appBaseUrl } from "@/lib/appUrl";
+import { metaCheckoutMetadata } from "@/lib/metaCapi";
 import { db } from "@/lib/db";
 import { labelForInstrumentId } from "@/lib/instruments";
 import { stripe } from "@/lib/stripe";
@@ -7,7 +8,7 @@ import { getSessionUserId } from "@/lib/supabaseServer";
 
 // POST /api/jobs/:jobId/resume-checkout
 // Returns an Embedded Checkout client secret for a PENDING_PAYMENT job.
-export async function POST(_req: NextRequest, { params }: { params: { jobId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const creatorId = await getSessionUserId();
   if (!creatorId) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
@@ -60,6 +61,7 @@ export async function POST(_req: NextRequest, { params }: { params: { jobId: str
         metadata: {
           jobId: job.id,
           creatorId,
+          ...metaCheckoutMetadata(req),
         },
         payment_intent_data: {
           metadata: {

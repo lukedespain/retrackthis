@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { sendMetaPurchase } from "@/lib/metaCapi";
 import { notifyJobInvites, notifyNewJobPosted } from "@/lib/notify";
 import type Stripe from "stripe";
 
@@ -21,12 +22,16 @@ export async function activateJobFromCheckout(session: Stripe.Checkout.Session) 
     console.warn("[checkout] session missing jobId", session.id);
     return;
   }
+  const opened: string[] = [];
   for (const jobId of ids) {
-    await activateOneJob(session, jobId);
+    if (await activateOneJob(session, jobId)) opened.push(jobId);
   }
+  // Only the call that actually opened the jobs reports the sale to Meta.
+  if (opened.length > 0) await sendMetaPurchase(session, ids);
 }
 
-async function activateOneJob(session: Stripe.Checkout.Session, jobId: string) {
+/** True when this call opened a real (non-test) job. */
+async function activateOneJob(session: Stripe.Checkout.Session, jobId: string): Promise<boolean> {
 
   const job = await db.job.findUnique({
     where: { id: jobId },
@@ -34,14 +39,14 @@ async function activateOneJob(session: Stripe.Checkout.Session, jobId: string) {
   });
   if (!job) {
     console.warn("[checkout] no job for", jobId);
-    return;
+    return false;
   }
   if (job.status === "OPEN" || job.status === "AWARDED") {
-    return;
+    return false;
   }
   if (job.status !== "PENDING_PAYMENT") {
     console.warn("[checkout] unexpected job status", job.status, jobId);
-    return;
+    return false;
   }
 
   const piId =
@@ -50,7 +55,7 @@ async function activateOneJob(session: Stripe.Checkout.Session, jobId: string) {
       : session.payment_intent?.id;
   if (!piId) {
     console.warn("[checkout] session has no payment_intent", session.id);
-    return;
+    return false;
   }
 
   if (!job.payment) {
@@ -81,7 +86,7 @@ async function activateOneJob(session: Stripe.Checkout.Session, jobId: string) {
     data: { status: "OPEN" },
   });
 
-  if (opened.isTest) return;
+  if (opened.isTest) return false;
 
   await notifyNewJobPosted(opened);
 
@@ -103,6 +108,7 @@ async function activateOneJob(session: Stripe.Checkout.Session, jobId: string) {
       });
     }
   }
+  return true;
 }
 
 /**

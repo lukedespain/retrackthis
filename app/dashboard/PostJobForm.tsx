@@ -26,6 +26,7 @@ import { InstrumentTypeahead } from "@/components/InstrumentTypeahead";
 import { SongPad } from "@/components/brand/SongPad";
 import { JOB_POSTED } from "@/components/MarketingHeroCtas";
 import { clearPostDraft, readPostDraft, writePostDraft } from "@/lib/postJobDraft";
+import { trackMeta } from "@/lib/metaPixel";
 import { supabaseClient } from "@/lib/supabaseClient";
 import { JobCheckoutEmbed } from "./JobCheckoutEmbed";
 import { JobPricingFields } from "./JobPricingFields";
@@ -241,6 +242,7 @@ function PostJobFormInner({
   const [previewOpen, setPreviewOpen] = useState(0);
   const [payReady, setPayReady] = useState(false);
   const pointerHeld = useRef(false);
+  const firedCheckout = useRef(false);
 
   useEffect(() => {
     const down = () => {
@@ -258,6 +260,17 @@ function PostJobFormInner({
       window.removeEventListener("pointercancel", up);
     };
   }, []);
+
+  // Meta: reaching the Pay step, once per form.
+  useEffect(() => {
+    if (step !== 4 || firedCheckout.current) return;
+    firedCheckout.current = true;
+    const total = priceDollars + more.reduce((sum, part) => sum + part.priceDollars, 0);
+    trackMeta("InitiateCheckout", {
+      params: total > 0 ? { value: total, currency: "USD", content_type: "job" } : { content_type: "job" },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   useEffect(() => {
     if (step !== 4) {

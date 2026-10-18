@@ -4,6 +4,7 @@ import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef } from "react";
 import { META_PIXEL_ID, trackMeta } from "@/lib/metaPixel";
+import { supabaseClient } from "@/lib/supabaseClient";
 
 function MetaPixelEvents() {
   const pathname = usePathname();
@@ -17,6 +18,24 @@ function MetaPixelEvents() {
     }
     trackMeta("PageView");
   }, [pathname]);
+
+  // Advanced matching: once signed in, give the pixel the account email (it
+  // hashes it in the browser). Never for guests.
+  useEffect(() => {
+    let sent: string | null = null;
+    const match = (email: string | undefined, tries = 0) => {
+      if (!email || email === sent) return;
+      if (typeof window.fbq !== "function") {
+        if (tries < 20) window.setTimeout(() => match(email, tries + 1), 250);
+        return;
+      }
+      sent = email;
+      window.fbq("init", META_PIXEL_ID, { em: email.trim().toLowerCase() });
+    };
+    supabaseClient.auth.getSession().then(({ data }) => match(data.session?.user.email));
+    const { data: sub } = supabaseClient.auth.onAuthStateChange((_event, session) => match(session?.user.email));
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (searchParams.get("signedup") !== "1") return;

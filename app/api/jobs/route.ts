@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { appBaseUrl } from "@/lib/appUrl";
+import { metaCheckoutMetadata } from "@/lib/metaCapi";
 import { db } from "@/lib/db";
 import { CANCEL_GRACE_PERIOD_MS } from "@/lib/jobActions";
 import { stripe } from "@/lib/stripe";
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   if (Array.isArray(body?.parts) && body.parts.length > 1) {
-    return createPartBundle(creatorId, body);
+    return createPartBundle(creatorId, req, body);
   }
   const {
     title,
@@ -227,6 +228,7 @@ export async function POST(req: NextRequest) {
           jobId: job.id,
           creatorId,
           inviteEmails: invites.join(",").slice(0, 450),
+          ...metaCheckoutMetadata(req),
         },
         payment_intent_data: {
           metadata: {
@@ -380,6 +382,7 @@ type BundlePart = {
 /** One Stripe charge covering several parts. Each part is its own job. */
 async function createPartBundle(
   creatorId: string,
+  req: NextRequest,
   body: {
     title?: string;
     musicalKey?: unknown;
@@ -560,6 +563,7 @@ async function createPartBundle(
         jobIds: jobIds.slice(0, 500),
         creatorId,
         inviteEmails: invites.join(",").slice(0, 450),
+        ...metaCheckoutMetadata(req),
       },
       payment_intent_data: {
         metadata: { jobIds: jobIds.slice(0, 500), creatorId },

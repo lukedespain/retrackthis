@@ -31,6 +31,10 @@ export const metadata = {
     ],
     apple: [{ url: "/apple-touch-icon.png?v=20261002b", sizes: "180x180", type: "image/png" }],
   },
+  // Meta Business domain verification. Set META_DOMAIN_VERIFICATION in Vercel, then redeploy.
+  ...(process.env.META_DOMAIN_VERIFICATION
+    ? { other: { "facebook-domain-verification": process.env.META_DOMAIN_VERIFICATION } }
+    : {}),
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

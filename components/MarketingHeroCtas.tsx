@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { trackMeta } from "@/lib/metaPixel";
 
 export const OPEN_POST_JOB = "rt-open-post-job";
 export const JOB_POSTED = "rt-job-posted";
 
 /** Opens the Post a job popup for everyone. Account is asked on the Pay step. */
 export function requestPostJob() {
+  trackMeta("PostJobOpened", { custom: true });
   window.dispatchEvent(new Event(OPEN_POST_JOB));
 }
 

@@ -59,7 +59,7 @@ function ProducersPageInner() {
   }, []);
 
   useEffect(() => {
-    if (searchParams.get("tab") === "post" || searchParams.get("post") === "1") {
+    if (searchParams.get("tab") === "post") {
       requestPostJob();
       router.replace("/producers", { scroll: false });
     }
@@ -84,7 +84,21 @@ function ProducersPageInner() {
       void fetch(`/api/jobs/${jobId}/confirm-checkout`, { method: "POST" })
         .then(async (res) => {
           const body = await res.json().catch(() => null);
-          if (body?.status === "OPEN") trackMeta("JobPosted", { custom: true });
+          if (body?.status === "OPEN") {
+            trackMeta("JobPosted", { custom: true });
+            // Same event_id as the server copy (lib/metaCapi), so Meta counts it once.
+            if (body.checkoutId) {
+              trackMeta("Purchase", {
+                params: {
+                  value: body.amount,
+                  currency: "USD",
+                  content_type: "job",
+                  content_ids: body.jobIds ?? [jobId],
+                },
+                eventId: `purchase_${body.checkoutId}`,
+              });
+            }
+          }
           setJobsKey((k) => k + 1);
         })
         .catch(() => {});

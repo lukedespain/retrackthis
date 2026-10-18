@@ -7,7 +7,7 @@ import { PostJobForm } from "@/app/dashboard/PostJobForm";
 import { Avatar } from "@/components/brand/Avatar";
 import { avatarForName } from "@/lib/avatar";
 import { Wordmark } from "@/components/brand/Wordmark";
-import { JOB_POSTED, OPEN_POST_JOB } from "@/components/MarketingHeroCtas";
+import { JOB_POSTED, OPEN_POST_JOB, requestPostJob } from "@/components/MarketingHeroCtas";
 import { supabaseClient } from "@/lib/supabaseClient";
 
 type Profile = {
@@ -167,7 +167,7 @@ export function SiteHeader() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("post") !== "1") return;
-    setPostOpen(true);
+    requestPostJob();
     params.delete("post");
     const qs = params.toString();
     window.history.replaceState(null, "", qs ? `${pathname}?${qs}` : pathname);

@@ -1,6 +1,7 @@
+import { listApprovedInstruments } from "@/lib/approvedInstruments";
 import { db } from "@/lib/db";
 import { listInstrumentAdjustments } from "@/lib/instrumentOverrides";
-import { buildNetworkInstrumentList, normalizeInstrumentId } from "@/lib/instruments";
+import { buildNetworkInstrumentList, groupForInstrumentId, normalizeInstrumentId } from "@/lib/instruments";
 
 export async function getMusicianCountsByInstrument(): Promise<Record<string, number>> {
   const users = await db.user.findMany({
@@ -19,12 +20,29 @@ export async function getMusicianCountsByInstrument(): Promise<Record<string, nu
 }
 
 export async function getNetworkInstruments() {
-  const [musicianCounts, adjustments] = await Promise.all([
+  const [musicianCounts, adjustments, approved] = await Promise.all([
     getMusicianCountsByInstrument(),
     listInstrumentAdjustments(),
+    listApprovedInstruments(),
   ]);
   const hidden = new Set(adjustments.hidden);
   const list = buildNetworkInstrumentList(musicianCounts);
+  // Admin-approved instruments (like Melodica) count too, not just the built-in catalog.
+  for (const row of approved) {
+    const musicianCount = musicianCounts[row.id] ?? 0;
+    const status = musicianCount > 0 ? ("available" as const) : ("coming-soon" as const);
+    const entry = {
+      id: row.id,
+      label: row.label,
+      emoji: "",
+      aliases: [],
+      groupId: row.groupId,
+      groupLabel: groupForInstrumentId(row.id)?.label ?? "Other",
+      musicianCount,
+      status,
+    };
+    (status === "available" ? list.available : list.comingSoon).push(entry);
+  }
   const apply = <T extends { id: string; label: string }>(rows: T[]) =>
     rows
       .filter((row) => !hidden.has(row.id))

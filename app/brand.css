@@ -436,6 +436,8 @@ button.jhead .pc-chev { margin-top: 2px; transition: transform .2s var(--ease); 
 .toast.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 .toast button { border: 0; background: rgba(255,255,255,.14); color: #fff; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 500; }
 .toast button:hover { background: rgba(255,255,255,.24); }
+.toast .toast-x { width: 28px; padding: 0; display: grid; place-items: center; flex: none; }
+.toast .toast-x svg { width: 14px; height: 14px; }
 
 /* ---------- motion ---------- */
 @keyframes fade { from { opacity: 0; } }

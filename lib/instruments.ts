@@ -504,8 +504,8 @@ export function jobMatchesAlertFilters(
     .filter((id) => id && id !== ALL_INSTRUMENTS_ID);
   if (concrete.length === 0) return false;
   const jobId = normalizeInstrumentId(instrumentId ?? categoryForInstrument(instrument).id);
-  // Custom write-in jobs don't fan out via email alerts.
-  if (isCustomInstrumentId(jobId)) return false;
+  // Exact id match only. A custom id here is an admin-approved instrument (jobs
+  // can't be posted with anything else), so its players get alerts too.
   return concrete.includes(jobId);
 }
 

@@ -19,6 +19,7 @@ import { JobLyrics } from "@/components/JobLyrics";
 import { EditJobForm } from "./EditJobForm";
 import { JobCheckoutEmbed } from "./JobCheckoutEmbed";
 import { JOB_POSTED, requestPostJob } from "@/components/MarketingHeroCtas";
+import { showToast } from "@/components/toast";
 
 export function CreatorView({
   initialShowPost = false,
@@ -320,6 +321,13 @@ function CreatorJobCard({
         throw new Error(body?.error ?? `Request failed (${res.status})`);
       }
       setCheckoutClientSecret(null);
+      showToast(
+        job.isTest
+          ? "Test job cancelled."
+          : job.paymentStatus === "captured"
+            ? `Cancelled. ${formatCents(job.priceCents)} is on its way back to your card.`
+            : "Cancelled. You weren’t charged."
+      );
       onChanged();
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : "Something went wrong.");
@@ -762,8 +770,12 @@ function TakesList({
   if (takes.length === 0) {
     return (
       <EmptyState
-        title="No takes yet"
-        description="Musicians can submit their recordings while this job is open."
+        title={jobOpen ? "No takes yet" : "No takes"}
+        description={
+          jobOpen
+            ? "Musicians can submit their recordings while this job is open."
+            : "Nobody submitted a take before this job closed."
+        }
       />
     );
   }

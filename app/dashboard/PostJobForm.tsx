@@ -866,7 +866,12 @@ function PostJobFormInner({
             disabled={submitting}
           />
           {tried && step === 2 && !stepValid(2) ? (
-            <Alert variant="error">Add the instrument, the part to retrack, notes, the length, and a deadline.</Alert>
+            <Alert variant="error">
+              {!isTestJob &&
+              (!(priceDollars >= SLIDER_MIN_USD) || more.some((part) => !(part.priceDollars >= SLIDER_MIN_USD)))
+                ? `The budget must be at least $${SLIDER_MIN_USD} for each part.`
+                : "Add the instrument, the part to retrack, notes, the length, and a deadline."}
+            </Alert>
           ) : null}
         </section>
         {more.map((part, index) => (

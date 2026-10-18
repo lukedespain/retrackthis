@@ -396,6 +396,8 @@ button.jhead .pc-chev { margin-top: 2px; transition: transform .2s var(--ease); 
 .sum-row .n span { font-size: 12.5px; color: var(--muted); }
 .sum-row .p { font-weight: 500; }
 .sum-total { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0 12px; border-top: 1px solid var(--line-2); }
+/* With no part rows above it, the total needs no divider; even out the spacing too. */
+.sum-total:first-child { border-top: 0; padding-top: 12px; }
 .sum-total span { color: var(--muted); }
 .sum-total b { font-size: 24px; font-weight: 600; letter-spacing: -.03em; }
 .methods { display: flex; flex-direction: column; gap: 8px; }

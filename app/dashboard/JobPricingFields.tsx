@@ -201,6 +201,12 @@ export function JobPricingFields({
               <label className="lbl" htmlFor="price">
                 Budget<span className="req">*</span>
               </label>
+              {/* Wait until they leave the field, so typing "40" doesn't flash it at "4". */}
+              {priceText.trim() && priceBelowMin && !priceFocused ? (
+                <span className="hint" style={{ color: "var(--bad)" }}>
+                  ${SLIDER_MIN_USD} minimum
+                </span>
+              ) : null}
             </div>
             <div className="money">
               <span>$</span>

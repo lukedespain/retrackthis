@@ -7,7 +7,7 @@ import { FIND_WORK_HREF, requestPostJob } from "@/components/MarketingHeroCtas";
 export function HomeHeroCtas() {
   return (
     <div className="ctas">
-      <button type="button" className="btn primary" onClick={requestPostJob}>
+      <button type="button" className="btn primary cta-pulse" onClick={requestPostJob}>
         Post a job
       </button>
       <Link href={FIND_WORK_HREF} className="btn outline">

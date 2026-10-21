@@ -440,6 +440,14 @@ button.jhead .pc-chev { margin-top: 2px; transition: transform .2s var(--ease); 
 .toast .toast-x svg { width: 14px; height: 14px; }
 
 /* ---------- motion ---------- */
+/* Homepage hero "Post a job": a soft Iris ring every few seconds, so ad visitors spot the main action. */
+.cta-pulse { position: relative; }
+.cta-pulse::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; animation: cta-pulse 3.6s var(--ease) 1.2s infinite; }
+@keyframes cta-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), .45); }
+  40%, 100% { box-shadow: 0 0 0 14px rgba(var(--accent-rgb), 0); }
+}
+@media (prefers-reduced-motion: reduce) { .cta-pulse::after { animation: none; } }
 @keyframes fade { from { opacity: 0; } }
 @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.97); } }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }

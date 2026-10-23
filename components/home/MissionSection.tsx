@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CommunityOrbit } from "@/components/home/CommunityOrbit";
 
 type Ripple = { x: number; y: number; t0: number; waves: number };
 
@@ -238,6 +239,7 @@ export function MissionSection() {
         connecting producers with the musicians who bring their songs to life, and paying them
         fairly for it.
       </p>
+      <CommunityOrbit />
     </section>
   );
 }

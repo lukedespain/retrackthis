@@ -1128,6 +1128,35 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .mission .glow { position: absolute; left: var(--gx, calc(100% - 120px)); top: var(--gy, calc(100% - 80px)); width: 480px; height: 480px; margin: -240px 0 0 -240px; border-radius: 50%; background: radial-gradient(circle, rgba(var(--accent-rgb),.45), transparent 65%); filter: blur(10px); pointer-events: none; }
 .mission .ripples { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .mission h2, .mission p { position: relative; }
+/* PROTOTYPE: community orbit under the mission line (components/home/CommunityOrbit). */
+.orbit { position: relative; margin-top: 56px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.08); cursor: default; }
+.orbit-head { display: flex; justify-content: space-between; gap: 16px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.42); }
+.orbit-count { color: rgba(255,255,255,.3); }
+.orbit-field { position: relative; height: 460px; margin: 8px 20px 0; }
+.cm { position: absolute; left: var(--x); top: var(--y); width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); transition: opacity .35s; }
+.cm-bob { position: relative; width: 100%; height: 100%; animation: cm-float var(--fd) ease-in-out var(--fo) infinite; }
+.cm-face { position: absolute; inset: 0; z-index: 2; border-radius: 50%; overflow: hidden; display: block; box-shadow: 0 0 0 2px rgba(255,255,255,.14), 0 10px 30px -10px rgba(0,0,0,.6); transition: transform .3s var(--ease), box-shadow .3s; outline: none; }
+.cm-face svg { width: 100%; height: 100%; display: block; }
+.cm-ring { --r: calc(var(--s) / 2 + 16px + var(--j) * 13px); position: absolute; left: 50%; top: 50%; width: calc(var(--r) * 2); height: calc(var(--r) * 2); margin: calc(var(--r) * -1) 0 0 calc(var(--r) * -1); border-radius: 50%; border: 1px dashed rgba(255,255,255,.08); animation: spin var(--d) linear var(--o) infinite; transition: border-color .3s; pointer-events: none; }
+.cm-moon { position: absolute; left: 50%; top: 0; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; background: #F5F4F1; display: grid; place-items: center; box-shadow: 0 4px 12px -4px rgba(0,0,0,.5); animation: spin var(--d) linear var(--o) infinite reverse; pointer-events: auto; }
+.cm-moon svg { width: 16px; height: 16px; }
+.cm-tip { position: absolute; left: 50%; bottom: calc(100% + 12px); z-index: 4; transform: translate(-50%, 6px); opacity: 0; pointer-events: none; white-space: nowrap; background: #fff; color: var(--ink); border-radius: 14px; padding: 8px 12px; font-size: 13px; line-height: 1.3; text-align: center; box-shadow: 0 14px 34px -12px rgba(0,0,0,.6); transition: opacity .2s, transform .25s var(--ease); }
+.cm-tip b { display: block; font-weight: 600; }
+.cm-tip span { color: var(--accent); font-size: 12px; font-weight: 500; }
+.cm:hover, .cm:focus-within { z-index: 5; }
+.cm:hover .cm-face, .cm:focus-within .cm-face { transform: scale(1.1); box-shadow: 0 0 0 2px var(--accent), 0 0 0 8px rgba(var(--accent-rgb), .22), 0 14px 34px -10px rgba(0,0,0,.7); }
+.cm:hover .cm-ring, .cm:focus-within .cm-ring { border-color: rgba(var(--accent-rgb), .5); }
+.cm:hover .cm-tip, .cm:focus-within .cm-tip { opacity: 1; transform: translate(-50%, 0); }
+.orbit-field:hover .cm:not(:hover) { opacity: .45; }
+@keyframes cm-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@media (max-width: 760px) {
+  .orbit-head { flex-direction: column; gap: 4px; }
+  .orbit-field { height: 640px; margin: 8px 0 0; }
+  .cm { left: var(--mx); top: var(--my); --s: 52px !important; }
+  .cm-ring { --r: calc(var(--s) / 2 + 13px + var(--j) * 11px); }
+  .cm-desk { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .cm-bob, .cm-ring, .cm-moon { animation: none; } }
 .mission { cursor: crosshair; user-select: none; -webkit-user-select: none; }
 .mission-hint { position: absolute; right: 28px; bottom: 22px; font-size: 12.5px; color: rgba(255,255,255,.38); letter-spacing: .01em; transition: opacity .6s; pointer-events: none; }
 .mission.played .mission-hint { opacity: 0; }

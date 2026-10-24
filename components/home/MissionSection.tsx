@@ -31,6 +31,18 @@ export function MissionSection() {
 
     const rest = () => ({ x: sec.clientWidth - 120, y: sec.clientHeight - 80 });
     const pos = rest();
+    // Move the glow with a transform on the glow itself. Setting a variable on the
+    // card made the browser restyle everything inside it (the whole community) every frame.
+    const place = () => {
+      glow.style.transform = `translate3d(${pos.x - 240}px, ${pos.y - 240}px, 0)`;
+    };
+    glow.style.left = "0";
+    glow.style.top = "0";
+    glow.style.margin = "0";
+    place();
+    // Read once; reading computed styles every frame forces a full style pass.
+    const rgb =
+      getComputedStyle(document.documentElement).getPropertyValue("--accent-rgb").trim() || "95,74,255";
     let target: { x: number; y: number } | null = null;
     let ripples: Ripple[] = [];
     let raf = 0;
@@ -61,13 +73,10 @@ export function MissionSection() {
       const to = target || rest();
       pos.x += (to.x - pos.x) * 0.08;
       pos.y += (to.y - pos.y) * 0.08;
-      sec!.style.setProperty("--gx", `${pos.x}px`);
-      sec!.style.setProperty("--gy", `${pos.y}px`);
+      place();
 
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx!.clearRect(0, 0, cv!.width, cv!.height);
-      const rgb =
-        getComputedStyle(document.documentElement).getPropertyValue("--accent-rgb").trim() || "95,74,255";
       ripples = ripples.filter((rp) => now - rp.t0 < 2200);
       for (const rp of ripples) {
         for (let i = 0; i < 3; i++) {
@@ -143,8 +152,10 @@ export function MissionSection() {
       sec.removeEventListener("pointerdown", onDown);
       ro.disconnect();
       if (raf) cancelAnimationFrame(raf);
-      sec.style.removeProperty("--gx");
-      sec.style.removeProperty("--gy");
+      glow.style.removeProperty("transform");
+      glow.style.removeProperty("left");
+      glow.style.removeProperty("top");
+      glow.style.removeProperty("margin");
     };
   }, []);
 

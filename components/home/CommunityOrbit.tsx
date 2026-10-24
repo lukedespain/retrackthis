@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { avatarSvg, cleanAvatar, initialsFor } from "@/lib/avatar";
 import { instrumentIconSvg } from "@/lib/instrumentIcons";
 
@@ -21,6 +21,7 @@ const MIN_COPY_PX = 1200;
  */
 export function CommunityOrbit() {
   const [musicians, setMusicians] = useState<Musician[] | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/community")
@@ -28,6 +29,15 @@ export function CommunityOrbit() {
       .then((body) => setMusicians(Array.isArray(body?.musicians) ? body.musicians : []))
       .catch(() => setMusicians([]));
   }, []);
+
+  // Pause the rows while the card is off screen.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => el.classList.toggle("is-off", !entry.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, [musicians]);
 
   const rows = useMemo(() => {
     if (!musicians) return [];
@@ -59,7 +69,7 @@ export function CommunityOrbit() {
   const instrumentCount = new Set(musicians.flatMap((m) => m.instruments)).size;
 
   return (
-    <div className="orbit">
+    <div className="orbit" ref={rootRef}>
       <div className="orbit-head">
         <span>The musicians keeping it human</span>
         <span className="orbit-count">
@@ -87,8 +97,6 @@ export function CommunityOrbit() {
                         {
                           "--n": m.moons.length + (m.more ? 1 : 0),
                           "--lift": `${[-8, 6, -2, 10, -6, 4][i % 6]}px`,
-                          "--fd": `${6 + (i % 3) * 1.4}s`,
-                          "--fo": `${-i * 1.3}s`,
                         } as React.CSSProperties
                       }
                     >

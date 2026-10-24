@@ -1125,7 +1125,7 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .mission h2 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); line-height: 1.02; letter-spacing: -.05em; font-weight: 600; max-width: 820px; }
 .mission h2 em { font-style: normal; color: var(--accent); }
 .mission p { color: rgba(255,255,255,.66); font-size: 17px; line-height: 1.6; max-width: 620px; margin: 24px 0 0; }
-.mission .glow { position: absolute; left: var(--gx, calc(100% - 120px)); top: var(--gy, calc(100% - 80px)); width: 480px; height: 480px; margin: -240px 0 0 -240px; border-radius: 50%; background: radial-gradient(circle, rgba(var(--accent-rgb),.45), transparent 65%); filter: blur(10px); pointer-events: none; }
+.mission .glow { position: absolute; left: var(--gx, calc(100% - 120px)); top: var(--gy, calc(100% - 80px)); width: 480px; height: 480px; margin: -240px 0 0 -240px; border-radius: 50%; background: radial-gradient(circle, rgba(var(--accent-rgb),.45), rgba(var(--accent-rgb),.12) 40%, transparent 68%); pointer-events: none; will-change: transform; }
 .mission .ripples { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .mission h2, .mission p { position: relative; }
 /* PROTOTYPE: community rows under the mission line (components/home/CommunityOrbit). */
@@ -1139,12 +1139,14 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 /* Each sliding row is its own layer; lift the hovered row so its name card sits over the rows below. */
 .orbit-row { position: relative; z-index: 1; }
 .orbit-row:hover, .orbit-row:has(.cm-face:focus-visible) { z-index: 3; }
-.orbit-track { display: flex; flex: none; animation: orbit-slide var(--dur) linear infinite; }
+.orbit-track { display: flex; flex: none; animation: orbit-slide var(--dur) linear infinite; will-change: transform; }
+/* Off screen: stop the rows (CommunityOrbit toggles this). */
+.orbit.is-off .orbit-track { animation-play-state: paused; }
 .orbit-row.ltr .orbit-track { animation-direction: reverse; }
 .orbit-row:hover .orbit-track, .orbit-row:has(.cm-face:focus-visible) .orbit-track { animation-play-state: paused; }
 @keyframes orbit-slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .cm { position: relative; flex: none; width: var(--s); height: var(--s); margin: 0 38px; transform: translateY(var(--lift)); transition: opacity .3s; }
-.cm-bob { position: relative; width: 100%; height: 100%; animation: cm-float var(--fd) ease-in-out var(--fo) infinite; }
+.cm-bob { position: relative; width: 100%; height: 100%; }
 .cm-face { position: absolute; inset: 0; z-index: 2; border-radius: 50%; overflow: hidden; display: block; cursor: pointer; box-shadow: 0 0 0 2px rgba(255,255,255,.14), 0 10px 30px -10px rgba(0,0,0,.6); transition: transform .35s var(--ease), box-shadow .3s; outline: none; }
 .cm-face svg { width: 100%; height: 100%; display: block; }
 /* No avatar yet: initials on a soft Iris disc. */
@@ -1171,7 +1173,6 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
 .cm:hover .cm-face, .cm:has(.cm-face:focus-visible) .cm-face { transform: scale(1.15); box-shadow: 0 0 0 2px var(--accent), 0 0 0 9px rgba(var(--accent-rgb), .22), 0 14px 34px -10px rgba(0,0,0,.7); }
 .cm:hover .cm-tip, .cm:has(.cm-face:focus-visible) .cm-tip { opacity: 1; transform: translate(-50%, 0); }
 .orbit-row:hover .cm:not(:hover), .orbit-row:has(.cm-face:focus-visible) .cm:not(:has(.cm-face:focus-visible)) { opacity: .4; }
-@keyframes cm-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 @media (max-width: 760px) {
   .orbit-head { flex-direction: column; gap: 4px; }
   .orbit-field { margin: 0 -28px -24px; }

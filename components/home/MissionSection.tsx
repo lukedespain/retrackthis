@@ -96,8 +96,29 @@ export function MissionSection() {
         kick();
       }
     };
-    const onLeave = () => {
-      target = null;
+    // The glow follows the mouse out past whichever edge it left by, and slides
+    // back in from wherever it enters, instead of parking in the corner.
+    const OFF = 320;
+    const beyondEdge = (p: { x: number; y: number }) => {
+      const w = sec.clientWidth;
+      const h = sec.clientHeight;
+      const gaps = [
+        { d: p.x, at: { x: -OFF, y: p.y } },
+        { d: w - p.x, at: { x: w + OFF, y: p.y } },
+        { d: p.y, at: { x: p.x, y: -OFF } },
+        { d: h - p.y, at: { x: p.x, y: h + OFF } },
+      ];
+      return gaps.reduce((a, b) => (b.d < a.d ? b : a)).at;
+    };
+    const onEnter = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
+      const p = local(e);
+      Object.assign(pos, beyondEdge(p));
+      target = p;
+      kick();
+    };
+    const onLeave = (e: PointerEvent) => {
+      target = e.pointerType === "mouse" ? beyondEdge(local(e)) : null;
       kick();
     };
     const onDown = (e: PointerEvent) => {
@@ -112,10 +133,12 @@ export function MissionSection() {
     };
 
     sec.addEventListener("pointermove", onMove);
+    sec.addEventListener("pointerenter", onEnter);
     sec.addEventListener("pointerleave", onLeave);
     sec.addEventListener("pointerdown", onDown);
     return () => {
       sec.removeEventListener("pointermove", onMove);
+      sec.removeEventListener("pointerenter", onEnter);
       sec.removeEventListener("pointerleave", onLeave);
       sec.removeEventListener("pointerdown", onDown);
       ro.disconnect();

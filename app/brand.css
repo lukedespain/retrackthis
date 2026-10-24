@@ -1154,6 +1154,8 @@ button.avatar:hover, button.avatar[aria-expanded="true"], button.avatar.on { box
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), .25), 0 8px 20px -6px rgba(0,0,0,.6); transform: translateX(0) scale(.3); opacity: 0; transition: transform .45s var(--ease), opacity .25s; }
 /* Icons stroke in currentColor, which is white inside the mission card: set ink + a stronger Iris fill. */
 .cm-moon { color: var(--ink); --duo: rgba(var(--accent-rgb), .45); }
+.cm-more .cm-ico { font-size: 13px; font-weight: 600; letter-spacing: -.02em; color: var(--accent); }
+.cm-tip em { font-style: normal; color: var(--muted); }
 .cm-ico { display: grid; place-items: center; animation: spin 24s linear infinite reverse; animation-play-state: paused; }
 .cm-ico svg { width: 24px; height: 24px; }
 .cm:hover .cm-ico, .cm:has(.cm-face:focus-visible) .cm-ico { animation-play-state: running; }

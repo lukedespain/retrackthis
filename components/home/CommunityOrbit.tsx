@@ -21,7 +21,11 @@ const ROWS: Musician[][] = [
     { name: "Sam O.", seed: 63, instruments: ["Bass guitar", "Organ"] },
     { name: "Aiko T.", seed: 77, instruments: ["Trumpet", "Flugelhorn"] },
     { name: "Marcus B.", seed: 89, instruments: ["Male vocal"] },
-    { name: "Inés F.", seed: 94, instruments: ["Acoustic guitar", "Mandolin", "Banjo"] },
+    {
+      name: "Inés F.",
+      seed: 94,
+      instruments: ["Acoustic guitar", "Cello", "Piano", "Mandolin", "Banjo", "Violin", "Harp", "Ukulele", "Female vocal", "Flute"],
+    },
     { name: "Hana L.", seed: 171, instruments: ["Marimba", "Vibraphone"] },
     { name: "Felix N.", seed: 183, instruments: ["Double bass"] },
   ],
@@ -34,6 +38,9 @@ const ROWS: Musician[][] = [
     { name: "June C.", seed: 192, instruments: ["Female vocal", "Acoustic guitar"] },
   ],
 ];
+
+// Show at most this many instrument moons; the rest collapse into a "+N" moon.
+const MAX_MOONS = 3;
 
 // Each row's list repeats so the strip never runs out; the track slides by half
 // its width (two copies), then loops seamlessly.
@@ -51,7 +58,10 @@ export function CommunityOrbit() {
         row.map((m, i) => ({
           ...m,
           face: avatarSvg(randomAvatar(m.seed), `orb${r}-${i}`),
-          moons: m.instruments.map((inst, j) => ({ inst, icon: instrumentIconSvg(inst, `orb${r}-${i}-${j}`) })),
+          moons: m.instruments
+            .slice(0, MAX_MOONS)
+            .map((inst, j) => ({ inst, icon: instrumentIconSvg(inst, `orb${r}-${i}-${j}`) })),
+          more: Math.max(0, m.instruments.length - MAX_MOONS),
         }))
       ),
     []
@@ -79,7 +89,7 @@ export function CommunityOrbit() {
                     aria-hidden={copy > 0 ? true : undefined}
                     style={
                       {
-                        "--n": m.moons.length,
+                        "--n": m.moons.length + (m.more ? 1 : 0),
                         "--lift": `${[-8, 6, -2, 10, -6, 4][i]}px`,
                         "--fd": `${6 + (i % 3) * 1.4}s`,
                         "--fo": `${-i * 1.3}s`,
@@ -95,6 +105,13 @@ export function CommunityOrbit() {
                             </span>
                           </span>
                         ))}
+                        {m.more ? (
+                          <span className="cm-arm" style={{ "--j": m.moons.length } as React.CSSProperties}>
+                            <span className="cm-moon cm-more" title={m.instruments.slice(MAX_MOONS).join(", ")}>
+                              <span className="cm-ico">+{m.more}</span>
+                            </span>
+                          </span>
+                        ) : null}
                       </div>
                       <span
                         className="cm-face"
@@ -105,7 +122,10 @@ export function CommunityOrbit() {
                       />
                       <span className="cm-tip" aria-hidden="true">
                         <b>{m.name}</b>
-                        <span>{m.instruments.join(" · ")}</span>
+                        <span>
+                          {m.instruments.slice(0, MAX_MOONS).join(" · ")}
+                          {m.more ? <em> +{m.more} more</em> : null}
+                        </span>
                       </span>
                     </div>
                   </div>

@@ -97,7 +97,7 @@ export function NotificationSettings() {
   );
 }
 
-function PrefRow({
+export function PrefRow({
   title,
   description,
   checked,

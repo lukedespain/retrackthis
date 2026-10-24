@@ -2,7 +2,7 @@ import { LegalPage, LegalSection } from "@/components/LegalPage";
 
 export default function PrivacyPolicyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="August 12, 2026">
+    <LegalPage title="Privacy Policy" updated="October 23, 2026">
       <p>
         This Privacy Policy explains what Retrack This (retrackthis.com) collects and how we use it
         when you browse, create an account, post jobs, or submit takes.
@@ -66,6 +66,11 @@ export default function PrivacyPolicyPage() {
         <p className="mt-3">
           Producers can hear takes submitted to their jobs. Picked takes may be downloaded by the
           producer. We do not sell your personal information.
+        </p>
+        <p className="mt-3">
+          If you list an instrument, your first name, last initial, avatar, and instruments may
+          appear in the community on our homepage. You can turn this off anytime in Settings under
+          &quot;Show me on the homepage.&quot;
         </p>
       </LegalSection>
 

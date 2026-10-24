@@ -51,6 +51,10 @@ model User {
   // Avatar builder settings (parts + colors). Null until the user makes one.
   avatar          Json?
 
+  // Shown in the homepage community (first name + last initial, avatar, instruments).
+  // Everyone starts shown; admin accounts start hidden. Toggle in Settings.
+  showInCommunity Boolean  @default(true)
+
   jobsPosted      Job[]    @relation("JobsPosted")
   takesSubmitted  Take[]
   instrumentSuggestions InstrumentSuggestion[]

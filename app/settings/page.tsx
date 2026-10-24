@@ -10,6 +10,7 @@ import { avatarSvg, cleanAvatar, randomAvatar } from "@/lib/avatar";
 import { Spinner } from "@/components/ui/Spinner";
 import { AccountSettings } from "@/app/dashboard/AccountSettings";
 import { MusicianInstrumentsSettings } from "@/app/dashboard/MusicianInstrumentsSettings";
+import { CommunityVisibilitySetting } from "@/app/dashboard/CommunityVisibilitySetting";
 import { FeatureRequestSettings } from "@/app/dashboard/FeatureRequestSettings";
 import { NotificationSettings } from "@/app/dashboard/NotificationSettings";
 
@@ -115,6 +116,7 @@ function SettingsPageInner() {
             <h2>What you play</h2>
             <p>We use this to show you the right gigs and let you know about new ones.</p>
             <MusicianInstrumentsSettings />
+            <CommunityVisibilitySetting />
           </section>
 
           <section className="card" id="notifications">

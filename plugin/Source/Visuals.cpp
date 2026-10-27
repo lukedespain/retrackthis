@@ -376,6 +376,7 @@ namespace visuals
             case 1:  return "Hold Option and drag it onto each other track you want retracked.";
             case 2:  return "Drag one more copy onto the Stereo Out, after your other plugins.";
             case 3:  return "If you're retracking more than one track, press C to turn on Cycle over the section.";
+            case 4:  return "Optional: click the link button at the top right of the plugin window. Then one Retrack window follows whichever track you open.";
             default: return "Click Arm in any Retrack window, then press play. Retrack records one loop for each track.";
         }
     }
@@ -417,6 +418,7 @@ namespace visuals
             case 1:  paintCopy (g, area, t, false); break;
             case 2:  paintCopy (g, area, t, true); break;
             case 3:  paintCycle (g, area, t); break;
+            case 4:  paintLink (g, area, t); break;
             default: paintArm (g, area, t); break;
         }
     }
@@ -572,6 +574,71 @@ namespace visuals
         }
 
         cornerKey (g, area, "C", t >= 1.05 && t < 1.5);
+    }
+
+    void Walkthrough::paintLink (juce::Graphics& g, juce::Rectangle<float> area, double t)
+    {
+        // Three tracks with Retrack on the left, Logic's plugin window on the right.
+        auto rects = stripRects (area.reduced (12.0f, 8.0f).withWidth (190.0f), 3, 56.0f);
+        const char* names[] = { "Keys", "Drums", "Bass" };
+        for (int i = 0; i < 3; ++i)
+            drawStrip (g, rects[i], { names[i], false, Slot::retrack }, true);
+
+        const bool linked = t >= 0.95;
+        const int open = t >= 3.45 ? 2 : t >= 2.15 ? 1 : 0;
+
+        auto window = area.withTrimmedLeft (rects[2].getRight() - area.getX() + 22.0f).reduced (0.0f, 22.0f).withTrimmedRight (16.0f);
+        g.setColour (juce::Colours::black.withAlpha (0.35f));
+        g.fillRoundedRectangle (window.translated (0.0f, 3.0f), 8.0f);
+        g.setColour (juce::Colour (0xff2a2a2d));
+        g.fillRoundedRectangle (window, 8.0f);
+
+        auto titleBar = window.withHeight (24.0f);
+        g.setColour (stripText);
+        g.setFont (brand::font (10.0f, brand::Weight::semibold));
+        g.drawText (names[open], titleBar, juce::Justification::centred, false);
+
+        // Logic's link button: grey when off, purple when on.
+        auto link = juce::Rectangle<float> (22.0f, 15.0f).withCentre ({ titleBar.getRight() - 20.0f, titleBar.getCentreY() });
+        g.setColour (linked ? brand::accent : slotGrey);
+        g.fillRoundedRectangle (link, 4.0f);
+        {
+            auto c = link.getCentre();
+            juce::Path chain;
+            chain.addRoundedRectangle (c.x - 6.5f, c.y - 2.5f, 8.0f, 5.0f, 2.5f);
+            chain.addRoundedRectangle (c.x - 1.5f, c.y - 2.5f, 8.0f, 5.0f, 2.5f);
+            chain.applyTransform (juce::AffineTransform::rotation (-0.6f, c.x, c.y));
+            g.setColour (juce::Colours::white);
+            g.strokePath (chain, juce::PathStrokeType (1.2f));
+        }
+
+        // The same Retrack screen whichever track is open.
+        auto body = window.withTrimmedTop (24.0f).reduced (5.0f, 0.0f).withTrimmedBottom (5.0f);
+        g.setColour (brand::page);
+        g.fillRoundedRectangle (body, 5.0f);
+        brand::drawBadge (g, { body.getX() + 8.0f, body.getY() + 7.0f, 14.0f, 14.0f });
+        g.setColour (brand::ink);
+        g.setFont (brand::font (10.0f, brand::Weight::semibold));
+        g.drawText ("Retrack", juce::Rectangle<float> (body.getX() + 27.0f, body.getY() + 7.0f, 80.0f, 14.0f),
+                    juce::Justification::centredLeft, false);
+        for (int i = 0; i < 3; ++i)
+        {
+            auto row = juce::Rectangle<float> (body.getX() + 10.0f, body.getY() + 30.0f + 12.0f * (float) i,
+                                               (body.getWidth() - 20.0f) * (i == 2 ? 0.5f : 0.8f), 6.0f);
+            g.setColour (juce::Colour (0xffd6d4cd));
+            g.fillRoundedRectangle (row, 3.0f);
+        }
+
+        // Click link, then open Retrack on Drums and on Bass. The one window follows.
+        auto start = juce::Point<float> (area.getRight() - 60.0f, area.getBottom() - 30.0f);
+        auto drums = fxSlot (rects[1], 2).getCentre(), bass = fxSlot (rects[2], 2).getCentre();
+        auto pointer = glide (start, link.getCentre(), t, 0.1, 0.9);
+        if (t >= 1.4) pointer = glide (link.getCentre(), drums, t, 1.4, 2.1);
+        if (t >= 2.7) pointer = glide (drums, bass, t, 2.7, 3.4);
+        drawClick (g, link.getCentre(), t, 0.95);
+        drawClick (g, drums, t, 2.15);
+        drawClick (g, bass, t, 3.45);
+        drawPointer (g, pointer);
     }
 
     void Walkthrough::paintArm (juce::Graphics& g, juce::Rectangle<float> area, double t)

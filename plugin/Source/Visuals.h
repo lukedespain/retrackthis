@@ -56,14 +56,15 @@ namespace visuals
 
     /**
      * The walkthrough's moving pictures: a pointer inserting Retrack, Option-dragging
-     * copies to other tracks and the Stereo Out, turning on Cycle, then Arm and play.
+     * copies to other tracks and the Stereo Out, turning on Cycle, linking the plugin
+     * window (optional), then Arm and play.
      * Each page loops a few seconds of animation.
      */
     class Walkthrough : public juce::Component,
                         private juce::Timer
     {
     public:
-        static constexpr int pageCount = 5;
+        static constexpr int pageCount = 6;
         static juce::String caption (int page);
 
         void setPage (int);
@@ -80,6 +81,7 @@ namespace visuals
         void paintInsert (juce::Graphics&, juce::Rectangle<float>, double t);
         void paintCopy (juce::Graphics&, juce::Rectangle<float>, double t, bool toOutput);
         void paintCycle (juce::Graphics&, juce::Rectangle<float>, double t);
+        void paintLink (juce::Graphics&, juce::Rectangle<float>, double t);
         void paintArm (juce::Graphics&, juce::Rectangle<float>, double t);
 
         int page = 0;

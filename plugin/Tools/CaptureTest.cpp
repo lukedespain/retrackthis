@@ -147,6 +147,11 @@ namespace
 
             pos = wrap <= block ? (juce::int64) (block - wrap) : pos + block;
             playedLoopSamples += block;
+
+            // This runs far faster than real time. Give the file writer a moment now and then,
+            // since its buffer holds under three seconds and Logic would never outrun it.
+            if ((playedLoopSamples / block) % 16 == 0)
+                juce::Thread::sleep (2);
         }
 
         if (boundary != Boundary::atLoopStart || std::abs (std::fmod (loopEndSamples, (double) block)) < 1.0e-3)

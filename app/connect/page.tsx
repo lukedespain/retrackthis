@@ -94,7 +94,7 @@ function Connect() {
   if (!ready) return null;
   if (done === "approved") {
     return (
-      <AuthLayout title="You're connected" subtitle="Head back to your DAW. Retrack This Bridge is signed in to your account.">
+      <AuthLayout title="You're connected" subtitle="Head back to your DAW. The Retrack plugin is signed in to your account.">
         <p className="hint">You can disconnect it anytime in Settings under Connected apps.</p>
       </AuthLayout>
     );
@@ -109,7 +109,7 @@ function Connect() {
   return (
     <AuthLayout
       title="Connect your DAW"
-      subtitle={pending ? undefined : "Enter the code shown in Retrack This Bridge."}
+      subtitle={pending ? undefined : "Enter the code shown in the Retrack plugin."}
     >
       {pending ? (
         <div className="stack" style={{ gap: 14 }}>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlugIcon } from "@/components/brand/BridgeMark";
+import { PlugIcon } from "@/components/brand/PluginMark";
 import { Alert } from "@/components/ui/Alert";
 
 type App = { id: string; clientName: string; createdAt: string; lastUsedAt: string };
@@ -15,7 +15,7 @@ function lastUsed(iso: string) {
 }
 
 /** DAW plugins signed in to this account, each with Disconnect. Always shown: with none
- *  connected it introduces Retrack This Bridge. */
+ *  connected it introduces the Retrack plugin. */
 export function ConnectedApps() {
   const [apps, setApps] = useState<App[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -56,12 +56,12 @@ export function ConnectedApps() {
           : "Post a part straight from your DAW, without leaving your session."}
       </p>
       {apps.length === 0 ? (
-        <div className="bridge-promo">
-          <span className="bridge-promo-ico">
+        <div className="plugin-promo">
+          <span className="plugin-promo-ico">
             <PlugIcon size={20} />
           </span>
           <span className="t">
-            <strong>Retrack This Bridge</strong>
+            <strong>Retrack plugin</strong>
             <span>Capture a track as it plays and post the job from your DAW. Logic Pro first.</span>
           </span>
           <span className="status draft">Coming soon</span>

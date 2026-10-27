@@ -35,7 +35,7 @@ function sanitizeInviteEmails(value: unknown): string[] {
 
 // POST /api/jobs - creator posts a new job and is sent to Stripe Checkout
 // (charge-upfront). Job stays PENDING_PAYMENT until checkout.session.completed.
-// The Retrack This Bridge plugin posts here too, with its plugin token (lib/pluginAuth).
+// The Retrack plugin posts here too, with its plugin token (lib/pluginAuth).
 export async function POST(req: NextRequest) {
   const creatorId = await getRequestUserId(req, { allowPlugin: true });
   if (!creatorId) {

@@ -26,7 +26,7 @@ const ALLOWED_MIME_TYPES = [
 // POST /api/uploads/sign { fileName, kind } - mints a signed Supabase
 // Storage upload URL so the browser can upload the file directly
 // (bytes never pass through our server). kind namespaces the storage path.
-// The Retrack This Bridge plugin uploads the Part and Bed here too, with its plugin token.
+// The Retrack plugin uploads the Part and Bed here too, with its plugin token.
 export async function POST(req: NextRequest) {
   const userId = await getRequestUserId(req, { allowPlugin: true });
   // A plugin with an expired or revoked token signs in again; it never uploads as a guest.

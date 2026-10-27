@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
-import { BridgeDot, SentFrom } from "@/components/brand/BridgeMark";
+import { PluginDot, SentFrom } from "@/components/brand/PluginMark";
 import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -292,7 +292,7 @@ function SubmissionCard({
       <div className="job-head" onClick={onToggle}>
         <span className="job-ico">
           <InstrumentIcon instrument={liveTake.job.instrument} />
-          {liveTake.job.postedFrom ? <BridgeDot from={liveTake.job.postedFrom} /> : null}
+          {liveTake.job.postedFrom ? <PluginDot from={liveTake.job.postedFrom} /> : null}
         </span>
         <div className="job-main">
           <div className="job-title">

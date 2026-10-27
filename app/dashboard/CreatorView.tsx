@@ -12,7 +12,7 @@ import { TestJobBadge } from "@/components/TestJobBadge";
 import { audioFiles, listenUrl, masterUrl } from "@/lib/takeFiles";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
-import { BridgeDot } from "@/components/brand/BridgeMark";
+import { PluginDot } from "@/components/brand/PluginMark";
 import type { Job, Take } from "@/lib/types";
 import { daysUntilDeadline, formatCents, formatDeadline } from "@/lib/format";
 import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
@@ -449,7 +449,7 @@ function CreatorJobCard({
       <div className="job-head" onClick={onToggle}>
         <span className="job-ico">
           <InstrumentIcon instrument={job.instrument} />
-          {job.postedFrom ? <BridgeDot from={job.postedFrom} /> : null}
+          {job.postedFrom ? <PluginDot from={job.postedFrom} /> : null}
         </span>
         <div className="job-main">
           <div className="job-title">

@@ -1,4 +1,4 @@
-// Sign-in for the Retrack This Bridge DAW plugin ("enter the code" / device flow).
+// Sign-in for the Retrack DAW plugin ("enter the code" / device flow).
 //
 // 1. Plugin: POST /api/plugin/auth/start -> a secret deviceCode + a short userCode to show.
 // 2. User: approves the userCode on /connect while signed in to the website.
@@ -50,7 +50,7 @@ export function newPluginToken() {
 /** Short, plain app label shown on /connect and in Connected apps. */
 export function cleanClientName(input: unknown): string {
   const name = typeof input === "string" ? input.replace(/[^\p{L}\p{N} ()·.,'-]/gu, "").trim() : "";
-  return (name || "Retrack This Bridge").slice(0, 60);
+  return (name || "Retrack").slice(0, 60);
 }
 
 /**
@@ -60,7 +60,7 @@ export function cleanClientName(input: unknown): string {
 export function pluginPostedFrom(req: NextRequest, host: unknown): string | null {
   if (!hasPluginToken(req)) return null;
   const name = typeof host === "string" ? host.replace(/[^\p{L}\p{N} .&+'-]/gu, "").trim().slice(0, 40) : "";
-  return name || "Retrack This Bridge";
+  return name || "Retrack";
 }
 
 /** True when the request carries a plugin token (valid or not). */

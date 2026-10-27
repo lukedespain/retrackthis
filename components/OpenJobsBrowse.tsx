@@ -7,7 +7,7 @@ import { type PayoutSnapshot } from "@/components/PayoutSetupPanel";
 import { TestJobBadge } from "@/components/TestJobBadge";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
-import { BridgeDot, SentFrom } from "@/components/brand/BridgeMark";
+import { PluginDot, SentFrom } from "@/components/brand/PluginMark";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { FindWorkAlerts, FindWorkNext } from "@/components/FindWorkNext";
 import { Spinner } from "@/components/ui/Spinner";
@@ -379,7 +379,7 @@ function OpenJobCard({
       <div className="job-head" onClick={onToggle}>
         <span className="job-ico">
           <InstrumentIcon instrument={job.instrument} />
-          {job.postedFrom ? <BridgeDot from={job.postedFrom} /> : null}
+          {job.postedFrom ? <PluginDot from={job.postedFrom} /> : null}
         </span>
         <div className="job-main">
           <div className="job-title">

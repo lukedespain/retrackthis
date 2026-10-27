@@ -1,4 +1,4 @@
-// Marks a job posted from the Retrack This Bridge DAW plugin: a small plug badge
+// Marks a job posted from the Retrack DAW plugin: a small plug badge
 // on the instrument icon, and "Sent from Logic Pro" after "Posted by".
 
 export function PlugIcon({ size = 12 }: { size?: number }) {
@@ -22,10 +22,10 @@ export function PlugIcon({ size = 12 }: { size?: number }) {
 }
 
 /** Corner badge for .job-ico. */
-export function BridgeDot({ from }: { from: string }) {
-  const label = `Posted from ${from} with Retrack This Bridge`;
+export function PluginDot({ from }: { from: string }) {
+  const label = `Posted from ${from} with the Retrack plugin`;
   return (
-    <span className="bridge-dot" title={label} aria-label={label} role="img">
+    <span className="plugin-dot" title={label} aria-label={label} role="img">
       <PlugIcon size={11} />
     </span>
   );
@@ -34,7 +34,7 @@ export function BridgeDot({ from }: { from: string }) {
 /** Follows "Posted by …". */
 export function SentFrom({ from }: { from: string }) {
   return (
-    <span className="sent-from" title="Posted with the Retrack This Bridge plugin">
+    <span className="sent-from" title="Posted with the Retrack plugin">
       <span aria-hidden="true">·</span>
       <PlugIcon size={13} />
       Sent from {from}

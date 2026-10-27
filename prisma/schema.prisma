@@ -125,7 +125,7 @@ model FeatureRequest {
 
 model Job {
   id             String    @id @default(cuid())
-  // DAW name when posted from the Retrack This Bridge plugin ("Logic Pro"); null = website.
+  // DAW name when posted from the Retrack plugin ("Logic Pro"); null = website.
   postedFrom     String?
   creator        User      @relation("JobsPosted", fields: [creatorId], references: [id])
   creatorId      String

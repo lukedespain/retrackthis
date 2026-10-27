@@ -6,7 +6,7 @@ export type Job = {
   title: string;
   instrument: string;
   instrumentId?: string | null;
-  /** DAW name when posted from the Retrack This Bridge plugin. */
+  /** DAW name when posted from the Retrack plugin. */
   postedFrom?: string | null;
   description: string;
   demoFileUrl: string;

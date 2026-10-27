@@ -60,7 +60,7 @@ export const NAMES: Record<string, string> = {
 };
 
 // Browsers keep the first of two same-named attributes, so a stroke-width in `extra`
-// never applied; drop it so the SVG is also valid XML (for the Bridge plugin).
+// never applied; drop it so the SVG is also valid XML (for the Retrack plugin).
 const o = (fill: string, extra = "") =>
   `fill="${fill}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" ${extra.replace(/stroke-width="[^"]*"\s*/, "")}`;
 const line = (w = 2) => `fill="none" stroke="${INK}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
@@ -342,7 +342,7 @@ export function cleanAvatar(input: unknown): AvatarSettings | null {
   return a;
 }
 
-/** Ready-to-draw round avatar for the Bridge plugin, or null if they haven't made one. */
+/** Ready-to-draw round avatar for the Retrack plugin, or null if they haven't made one. */
 export function avatarSvgFor(input: unknown): string | null {
   const a = cleanAvatar(input);
   return a ? avatarSvg(a, "rtb") : null;

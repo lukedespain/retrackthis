@@ -224,7 +224,8 @@ export function WaveformMixPlayer({
       const t = timelineNow();
       const dur = durationRef.current;
       if (dur > 0 && t >= dur - 0.02) {
-        pauseTransport(dur);
+        // Back to the start when it finishes, so the next play starts from the top.
+        pauseTransport(0);
         return;
       }
       publishTime(t);
@@ -279,7 +280,7 @@ export function WaveformMixPlayer({
       }
       src.onended = () => {
         if (partSrcNodeRef.current === src && m === "part" && playingRef.current) {
-          pauseTransport(dur);
+          pauseTransport(0);
         }
       };
       partSrcNodeRef.current = src;
@@ -292,7 +293,7 @@ export function WaveformMixPlayer({
       src.start(when, timeline);
       src.onended = () => {
         if (bedSrcNodeRef.current === src && playingRef.current) {
-          pauseTransport(dur);
+          pauseTransport(0);
         }
       };
       bedSrcNodeRef.current = src;
@@ -395,7 +396,9 @@ export function WaveformMixPlayer({
 
   async function play() {
     if (!ready) return;
-    await startTransport(currentTimeRef.current);
+    const dur = durationRef.current;
+    const at = currentTimeRef.current;
+    await startTransport(dur > 0 && at >= dur - 0.05 ? 0 : at);
   }
 
   function pause() {

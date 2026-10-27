@@ -3,6 +3,8 @@
 
 #include <JuceHeader.h>
 #include "../Source/SignInView.h"
+#include "../Source/WorkspaceView.h"
+#include "../Source/PluginProcessor.h"
 
 namespace
 {
@@ -87,5 +89,27 @@ int main (int argc, char* argv[])
     starting.phase = State::Phase::starting;
     save (view, starting, dir.getChildFile ("6-opening-browser.png"));
 
+    // The signed-in workspace, one PNG per screen. Needs a real processor for its session.
+    {
+        RetrackProcessor proc;
+        auto& account = proc.getAccount();
+        WorkspaceView ws (proc, account);
+        ws.setSize (WorkspaceView::defaultWidth, WorkspaceView::defaultHeight);
+        const char* screens[] = { "intro", "setup1", "setup2", "ready", "armed", "capturing", "failed", "jobs", "posting", "posted" };
+        int n = 10;
+        for (auto* sc : screens)
+        {
+            WorkspaceView::Preview p;
+            p.screen = sc;
+            if (juce::String (sc) != "setup1") p.parts = { "Drums", "Keys" };
+            p.hasBed = juce::String (sc) != "setup1" && juce::String (sc) != "setup2";
+            ws.showPreview (p);
+            auto image = ws.createComponentSnapshot (ws.getLocalBounds(), true, 2.0f);
+            auto file = dir.getChildFile ("w" + juce::String (n++) + "-" + sc + ".png");
+            file.deleteFile();
+            juce::FileOutputStream out (file);
+            juce::PNGImageFormat().writeImageToStream (image, out);
+        }
+    }
     return 0;
 }

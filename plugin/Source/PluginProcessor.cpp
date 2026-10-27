@@ -6,140 +6,217 @@ RetrackProcessor::RetrackProcessor()
                           .withInput("Input", juce::AudioChannelSet::stereo(), true)
                           .withOutput("Output", juce::AudioChannelSet::stereo(), true))
 {
-    instanceId = juce::Uuid().toString().substring(0, 8);
-    backgroundThread.startThread();
+    writerThread.startThread();
+    session->add(this);
 }
 
 RetrackProcessor::~RetrackProcessor()
 {
-    stopCapture();
-    backgroundThread.stopThread(2000);
+    session->remove(this);
+    closeTake();
+    writerThread.stopThread(2000);
 }
 
 void RetrackProcessor::prepareToPlay(double sampleRate, int)
 {
-    currentSampleRate = sampleRate;
+    sampleRateNow = sampleRate;
 }
 
-void RetrackProcessor::releaseResources()
-{
-    stopCapture();
-}
+void RetrackProcessor::releaseResources() {}
 
 bool RetrackProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
     return layouts.getMainOutputChannelSet() == layouts.getMainInputChannelSet()
-           && !layouts.getMainOutputChannelSet().isDisabled();
+           && ! layouts.getMainOutputChannelSet().isDisabled();
 }
 
-void RetrackProcessor::startCapture(double bpm, int numerator, int denominator,
-                                               double startSeconds, juce::int64 startSamples)
+void RetrackProcessor::updateTrackProperties(const TrackProperties& props)
 {
-    auto desktop = juce::File::getSpecialLocation(juce::File::userDesktopDirectory);
-    auto timestamp = juce::Time::getCurrentTime().formatted("%Y%m%d-%H%M%S");
-    auto baseName = "RetrackCapture-" + timestamp + "-" + instanceId;
-
-    lastCaptureFile = desktop.getNonexistentChildFile(baseName, ".wav");
-    auto sidecarFile = desktop.getChildFile(lastCaptureFile.getFileNameWithoutExtension() + ".txt");
-
-    auto stream = std::make_unique<juce::FileOutputStream>(lastCaptureFile);
-    if (!stream->openedOk())
-    {
-        statusText = "Could not open capture file";
-        return;
-    }
-
-    juce::WavAudioFormat wavFormat;
-    auto numChannels = (unsigned int) juce::jmax(1, getTotalNumOutputChannels());
-    std::unique_ptr<juce::AudioFormatWriter> writer(
-        wavFormat.createWriterFor(stream.get(), currentSampleRate, numChannels, 24, {}, 0));
-
-    if (writer == nullptr)
-    {
-        statusText = "Could not create WAV writer";
-        return;
-    }
-
-    stream.release(); // writer now owns the stream
-
-    {
-        const juce::ScopedLock sl(writerLock);
-        threadedWriter.reset(new juce::AudioFormatWriter::ThreadedWriter(writer.release(), backgroundThread, 32768));
-    }
-
-    juce::String sidecar;
-    sidecar << "instanceId: " << instanceId << "\n";
-    sidecar << "sampleRate: " << currentSampleRate << "\n";
-    sidecar << "bpm: " << bpm << "\n";
-    sidecar << "timeSignature: " << numerator << "/" << denominator << "\n";
-    sidecar << "startSeconds: " << startSeconds << "\n";
-    sidecar << "startSamples: " << (double) startSamples << "\n";
-    sidecar << "capturedAt: " << juce::Time::getCurrentTime().toISO8601(true) << "\n";
-    sidecarFile.replaceWithText(sidecar);
-
-    statusText = "Recording -> " + lastCaptureFile.getFileName();
+    const juce::SpinLock::ScopedLockType sl(nameLock);
+    trackName = props.name;
 }
 
-void RetrackProcessor::stopCapture()
+juce::String RetrackProcessor::getTrackName() const
 {
-    const juce::ScopedLock sl(writerLock);
-    if (threadedWriter != nullptr)
+    const juce::SpinLock::ScopedLockType sl(nameLock);
+    return trackName;
+}
+
+bool RetrackProcessor::isBed() const
+{
+    switch (getRoleSetting())
     {
-        threadedWriter.reset();
-        statusText = "Captured: " + lastCaptureFile.getFileName();
+        case Role::part: return false;
+        case Role::bed:  return true;
+        case Role::automatic: break;
+    }
+    auto name = getTrackName().toLowerCase();
+    return name.contains("stereo out") || name == "output" || name.startsWith("output ")
+           || name.contains("master") || name.contains("main out");
+}
+
+void RetrackProcessor::getStateInformation(juce::MemoryBlock& dest)
+{
+    juce::MemoryOutputStream(dest, false).writeInt(roleSetting.load());
+}
+
+void RetrackProcessor::setStateInformation(const void* data, int size)
+{
+    if (size >= 4)
+        roleSetting = juce::jlimit(0, 2, juce::MemoryInputStream(data, (size_t) size, false).readInt());
+}
+
+//==============================================================================
+void RetrackProcessor::prepareTake(const juce::File& folder, int partIndex, int numParts, bool needsLoop,
+                                   const juce::StringArray& partNames,
+                                   juce::Array<juce::File>& partFilesOut, juce::Array<juce::File>& bedFilesOut)
+{
+    auto makeWriter = [this](const juce::File& file) -> std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter>
+    {
+        file.deleteFile();
+        auto stream = std::make_unique<juce::FileOutputStream>(file);
+        if (! stream->openedOk())
+            return {};
+        juce::WavAudioFormat wav;
+        std::unique_ptr<juce::AudioFormatWriter> w(wav.createWriterFor(stream.get(), sampleRateNow.load(),
+                                                                         (unsigned int) juce::jmax(1, getTotalNumInputChannels()),
+                                                                         24, {}, 0));
+        if (w == nullptr)
+            return {};
+        stream.release();
+        return std::make_unique<juce::AudioFormatWriter::ThreadedWriter>(w.release(), writerThread, 1 << 17);
+    };
+
+    auto safe = [](const juce::String& s) { return juce::File::createLegalFileName(s.isEmpty() ? juce::String("Track") : s); };
+
+    const juce::ScopedLock sl(takeLock);
+    partWriter.reset();
+    bedWriters.clear();
+    myPartIndex = isBed() ? -1 : partIndex;
+
+    if (isBed())
+    {
+        for (int i = 0; i < numParts; ++i)
+        {
+            auto file = folder.getChildFile("bed-" + juce::String(i + 1) + "-" + safe(partNames[i]) + ".wav");
+            bedWriters.push_back(makeWriter(file));
+            bedFilesOut.add(file);
+        }
+    }
+    else if (partIndex >= 0)
+    {
+        auto file = folder.getChildFile("part-" + juce::String(partIndex + 1) + "-" + safe(partNames[partIndex]) + ".wav");
+        partWriter = makeWriter(file);
+        partFilesOut.add(file);
+    }
+
+    clock.reset(numParts, needsLoop);
+    clockState = (int) CaptureClock::State::idle;
+    clockFailure = (int) CaptureClock::Failure::none;
+    clockPass = 0;
+    samplesInPass = 0;
+    totalSamples = 0;
+}
+
+void RetrackProcessor::closeTake()
+{
+    armed = false;
+    const juce::ScopedLock sl(takeLock);
+    partWriter.reset(); // flushes and closes the files
+    bedWriters.clear();
+}
+
+void RetrackProcessor::writeAndMute(juce::AudioBuffer<float>& buffer, const CaptureClock::Segment& seg)
+{
+    const int channels = juce::jmin(buffer.getNumChannels(), 8);
+    const float* ptrs[8] = {};
+    for (int c = 0; c < channels; ++c)
+        ptrs[c] = buffer.getReadPointer(c, seg.start);
+
+    if (myPartIndex >= 0)
+    {
+        if (seg.pass == myPartIndex)
+        {
+            if (partWriter != nullptr)
+                partWriter->write(ptrs, seg.length);
+            // This part's loop: send silence on so the Bed records the song without it.
+            for (int c = 0; c < buffer.getNumChannels(); ++c)
+                buffer.clear(c, seg.start, seg.length);
+        }
+    }
+    else if (juce::isPositiveAndBelow(seg.pass, (int) bedWriters.size()) && bedWriters[(size_t) seg.pass] != nullptr)
+    {
+        bedWriters[(size_t) seg.pass]->write(ptrs, seg.length);
     }
 }
 
 void RetrackProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals noDenormals;
+    for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
+        buffer.clear(i, 0, buffer.getNumSamples());
 
-    bool isPlaying = false;
-    double bpm = 120.0;
-    int numerator = 4, denominator = 4;
-    double startSeconds = 0.0;
-    juce::int64 startSamples = 0;
+    CaptureClock::Position pos;
+    pos.numSamples = buffer.getNumSamples();
+    pos.sampleRate = getSampleRate() > 0 ? getSampleRate() : sampleRateNow.load();
 
-    if (auto* playHead = getPlayHead())
-    {
-        if (auto position = playHead->getPosition())
+    if (auto* ph = getPlayHead())
+        if (auto p = ph->getPosition())
         {
-            isPlaying = position->getIsPlaying();
-
-            if (auto bpmOpt = position->getBpm())
-                bpm = *bpmOpt;
-
-            if (auto tsOpt = position->getTimeSignature())
+            pos.playing = p->getIsPlaying();
+            pos.looping = p->getIsLooping();
+            pos.ppq = p->getPpqPosition().orFallback(0.0);
+            pos.bpm = p->getBpm().orFallback(120.0);
+            if (auto lp = p->getLoopPoints())
             {
-                numerator = tsOpt->numerator;
-                denominator = tsOpt->denominator;
+                pos.loopStart = lp->ppqStart;
+                pos.loopEnd = lp->ppqEnd;
             }
-
-            if (auto samplesOpt = position->getTimeInSamples())
-                startSamples = *samplesOpt;
-
-            if (auto secondsOpt = position->getTimeInSeconds())
-                startSeconds = *secondsOpt;
+            if (auto ts = p->getTimeSignature())
+            {
+                timeSigNum = ts->numerator;
+                timeSigDen = ts->denominator;
+            }
+            lastBpm = pos.bpm;
+            loopingNow = pos.looping;
+            loopSeconds = pos.looping ? (pos.loopEnd - pos.loopStart) * 60.0 / juce::jmax(1.0, pos.bpm) : 0.0;
         }
-    }
 
-    if (isPlaying && !wasPlaying && captureArmed)
-        startCapture(bpm, numerator, denominator, startSeconds, startSamples);
-    else if (!isPlaying && wasPlaying)
-        stopCapture();
+    lastBlockMs = juce::Time::getMillisecondCounter();
+    if (! armed)
+        return;
 
-    wasPlaying = isPlaying;
+    const juce::ScopedTryLock tl(takeLock);
+    if (! tl.isLocked())
+        return;
 
-    {
-        const juce::ScopedLock sl(writerLock);
-        if (threadedWriter != nullptr)
-            threadedWriter->write(buffer.getArrayOfReadPointers(), buffer.getNumSamples());
-    }
+    for (auto& seg : clock.advance(pos))
+        writeAndMute(buffer, seg);
 
-    // Pass-through: buffer is left unmodified so audio continues downstream unaffected.
-    juce::ignoreUnused(buffer);
+    clockState = (int) clock.getState();
+    clockFailure = (int) clock.getFailure();
+    clockPass = clock.getPass();
+    samplesInPass = clock.getSamplesInPass();
+    totalSamples = clock.getTotalSamples();
 }
 
+void RetrackProcessor::checkForStall()
+{
+    if (! armed || getClockState() != CaptureClock::State::recording)
+        return;
+    if (juce::Time::getMillisecondCounter() - lastBlockMs.load() < 500)
+        return;
+
+    const juce::ScopedLock sl(takeLock);
+    CaptureClock::Position stopped;
+    stopped.numSamples = 1;
+    stopped.sampleRate = sampleRateNow.load();
+    clock.advance(stopped);
+    clockState = (int) clock.getState();
+    clockFailure = (int) clock.getFailure();
+}
+
+//==============================================================================
 RetrackAccount& RetrackProcessor::getAccount()
 {
     JUCE_ASSERT_MESSAGE_THREAD

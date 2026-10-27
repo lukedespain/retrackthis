@@ -123,7 +123,8 @@ void SignInView::updateButtons()
 //==============================================================================
 juce::Rectangle<float> SignInView::cardArea() const
 {
-    return getLocalBounds().toFloat().withTrimmedTop (headerH).reduced (pad).withTrimmedTop (-4.0f);
+    auto area = getLocalBounds().toFloat().withTrimmedTop (headerH).reduced (pad).withTrimmedTop (-4.0f);
+    return area.withSizeKeepingCentre (juce::jmin (440.0f, area.getWidth()), area.getHeight());
 }
 
 juce::Rectangle<float> SignInView::chipArea() const

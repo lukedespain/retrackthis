@@ -187,6 +187,7 @@ void RetrackAccount::poll()
                 s.avatarSvg = res.json["user"]["avatarSvg"].toString();
                 self->setState (s);
                 self->saveToFile();
+                self->verifyToken(); // picks up isAdmin
                 return;
             }
             if (status == "denied")
@@ -241,12 +242,14 @@ void RetrackAccount::verifyToken()
                 self->setState (errorState ("You've been signed out", "This plugin was disconnected from your account. Sign in again to keep posting."));
             }
             else if (status == 200 && json["name"].toString().isNotEmpty()
-                     && (json["name"].toString() != self->state.name || json["avatarSvg"].toString() != self->state.avatarSvg))
+                     && (json["name"].toString() != self->state.name || json["avatarSvg"].toString() != self->state.avatarSvg
+                         || (bool) json["isAdmin"] != self->state.isAdmin))
             {
                 // They changed their name or avatar on the site.
                 auto s = self->state;
                 s.name = json["name"].toString();
                 s.avatarSvg = json["avatarSvg"].toString();
+                s.isAdmin = (bool) json["isAdmin"];
                 self->setState (s);
                 self->saveToFile();
             }

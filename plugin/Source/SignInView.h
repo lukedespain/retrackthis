@@ -29,8 +29,8 @@ public:
     void mouseUp (const juce::MouseEvent&) override;
     void mouseMove (const juce::MouseEvent&) override;
 
-    static constexpr int defaultWidth = 460;
-    static constexpr int defaultHeight = 380;
+    static constexpr int defaultWidth = 580;
+    static constexpr int defaultHeight = 400;
 
 private:
     using Phase = RetrackAccount::State::Phase;

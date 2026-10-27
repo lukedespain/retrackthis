@@ -39,6 +39,25 @@ namespace brand
     /** The person's avatar art from the site (an SVG string) in a circle, or initials without it. */
     void drawAvatar (juce::Graphics&, juce::Rectangle<float> area, const juce::String& name, const juce::String& svg);
 
+    /** Fields, dropdowns, menus and tooltips in the site's style (Geist, soft fills, round corners). */
+    class LookAndFeel : public juce::LookAndFeel_V4
+    {
+    public:
+        LookAndFeel();
+        juce::Typeface::Ptr getTypefaceForFont (const juce::Font&) override;
+        void drawComboBox (juce::Graphics&, int width, int height, bool isButtonDown,
+                           int buttonX, int buttonY, int buttonW, int buttonH, juce::ComboBox&) override;
+        juce::Font getComboBoxFont (juce::ComboBox&) override;
+        void positionComboBoxText (juce::ComboBox&, juce::Label&) override;
+        void fillTextEditorBackground (juce::Graphics&, int width, int height, juce::TextEditor&) override;
+        void drawTextEditorOutline (juce::Graphics&, int width, int height, juce::TextEditor&) override;
+        juce::Font getPopupMenuFont() override;
+        void drawPopupMenuBackground (juce::Graphics&, int width, int height) override;
+        juce::Rectangle<int> getTooltipBounds (const juce::String&, juce::Point<int>, juce::Rectangle<int>) override;
+        void drawTooltip (juce::Graphics&, const juce::String&, int width, int height) override;
+        void drawToggleButton (juce::Graphics&, juce::ToggleButton&, bool highlighted, bool down) override;
+    };
+
     /** Pill button in the site's styles. */
     class PillButton : public juce::Button
     {

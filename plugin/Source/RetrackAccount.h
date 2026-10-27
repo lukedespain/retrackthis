@@ -34,6 +34,7 @@ public:
         // signedIn
         juce::String name;
         juce::String avatarSvg; // the site's avatar art; empty means show initials
+        bool isAdmin = false;   // admins can post free test jobs
 
         // error
         juce::String errorTitle;

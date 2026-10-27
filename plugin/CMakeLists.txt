@@ -35,6 +35,18 @@ set(RETRACK_UI_SOURCES
     Source/SignInView.cpp
 )
 
+# The capture engine and everything the plugin window needs.
+set(RETRACK_PLUGIN_SOURCES
+    Source/PluginProcessor.cpp
+    Source/PluginEditor.cpp
+    Source/RetrackSession.cpp
+    Source/CaptureClock.cpp
+    Source/JobPoster.cpp
+    Source/Visuals.cpp
+    Source/WorkspaceView.cpp
+    ${RETRACK_UI_SOURCES}
+)
+
 juce_add_plugin(Retrack
     COMPANY_NAME "RetrackThis"
     BUNDLE_ID "com.retrackthis.retrack"
@@ -52,12 +64,7 @@ juce_add_plugin(Retrack
 
 juce_generate_juce_header(Retrack)
 
-target_sources(Retrack
-    PRIVATE
-        Source/PluginProcessor.cpp
-        Source/PluginEditor.cpp
-        ${RETRACK_UI_SOURCES}
-)
+target_sources(Retrack PRIVATE ${RETRACK_PLUGIN_SOURCES})
 
 target_compile_definitions(Retrack
     PUBLIC
@@ -82,18 +89,44 @@ target_link_libraries(Retrack
 #   ./build/RetrackSnapshots_artefacts/Debug/RetrackSnapshots <out-dir>
 juce_add_console_app(RetrackSnapshots PRODUCT_NAME "RetrackSnapshots")
 juce_generate_juce_header(RetrackSnapshots)
-target_sources(RetrackSnapshots PRIVATE Tools/Snapshots.cpp ${RETRACK_UI_SOURCES})
+target_sources(RetrackSnapshots PRIVATE Tools/Snapshots.cpp ${RETRACK_PLUGIN_SOURCES})
 target_compile_definitions(RetrackSnapshots
     PRIVATE
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
+        JucePlugin_Name="Retrack"
         RT_BASE_URL="${RT_BASE_URL}"
 )
 target_link_libraries(RetrackSnapshots
     PRIVATE
         RetrackAssets
         juce::juce_gui_extra
-        juce::juce_audio_processors
+        juce::juce_audio_utils
+        juce::juce_audio_formats
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+# Runs capture the way Logic drives it and checks every part and bed file:
+#   ./build/RetrackCaptureTest_artefacts/Debug/RetrackCaptureTest
+juce_add_console_app(RetrackCaptureTest PRODUCT_NAME "RetrackCaptureTest")
+juce_generate_juce_header(RetrackCaptureTest)
+target_sources(RetrackCaptureTest PRIVATE Tools/CaptureTest.cpp ${RETRACK_PLUGIN_SOURCES})
+target_compile_definitions(RetrackCaptureTest
+    PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JUCE_MODAL_LOOPS_PERMITTED=1
+        JucePlugin_Name="Retrack"
+        RT_BASE_URL="${RT_BASE_URL}"
+)
+target_link_libraries(RetrackCaptureTest
+    PRIVATE
+        RetrackAssets
+        juce::juce_audio_utils
+        juce::juce_audio_formats
+        juce::juce_gui_extra
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags

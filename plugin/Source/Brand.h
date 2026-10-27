@@ -59,6 +59,17 @@ namespace brand
     };
 
     /** Pill button in the site's styles. */
+    /** A ComboBox you can type into while it has focus: "p" picks Piano, "dr" picks Drum kit. */
+    class TypingComboBox : public juce::ComboBox
+    {
+    public:
+        bool keyPressed (const juce::KeyPress&) override;
+
+    private:
+        juce::String typed;
+        juce::uint32 lastTypedMs = 0;
+    };
+
     class PillButton : public juce::Button
     {
     public:

@@ -37,6 +37,8 @@ public:
         juce::String screen; // setup1, setup2, ready, armed, capturing, jobs, posting, posted, failed, intro
         juce::StringArray parts;
         bool hasBed = false;
+        int walkPage = 0;        // intro only: which walkthrough page
+        double walkTime = 1.0;   // intro only: seconds into its animation
     };
     void showPreview (const Preview&);
 
@@ -65,13 +67,15 @@ private:
     juce::Rectangle<float> rightCard() const;
     juce::Rectangle<float> chipArea() const;
     juce::Rectangle<float> helpArea() const;
-    juce::Rectangle<float> trackArea() const;
     void paintHeader (juce::Graphics&);
     void paintChecklist (juce::Graphics&, juce::Rectangle<float>);
     void paintLoops (juce::Graphics&, juce::Rectangle<float>);
     void paintJobList (juce::Graphics&, juce::Rectangle<float>);
     void paintRight (juce::Graphics&, juce::Rectangle<float>);
     void paintIntro (juce::Graphics&);
+    juce::Rectangle<float> introCard() const;
+    void showWalkthrough (int page);
+    void closeWalkthrough();
 
     // Jobs
     void enterJobs();
@@ -98,6 +102,7 @@ private:
     visuals::MixerPicture mixer;
     visuals::CyclePicture cycle;
     visuals::RecordLight light;
+    visuals::Walkthrough walkthrough;
 
     using Pill = brand::PillButton;
     Pill armButton { "Arm", Pill::Style::primary };
@@ -108,11 +113,12 @@ private:
     Pill filesButton { "Show files", Pill::Style::text };
     Pill payAgainButton { "Open payment again", Pill::Style::secondary };
     Pill newCaptureButton { "Start a new capture", Pill::Style::text };
-    Pill gotItButton { "Got it", Pill::Style::primary };
+    Pill backButton { "Back", Pill::Style::text };
+    Pill nextButton { "Next", Pill::Style::primary };
 
     juce::TextEditor titleEditor, notesEditor, budgetEditor;
-    juce::ComboBox instrumentBox, dueBox, keyBox;
-    juce::ToggleButton testToggle { "Free test jobs (admins only)" };
+    brand::TypingComboBox instrumentBox, dueBox, keyBox;
+    juce::ToggleButton testToggle { "Admin test" };
 
     juce::Array<Draft> drafts;
     int selected = 0;
@@ -125,6 +131,7 @@ private:
     juce::String postProgress;
     JobPoster::Result postResult;
     bool chipHover = false;
+    bool helpHover = false;
 
     JUCE_DECLARE_WEAK_REFERENCEABLE (WorkspaceView)
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WorkspaceView)

@@ -8,10 +8,12 @@ namespace
         juce::var json;
     };
 
+    // inAddress keeps a URL's query (like a signed upload's ?token=) in the address.
+    // inPostData would move it into the body, and the upload would be refused.
     Http send (const juce::URL& url, const juce::String& method, const juce::String& headers, int timeoutMs)
     {
         Http res;
-        if (auto stream = url.createInputStream (juce::URL::InputStreamOptions (juce::URL::ParameterHandling::inPostData)
+        if (auto stream = url.createInputStream (juce::URL::InputStreamOptions (juce::URL::ParameterHandling::inAddress)
                                                      .withHttpRequestCmd (method)
                                                      .withExtraHeaders (headers)
                                                      .withConnectionTimeoutMs (timeoutMs)

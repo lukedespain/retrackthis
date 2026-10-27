@@ -54,6 +54,38 @@ namespace visuals
         bool on = true;
     };
 
+    /**
+     * The walkthrough's moving pictures: a pointer inserting Retrack, Option-dragging
+     * copies to other tracks and the Stereo Out, turning on Cycle, then Arm and play.
+     * Each page loops a few seconds of animation.
+     */
+    class Walkthrough : public juce::Component,
+                        private juce::Timer
+    {
+    public:
+        static constexpr int pageCount = 5;
+        static juce::String caption (int page);
+
+        void setPage (int);
+        int getPage() const { return page; }
+        /** For the snapshot tool: hold the animation at this many seconds into the page. */
+        void freezeAt (double seconds) { frozenAt = seconds; repaint(); }
+
+        void paint (juce::Graphics&) override;
+        void visibilityChanged() override;
+
+    private:
+        void timerCallback() override { repaint(); }
+        double now() const;
+        void paintInsert (juce::Graphics&, juce::Rectangle<float>, double t);
+        void paintCopy (juce::Graphics&, juce::Rectangle<float>, double t, bool toOutput);
+        void paintCycle (juce::Graphics&, juce::Rectangle<float>, double t);
+        void paintArm (juce::Graphics&, juce::Rectangle<float>, double t);
+
+        int page = 0;
+        double startMs = 0.0, frozenAt = -1.0;
+    };
+
     /** Draws a keyboard key, like "space" or "C". Returns its width. */
-    float drawKey (juce::Graphics&, juce::Point<float> topLeft, const juce::String& label, float height = 22.0f);
+    float drawKey (juce::Graphics&, juce::Point<float> topLeft, const juce::String& label, float height = 22.0f, bool pressed = false);
 }

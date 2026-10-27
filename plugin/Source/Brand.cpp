@@ -284,4 +284,31 @@ namespace brand
         g.setFont (font (12.5f));
         g.drawText (b.getButtonText(), b.getLocalBounds().withTrimmedLeft (24), juce::Justification::centredLeft, true);
     }
+
+    bool TypingComboBox::keyPressed (const juce::KeyPress& key)
+    {
+        const auto c = key.getTextCharacter();
+        const bool typing = c > ' ' || (c == ' ' && typed.isNotEmpty());
+        if (! typing || key.getModifiers().isCommandDown() || key.getModifiers().isCtrlDown())
+            return juce::ComboBox::keyPressed (key);
+
+        const auto now = juce::Time::getMillisecondCounter();
+        if (now - lastTypedMs > 1000)
+            typed.clear();
+        lastTypedMs = now;
+        typed += juce::String::charToString (c);
+
+        // First an item that starts with what was typed, then one with a word that does.
+        for (int pass = 0; pass < 2; ++pass)
+            for (int i = 0; i < getNumItems(); ++i)
+            {
+                auto text = getItemText (i);
+                if (pass == 0 ? text.startsWithIgnoreCase (typed) : text.containsIgnoreCase (" " + typed))
+                {
+                    setSelectedItemIndex (i);
+                    return true;
+                }
+            }
+        return true;
+    }
 }

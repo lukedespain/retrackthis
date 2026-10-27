@@ -109,12 +109,20 @@ WorkspaceView::WorkspaceView (RetrackProcessor& p, RetrackAccount& a)
 
     for (auto* c : std::initializer_list<juce::Component*> { &mixer, &cycle, &light, &armButton, &disarmButton, &retryButton,
                                                              &postButton, &recaptureButton, &filesButton, &payAgainButton,
-                                                             &newCaptureButton, &gotItButton, &titleEditor, &notesEditor,
-                                                             &budgetEditor, &instrumentBox, &dueBox, &keyBox, &testToggle })
+                                                             &newCaptureButton, &backButton, &nextButton, &walkthrough,
+                                                             &titleEditor, &notesEditor, &budgetEditor, &instrumentBox, &dueBox,
+                                                             &keyBox, &testToggle })
         addChildComponent (c);
 
+    // Tab goes down the form in reading order.
+    setFocusContainerType (FocusContainerType::keyboardFocusContainer);
+    int order = 1;
+    for (auto* c : std::initializer_list<juce::Component*> { &titleEditor, &instrumentBox, &budgetEditor, &dueBox, &keyBox,
+                                                             &notesEditor, &testToggle, &postButton })
+        c->setExplicitFocusOrder (order++);
+
     titleEditor.setTextToShowWhenEmpty ("Song title", muted);
-    notesEditor.setTextToShowWhenEmpty ("What should the musician play? Style, feel, references.", muted);
+    notesEditor.setTextToShowWhenEmpty ("Optional. Style, feel, references.", muted);
     notesEditor.setMultiLine (true, true);
     notesEditor.setReturnKeyStartsNewLine (true);
     budgetEditor.setInputRestrictions (3, "0123456789");
@@ -126,7 +134,7 @@ WorkspaceView::WorkspaceView (RetrackProcessor& p, RetrackAccount& a)
         ed->onTextChange = [this] { storeFormIntoDraft(); repaint(); };
     }
     instrumentBox.setTextWhenNothingSelected ("Instrument");
-    keyBox.setTextWhenNothingSelected ("Key (optional)");
+    keyBox.setTextWhenNothingSelected ("Optional");
     keyBox.addItem ("Not sure", 1);
     int keyItem = 2;
     for (auto& root : keyRoots)
@@ -140,7 +148,7 @@ WorkspaceView::WorkspaceView (RetrackProcessor& p, RetrackAccount& a)
         box->onChange = [this] { storeFormIntoDraft(); repaint(); };
 
     mixer.setTooltip ("In Logic's mixer, click the empty slot under your other plugins and choose "
-                      "Audio Units > RetrackThis > Retrack. Select several tracks first to insert it on all of them at once.");
+                      "Audio Units > RetrackThis > Retrack. To copy it to another track, hold Option and drag it there.");
     cycle.setTooltip ("Press C (or click the top of the ruler) to turn on Cycle, then drag the yellow area over the section. "
                       "Retrack plays it once for each track you're retracking, muting a different one each time.");
 
@@ -151,7 +159,14 @@ WorkspaceView::WorkspaceView (RetrackProcessor& p, RetrackAccount& a)
     filesButton.onClick = [this] { session.getTake().folder.startAsProcess(); };
     payAgainButton.onClick = [this] { openPaymentPage(); };
     newCaptureButton.onClick = [this] { drafts.clear(); postResult = {}; session.clearTake(); screen = Screen::setup; refresh(); };
-    gotItButton.onClick = [this] { showingIntro = false; introMarker().create(); refresh(); };
+    backButton.onClick = [this] { showWalkthrough (walkthrough.getPage() - 1); };
+    nextButton.onClick = [this]
+    {
+        if (walkthrough.getPage() >= visuals::Walkthrough::pageCount - 1)
+            closeWalkthrough();
+        else
+            showWalkthrough (walkthrough.getPage() + 1);
+    };
     postButton.onClick = [this]
     {
         storeFormIntoDraft();
@@ -169,6 +184,7 @@ WorkspaceView::WorkspaceView (RetrackProcessor& p, RetrackAccount& a)
     };
 
     showingIntro = ! introMarker().existsAsFile();
+    walkthrough.setPage (0);
     session.addChangeListener (this);
     account.addChangeListener (this);
     startTimerHz (10);
@@ -244,38 +260,49 @@ juce::Rectangle<float> WorkspaceView::helpArea() const
     return { chip.getX() - 8.0f - 30.0f, chip.getCentreY() - 15.0f, 30.0f, 30.0f };
 }
 
-juce::Rectangle<float> WorkspaceView::trackArea() const
-{
-    auto x = pad + 34.0f + juce::GlyphArrangement::getStringWidth (font (17.0f, Weight::semibold), "RetrackThis") + 8.0f;
-    return { x, headerH / 2.0f + 4.0f - 12.0f, helpArea().getX() - x - 8.0f, 24.0f };
-}
-
 void WorkspaceView::paintHeader (juce::Graphics& g)
 {
     auto y = headerH / 2.0f + 4.0f;
     drawBadge (g, { pad, y - 13.0f, 26.0f, 26.0f });
     drawWordmark (g, { pad + 34.0f, y + 6.0f }, 17.0f);
 
-    // Which copy this window belongs to, and its role. Click to change the role.
+    // Which track this copy is on.
     if (! previewMode || preview.parts.size() > 0)
     {
         auto name = previewMode ? preview.parts[0] : proc.getTrackName();
         if (name.isEmpty()) name = "This track";
-        const bool bed = previewMode ? false : proc.isBed();
-        auto label = utf8 ("\xc2\xb7 ") + name + "  " + (bed ? "Bed" : "Part") + utf8 (" \xe2\x96\xbe");
+        auto x = pad + 34.0f + juce::GlyphArrangement::getStringWidth (font (17.0f, Weight::semibold), "RetrackThis") + 8.0f;
         g.setColour (muted);
         g.setFont (font (13.5f));
-        g.drawText (label, trackArea(), juce::Justification::centredLeft, true);
+        g.drawText (utf8 ("\xc2\xb7 ") + name, juce::Rectangle<float> (x, y - 12.0f, helpArea().getX() - x - 8.0f, 24.0f),
+                    juce::Justification::centredLeft, true);
     }
 
+    // The help button turns purple with an X while the walkthrough is open.
     auto help = helpArea();
-    g.setColour (surface);
-    g.fillEllipse (help);
-    g.setColour (line);
-    g.drawEllipse (help.reduced (0.5f), 1.0f);
-    g.setColour (muted);
-    g.setFont (font (14.0f, Weight::semibold));
-    g.drawText ("?", help, juce::Justification::centred, false);
+    if (showingIntro)
+    {
+        g.setColour (helpHover ? accentInk : accent);
+        g.fillEllipse (help);
+        auto c = help.getCentre();
+        juce::Path x;
+        x.startNewSubPath (c.x - 4.5f, c.y - 4.5f);
+        x.lineTo (c.x + 4.5f, c.y + 4.5f);
+        x.startNewSubPath (c.x + 4.5f, c.y - 4.5f);
+        x.lineTo (c.x - 4.5f, c.y + 4.5f);
+        g.setColour (juce::Colours::white);
+        g.strokePath (x, juce::PathStrokeType (1.8f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+    else
+    {
+        g.setColour (helpHover ? soft.darker (0.03f) : surface);
+        g.fillEllipse (help);
+        g.setColour (line);
+        g.drawEllipse (help.reduced (0.5f), 1.0f);
+        g.setColour (muted);
+        g.setFont (font (14.0f, Weight::semibold));
+        g.drawText ("?", help, juce::Justification::centred, false);
+    }
 
     auto state = account.getState();
     auto chip = chipArea();
@@ -426,7 +453,7 @@ void WorkspaceView::paintRight (juce::Graphics& g, juce::Rectangle<float> card)
             if (step == Step::insertParts || step == Step::insertBed)
             {
                 auto caption = step == Step::insertParts ? "Insert Retrack last on each track you want retracked."
-                                                         : "Insert Retrack last on the Stereo Out, after your limiter and meter.";
+                                                         : "Insert Retrack last on the Stereo Out, after your other plugins.";
                 drawText (g, caption, font (12.5f), muted, inner.withTop ((float) mixer.getBottom() + 10.0f), juce::Justification::centredTop);
             }
             else
@@ -575,20 +602,44 @@ void WorkspaceView::paintRight (juce::Graphics& g, juce::Rectangle<float> card)
     }
 }
 
+juce::Rectangle<float> WorkspaceView::introCard() const
+{
+    return getLocalBounds().toFloat().withTrimmedTop (headerH + 4.0f).reduced (pad, 0.0f).withTrimmedBottom (pad);
+}
+
 void WorkspaceView::paintIntro (juce::Graphics& g)
 {
-    auto area = getLocalBounds().toFloat().withTrimmedTop (headerH + 4.0f).reduced (pad, 0.0f).withTrimmedBottom (pad);
+    auto area = introCard();
     g.setColour (page);
     g.fillRect (area.expanded (pad, 0.0f).withBottom ((float) getHeight()));
     drawCard (g, area, 14.0f);
 
-    auto steps = area.reduced (24.0f).withTop ((float) mixer.getBottom() + 16.0f);
-    const char* lines[] = { "Insert this plugin last on each track you want retracked.",
-                            "Insert it last on the Stereo Out too.", "Click Arm.", "Press play." };
-    auto list = steps.withSizeKeepingCentre (380.0f, steps.getHeight());
-    float y = list.getY();
-    for (int i = 0; i < 4; ++i)
-        y = drawRow (g, list.withY (y), Mark::now, juce::String (i + 1), lines[i]) - 4.0f;
+    // Step number and caption under the picture, then dots for the pages.
+    const int pageIndex = walkthrough.getPage();
+    auto text = area.reduced (16.0f).withTop ((float) walkthrough.getBottom() + 12.0f).withTrimmedBottom (40.0f);
+    drawRow (g, text, Mark::now, juce::String (pageIndex + 1), visuals::Walkthrough::caption (pageIndex));
+
+    const float dot = 6.0f, dotGap = 6.0f;
+    auto dots = juce::Point<float> (area.getX() + 16.0f, (float) nextButton.getBounds().getCentreY() - dot / 2.0f);
+    for (int i = 0; i < visuals::Walkthrough::pageCount; ++i)
+    {
+        g.setColour (i == pageIndex ? accent : juce::Colour (0xffd6d4cd));
+        g.fillEllipse (dots.x + (dot + dotGap) * (float) i, dots.y, dot, dot);
+    }
+}
+
+void WorkspaceView::showWalkthrough (int pageIndex)
+{
+    showingIntro = true;
+    walkthrough.setPage (pageIndex);
+    refresh();
+}
+
+void WorkspaceView::closeWalkthrough()
+{
+    showingIntro = false;
+    introMarker().create();
+    refresh();
 }
 
 //==============================================================================
@@ -599,31 +650,41 @@ void WorkspaceView::resized()
 
 void WorkspaceView::layoutRight()
 {
-    for (auto* c : getChildren())
-        c->setVisible (false);
+    // Collect what this screen shows, then show and hide in one pass at the end. Hiding
+    // a field and showing it again would take keyboard focus away while someone types.
+    juce::Array<juce::Component*> shown;
+    struct ApplyVisibility
+    {
+        WorkspaceView& view;
+        juce::Array<juce::Component*>& shown;
+        ~ApplyVisibility()
+        {
+            for (auto* c : view.getChildren())
+                c->setVisible (shown.contains (c));
+        }
+    } applyVisibility { *this, shown };
 
     auto card = rightCard();
     auto inner = card.reduced (16.0f);
     auto centreButton = [&] (juce::Component& b, float y, float w)
     {
         b.setBounds (juce::Rectangle<float> (w, 40.0f).withCentre ({ card.getCentreX(), y + 20.0f }).toNearestInt());
-        b.setVisible (true);
+        shown.add (&b);
     };
 
     if (showingIntro)
     {
-        auto area = getLocalBounds().toFloat().withTrimmedTop (headerH + 4.0f).reduced (pad, 0.0f).withTrimmedBottom (pad).reduced (24.0f);
-        juce::Array<visuals::MixerPicture::Strip> strips;
-        strips.add (strip ("Drums", false, true));
-        strips.add (strip ("Keys", false, true));
-        strips.add (strip ("Bass", false, false, false, true));
-        strips.add (strip ("Vocal", false, false, false, true));
-        strips.add (strip ("Stereo Out", true, true));
-        mixer.setStrips (strips);
-        mixer.setBounds (area.removeFromTop (128.0f).withSizeKeepingCentre (360.0f, 128.0f).toNearestInt());
-        mixer.setVisible (true);
-        gotItButton.setBounds (juce::Rectangle<int> ((int) area.getRight() - 130, (int) area.getBottom() - 38, 130, 38));
-        gotItButton.setVisible (true);
+        auto area = introCard().reduced (16.0f);
+        walkthrough.setBounds (area.removeFromTop (196.0f).toNearestInt());
+        auto nav = area.removeFromBottom (36.0f);
+        const bool last = walkthrough.getPage() >= visuals::Walkthrough::pageCount - 1;
+        nextButton.setButtonText (last ? "Got it" : "Next");
+        nextButton.setBounds (nav.removeFromRight (110.0f).toNearestInt());
+        nav.removeFromRight (6.0f);
+        backButton.setBounds (nav.removeFromRight (80.0f).toNearestInt());
+        shown.add (&walkthrough, &nextButton);
+        if (walkthrough.getPage() > 0)
+            shown.add (&backButton);
         return;
     }
 
@@ -648,8 +709,8 @@ void WorkspaceView::layoutRight()
                 const bool hasBed = previewMode ? preview.hasBed : session.getBeds().size() > 0;
                 strips.add (strip ("Stereo Out", true, hasBed, step == Step::insertBed));
                 mixer.setStrips (strips);
-                mixer.setBounds (inner.withHeight (170.0f).toNearestInt());
-                mixer.setVisible (true);
+                mixer.setBounds (inner.withHeight (212.0f).toNearestInt());
+                shown.add (&mixer);
             }
             else
             {
@@ -658,14 +719,14 @@ void WorkspaceView::layoutRight()
                 if (multi)
                 {
                     cycle.setBounds (inner.withTop ((float) armButton.getBottom() + 28.0f).withHeight (54.0f).toNearestInt());
-                    cycle.setVisible (true);
+                    shown.add (&cycle);
                 }
             }
             break;
         }
         case Screen::armed:
             light.setBounds (juce::Rectangle<int> (70, 70).withCentre ({ (int) card.getCentreX(), (int) inner.getY() + 48 }));
-            light.setVisible (true);
+            shown.add (&light);
             centreButton (disarmButton, inner.getBottom() - 40.0f, 140.0f);
             break;
         case Screen::capturing:
@@ -681,13 +742,13 @@ void WorkspaceView::layoutRight()
             auto row = [&] (float h) { f.removeFromTop (16.0f); auto r = f.removeFromTop (h); f.removeFromTop (8.0f); return r; };
             titleEditor.setBounds (row (30.0f).toNearestInt());
             instrumentBox.setBounds (row (30.0f).toNearestInt());
-            auto pair = row (30.0f);
-            budgetEditor.setBounds (pair.removeFromLeft (pair.getWidth() * 0.38f).toNearestInt());
-            pair.removeFromLeft (8.0f);
-            auto dueKey = pair;
-            dueBox.setBounds (dueKey.removeFromLeft (dueKey.getWidth() * 0.5f - 4.0f).toNearestInt());
-            dueKey.removeFromLeft (8.0f);
-            keyBox.setBounds (dueKey.toNearestInt());
+            auto three = row (30.0f);
+            const float third = (three.getWidth() - 16.0f) / 3.0f;
+            budgetEditor.setBounds (three.removeFromLeft (third).toNearestInt());
+            three.removeFromLeft (8.0f);
+            dueBox.setBounds (three.removeFromLeft (third).toNearestInt());
+            three.removeFromLeft (8.0f);
+            keyBox.setBounds (three.toNearestInt());
             notesEditor.setBounds (row (juce::jmax (40.0f, f.getHeight() - 16.0f - 8.0f - 44.0f)).toNearestInt());
             auto bottom = inner.withTop (inner.getBottom() - 36.0f);
             const bool last = selected >= drafts.size() - 1;
@@ -702,10 +763,9 @@ void WorkspaceView::layoutRight()
             if (account.getState().isAdmin || previewMode)
             {
                 testToggle.setBounds (bottom.withTrimmedRight (8.0f).toNearestInt());
-                testToggle.setVisible (true);
+                shown.add (&testToggle);
             }
-            for (auto* c : std::initializer_list<juce::Component*> { &titleEditor, &instrumentBox, &budgetEditor, &dueBox, &keyBox, &notesEditor, &postButton })
-                c->setVisible (true);
+            shown.add (&titleEditor, &instrumentBox, &budgetEditor, &dueBox, &keyBox, &notesEditor, &postButton);
             break;
         }
         case Screen::posting:
@@ -725,21 +785,27 @@ void WorkspaceView::layoutRight()
         auto left = leftCard().reduced (16.0f);
         recaptureButton.setBounds (juce::Rectangle<float> (left.getX() - 8.0f, left.getBottom() - 30.0f, 90.0f, 30.0f).toNearestInt());
         filesButton.setBounds (juce::Rectangle<float> (left.getRight() - 84.0f, left.getBottom() - 30.0f, 90.0f, 30.0f).toNearestInt());
-        recaptureButton.setVisible (true);
-        filesButton.setVisible (! previewMode);
+        shown.add (&recaptureButton);
+        if (! previewMode)
+            shown.add (&filesButton);
     }
 }
 
 //==============================================================================
 void WorkspaceView::mouseMove (const juce::MouseEvent& e)
 {
-    auto hover = chipArea().contains (e.position) || helpArea().contains (e.position) || trackArea().contains (e.position)
+    auto hover = chipArea().contains (e.position) || helpArea().contains (e.position)
                  || (screen == Screen::jobs && std::any_of (jobRowAreas.begin(), jobRowAreas.end(), [&] (auto& r) { return r.contains (e.position); }));
     setMouseCursor (hover ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
     if (chipArea().contains (e.position) != chipHover)
     {
         chipHover = ! chipHover;
         repaint (chipArea().expanded (4.0f).toNearestInt());
+    }
+    if (helpArea().contains (e.position) != helpHover)
+    {
+        helpHover = ! helpHover;
+        repaint (helpArea().expanded (4.0f).toNearestInt());
     }
 }
 
@@ -758,24 +824,10 @@ void WorkspaceView::mouseUp (const juce::MouseEvent& e)
     }
     if (helpArea().contains (e.position))
     {
-        showingIntro = true;
-        refresh();
-        return;
-    }
-    if (trackArea().contains (e.position) && screen == Screen::setup)
-    {
-        using Role = RetrackProcessor::Role;
-        auto current = proc.getRoleSetting();
-        juce::PopupMenu menu;
-        menu.addSectionHeader ("What this copy records");
-        menu.addItem ("Automatic (Bed on Stereo Out, Part elsewhere)", true, current == Role::automatic,
-                      [this] { proc.setRoleSetting (Role::automatic); refresh(); });
-        menu.addItem ("Part: this track gets retracked", true, current == Role::part,
-                      [this] { proc.setRoleSetting (Role::part); refresh(); });
-        menu.addItem ("Bed: records everything else", true, current == Role::bed,
-                      [this] { proc.setRoleSetting (Role::bed); refresh(); });
-        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this)
-                                .withTargetScreenArea (localAreaToGlobal (trackArea().toNearestInt())));
+        if (showingIntro)
+            closeWalkthrough();
+        else
+            showWalkthrough (0);
         return;
     }
     if (screen == Screen::jobs)
@@ -917,7 +969,7 @@ void WorkspaceView::storeFormIntoDraft()
 bool WorkspaceView::draftComplete (const Draft& d) const
 {
     auto budget = d.budget.getIntValue();
-    return d.instrumentId.isNotEmpty() && budget >= 25 && budget <= 500 && d.notes.isNotEmpty();
+    return d.instrumentId.isNotEmpty() && budget >= 25 && budget <= 500 && d.dueDays > 0;
 }
 
 juce::String WorkspaceView::firstProblem() const
@@ -928,7 +980,6 @@ juce::String WorkspaceView::firstProblem() const
         if (d.instrumentId.isEmpty()) return "Pick an instrument for " + d.trackName + ".";
         auto b = d.budget.getIntValue();
         if (b < 25 || b > 500) return "Set a budget from $25 to $500 for " + d.trackName + ".";
-        if (d.notes.isEmpty()) return "Add notes for " + d.trackName + ".";
     }
     if (session.getTake().seconds < 5.0) return "The section has to be at least 5 seconds. Recapture a longer one.";
     return {};
@@ -1005,6 +1056,11 @@ void WorkspaceView::showPreview (const Preview& p)
     previewMode = true;
     preview = p;
     showingIntro = p.screen == "intro";
+    if (showingIntro)
+    {
+        walkthrough.setPage (p.walkPage);
+        walkthrough.freezeAt (p.walkTime);
+    }
     if (p.screen == "armed") screen = Screen::armed;
     else if (p.screen == "capturing") screen = Screen::capturing;
     else if (p.screen == "failed") screen = Screen::failed;

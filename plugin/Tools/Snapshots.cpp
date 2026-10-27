@@ -95,7 +95,25 @@ int main (int argc, char* argv[])
         auto& account = proc.getAccount();
         WorkspaceView ws (proc, account);
         ws.setSize (WorkspaceView::defaultWidth, WorkspaceView::defaultHeight);
-        const char* screens[] = { "intro", "setup1", "setup2", "ready", "armed", "capturing", "failed", "jobs", "posting", "posted" };
+        // The walkthrough: each page at a few moments of its animation.
+        const double moments[] = { 0.6, 1.6, 2.2, 2.6, 4.0 };
+        for (int pageIndex = 0; pageIndex < visuals::Walkthrough::pageCount; ++pageIndex)
+            for (int m = 0; m < 5; ++m)
+            {
+                WorkspaceView::Preview p;
+                p.screen = "intro";
+                p.parts = { "Drums", "Keys" };
+                p.walkPage = pageIndex;
+                p.walkTime = moments[m];
+                ws.showPreview (p);
+                auto image = ws.createComponentSnapshot (ws.getLocalBounds(), true, 2.0f);
+                auto file = dir.getChildFile ("walk" + juce::String (pageIndex + 1) + "-" + juce::String (m) + ".png");
+                file.deleteFile();
+                juce::FileOutputStream out (file);
+                juce::PNGImageFormat().writeImageToStream (image, out);
+            }
+
+        const char* screens[] = { "setup1", "setup2", "ready", "armed", "capturing", "failed", "jobs", "posting", "posted" };
         int n = 10;
         for (auto* sc : screens)
         {

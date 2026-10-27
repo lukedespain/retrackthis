@@ -123,7 +123,7 @@ void RetrackThisBridgeProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
         }
     }
 
-    if (isPlaying && !wasPlaying)
+    if (isPlaying && !wasPlaying && captureArmed)
         startCapture(bpm, numerator, denominator, startSeconds, startSamples);
     else if (!isPlaying && wasPlaying)
         stopCapture();
@@ -138,6 +138,14 @@ void RetrackThisBridgeProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
 
     // Pass-through: buffer is left unmodified so audio continues downstream unaffected.
     juce::ignoreUnused(buffer);
+}
+
+BridgeAccount& RetrackThisBridgeProcessor::getAccount()
+{
+    JUCE_ASSERT_MESSAGE_THREAD
+    if (account == nullptr)
+        account = std::make_unique<juce::SharedResourcePointer<BridgeAccount>>();
+    return **account;
 }
 
 juce::AudioProcessorEditor* RetrackThisBridgeProcessor::createEditor()

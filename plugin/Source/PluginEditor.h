@@ -2,22 +2,20 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "SignInView.h"
 
-class RetrackThisBridgeEditor : public juce::AudioProcessorEditor,
-                                 private juce::Timer
+class RetrackThisBridgeEditor : public juce::AudioProcessorEditor
 {
 public:
     explicit RetrackThisBridgeEditor(RetrackThisBridgeProcessor&);
-    ~RetrackThisBridgeEditor() override;
+    ~RetrackThisBridgeEditor() override = default;
 
     void paint(juce::Graphics&) override;
     void resized() override;
 
 private:
-    void timerCallback() override;
-
     RetrackThisBridgeProcessor& processorRef;
-    juce::Label statusLabel;
+    SignInView view;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RetrackThisBridgeEditor)
 };

@@ -1,34 +1,19 @@
 #include "PluginEditor.h"
 
 RetrackThisBridgeEditor::RetrackThisBridgeEditor(RetrackThisBridgeProcessor& p)
-    : AudioProcessorEditor(&p), processorRef(p)
+    : AudioProcessorEditor(&p), processorRef(p), view(&p.getAccount())
 {
-    statusLabel.setJustificationType(juce::Justification::centred);
-    statusLabel.setFont(juce::Font(16.0f));
-    statusLabel.setColour(juce::Label::textColourId, juce::Colours::white);
-    addAndMakeVisible(statusLabel);
-
-    setSize(380, 120);
-    startTimerHz(10);
-}
-
-RetrackThisBridgeEditor::~RetrackThisBridgeEditor()
-{
-    stopTimer();
+    view.setHostName(BridgeAccount::hostName());
+    addAndMakeVisible(view);
+    setSize(SignInView::defaultWidth, SignInView::defaultHeight);
 }
 
 void RetrackThisBridgeEditor::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colour(0xff111113));
+    g.fillAll(brand::page);
 }
 
 void RetrackThisBridgeEditor::resized()
 {
-    statusLabel.setBounds(getLocalBounds().reduced(16));
-}
-
-void RetrackThisBridgeEditor::timerCallback()
-{
-    statusLabel.setText("Retrack This Bridge (spike)\n" + processorRef.getStatusText(),
-                         juce::dontSendNotification);
+    view.setBounds(getLocalBounds());
 }

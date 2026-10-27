@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "BridgeAccount.h"
 
 /**
  * Spike only: records whatever passes through this plugin while the host
@@ -40,6 +41,10 @@ public:
 
     juce::String getStatusText() const { return statusText; }
 
+    /** Created on the message thread when the editor first opens, then kept for
+        the life of the plugin so a sign-in keeps going with the window closed. */
+    BridgeAccount& getAccount();
+
 private:
     void startCapture(double bpm, int numerator, int denominator, double startSeconds, juce::int64 startSamples);
     void stopCapture();
@@ -48,6 +53,10 @@ private:
     std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> threadedWriter;
     juce::CriticalSection writerLock;
 
+    std::unique_ptr<juce::SharedResourcePointer<BridgeAccount>> account;
+
+    // Spike capture to the Desktop is off until the real Capture button exists.
+    std::atomic<bool> captureArmed { false };
     bool wasPlaying = false;
     double currentSampleRate = 44100.0;
     juce::String instanceId;

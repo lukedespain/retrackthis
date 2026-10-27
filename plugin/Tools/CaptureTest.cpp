@@ -42,8 +42,12 @@ namespace
         return b;
     }
 
-    /** One run: nParts parts, loop [0, loopPpq), playback starting at startPpq. */
-    void run (const juce::String& name, int nParts, double loopPpq, double startPpq, bool staleBedBlock,
+    enum class Stale { none, extraBlock, replacesFirst };
+
+    /** One run: nParts parts, loop [0, loopPpq), playback starting at startPpq.
+        Stale::replacesFirst is what Logic did in real use: the Stereo Out copy's first
+        block has the real audio but the old playhead position. */
+    void run (const juce::String& name, int nParts, double loopPpq, double startPpq, Stale stale,
               int loopsToPlay, bool cycleOn)
     {
         std::cout << name << "\n";
@@ -116,16 +120,16 @@ namespace
                 mix.addSample (1, s, source (4, t));
             }
 
-            if (firstBlock && staleBedBlock)
+            if (firstBlock && stale == Stale::extraBlock)
             {
                 juce::AudioBuffer<float> junk (2, block);
                 junk.clear();
                 blockAt ((juce::int64) (583.6 * spp), true); // the old playhead position
                 bed.processBlock (junk, midi);
             }
-            firstBlock = false;
-            blockAt (pos, true);
+            blockAt (firstBlock && stale == Stale::replacesFirst ? (juce::int64) (583.6 * spp) : pos, true);
             bed.processBlock (mix, midi);
+            firstBlock = false;
 
             pos = wrap <= block ? (juce::int64) (block - wrap) : pos + block;
             playedLoopSamples += block;
@@ -185,10 +189,12 @@ int main()
 {
     juce::ScopedJuceInitialiser_GUI gui;
     // Loops of 8 quarter notes at 108 BPM = 213333.33 samples, so wraps land mid-block.
-    run ("4 parts, cycle on, start at the loop start, stale first Bed block", 4, 8.0, 0.0, true, 4, true);
-    run ("2 parts, start mid-loop (waits for the wrap)", 2, 8.0, 3.3, false, 3, true);
-    run ("3 parts, stopped after 2 loops (should fail cleanly)", 3, 8.0, 0.0, false, 2, true);
-    run ("1 part, cycle off, play then stop", 1, 8.0, 4.0, false, 2, false);
+    run ("4 parts, cycle on, start at the loop start, extra stale Bed block", 4, 8.0, 0.0, Stale::extraBlock, 4, true);
+    run ("4 parts, the Bed's first block has a stale playhead (seen in Logic)", 4, 8.0, 0.0, Stale::replacesFirst, 4, true);
+    run ("3 parts, play starts a little before the loop (pre-roll)", 3, 8.0, -0.03, Stale::none, 3, true);
+    run ("2 parts, start mid-loop (waits for the wrap)", 2, 8.0, 3.3, Stale::none, 3, true);
+    run ("3 parts, stopped after 2 loops (should fail cleanly)", 3, 8.0, 0.0, Stale::none, 2, true);
+    run ("1 part, cycle off, play then stop", 1, 8.0, 4.0, Stale::none, 2, false);
 
     std::cout << (failures == 0 ? "\nALL PASSED\n" : "\nFAILURES: " + juce::String (failures) + "\n");
     return failures == 0 ? 0 : 1;

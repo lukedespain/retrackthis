@@ -79,6 +79,8 @@ public:
     bool isLoopingNow() const { return loopingNow; }
     int getTimeSigNumerator() const { return timeSigNum; }
     int getTimeSigDenominator() const { return timeSigDen; }
+    /** The playhead numbers of the first blocks after Arm, for the capture log. */
+    juce::String describeFirstBlocks() const;
 
 private:
     void writeAndMute(juce::AudioBuffer<float>&, const CaptureClock::Segment&);
@@ -97,6 +99,19 @@ private:
     std::vector<std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter>> bedWriters;
     CaptureClock clock;
     int myPartIndex = -1;
+    // The last block before recording began, in case it turns out to be the start of loop 1
+    // (Logic can hand a copy its first block with a stale playhead position).
+    juce::AudioBuffer<float> leadBuffer;
+    int previousBlockLength = 0;
+
+    struct BlockNote
+    {
+        double ppq = 0.0, loopStart = 0.0, loopEnd = 0.0;
+        int numSamples = 0, segments = 0, leadIn = 0, stateAfter = 0;
+        bool playing = false, looping = false;
+    };
+    std::array<BlockNote, 48> blockNotes;
+    std::atomic<int> blockNoteCount { 0 };
 
     std::atomic<bool> armed { false };
     std::atomic<juce::uint32> lastBlockMs { 0 };

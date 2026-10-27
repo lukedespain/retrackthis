@@ -31,6 +31,9 @@ public:
     {
         int start = 0, length = 0;
         int pass = 0;
+        /** Samples of this pass that came before this block (a late start). Write the
+            previous block's audio there if it was that long, otherwise silence. */
+        int leadIn = 0;
     };
 
     enum class State { idle, waiting, recording, done, failed };
@@ -49,6 +52,8 @@ public:
     juce::int64 getTotalSamples() const { return totalSamples; }
 
     static constexpr double minSeconds = 5.0;
+    /** Play that starts up to this late into the loop still counts as starting at the loop start. */
+    static constexpr double maxLateSeconds = 0.1;
 
 private:
     void fail (Failure f) { state = State::failed; failure = f; }

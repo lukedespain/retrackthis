@@ -108,6 +108,7 @@ WorkspaceView::WorkspaceView (RetrackProcessor& p, RetrackAccount& a)
     setLookAndFeel (lnf.get());
 
     for (auto* c : std::initializer_list<juce::Component*> { &mixer, &cycle, &light, &armButton, &disarmButton, &retryButton,
+                                                             &cancelButton, &setupButton,
                                                              &postButton, &recaptureButton, &filesButton, &payAgainButton,
                                                              &newCaptureButton, &backButton, &nextButton, &walkthrough,
                                                              &titleEditor, &notesEditor, &budgetEditor, &instrumentBox, &dueBox,
@@ -155,6 +156,8 @@ WorkspaceView::WorkspaceView (RetrackProcessor& p, RetrackAccount& a)
     armButton.onClick = [this] { session.arm(); };
     disarmButton.onClick = [this] { session.disarm(); };
     retryButton.onClick = [this] { session.rearm(); };
+    cancelButton.onClick = [this] { session.disarm(); };
+    setupButton.onClick = [this] { session.disarm(); };
     recaptureButton.onClick = [this] { drafts.clear(); session.clearTake(); };
     filesButton.onClick = [this] { session.getTake().folder.startAsProcess(); };
     payAgainButton.onClick = [this] { openPaymentPage(); };
@@ -465,7 +468,7 @@ void WorkspaceView::paintRight (juce::Graphics& g, juce::Rectangle<float> card)
                 if (parts > 1)
                     drawText (g, caption, font (12.5f), muted, inner.withTop ((float) cycle.getBottom() + 10.0f), juce::Justification::centredTop);
                 else
-                    drawText (g, caption, font (12.5f), muted, inner.withTop ((float) armButton.getBottom() + 14.0f), juce::Justification::centredTop);
+                    drawText (g, caption, font (12.5f), muted, inner.withTop (inner.getY() + 60.0f), juce::Justification::centredTop);
             }
             break;
         }
@@ -503,7 +506,7 @@ void WorkspaceView::paintRight (juce::Graphics& g, juce::Rectangle<float> card)
             g.drawText ("Part", juce::Rectangle<float> (inner.getX() + nameW, y, colW, 16.0f), juce::Justification::centredLeft, false);
             g.drawText ("Bed", juce::Rectangle<float> (inner.getX() + nameW + colW + 8.0f, y, colW, 16.0f), juce::Justification::centredLeft, false);
             y += 20.0f;
-            for (int i = 0; i < names.size() && y < inner.getBottom() - 30.0f; ++i)
+            for (int i = 0; i < names.size() && y < inner.getBottom() - 80.0f; ++i)
             {
                 float fill = i < pass ? 1.0f : i == pass ? (float) juce::jlimit (0.0, 1.0, cycleOff ? 0.5 : secs / loopSecs) : 0.0f;
                 g.setColour (ink);
@@ -714,11 +717,11 @@ void WorkspaceView::layoutRight()
             }
             else
             {
-                const bool multi = names.size() > 1;
-                centreButton (armButton, inner.getY() + (multi ? 18.0f : 70.0f), 180.0f);
-                if (multi)
+                // Arm sits where Disarm will be, at the bottom.
+                centreButton (armButton, inner.getBottom() - 40.0f, 160.0f);
+                if (names.size() > 1)
                 {
-                    cycle.setBounds (inner.withTop ((float) armButton.getBottom() + 28.0f).withHeight (54.0f).toNearestInt());
+                    cycle.setBounds (inner.withTop (inner.getY() + 18.0f).withHeight (54.0f).toNearestInt());
                     shown.add (&cycle);
                 }
             }
@@ -727,12 +730,14 @@ void WorkspaceView::layoutRight()
         case Screen::armed:
             light.setBounds (juce::Rectangle<int> (70, 70).withCentre ({ (int) card.getCentreX(), (int) inner.getY() + 48 }));
             shown.add (&light);
-            centreButton (disarmButton, inner.getBottom() - 40.0f, 140.0f);
+            centreButton (disarmButton, inner.getBottom() - 40.0f, 160.0f);
             break;
         case Screen::capturing:
+            centreButton (cancelButton, inner.getBottom() - 40.0f, 160.0f);
             break;
         case Screen::failed:
             centreButton (retryButton, inner.getBottom() - 40.0f, 160.0f);
+            centreButton (setupButton, inner.getBottom() - 84.0f, 160.0f);
             break;
         case Screen::jobs:
         {
@@ -1011,8 +1016,13 @@ void WorkspaceView::post()
     for (int i = 0; i < drafts.size(); ++i)
     {
         auto& d = drafts.getReference (i);
+        // The site needs a description, and notes are optional here, so say plainly what the job is.
+        auto notes = d.notes.isNotEmpty() ? d.notes
+                                          : "Record a new " + d.instrumentLabel.toLowerCase() + " part for " + r.title
+                                                + ". The demo is the current " + d.trackName
+                                                + " part, and the backing track is the rest of the song.";
         r.jobs.add ({ d.trackName, take.partFiles[i], take.bedFiles[i], d.instrumentId, d.instrumentLabel,
-                      d.budget.getIntValue(), d.dueDays, d.notes });
+                      d.budget.getIntValue(), d.dueDays, notes });
     }
 
     screen = Screen::posting;

@@ -120,6 +120,7 @@ bool RetrackSession::arm()
     for (auto* b : getBeds()) b->setArmed (true);
 
     failureText = {};
+    lastMembersSignature = membersSignature(); // armed with exactly these copies
     setPhase (Phase::armed);
     return true;
 }
@@ -154,6 +155,25 @@ double RetrackSession::getSecondsInPass() const
     return beds.isEmpty() ? 0.0 : beds[0]->getSecondsInPass();
 }
 
+juce::String RetrackSession::membersSignature() const
+{
+    juce::String sig;
+    for (auto* p : getParts()) sig << "p:" << p->getTrackName() << ";";
+    for (auto* b : getBeds())  sig << "b:" << b->getTrackName() << ";";
+    return sig;
+}
+
+void RetrackSession::writeCaptureLog (const juce::String& outcome) const
+{
+    // What each copy saw when play started. Kept next to the captures to explain odd takes.
+    juce::String log;
+    log << juce::Time::getCurrentTime().toISO8601 (true) << "  " << outcome << "\n\n";
+    for (auto* p : getParts()) log << p->describeFirstBlocks() << "\n";
+    for (auto* b : getBeds())  log << b->describeFirstBlocks() << "\n";
+    capturesFolder().createDirectory();
+    capturesFolder().getChildFile ("last-capture-log.txt").replaceWithText (log);
+}
+
 void RetrackSession::setPhase (Phase p)
 {
     phase = p;
@@ -163,12 +183,30 @@ void RetrackSession::setPhase (Phase p)
 void RetrackSession::timerCallback()
 {
     // Copies added, removed, renamed or switched role: refresh the checklists.
-    juce::String sig;
-    for (auto* p : getParts()) sig << "p:" << p->getTrackName() << ";";
-    for (auto* b : getBeds())  sig << "b:" << b->getTrackName() << ";";
+    auto sig = membersSignature();
     if (sig != lastMembersSignature)
     {
         lastMembersSignature = sig;
+
+        // A copy added, removed or renamed after Arm: arm again with the new set of tracks,
+        // or stop a capture that's already running, since its loops no longer match.
+        if (phase == Phase::armed)
+        {
+            if (whyNotReady().isEmpty())
+                arm();
+            else
+                disarm();
+            return;
+        }
+        if (phase == Phase::capturing)
+        {
+            for (auto* p : getParts()) p->closeTake();
+            for (auto* b : getBeds())  b->closeTake();
+            failureText = "A track with Retrack was added, removed or renamed while capturing. Arm and press play to try again.";
+            writeCaptureLog ("failed: members changed");
+            setPhase (Phase::failed);
+            return;
+        }
         sendChangeMessage();
     }
 
@@ -203,6 +241,7 @@ void RetrackSession::timerCallback()
             case CaptureClock::Failure::needsCycle:
             case CaptureClock::Failure::none:          break;
         }
+        writeCaptureLog ("failed: " + failureText);
         setPhase (Phase::failed);
         return;
     }
@@ -215,6 +254,7 @@ void RetrackSession::timerCallback()
         take.timeSigNum = beds[0]->getTimeSigNumerator();
         take.timeSigDen = beds[0]->getTimeSigDenominator();
         for (auto* m : all) m->closeTake(); // flushes every file
+        writeCaptureLog ("captured");
         setPhase (Phase::captured);
         return;
     }

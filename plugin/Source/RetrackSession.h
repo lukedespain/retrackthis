@@ -62,6 +62,8 @@ public:
 private:
     void timerCallback() override;
     void setPhase (Phase);
+    void writeCaptureLog (const juce::String& outcome) const;
+    juce::String membersSignature() const;
     static juce::File capturesFolder();
 
     mutable juce::SpinLock membersLock;

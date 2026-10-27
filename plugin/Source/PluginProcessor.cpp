@@ -17,9 +17,13 @@ RetrackProcessor::~RetrackProcessor()
     writerThread.stopThread(2000);
 }
 
-void RetrackProcessor::prepareToPlay(double sampleRate, int)
+void RetrackProcessor::prepareToPlay(double sampleRate, int maxBlock)
 {
     sampleRateNow = sampleRate;
+    const juce::ScopedLock sl(takeLock);
+    leadBuffer.setSize(juce::jmax(2, getTotalNumInputChannels()),
+                       juce::jmax(maxBlock, 8192) + (int) (sampleRate * CaptureClock::maxLateSeconds) + 16);
+    previousBlockLength = 0;
 }
 
 void RetrackProcessor::releaseResources() {}
@@ -111,6 +115,8 @@ void RetrackProcessor::prepareTake(const juce::File& folder, int partIndex, int 
     }
 
     clock.reset(numParts, needsLoop);
+    previousBlockLength = 0;
+    blockNoteCount = 0;
     clockState = (int) CaptureClock::State::idle;
     clockFailure = (int) CaptureClock::Failure::none;
     clockPass = 0;
@@ -132,6 +138,27 @@ void RetrackProcessor::writeAndMute(juce::AudioBuffer<float>& buffer, const Capt
     const float* ptrs[8] = {};
     for (int c = 0; c < channels; ++c)
         ptrs[c] = buffer.getReadPointer(c, seg.start);
+
+    if (seg.leadIn > 0)
+    {
+        // A late start: the missed samples are the block before this one when it was exactly
+        // that long (a stale block), otherwise there's nothing to recover and they stay silent.
+        auto* writer = myPartIndex >= 0 ? (seg.pass == myPartIndex ? partWriter.get() : nullptr)
+                                        : (juce::isPositiveAndBelow(seg.pass, (int) bedWriters.size()) ? bedWriters[(size_t) seg.pass].get() : nullptr);
+        const int lead = juce::jmin(seg.leadIn, leadBuffer.getNumSamples());
+        int from = 0;
+        if (std::abs(previousBlockLength - lead) <= 2 && previousBlockLength >= lead)
+            from = previousBlockLength - lead;
+        else
+            leadBuffer.clear(0, lead);
+        if (writer != nullptr)
+        {
+            const float* lp[8] = {};
+            for (int c = 0; c < juce::jmin(leadBuffer.getNumChannels(), 8); ++c)
+                lp[c] = leadBuffer.getReadPointer(c, from);
+            writer->write(lp, lead);
+        }
+    }
 
     if (myPartIndex >= 0)
     {
@@ -190,14 +217,44 @@ void RetrackProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     if (! tl.isLocked())
         return;
 
-    for (auto& seg : clock.advance(pos))
+    auto segments = clock.advance(pos);
+    for (auto& seg : segments)
         writeAndMute(buffer, seg);
+
+    if (segments.isEmpty() && clock.getState() != CaptureClock::State::recording
+        && buffer.getNumSamples() <= leadBuffer.getNumSamples())
+    {
+        for (int c = 0; c < leadBuffer.getNumChannels(); ++c)
+            leadBuffer.copyFrom(c, 0, buffer, juce::jmin(c, buffer.getNumChannels() - 1), 0, buffer.getNumSamples());
+        previousBlockLength = buffer.getNumSamples();
+    }
+
+    if (const int n = blockNoteCount.load(); n < (int) blockNotes.size() && pos.playing)
+    {
+        blockNotes[(size_t) n] = { pos.ppq, pos.loopStart, pos.loopEnd, pos.numSamples, segments.size(),
+                                   segments.isEmpty() ? 0 : segments[0].leadIn, (int) clock.getState(), pos.playing, pos.looping };
+        blockNoteCount = n + 1;
+    }
 
     clockState = (int) clock.getState();
     clockFailure = (int) clock.getFailure();
     clockPass = clock.getPass();
     samplesInPass = clock.getSamplesInPass();
     totalSamples = clock.getTotalSamples();
+}
+
+juce::String RetrackProcessor::describeFirstBlocks() const
+{
+    juce::String out;
+    out << (getTrackName().isEmpty() ? juce::String("(no name)") : getTrackName()) << (isBed() ? " [bed]" : " [part]") << "\n";
+    for (int i = 0; i < juce::jmin(blockNoteCount.load(), (int) blockNotes.size()); ++i)
+    {
+        auto& b = blockNotes[(size_t) i];
+        out << "  ppq " << juce::String(b.ppq, 6) << "  loop " << juce::String(b.loopStart, 3) << "-" << juce::String(b.loopEnd, 3)
+            << "  n " << b.numSamples << (b.looping ? "  cycle" : "  no-cycle") << "  segs " << b.segments
+            << "  lead " << b.leadIn << "  state " << b.stateAfter << "\n";
+    }
+    return out;
 }
 
 void RetrackProcessor::checkForStall()

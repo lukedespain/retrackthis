@@ -108,6 +108,8 @@ private:
     Pill armButton { "Arm", Pill::Style::primary };
     Pill disarmButton { "Disarm", Pill::Style::secondary };
     Pill retryButton { "Arm again", Pill::Style::primary };
+    Pill cancelButton { "Cancel", Pill::Style::secondary };
+    Pill setupButton { "Back to setup", Pill::Style::text };
     Pill postButton { "Post", Pill::Style::primary };
     Pill recaptureButton { "Recapture", Pill::Style::text };
     Pill filesButton { "Show files", Pill::Style::text };

@@ -83,8 +83,11 @@ juce::Array<CaptureClock::Segment> CaptureClock::advance (const Position& p)
         return out;
 
     // Logic sometimes hands one copy a stale block (old playhead) right as play starts.
+    // A block that starts just before the loop and runs into it is a pre-roll, not stale.
+    const double blockEndPpq = p.ppq + p.numSamples / samplesPerPpq;
+    const bool runsIntoLoop = state == State::waiting && p.ppq < p.loopStart && blockEndPpq > p.loopStart + onePpqSample;
     const bool outsideLoop = p.ppq < p.loopStart - onePpqSample || p.ppq >= p.loopEnd + onePpqSample;
-    if (outsideLoop)
+    if (outsideLoop && ! runsIntoLoop)
     {
         if (state == State::recording)
             fail (Failure::playheadMoved);
@@ -100,11 +103,16 @@ juce::Array<CaptureClock::Segment> CaptureClock::advance (const Position& p)
     // Samples from the block start to the loop end (Logic wraps on the sample after this).
     const int toLoopEnd = (int) std::ceil ((p.loopEnd - p.ppq) * samplesPerPpq - 1.0e-6);
 
-    int cursor = 0;
+    int cursor = 0, leadIn = 0;
     if (state == State::waiting)
     {
-        if ((p.ppq - p.loopStart) * samplesPerPpq < 1.0)
+        const double late = (p.ppq - p.loopStart) * samplesPerPpq;
+        if (runsIntoLoop)
+            cursor = juce::jlimit (0, p.numSamples - 1, (int) std::ceil (-late - 1.0e-6)); // pre-roll: begin at the loop start
+        else if (late < 1.0)
             cursor = 0; // started right at the loop start
+        else if (late <= maxLateSeconds * p.sampleRate)
+            leadIn = (int) std::llround (late); // this copy's first block was stale or late; every copy still starts loop 1 together
         else if (toLoopEnd < p.numSamples)
             cursor = toLoopEnd; // started mid-loop: begin at the wrap
         else
@@ -113,14 +121,15 @@ juce::Array<CaptureClock::Segment> CaptureClock::advance (const Position& p)
         state = State::recording;
         loopTake = true;
         pass = 0;
-        samplesInPass = 0;
+        samplesInPass = leadIn;
+        totalSamples += leadIn;
     }
 
     int wrapAt = toLoopEnd;
     while (cursor < p.numSamples && state == State::recording)
     {
         const int end = (wrapAt > cursor && wrapAt <= p.numSamples) ? wrapAt : p.numSamples;
-        out.add ({ cursor, end - cursor, pass });
+        out.add ({ cursor, end - cursor, pass, out.isEmpty() ? leadIn : 0 });
         samplesInPass += end - cursor;
         totalSamples += end - cursor;
         cursor = end;

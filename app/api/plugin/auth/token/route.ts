@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cleanAvatar } from "@/lib/avatar";
+import { avatarSvgFor, cleanAvatar } from "@/lib/avatar";
 import { db } from "@/lib/db";
 import { POLL_INTERVAL_S, newPluginToken, sha256 } from "@/lib/pluginAuth";
 
@@ -42,6 +42,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     status: "approved",
     token,
-    user: { name: user?.name ?? "", avatar: cleanAvatar(user?.avatar) },
+    user: { name: user?.name ?? "", avatar: cleanAvatar(user?.avatar), avatarSvg: avatarSvgFor(user?.avatar) },
   });
 }

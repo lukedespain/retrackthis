@@ -59,7 +59,10 @@ export const NAMES: Record<string, string> = {
   chain: "Gold chain", kandi: "Kandi", phones: "DJ cans", whistle: "Whistle",
 };
 
-const o = (fill: string, extra = "") => `fill="${fill}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" ${extra}`;
+// Browsers keep the first of two same-named attributes, so a stroke-width in `extra`
+// never applied; drop it so the SVG is also valid XML (for the Bridge plugin).
+const o = (fill: string, extra = "") =>
+  `fill="${fill}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" ${extra.replace(/stroke-width="[^"]*"\s*/, "")}`;
 const line = (w = 2) => `fill="none" stroke="${INK}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
 const tube = (d: string, color: string, w = 5.5) => `<path d="${d}" fill="none" stroke="${INK}" stroke-width="${w + 3.4}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round"/>`;
 const ring = (d: string, color: string, w = 1.8) => `<path d="${d}" fill="none" stroke="${INK}" stroke-width="${w + 1.8}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round"/>`;
@@ -337,6 +340,12 @@ export function cleanAvatar(input: unknown): AvatarSettings | null {
     a[k] = typeof v === "string" && PAL[k].includes(v) ? v : nearest(v, PAL[k]);
   }
   return a;
+}
+
+/** Ready-to-draw round avatar for the Bridge plugin, or null if they haven't made one. */
+export function avatarSvgFor(input: unknown): string | null {
+  const a = cleanAvatar(input);
+  return a ? avatarSvg(a, "rtb") : null;
 }
 
 /** Deterministic avatar for someone who hasn't made one. */

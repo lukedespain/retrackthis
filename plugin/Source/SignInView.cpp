@@ -22,7 +22,7 @@ namespace
     }
 }
 
-SignInView::SignInView (BridgeAccount* acc) : account (acc)
+SignInView::SignInView (RetrackAccount* acc) : account (acc)
 {
     for (auto* b : { &primary, &secondary, &quiet })
         addChildComponent (b);
@@ -33,13 +33,13 @@ SignInView::SignInView (BridgeAccount* acc) : account (acc)
         if (state.phase == Phase::waiting)
             account->openBrowserAgain();
         else
-            account->startSignIn ("Retrack This Bridge (" + hostName + ")");
+            account->startSignIn ("Retrack (" + hostName + ")");
     };
     secondary.onClick = [this] { if (account != nullptr) account->openBrowserAgain(); };
     quiet.onClick = [this]
     {
         if (state.phase == Phase::signedOut)
-            juce::URL (BridgeAccount::baseUrl() + "/sign-up").launchInDefaultBrowser();
+            juce::URL (RetrackAccount::baseUrl() + "/sign-up").launchInDefaultBrowser();
         else if (state.phase == Phase::signedIn)
         {
             if (account != nullptr) account->signOut();
@@ -63,7 +63,7 @@ SignInView::~SignInView()
         account->removeChangeListener (this);
 }
 
-void SignInView::setState (const BridgeAccount::State& s)
+void SignInView::setState (const RetrackAccount::State& s)
 {
     state = s;
     updateButtons();
@@ -180,7 +180,7 @@ void SignInView::mouseUp (const juce::MouseEvent& e)
 
     juce::PopupMenu menu;
     menu.addSectionHeader (state.name);
-    menu.addItem ("Open retrackthis.com", [] { juce::URL (BridgeAccount::baseUrl() + "/producers").launchInDefaultBrowser(); });
+    menu.addItem ("Open retrackthis.com", [] { juce::URL (RetrackAccount::baseUrl() + "/producers").launchInDefaultBrowser(); });
     menu.addSeparator();
     menu.addItem ("Sign out", [this] { if (account != nullptr) account->signOut(); });
     menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this)
@@ -210,14 +210,7 @@ void SignInView::paintHeader (juce::Graphics& g)
 {
     auto y = headerH / 2.0f + 4.0f;
     drawBadge (g, { pad, y - 13.0f, 26.0f, 26.0f });
-    auto w = drawWordmark (g, { pad + 34.0f, y + 6.0f }, 17.0f);
-
-    g.setColour (line.withAlpha (0.18f));
-    g.fillRect (pad + 34.0f + w + 10.0f, y - 8.0f, 1.0f, 16.0f);
-    g.setColour (muted);
-    g.setFont (font (15.0f, Weight::medium));
-    g.drawText ("Bridge", juce::Rectangle<float> (pad + 34.0f + w + 21.0f, y - 10.0f, 80.0f, 20.0f),
-                juce::Justification::centredLeft, false);
+    drawWordmark (g, { pad + 34.0f, y + 6.0f }, 17.0f);
 
     if (state.phase == Phase::signedIn)
     {
@@ -237,8 +230,8 @@ void SignInView::paintSignedOut (juce::Graphics& g, juce::Rectangle<float> card)
 {
     auto inner = card.reduced (32.0f, 0.0f);
     drawBadge (g, juce::Rectangle<float> (46.0f, 46.0f).withCentre ({ card.getCentreX(), card.getY() + 50.0f }));
-    auto y = drawBlock (g, "Sign in to Retrack This", font (20.0f, Weight::semibold), ink, inner.withY (card.getY() + 88.0f));
-    drawBlock (g, "Connect Bridge to your account so you can post jobs straight from " + hostName + ".",
+    auto y = drawBlock (g, "Sign in to RetrackThis", font (20.0f, Weight::semibold), ink, inner.withY (card.getY() + 88.0f));
+    drawBlock (g, "Connect Retrack to your account so you can post jobs straight from " + hostName + ".",
                font (14.0f), muted, inner.withY (y + 6.0f), 1.25f);
 }
 

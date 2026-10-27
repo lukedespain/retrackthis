@@ -27,7 +27,7 @@ namespace brand
     /** The offset badge logo (purple disc, play glyph, black disc down-right). */
     void drawBadge (juce::Graphics&, juce::Rectangle<float> area);
 
-    /** "Retrack This" with only "This" in Iris. Returns the width used. */
+    /** "RetrackThis" (no space, as in the plugin) with only "This" in Iris. Returns the width used. */
     float drawWordmark (juce::Graphics&, juce::Point<float> baselineLeft, float px);
 
     /** White card with the site's large radius, hairline edge and soft shadow. */

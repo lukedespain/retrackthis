@@ -2,10 +2,10 @@
 
 #include <JuceHeader.h>
 #include "Brand.h"
-#include "BridgeAccount.h"
+#include "RetrackAccount.h"
 
 /**
- * The whole Bridge window for now: a header with the logo (and the signed-in
+ * The whole Retrack window for now: a header with the logo (and the signed-in
  * account), and a card for whichever sign-in step we're on. The capture UI
  * will replace the signed-in card later.
  */
@@ -15,10 +15,10 @@ class SignInView : public juce::Component,
 {
 public:
     /** Pass nullptr to drive it with setState() only (used by the snapshot tool). */
-    explicit SignInView (BridgeAccount*);
+    explicit SignInView (RetrackAccount*);
     ~SignInView() override;
 
-    void setState (const BridgeAccount::State&);
+    void setState (const RetrackAccount::State&);
     /** Shown in copy and sent to the site as part of the client name. */
     void setHostName (const juce::String& name) { hostName = name; repaint(); }
     /** Freezes the countdown and spinner (snapshot tool). */
@@ -33,7 +33,7 @@ public:
     static constexpr int defaultHeight = 380;
 
 private:
-    using Phase = BridgeAccount::State::Phase;
+    using Phase = RetrackAccount::State::Phase;
     using Pill = brand::PillButton;
 
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
@@ -50,8 +50,8 @@ private:
     void paintError (juce::Graphics&, juce::Rectangle<float> card);
     void paintSpinner (juce::Graphics&, juce::Point<float> centre);
 
-    BridgeAccount* account;
-    BridgeAccount::State state;
+    RetrackAccount* account;
+    RetrackAccount::State state;
     juce::String hostName { "your DAW" };
     juce::Time fixedNow;
     bool chipHover = false;

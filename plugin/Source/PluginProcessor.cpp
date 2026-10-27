@@ -1,7 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-RetrackThisBridgeProcessor::RetrackThisBridgeProcessor()
+RetrackProcessor::RetrackProcessor()
     : AudioProcessor(BusesProperties()
                           .withInput("Input", juce::AudioChannelSet::stereo(), true)
                           .withOutput("Output", juce::AudioChannelSet::stereo(), true))
@@ -10,34 +10,34 @@ RetrackThisBridgeProcessor::RetrackThisBridgeProcessor()
     backgroundThread.startThread();
 }
 
-RetrackThisBridgeProcessor::~RetrackThisBridgeProcessor()
+RetrackProcessor::~RetrackProcessor()
 {
     stopCapture();
     backgroundThread.stopThread(2000);
 }
 
-void RetrackThisBridgeProcessor::prepareToPlay(double sampleRate, int)
+void RetrackProcessor::prepareToPlay(double sampleRate, int)
 {
     currentSampleRate = sampleRate;
 }
 
-void RetrackThisBridgeProcessor::releaseResources()
+void RetrackProcessor::releaseResources()
 {
     stopCapture();
 }
 
-bool RetrackThisBridgeProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
+bool RetrackProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
     return layouts.getMainOutputChannelSet() == layouts.getMainInputChannelSet()
            && !layouts.getMainOutputChannelSet().isDisabled();
 }
 
-void RetrackThisBridgeProcessor::startCapture(double bpm, int numerator, int denominator,
+void RetrackProcessor::startCapture(double bpm, int numerator, int denominator,
                                                double startSeconds, juce::int64 startSamples)
 {
     auto desktop = juce::File::getSpecialLocation(juce::File::userDesktopDirectory);
     auto timestamp = juce::Time::getCurrentTime().formatted("%Y%m%d-%H%M%S");
-    auto baseName = "BridgeCapture-" + timestamp + "-" + instanceId;
+    auto baseName = "RetrackCapture-" + timestamp + "-" + instanceId;
 
     lastCaptureFile = desktop.getNonexistentChildFile(baseName, ".wav");
     auto sidecarFile = desktop.getChildFile(lastCaptureFile.getFileNameWithoutExtension() + ".txt");
@@ -80,7 +80,7 @@ void RetrackThisBridgeProcessor::startCapture(double bpm, int numerator, int den
     statusText = "Recording -> " + lastCaptureFile.getFileName();
 }
 
-void RetrackThisBridgeProcessor::stopCapture()
+void RetrackProcessor::stopCapture()
 {
     const juce::ScopedLock sl(writerLock);
     if (threadedWriter != nullptr)
@@ -90,7 +90,7 @@ void RetrackThisBridgeProcessor::stopCapture()
     }
 }
 
-void RetrackThisBridgeProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
+void RetrackProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals noDenormals;
 
@@ -140,21 +140,21 @@ void RetrackThisBridgeProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     juce::ignoreUnused(buffer);
 }
 
-BridgeAccount& RetrackThisBridgeProcessor::getAccount()
+RetrackAccount& RetrackProcessor::getAccount()
 {
     JUCE_ASSERT_MESSAGE_THREAD
     if (account == nullptr)
-        account = std::make_unique<juce::SharedResourcePointer<BridgeAccount>>();
+        account = std::make_unique<juce::SharedResourcePointer<RetrackAccount>>();
     return **account;
 }
 
-juce::AudioProcessorEditor* RetrackThisBridgeProcessor::createEditor()
+juce::AudioProcessorEditor* RetrackProcessor::createEditor()
 {
-    return new RetrackThisBridgeEditor(*this);
+    return new RetrackEditor(*this);
 }
 
 // This creates new instances of the plugin.
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new RetrackThisBridgeProcessor();
+    return new RetrackProcessor();
 }

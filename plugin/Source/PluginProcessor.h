@@ -1,7 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "BridgeAccount.h"
+#include "RetrackAccount.h"
 
 /**
  * Spike only: records whatever passes through this plugin while the host
@@ -10,11 +10,11 @@
  * alter the audio (pure pass-through) — this is purely to prove two
  * instances can agree on "where we are" in the host.
  */
-class RetrackThisBridgeProcessor : public juce::AudioProcessor
+class RetrackProcessor : public juce::AudioProcessor
 {
 public:
-    RetrackThisBridgeProcessor();
-    ~RetrackThisBridgeProcessor() override;
+    RetrackProcessor();
+    ~RetrackProcessor() override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -43,17 +43,17 @@ public:
 
     /** Created on the message thread when the editor first opens, then kept for
         the life of the plugin so a sign-in keeps going with the window closed. */
-    BridgeAccount& getAccount();
+    RetrackAccount& getAccount();
 
 private:
     void startCapture(double bpm, int numerator, int denominator, double startSeconds, juce::int64 startSamples);
     void stopCapture();
 
-    juce::TimeSliceThread backgroundThread { "Bridge Capture Writer" };
+    juce::TimeSliceThread backgroundThread { "Retrack Capture Writer" };
     std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> threadedWriter;
     juce::CriticalSection writerLock;
 
-    std::unique_ptr<juce::SharedResourcePointer<BridgeAccount>> account;
+    std::unique_ptr<juce::SharedResourcePointer<RetrackAccount>> account;
 
     // Spike capture to the Desktop is off until the real Capture button exists.
     std::atomic<bool> captureArmed { false };
@@ -63,5 +63,5 @@ private:
     juce::File lastCaptureFile;
     juce::String statusText { "Idle - waiting for playback" };
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RetrackThisBridgeProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RetrackProcessor)
 };

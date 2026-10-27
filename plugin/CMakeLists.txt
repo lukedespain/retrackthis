@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(RetrackThisBridge VERSION 0.1.0)
+project(Retrack VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS version" FORCE)
 
 # Which site the plugin signs in to. Override for local testing:
-#   cmake -B build -DRT_BRIDGE_BASE_URL=http://localhost:3000
-set(RT_BRIDGE_BASE_URL "https://retrackthis.com" CACHE STRING "Retrack This site the plugin talks to")
+#   cmake -B build -DRT_BASE_URL=http://localhost:3000
+set(RT_BASE_URL "https://retrackthis.com" CACHE STRING "RetrackThis site the plugin talks to")
 
 include(FetchContent)
 FetchContent_Declare(
@@ -19,7 +19,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(JUCE)
 
-juce_add_binary_data(BridgeAssets
+juce_add_binary_data(RetrackAssets
     SOURCES
         Assets/badge.svg
         Assets/fonts/Geist-Regular.ttf
@@ -29,19 +29,19 @@ juce_add_binary_data(BridgeAssets
 )
 
 # Shared by the plugin and the snapshot tool.
-set(BRIDGE_UI_SOURCES
+set(RETRACK_UI_SOURCES
     Source/Brand.cpp
-    Source/BridgeAccount.cpp
+    Source/RetrackAccount.cpp
     Source/SignInView.cpp
 )
 
-juce_add_plugin(RetrackThisBridge
-    COMPANY_NAME "Retrack This"
-    BUNDLE_ID "com.retrackthis.bridge"
+juce_add_plugin(Retrack
+    COMPANY_NAME "RetrackThis"
+    BUNDLE_ID "com.retrackthis.retrack"
     PLUGIN_MANUFACTURER_CODE RtTh
-    PLUGIN_CODE Brdg
+    PLUGIN_CODE Rtrk
     FORMATS AU Standalone
-    PRODUCT_NAME "Retrack This Bridge"
+    PRODUCT_NAME "Retrack"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
@@ -50,26 +50,26 @@ juce_add_plugin(RetrackThisBridge
     COPY_PLUGIN_AFTER_BUILD TRUE
 )
 
-juce_generate_juce_header(RetrackThisBridge)
+juce_generate_juce_header(Retrack)
 
-target_sources(RetrackThisBridge
+target_sources(Retrack
     PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
-        ${BRIDGE_UI_SOURCES}
+        ${RETRACK_UI_SOURCES}
 )
 
-target_compile_definitions(RetrackThisBridge
+target_compile_definitions(Retrack
     PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
-        RT_BRIDGE_BASE_URL="${RT_BRIDGE_BASE_URL}"
+        RT_BASE_URL="${RT_BASE_URL}"
 )
 
-target_link_libraries(RetrackThisBridge
+target_link_libraries(Retrack
     PRIVATE
-        BridgeAssets
+        RetrackAssets
         juce::juce_audio_utils
         juce::juce_audio_formats
     PUBLIC
@@ -79,19 +79,19 @@ target_link_libraries(RetrackThisBridge
 )
 
 # Renders every sign-in state to PNGs, for reviewing the design without opening Logic:
-#   ./build/BridgeSnapshots_artefacts/Debug/BridgeSnapshots <out-dir>
-juce_add_console_app(BridgeSnapshots PRODUCT_NAME "BridgeSnapshots")
-juce_generate_juce_header(BridgeSnapshots)
-target_sources(BridgeSnapshots PRIVATE Tools/Snapshots.cpp ${BRIDGE_UI_SOURCES})
-target_compile_definitions(BridgeSnapshots
+#   ./build/RetrackSnapshots_artefacts/Debug/RetrackSnapshots <out-dir>
+juce_add_console_app(RetrackSnapshots PRODUCT_NAME "RetrackSnapshots")
+juce_generate_juce_header(RetrackSnapshots)
+target_sources(RetrackSnapshots PRIVATE Tools/Snapshots.cpp ${RETRACK_UI_SOURCES})
+target_compile_definitions(RetrackSnapshots
     PRIVATE
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
-        RT_BRIDGE_BASE_URL="${RT_BRIDGE_BASE_URL}"
+        RT_BASE_URL="${RT_BASE_URL}"
 )
-target_link_libraries(BridgeSnapshots
+target_link_libraries(RetrackSnapshots
     PRIVATE
-        BridgeAssets
+        RetrackAssets
         juce::juce_gui_extra
         juce::juce_audio_processors
     PUBLIC

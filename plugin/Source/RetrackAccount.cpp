@@ -1,48 +1,48 @@
-#include "BridgeAccount.h"
+#include "RetrackAccount.h"
 #include <sys/stat.h>
 
-#ifndef RT_BRIDGE_BASE_URL
- #define RT_BRIDGE_BASE_URL "https://retrackthis.com"
+#ifndef RT_BASE_URL
+ #define RT_BASE_URL "https://retrackthis.com"
 #endif
 
 namespace
 {
     constexpr int fileCheckMs = 1500;
 
-    BridgeAccount::State errorState (const juce::String& title, const juce::String& detail)
+    RetrackAccount::State errorState (const juce::String& title, const juce::String& detail)
     {
-        BridgeAccount::State s;
-        s.phase = BridgeAccount::State::Phase::error;
+        RetrackAccount::State s;
+        s.phase = RetrackAccount::State::Phase::error;
         s.errorTitle = title;
         s.errorDetail = detail;
         return s;
     }
 
-    BridgeAccount::State offlineState()
+    RetrackAccount::State offlineState()
     {
-        return errorState ("Can't reach Retrack This",
+        return errorState ("Can't reach RetrackThis",
                            "Check your internet connection, then try again.");
     }
 }
 
-BridgeAccount::BridgeAccount()
+RetrackAccount::RetrackAccount()
 {
     loadFromFile (true);
     startTimer (fileCheckMs);
 }
 
-BridgeAccount::~BridgeAccount()
+RetrackAccount::~RetrackAccount()
 {
     stopTimer();
     pool.removeAllJobs (true, 4000);
 }
 
-juce::String BridgeAccount::baseUrl()
+juce::String RetrackAccount::baseUrl()
 {
-    return RT_BRIDGE_BASE_URL;
+    return RT_BASE_URL;
 }
 
-juce::String BridgeAccount::hostName()
+juce::String RetrackAccount::hostName()
 {
     juce::PluginHostType host;
     if (host.isLogic())          return "Logic Pro";
@@ -58,7 +58,7 @@ juce::String BridgeAccount::hostName()
 }
 
 //==============================================================================
-void BridgeAccount::startSignIn (const juce::String& clientName)
+void RetrackAccount::startSignIn (const juce::String& clientName)
 {
     auto gen = ++generation;
     State s;
@@ -69,7 +69,7 @@ void BridgeAccount::startSignIn (const juce::String& clientName)
     body->setProperty ("clientName", clientName);
     juce::var bodyVar (body.get());
 
-    juce::WeakReference<BridgeAccount> weak (this);
+    juce::WeakReference<RetrackAccount> weak (this);
     runInBackground ([weak, gen, bodyVar]
     {
         auto res = request ("/api/plugin/auth/start", bodyVar, {});
@@ -103,13 +103,13 @@ void BridgeAccount::startSignIn (const juce::String& clientName)
     });
 }
 
-void BridgeAccount::openBrowserAgain()
+void RetrackAccount::openBrowserAgain()
 {
     if (state.verificationUrl.isNotEmpty())
         juce::URL (state.verificationUrl).launchInDefaultBrowser();
 }
 
-void BridgeAccount::cancel()
+void RetrackAccount::cancel()
 {
     ++generation;
     deviceCode = {};
@@ -117,7 +117,7 @@ void BridgeAccount::cancel()
     setState ({});
 }
 
-void BridgeAccount::signOut()
+void RetrackAccount::signOut()
 {
     ++generation;
     auto oldToken = token;
@@ -133,7 +133,7 @@ void BridgeAccount::signOut()
 }
 
 //==============================================================================
-void BridgeAccount::timerCallback()
+void RetrackAccount::timerCallback()
 {
     if (state.phase == State::Phase::waiting)
     {
@@ -156,7 +156,7 @@ void BridgeAccount::timerCallback()
         loadFromFile (false);
 }
 
-void BridgeAccount::poll()
+void RetrackAccount::poll()
 {
     pollInFlight = true;
     auto gen = generation;
@@ -164,7 +164,7 @@ void BridgeAccount::poll()
     body->setProperty ("deviceCode", deviceCode);
     juce::var bodyVar (body.get());
 
-    juce::WeakReference<BridgeAccount> weak (this);
+    juce::WeakReference<RetrackAccount> weak (this);
     runInBackground ([weak, gen, bodyVar]
     {
         auto res = request ("/api/plugin/auth/token", bodyVar, {});
@@ -210,11 +210,11 @@ void BridgeAccount::poll()
     });
 }
 
-void BridgeAccount::verifyToken()
+void RetrackAccount::verifyToken()
 {
     auto gen = generation;
     auto t = token;
-    juce::WeakReference<BridgeAccount> weak (this);
+    juce::WeakReference<RetrackAccount> weak (this);
     runInBackground ([weak, gen, t]
     {
         juce::URL url (baseUrl() + "/api/plugin/me");
@@ -256,19 +256,19 @@ void BridgeAccount::verifyToken()
 }
 
 //==============================================================================
-void BridgeAccount::setState (State s)
+void RetrackAccount::setState (State s)
 {
     state = std::move (s);
     sendChangeMessage();
 }
 
-juce::File BridgeAccount::accountFile()
+juce::File RetrackAccount::accountFile()
 {
     return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
-        .getChildFile ("Application Support/Retrack This/Bridge/account.json");
+        .getChildFile ("Application Support/RetrackThis/Retrack/account.json");
 }
 
-void BridgeAccount::saveToFile()
+void RetrackAccount::saveToFile()
 {
     auto file = accountFile();
     file.getParentDirectory().createDirectory();
@@ -288,7 +288,7 @@ void BridgeAccount::saveToFile()
     fileStamp = file.getLastModificationTime();
 }
 
-void BridgeAccount::loadFromFile (bool verifyWithServer)
+void RetrackAccount::loadFromFile (bool verifyWithServer)
 {
     auto file = accountFile();
     fileStamp = file.getLastModificationTime();
@@ -318,12 +318,12 @@ void BridgeAccount::loadFromFile (bool verifyWithServer)
         verifyToken();
 }
 
-void BridgeAccount::runInBackground (std::function<void()> fn)
+void RetrackAccount::runInBackground (std::function<void()> fn)
 {
     pool.addJob (std::move (fn));
 }
 
-BridgeAccount::Response BridgeAccount::request (const juce::String& path, const juce::var& body, const juce::String& bearer)
+RetrackAccount::Response RetrackAccount::request (const juce::String& path, const juce::var& body, const juce::String& bearer)
 {
     juce::String headers ("Content-Type: application/json");
     if (bearer.isNotEmpty())

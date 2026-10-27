@@ -1,19 +1,19 @@
 #include "PluginEditor.h"
 
-RetrackThisBridgeEditor::RetrackThisBridgeEditor(RetrackThisBridgeProcessor& p)
+RetrackEditor::RetrackEditor(RetrackProcessor& p)
     : AudioProcessorEditor(&p), processorRef(p), view(&p.getAccount())
 {
-    view.setHostName(BridgeAccount::hostName());
+    view.setHostName(RetrackAccount::hostName());
     addAndMakeVisible(view);
     setSize(SignInView::defaultWidth, SignInView::defaultHeight);
 }
 
-void RetrackThisBridgeEditor::paint(juce::Graphics& g)
+void RetrackEditor::paint(juce::Graphics& g)
 {
     g.fillAll(brand::page);
 }
 
-void RetrackThisBridgeEditor::resized()
+void RetrackEditor::resized()
 {
     view.setBounds(getLocalBounds());
 }

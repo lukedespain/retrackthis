@@ -47,7 +47,7 @@ namespace brand
     float drawWordmark (juce::Graphics& g, juce::Point<float> baselineLeft, float px)
     {
         auto f = font (px, Weight::semibold);
-        const juce::String first ("Retrack "), second ("This");
+        const juce::String first ("Retrack"), second ("This");
 
         juce::GlyphArrangement a;
         a.addLineOfText (f, first, baselineLeft.x, baselineLeft.y);

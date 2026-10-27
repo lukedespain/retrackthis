@@ -3,8 +3,8 @@
 #include <JuceHeader.h>
 
 /**
- * The plugin's sign-in to retrackthis.com, shared by every Bridge instance in
- * the process (hold it with juce::SharedResourcePointer<BridgeAccount>).
+ * The plugin's sign-in to retrackthis.com, shared by every Retrack instance in
+ * the process (hold it with juce::SharedResourcePointer<RetrackAccount>).
  *
  * Device-code flow, matching the site's app/api/plugin/auth routes:
  *   1. POST /api/plugin/auth/start  -> a short code; we open /connect?code=… in the browser.
@@ -16,7 +16,7 @@
  * All methods must be called on the message thread; listeners are told about
  * changes there too. Network calls run on a background thread.
  */
-class BridgeAccount : public juce::ChangeBroadcaster,
+class RetrackAccount : public juce::ChangeBroadcaster,
                       private juce::Timer
 {
 public:
@@ -40,8 +40,8 @@ public:
         juce::String errorDetail;
     };
 
-    BridgeAccount();
-    ~BridgeAccount() override;
+    RetrackAccount();
+    ~RetrackAccount() override;
 
     State getState() const { return state; }
     /** The plugin key for API calls, or empty when signed out. */
@@ -83,8 +83,8 @@ private:
     int generation = 0; // bumped on cancel/sign-out so late network replies are ignored
     juce::Time fileStamp;
 
-    juce::ThreadPool pool { juce::ThreadPoolOptions{}.withThreadName ("Bridge Account").withNumberOfThreads (1) };
+    juce::ThreadPool pool { juce::ThreadPoolOptions{}.withThreadName ("Retrack Account").withNumberOfThreads (1) };
 
-    JUCE_DECLARE_WEAK_REFERENCEABLE (BridgeAccount)
-    JUCE_DECLARE_NON_COPYABLE (BridgeAccount)
+    JUCE_DECLARE_WEAK_REFERENCEABLE (RetrackAccount)
+    JUCE_DECLARE_NON_COPYABLE (RetrackAccount)
 };

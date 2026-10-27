@@ -1,12 +1,12 @@
-// Renders each sign-in state of the Bridge window to a PNG (at 2x), so the design
-// can be reviewed without opening Logic. Usage: BridgeSnapshots <out-dir>
+// Renders each sign-in state of the Retrack window to a PNG (at 2x), so the design
+// can be reviewed without opening Logic. Usage: RetrackSnapshots <out-dir>
 
 #include <JuceHeader.h>
 #include "../Source/SignInView.h"
 
 namespace
 {
-    using State = BridgeAccount::State;
+    using State = RetrackAccount::State;
 
     void save (SignInView& view, const State& s, const juce::File& file)
     {
@@ -23,7 +23,7 @@ int main (int argc, char* argv[])
 {
     juce::ScopedJuceInitialiser_GUI gui;
 
-    // BridgeSnapshots --svg <dir>: draw each .svg there to a PNG next to it, to check
+    // RetrackSnapshots --svg <dir>: draw each .svg there to a PNG next to it, to check
     // the site's avatar art renders correctly in JUCE.
     if (argc > 2 && juce::String (argv[1]) == "--svg")
     {
@@ -79,7 +79,7 @@ int main (int argc, char* argv[])
 
     State offline;
     offline.phase = State::Phase::error;
-    offline.errorTitle = "Can't reach Retrack This";
+    offline.errorTitle = "Can't reach RetrackThis";
     offline.errorDetail = "Check your internet connection, then try again.";
     save (view, offline, dir.getChildFile ("5-offline.png"));
 

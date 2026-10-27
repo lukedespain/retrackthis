@@ -98,3 +98,30 @@ target_link_libraries(BridgeSnapshots
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags
 )
+
+# Test plugin for multi-part capture (cycle-loop detection and copies seeing each
+# other). Not shipped. Writes WAVs and logs to ~/Desktop/Bridge Probe/.
+juce_add_plugin(RTBridgeProbe
+    COMPANY_NAME "Retrack This"
+    BUNDLE_ID "com.retrackthis.bridgeprobe"
+    PLUGIN_MANUFACTURER_CODE RtTh
+    PLUGIN_CODE Prb1
+    FORMATS AU
+    PRODUCT_NAME "RT Bridge Probe"
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    COPY_PLUGIN_AFTER_BUILD TRUE
+)
+juce_generate_juce_header(RTBridgeProbe)
+target_sources(RTBridgeProbe PRIVATE Probe/ProbeProcessor.cpp)
+target_compile_definitions(RTBridgeProbe PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+target_link_libraries(RTBridgeProbe
+    PRIVATE
+        juce::juce_audio_utils
+        juce::juce_audio_formats
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)

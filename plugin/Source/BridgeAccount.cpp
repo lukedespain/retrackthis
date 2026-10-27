@@ -184,6 +184,7 @@ void BridgeAccount::poll()
                 State s;
                 s.phase = State::Phase::signedIn;
                 s.name = res.json["user"]["name"].toString();
+                s.avatarSvg = res.json["user"]["avatarSvg"].toString();
                 self->setState (s);
                 self->saveToFile();
                 return;
@@ -239,10 +240,13 @@ void BridgeAccount::verifyToken()
                 self->fileStamp = {};
                 self->setState (errorState ("You've been signed out", "This plugin was disconnected from your account. Sign in again to keep posting."));
             }
-            else if (status == 200 && json["name"].toString().isNotEmpty() && json["name"].toString() != self->state.name)
+            else if (status == 200 && json["name"].toString().isNotEmpty()
+                     && (json["name"].toString() != self->state.name || json["avatarSvg"].toString() != self->state.avatarSvg))
             {
+                // They changed their name or avatar on the site.
                 auto s = self->state;
                 s.name = json["name"].toString();
+                s.avatarSvg = json["avatarSvg"].toString();
                 self->setState (s);
                 self->saveToFile();
             }
@@ -273,6 +277,7 @@ void BridgeAccount::saveToFile()
     obj->setProperty ("site", baseUrl());
     obj->setProperty ("token", token);
     obj->setProperty ("name", state.name);
+    obj->setProperty ("avatarSvg", state.avatarSvg);
 
     // Create it private (owner read/write only) before the key goes in.
     file.deleteFile();
@@ -306,6 +311,7 @@ void BridgeAccount::loadFromFile (bool verifyWithServer)
     State s;
     s.phase = State::Phase::signedIn;
     s.name = json["name"].toString();
+    s.avatarSvg = json["avatarSvg"].toString();
     setState (s);
 
     if (verifyWithServer || changed)

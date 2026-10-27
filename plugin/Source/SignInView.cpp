@@ -226,7 +226,7 @@ void SignInView::paintHeader (juce::Graphics& g)
         g.fillRoundedRectangle (chip, chip.getHeight() / 2.0f);
         g.setColour (line);
         g.drawRoundedRectangle (chip.reduced (0.5f), chip.getHeight() / 2.0f, 1.0f);
-        drawInitialsAvatar (g, { chip.getX() + 3.0f, chip.getY() + 3.0f, 28.0f, 28.0f }, state.name);
+        drawAvatar (g, { chip.getX() + 3.0f, chip.getY() + 3.0f, 28.0f, 28.0f }, state.name, state.avatarSvg);
         g.setColour (ink);
         g.setFont (font (13.0f, Weight::medium));
         g.drawText (state.name, chip.withTrimmedLeft (39.0f).withTrimmedRight (10.0f), juce::Justification::centredLeft, true);
@@ -278,7 +278,7 @@ void SignInView::paintSignedIn (juce::Graphics& g, juce::Rectangle<float> card)
 {
     auto inner = card.reduced (32.0f, 0.0f);
     auto avatar = juce::Rectangle<float> (56.0f, 56.0f).withCentre ({ card.getCentreX(), card.getY() + 56.0f });
-    drawInitialsAvatar (g, avatar, state.name);
+    drawAvatar (g, avatar, state.name, state.avatarSvg);
 
     // Small check on the avatar, like the site's connected state.
     auto dot = juce::Rectangle<float> (20.0f, 20.0f).withCentre (avatar.getBottomRight().translated (-6.0f, -6.0f));

@@ -33,6 +33,7 @@ public:
 
         // signedIn
         juce::String name;
+        juce::String avatarSvg; // the site's avatar art; empty means show initials
 
         // error
         juce::String errorTitle;

@@ -36,6 +36,8 @@ namespace brand
     /** Round avatar with initials on the site's Iris gradient. */
     void drawInitialsAvatar (juce::Graphics&, juce::Rectangle<float> area, const juce::String& name);
     juce::String initialsFor (const juce::String& name);
+    /** The person's avatar art from the site (an SVG string) in a circle, or initials without it. */
+    void drawAvatar (juce::Graphics&, juce::Rectangle<float> area, const juce::String& name, const juce::String& svg);
 
     /** Pill button in the site's styles. */
     class PillButton : public juce::Button

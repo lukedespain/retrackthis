@@ -23,6 +23,24 @@ int main (int argc, char* argv[])
 {
     juce::ScopedJuceInitialiser_GUI gui;
 
+    // BridgeSnapshots --svg <dir>: draw each .svg there to a PNG next to it, to check
+    // the site's avatar art renders correctly in JUCE.
+    if (argc > 2 && juce::String (argv[1]) == "--svg")
+    {
+        auto dir = juce::File::getCurrentWorkingDirectory().getChildFile (argv[2]);
+        for (auto& f : dir.findChildFiles (juce::File::findFiles, false, "*.svg"))
+        {
+            juce::Image img (juce::Image::ARGB, 240, 240, true);
+            juce::Graphics g (img);
+            brand::drawAvatar (g, { 0.0f, 0.0f, 240.0f, 240.0f }, "Test Name", f.loadFileAsString());
+            auto out = f.withFileExtension ("juce.png");
+            out.deleteFile();
+            juce::FileOutputStream os (out);
+            juce::PNGImageFormat().writeImageToStream (img, os);
+        }
+        return 0;
+    }
+
     auto dir = juce::File::getCurrentWorkingDirectory().getChildFile (argc > 1 ? argv[1] : "snapshots");
     dir.createDirectory();
 
@@ -45,6 +63,13 @@ int main (int argc, char* argv[])
     signedIn.phase = State::Phase::signedIn;
     signedIn.name = "Luke Despain";
     save (view, signedIn, dir.getChildFile ("3-signed-in.png"));
+
+    // With avatar art from the site (pass its SVG file as the 2nd argument).
+    if (argc > 2)
+    {
+        signedIn.avatarSvg = juce::File::getCurrentWorkingDirectory().getChildFile (argv[2]).loadFileAsString();
+        save (view, signedIn, dir.getChildFile ("3b-signed-in-avatar.png"));
+    }
 
     State expired;
     expired.phase = State::Phase::error;

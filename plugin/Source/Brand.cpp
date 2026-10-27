@@ -95,6 +95,43 @@ namespace brand
         g.drawText (initialsFor (name), area, juce::Justification::centred, false);
     }
 
+    void drawAvatar (juce::Graphics& g, juce::Rectangle<float> area, const juce::String& name, const juce::String& svg)
+    {
+        // Parsing is the slow part, so keep the last one (it's nearly always the same person).
+        // Held by a SharedResourcePointer so it's freed with the last window, not at exit.
+        struct Cache { juce::String svg; std::unique_ptr<juce::Drawable> drawable; };
+        juce::SharedResourcePointer<Cache> cache;
+        constexpr float size = 120.0f;
+
+        if (svg != cache->svg)
+        {
+            cache->svg = svg;
+            cache->drawable.reset();
+            if (auto xml = juce::parseXML (svg))
+            {
+                // Give it a fixed size so its viewBox maps to 0..120 in drawable units.
+                xml->setAttribute ("width", (int) size);
+                xml->setAttribute ("height", (int) size);
+                xml->removeAttribute ("preserveAspectRatio");
+                cache->drawable = juce::Drawable::createFromSVG (*xml);
+            }
+        }
+
+        if (svg.isEmpty() || cache->drawable == nullptr)
+        {
+            drawInitialsAvatar (g, area, name);
+            return;
+        }
+
+        // The art spills past the circle on purpose; the clip trims it.
+        juce::Graphics::ScopedSaveState save (g);
+        juce::Path circle;
+        circle.addEllipse (area);
+        g.reduceClipRegion (circle);
+        cache->drawable->draw (g, 1.0f, juce::AffineTransform::scale (area.getWidth() / size, area.getHeight() / size)
+                                            .translated (area.getX(), area.getY()));
+    }
+
     PillButton::PillButton (const juce::String& text, Style s) : juce::Button (text), style (s)
     {
         setMouseCursor (juce::MouseCursor::PointingHandCursor);

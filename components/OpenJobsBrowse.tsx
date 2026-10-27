@@ -7,6 +7,7 @@ import { type PayoutSnapshot } from "@/components/PayoutSetupPanel";
 import { TestJobBadge } from "@/components/TestJobBadge";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
+import { BridgeDot, SentFrom } from "@/components/brand/BridgeMark";
 import { ReferenceTracksPlayer } from "@/components/ReferenceTracksPlayer";
 import { FindWorkAlerts, FindWorkNext } from "@/components/FindWorkNext";
 import { Spinner } from "@/components/ui/Spinner";
@@ -378,6 +379,7 @@ function OpenJobCard({
       <div className="job-head" onClick={onToggle}>
         <span className="job-ico">
           <InstrumentIcon instrument={job.instrument} />
+          {job.postedFrom ? <BridgeDot from={job.postedFrom} /> : null}
         </span>
         <div className="job-main">
           <div className="job-title">
@@ -411,6 +413,7 @@ function OpenJobCard({
             <div className="by">
               <Avatar avatar={job.poster?.avatar} name={mine ? "You" : job.poster?.name ?? "Producer"} size="sm" />
               Posted by <b>{mine ? "you" : job.poster?.name ?? "a producer"}</b>
+              {job.postedFrom ? <SentFrom from={job.postedFrom} /> : null}
             </div>
             <p style={{ color: "var(--ink-2)" }}>{job.description}</p>
             <div className="pills" style={{ margin: 0 }}>

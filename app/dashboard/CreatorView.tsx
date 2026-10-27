@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +12,7 @@ import { TestJobBadge } from "@/components/TestJobBadge";
 import { audioFiles, listenUrl, masterUrl } from "@/lib/takeFiles";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
+import { BridgeDot } from "@/components/brand/BridgeMark";
 import type { Job, Take } from "@/lib/types";
 import { daysUntilDeadline, formatCents, formatDeadline } from "@/lib/format";
 import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
@@ -28,6 +29,7 @@ export function CreatorView({
   readOnly = false,
   jobsUrl = "/api/jobs?mine=true",
   initialExpandedJobId = null,
+  autoPayJobId = null,
 }: {
   initialShowPost?: boolean;
   hideHeading?: boolean;
@@ -39,10 +41,12 @@ export function CreatorView({
   /** Fetch URL for jobs. Admin preview returns `{ jobs }`; mine=true returns an array. */
   jobsUrl?: string;
   initialExpandedJobId?: string | null;
+  /** Open this draft's Finish payment on load (the DAW plugin links to /producers?pay=<id>). */
+  autoPayJobId?: string | null;
 }) {
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [filter, setFilter] = useState<"all" | JobBucket>("all");
-  const [expandedJobId, setExpandedJobId] = useState<string | null>(initialExpandedJobId);
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(initialExpandedJobId ?? autoPayJobId);
 
   async function loadJobs() {
     const res = await fetch(jobsUrl);
@@ -105,6 +109,7 @@ export function CreatorView({
         onToggle={(id) => setExpandedJobId(expandedJobId === id ? null : id)}
         onChanged={loadJobs}
         readOnly={readOnly}
+        autoPayJobId={autoPayJobId}
       />
     </div>
   );
@@ -143,6 +148,7 @@ function JobsList({
   onToggle,
   onChanged,
   readOnly,
+  autoPayJobId = null,
 }: {
   jobs: Job[] | null;
   filter: "all" | JobBucket;
@@ -151,6 +157,7 @@ function JobsList({
   onToggle: (id: string) => void;
   onChanged: () => void;
   readOnly: boolean;
+  autoPayJobId?: string | null;
 }) {
   if (jobs === null) {
     return (
@@ -196,6 +203,7 @@ function JobsList({
                 onToggle={() => onToggle(job.id)}
                 onChanged={onChanged}
                 readOnly={readOnly}
+                autoPay={autoPayJobId === job.id}
               />
             ))}
           </div>
@@ -229,6 +237,7 @@ function JobsList({
               onToggle={() => onToggle(job.id)}
               onChanged={onChanged}
               readOnly={readOnly}
+              autoPay={autoPayJobId === job.id}
             />
           ))
         )}
@@ -243,12 +252,14 @@ function CreatorJobCard({
   onToggle,
   onChanged,
   readOnly = false,
+  autoPay = false,
 }: {
   job: Job;
   expanded: boolean;
   onToggle: () => void;
   onChanged: () => void;
   readOnly?: boolean;
+  autoPay?: boolean;
 }) {
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
@@ -386,8 +397,8 @@ function CreatorJobCard({
     window.setTimeout(() => setCopied(false), 2000);
   }
 
-  async function resumeCheckout(e: React.MouseEvent) {
-    e.stopPropagation();
+  async function resumeCheckout(e?: React.MouseEvent) {
+    e?.stopPropagation();
     if (readOnly) return;
     setResumingCheckout(true);
     setCancelError(null);
@@ -414,6 +425,15 @@ function CreatorJobCard({
     }
   }
 
+  // Arrived from the DAW plugin's "Pay" link: start Finish payment once, for a draft only.
+  const autoPayStarted = useRef(false);
+  useEffect(() => {
+    if (!autoPay || autoPayStarted.current || readOnly || job.status !== "PENDING_PAYMENT") return;
+    autoPayStarted.current = true;
+    void resumeCheckout();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPay, job.status, readOnly]);
+
   function startEdit(e?: React.MouseEvent) {
     e?.stopPropagation();
     if (readOnly) return;
@@ -429,6 +449,7 @@ function CreatorJobCard({
       <div className="job-head" onClick={onToggle}>
         <span className="job-ico">
           <InstrumentIcon instrument={job.instrument} />
+          {job.postedFrom ? <BridgeDot from={job.postedFrom} /> : null}
         </span>
         <div className="job-main">
           <div className="job-title">

@@ -56,6 +56,8 @@ model User {
   showInCommunity Boolean  @default(true)
 
   jobsPosted      Job[]    @relation("JobsPosted")
+  pluginTokens    PluginToken[]
+  pluginDeviceAuths PluginDeviceAuth[]
   takesSubmitted  Take[]
   instrumentSuggestions InstrumentSuggestion[]
   featureRequests       FeatureRequest[]
@@ -123,6 +125,8 @@ model FeatureRequest {
 
 model Job {
   id             String    @id @default(cuid())
+  // DAW name when posted from the Retrack This Bridge plugin ("Logic Pro"); null = website.
+  postedFrom     String?
   creator        User      @relation("JobsPosted", fields: [creatorId], references: [id])
   creatorId      String
   title          String
@@ -237,4 +241,37 @@ model EmailBlast {
 
   @@index([kind, createdAt])
   @@index([createdAt])
+}
+
+// DAW plugin sign-in ("enter the code"). The plugin starts a request and shows
+// userCode; the user approves it on /connect; the plugin swaps its secret
+// deviceCode for a PluginToken once. Only hashes of secrets are stored.
+model PluginDeviceAuth {
+  id             String    @id @default(cuid())
+  deviceCodeHash String    @unique
+  userCode       String    @unique
+  clientName     String
+  status         String    @default("pending") // pending | approved | denied | used
+  user           User?     @relation(fields: [userId], references: [id])
+  userId         String?
+  expiresAt      DateTime
+  lastPolledAt   DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([expiresAt])
+}
+
+// A signed-in DAW plugin. Sent as "Authorization: Bearer rtb_...", accepted only on
+// routes that opt in (lib/pluginAuth). Expires after 90 days unused; revocable in Settings.
+model PluginToken {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id])
+  userId     String
+  tokenHash  String    @unique
+  clientName String
+  lastUsedAt DateTime  @default(now())
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }

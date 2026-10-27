@@ -132,7 +132,7 @@ function ProducersPageInner() {
           avatar={profile.avatar}
           current="jobs"
         />
-        <CreatorView key={jobsKey} hideHeading hidePostButton />
+        <CreatorView key={jobsKey} hideHeading hidePostButton autoPayJobId={searchParams.get("pay")} />
       </main>
       <MarketingFooter />
     </div>

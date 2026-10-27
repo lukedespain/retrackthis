@@ -18,6 +18,7 @@ export async function GET() {
           id: true,
           title: true,
           instrument: true,
+          postedFrom: true,
           priceCents: true,
           isTest: true,
           createdAt: true,

@@ -6,6 +6,8 @@ export type Job = {
   title: string;
   instrument: string;
   instrumentId?: string | null;
+  /** DAW name when posted from the Retrack This Bridge plugin. */
+  postedFrom?: string | null;
   description: string;
   demoFileUrl: string;
   /** Background / instrumental without the part being retracked */
@@ -56,6 +58,7 @@ export type MyTake = {
     id: string;
     title: string;
     instrument: string;
+    postedFrom?: string | null;
     priceCents: number;
     isTest?: boolean;
     createdAt?: string;

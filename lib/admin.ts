@@ -66,3 +66,10 @@ export async function requireAdmin() {
   }
   return { admin, error: null as null };
 }
+
+/** Whether this user id is an admin. For routes that resolve the user themselves
+ *  (e.g. a plugin token) instead of the website session that getAdminUser reads. */
+export async function isAdminUserId(userId: string): Promise<boolean> {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { isAdmin: true } });
+  return Boolean(user?.isAdmin);
+}

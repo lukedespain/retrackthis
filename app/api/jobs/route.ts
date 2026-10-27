@@ -4,8 +4,9 @@ import { metaCheckoutMetadata } from "@/lib/metaCapi";
 import { db } from "@/lib/db";
 import { CANCEL_GRACE_PERIOD_MS } from "@/lib/jobActions";
 import { stripe } from "@/lib/stripe";
+import { getRequestUserId, pluginPostedFrom } from "@/lib/pluginAuth";
 import { getSessionUserId } from "@/lib/supabaseServer";
-import { getAdminUser } from "@/lib/admin";
+import { getAdminUser, isAdminUserId } from "@/lib/admin";
 import { resolvePostableInstrument } from "@/lib/approvedInstruments";
 import {
   isTestInstrumentId,
@@ -34,13 +35,16 @@ function sanitizeInviteEmails(value: unknown): string[] {
 
 // POST /api/jobs - creator posts a new job and is sent to Stripe Checkout
 // (charge-upfront). Job stays PENDING_PAYMENT until checkout.session.completed.
+// The Retrack This Bridge plugin posts here too, with its plugin token (lib/pluginAuth).
 export async function POST(req: NextRequest) {
-  const creatorId = await getSessionUserId();
+  const creatorId = await getRequestUserId(req, { allowPlugin: true });
   if (!creatorId) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
   const body = await req.json();
+  // Set only for plugin requests (the plugin sends its DAW as postedFrom).
+  const postedFrom = pluginPostedFrom(req, body?.postedFrom);
   if (Array.isArray(body?.parts) && body.parts.length > 1) {
     return createPartBundle(creatorId, req, body);
   }
@@ -79,7 +83,7 @@ export async function POST(req: NextRequest) {
   const requestedTest = body.isTest === true;
   const isTest = requestedTest || isTestInstrumentId(resolvedInstrumentId);
   if (isTest) {
-    if (!(await getAdminUser())) {
+    if (!(await isAdminUserId(creatorId))) {
       return NextResponse.json({ error: "Test jobs are for admins only." }, { status: 403 });
     }
     if (!requestedTest) {
@@ -171,6 +175,7 @@ export async function POST(req: NextRequest) {
     const testJob = await db.job.create({
       data: {
         creatorId,
+        postedFrom,
         title: titleStr,
         instrument: instrumentLabel,
         instrumentId: requestedTest ? resolvedInstrumentId : TEST_INSTRUMENT_ID,
@@ -201,6 +206,7 @@ export async function POST(req: NextRequest) {
   const job = await db.job.create({
     data: {
       creatorId,
+      postedFrom,
       title: titleStr,
       instrument: instrumentLabel,
       instrumentId: resolvedInstrumentId || null,
@@ -393,6 +399,7 @@ async function createPartBundle(
   }
 ) {
   const parts = body.parts ?? [];
+  const postedFrom = pluginPostedFrom(req, (body as { postedFrom?: unknown }).postedFrom);
   if (parts.length < 2 || parts.length > 8) {
     return NextResponse.json({ error: "A project can include 2 to 8 parts." }, { status: 400 });
   }
@@ -409,7 +416,7 @@ async function createPartBundle(
     bpmValue = Math.round(parsed);
   }
 
-  const admin = await getAdminUser();
+  const admin = await isAdminUserId(creatorId);
   const requestedTest = body.isTest === true;
   if (requestedTest && !admin) {
     return NextResponse.json({ error: "Test jobs are for admins only." }, { status: 403 });
@@ -499,6 +506,7 @@ async function createPartBundle(
       const job = await db.job.create({
         data: {
           creatorId,
+          postedFrom,
           title: `${title}: ${part.instrument}`.slice(0, 120),
           instrument: part.instrument,
           instrumentId: part.instrumentId,
@@ -532,6 +540,7 @@ async function createPartBundle(
     const job = await db.job.create({
       data: {
         creatorId,
+        postedFrom,
         title: `${title}: ${part.instrument}`.slice(0, 120),
         instrument: part.instrument,
         instrumentId: part.instrumentId,

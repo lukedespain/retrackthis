@@ -11,6 +11,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { AccountSettings } from "@/app/dashboard/AccountSettings";
 import { MusicianInstrumentsSettings } from "@/app/dashboard/MusicianInstrumentsSettings";
 import { CommunityVisibilitySetting } from "@/app/dashboard/CommunityVisibilitySetting";
+import { ConnectedApps } from "@/app/dashboard/ConnectedApps";
 import { FeatureRequestSettings } from "@/app/dashboard/FeatureRequestSettings";
 import { NotificationSettings } from "@/app/dashboard/NotificationSettings";
 
@@ -124,6 +125,8 @@ function SettingsPageInner() {
             <p>Choose what we keep you posted on. Changes save automatically.</p>
             <NotificationSettings />
           </section>
+
+          <ConnectedApps />
 
           <section className="card" id="ideas">
             <h2>Request a feature</h2>

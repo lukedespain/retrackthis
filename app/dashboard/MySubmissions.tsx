@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { SubmitTakeForm } from "@/app/dashboard/SubmitTakeForm";
 import { Avatar } from "@/components/brand/Avatar";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
+import { BridgeDot, SentFrom } from "@/components/brand/BridgeMark";
 import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -291,6 +292,7 @@ function SubmissionCard({
       <div className="job-head" onClick={onToggle}>
         <span className="job-ico">
           <InstrumentIcon instrument={liveTake.job.instrument} />
+          {liveTake.job.postedFrom ? <BridgeDot from={liveTake.job.postedFrom} /> : null}
         </span>
         <div className="job-main">
           <div className="job-title">
@@ -341,6 +343,7 @@ function SubmissionCard({
             <div className="by">
               <Avatar avatar={liveTake.job.creator?.avatar} name={liveTake.job.creator?.name ?? "Producer"} size="sm" />
               Posted by <b>{liveTake.job.creator?.name ?? "a producer"}</b>
+              {liveTake.job.postedFrom ? <SentFrom from={liveTake.job.postedFrom} /> : null}
             </div>
             <div className={`banner${status.cls === "awarded" ? " win" : ""}`}>
               <span>{outcomeCopy(liveTake, status.cls)}</span>

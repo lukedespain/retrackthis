@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUDIO_BUCKET, ensureAudioBucket, supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getSessionUserId } from "@/lib/supabaseServer";
+import { getRequestUserId, hasPluginToken } from "@/lib/pluginAuth";
 import { isTakeFileName } from "@/lib/constants";
 
 const ALLOWED_KINDS = new Set(["demo", "demo-backing", "take"]);
@@ -26,8 +26,13 @@ const ALLOWED_MIME_TYPES = [
 // POST /api/uploads/sign { fileName, kind } - mints a signed Supabase
 // Storage upload URL so the browser can upload the file directly
 // (bytes never pass through our server). kind namespaces the storage path.
+// The Retrack This Bridge plugin uploads the Part and Bed here too, with its plugin token.
 export async function POST(req: NextRequest) {
-  const userId = await getSessionUserId();
+  const userId = await getRequestUserId(req, { allowPlugin: true });
+  // A plugin with an expired or revoked token signs in again; it never uploads as a guest.
+  if (!userId && hasPluginToken(req)) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
   const body = await req.json().catch(() => null);
   const fileName = body?.fileName;
   const kind = body?.kind;

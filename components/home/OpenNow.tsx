@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { InstrumentIcon } from "@/components/brand/InstrumentIcon";
+import { BridgeDot } from "@/components/brand/BridgeMark";
 import { formatCents, formatDeadline } from "@/lib/format";
 import { formatPartDuration, musicianFacingPriceCents } from "@/lib/jobPricing";
 import type { Job } from "@/lib/types";
@@ -67,6 +68,7 @@ export function OpenNow() {
               <div className="on-top">
                 <span className="job-ico">
                   <InstrumentIcon instrument={job.instrument} />
+                  {job.postedFrom ? <BridgeDot from={job.postedFrom} /> : null}
                 </span>
                 <span className="on-t">
                   <strong>{job.title.split(":")[0]}</strong>

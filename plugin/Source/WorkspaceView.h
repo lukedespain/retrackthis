@@ -112,7 +112,7 @@ private:
     Pill setupButton { "Back to setup", Pill::Style::text };
     Pill postButton { "Post", Pill::Style::primary };
     Pill recaptureButton { "Recapture", Pill::Style::text };
-    Pill filesButton { "Show files", Pill::Style::text };
+    Pill filesButton { "Show in Finder", Pill::Style::text };
     Pill payAgainButton { "Open payment again", Pill::Style::secondary };
     Pill newCaptureButton { "Start a new capture", Pill::Style::text };
     Pill backButton { "Back", Pill::Style::text };

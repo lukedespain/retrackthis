@@ -52,7 +52,7 @@ namespace
         Stale::replacesFirst is what Logic did in real use: the Stereo Out copy's first
         block has the real audio but the old playhead position. */
     void run (const juce::String& name, int nParts, double loopPpq, double startPpq, Stale stale,
-              int loopsToPlay, bool cycleOn, Boundary boundary = Boundary::atLoopStart)
+              int loopsToPlay, bool cycleOn, Boundary boundary = Boundary::atLoopStart, bool checkNaming = false)
     {
         std::cout << name << "\n";
         juce::OwnedArray<RetrackProcessor> parts;
@@ -204,6 +204,22 @@ namespace
             check (bedErr < 1.0e-6, "bed " + juce::String (k + 1) + " is the song minus part " + juce::String (k + 1)
                                     + " (max error " + juce::String (bedErr, 9) + ")");
         }
+        if (checkNaming)
+        {
+            // Naming the take for a song moves it to Music/RetrackThis/<song> with readable names.
+            session.nameTakeForSong ("Capture Test Song");
+            auto& named = session.getTake();
+            check (named.folder.getParentDirectory() == RetrackSession::songsFolder(), "moved to " + named.folder.getFullPathName());
+            check (named.partFiles[1].getFileName() == "Capture Test Song_Track2_Part.wav" && named.partFiles[1].existsAsFile(),
+                   "part named " + named.partFiles[1].getFileName());
+            check (named.bedFiles[1].getFileName() == "Capture Test Song_Track2_Bed.wav" && named.bedFiles[1].existsAsFile(),
+                   "bed named " + named.bedFiles[1].getFileName());
+            auto folder = named.folder;
+            session.clearTake();
+            check (folder.isDirectory(), "a named take stays on disk after leaving the screen");
+            folder.deleteRecursively();
+            return;
+        }
         session.clearTake();
     }
 }
@@ -222,7 +238,7 @@ int main()
     run ("4 parts, wraps on block boundaries, next block reported at the loop end", 4, boundaryLoop, 0.0, Stale::none, 4, true, Boundary::atLoopEnd);
     run ("4 parts, wraps on block boundaries, the block before reported a hair early", 4, boundaryLoop, 0.0, Stale::none, 4, true, Boundary::previousShort);
     run ("3 parts, play starts a little before the loop (pre-roll)", 3, 8.0, -0.03, Stale::none, 3, true);
-    run ("2 parts, start mid-loop (waits for the wrap)", 2, 8.0, 3.3, Stale::none, 3, true);
+    run ("2 parts, start mid-loop (waits for the wrap)", 2, 8.0, 3.3, Stale::none, 3, true, Boundary::atLoopStart, true);
     run ("3 parts, stopped after 2 loops (should fail cleanly)", 3, 8.0, 0.0, Stale::none, 2, true);
     run ("1 part, cycle off, play then stop", 1, 8.0, 4.0, Stale::none, 2, false);
 

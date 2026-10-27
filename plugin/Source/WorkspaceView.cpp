@@ -159,7 +159,12 @@ WorkspaceView::WorkspaceView (RetrackProcessor& p, RetrackAccount& a)
     cancelButton.onClick = [this] { session.disarm(); };
     setupButton.onClick = [this] { session.disarm(); };
     recaptureButton.onClick = [this] { drafts.clear(); session.clearTake(); };
-    filesButton.onClick = [this] { session.getTake().folder.startAsProcess(); };
+    filesButton.onClick = [this]
+    {
+        // With a song name, the files move to Music/RetrackThis/<song> with readable names first.
+        session.nameTakeForSong (titleEditor.getText());
+        session.getTake().folder.startAsProcess();
+    };
     payAgainButton.onClick = [this] { openPaymentPage(); };
     newCaptureButton.onClick = [this] { drafts.clear(); postResult = {}; session.clearTake(); screen = Screen::setup; refresh(); };
     backButton.onClick = [this] { showWalkthrough (walkthrough.getPage() - 1); };
@@ -427,10 +432,12 @@ void WorkspaceView::paintJobList (juce::Graphics& g, juce::Rectangle<float> area
     const double secs = previewMode ? 32.0 : take.seconds;
     auto meta = juce::String (juce::roundToInt (bpm)) + " BPM" + utf8 (" \xc2\xb7 ")
                 + juce::String (previewMode ? 4 : take.timeSigNum) + "/" + juce::String (previewMode ? 4 : take.timeSigDen)
-                + utf8 (" \xc2\xb7 ") + juce::String ((int) secs / 60) + ":" + juce::String ((int) secs % 60).paddedLeft ('0', 2);
+                + utf8 (" \xc2\xb7 ") + juce::String ((int) secs / 60) + ":" + juce::String ((int) secs % 60).paddedLeft ('0', 2) + " loop";
     g.setColour (muted);
     g.setFont (font (12.0f));
-    g.drawText (meta, area.withTop (area.getBottom() - 62.0f).withHeight (18.0f), juce::Justification::centredLeft, false);
+    // On the jobs screen, Show in Finder sits above Recapture, so the details move up a row.
+    const float metaFromBottom = screen == Screen::jobs ? 94.0f : 62.0f;
+    g.drawText (meta, area.withTop (area.getBottom() - metaFromBottom).withHeight (18.0f), juce::Justification::centredLeft, false);
 }
 
 void WorkspaceView::paintRight (juce::Graphics& g, juce::Rectangle<float> card)
@@ -773,14 +780,20 @@ void WorkspaceView::layoutRight()
         }
     }
 
+    if (screen == Screen::posted)
+    {
+        auto left = leftCard().reduced (16.0f);
+        filesButton.setBounds (juce::Rectangle<float> (left.getX() - 8.0f, left.getBottom() - 30.0f, 117.0f, 30.0f).toNearestInt());
+        shown.add (&filesButton);
+    }
+
     if (screen == Screen::jobs)
     {
         auto left = leftCard().reduced (16.0f);
         recaptureButton.setBounds (juce::Rectangle<float> (left.getX() - 8.0f, left.getBottom() - 30.0f, 90.0f, 30.0f).toNearestInt());
-        filesButton.setBounds (juce::Rectangle<float> (left.getRight() - 84.0f, left.getBottom() - 30.0f, 90.0f, 30.0f).toNearestInt());
+        filesButton.setBounds (juce::Rectangle<float> (left.getX() - 8.0f, left.getBottom() - 62.0f, 117.0f, 30.0f).toNearestInt());
         shown.add (&recaptureButton);
-        if (! previewMode)
-            shown.add (&filesButton);
+        shown.add (&filesButton);
     }
 }
 
@@ -997,6 +1010,7 @@ void WorkspaceView::post()
         const int k = keyBox.getSelectedId() - 2;
         r.musicalKey = juce::String (keyRoots[k / 2][0]) + (k % 2 == 0 ? "-major" : "-minor");
     }
+    session.nameTakeForSong (r.title);
     auto& take = session.getTake();
     r.bpm = take.bpm;
     r.seconds = take.seconds;

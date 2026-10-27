@@ -50,7 +50,13 @@ public:
     void disarm();
     /** After a failed take: same parts, fresh files, armed again. */
     void rearm() { arm(); }
+    /** Leaves the setup screen. A take that was saved under a song name stays on disk. */
     void clearTake();
+    /** Moves the take to Music/RetrackThis/<song> and names its files <song>_<track>_Part.wav
+        and <song>_<track>_Bed.wav. Safe to call again if the song name changes. */
+    void nameTakeForSong (const juce::String& song);
+    /** Where takes go once they have a song name: Music/RetrackThis. */
+    static juce::File songsFolder();
 
     const Take& getTake() const { return take; }
     juce::String getFailureText() const { return failureText; }

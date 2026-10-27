@@ -138,10 +138,50 @@ void RetrackSession::disarm()
 
 void RetrackSession::clearTake()
 {
-    if (take.folder.exists())
+    if (take.folder.exists() && take.folder.isAChildOf (capturesFolder()))
         take.folder.deleteRecursively();
     take = {};
     setPhase (Phase::setup);
+}
+
+juce::File RetrackSession::songsFolder()
+{
+    return juce::File::getSpecialLocation (juce::File::userMusicDirectory).getChildFile ("RetrackThis");
+}
+
+void RetrackSession::nameTakeForSong (const juce::String& song)
+{
+    auto legal = [] (const juce::String& s) { return juce::File::createLegalFileName (s.trim()); };
+    const auto songName = legal (song);
+    if (songName.isEmpty() || ! take.folder.isDirectory())
+        return;
+
+    // Move the folder unless it's already this song's folder.
+    if (take.folder.getParentDirectory() != songsFolder() || ! take.folder.getFileName().startsWith (songName))
+    {
+        songsFolder().createDirectory();
+        auto target = songsFolder().getChildFile (songName);
+        if (target.exists())
+            target = songsFolder().getNonexistentChildFile (songName, {}, true);
+        if (! take.folder.moveFileTo (target))
+            return; // keep the files where they are rather than lose track of them
+        take.folder = target;
+    }
+
+    auto rename = [&] (juce::Array<juce::File>& files, const juce::String& kind)
+    {
+        for (int i = 0; i < files.size() && i < take.partNames.size(); ++i)
+        {
+            auto current = take.folder.getChildFile (files[i].getFileName());
+            auto named = take.folder.getChildFile (songName + "_" + legal (take.partNames[i]) + "_" + kind + ".wav");
+            if (current == named || current.moveFileTo (named))
+                files.set (i, named);
+            else
+                files.set (i, current);
+        }
+    };
+    rename (take.partFiles, "Part");
+    rename (take.bedFiles, "Bed");
 }
 
 int RetrackSession::getCurrentPass() const

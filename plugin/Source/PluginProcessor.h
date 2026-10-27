@@ -112,6 +112,10 @@ private:
     };
     std::array<BlockNote, 48> blockNotes;
     std::atomic<int> blockNoteCount { 0 };
+    // The block before and the block of each loop end, to explain a missed or extra wrap.
+    std::array<BlockNote, 32> wrapNotes;
+    std::atomic<int> wrapNoteCount { 0 };
+    BlockNote lastNote;
 
     std::atomic<bool> armed { false };
     std::atomic<juce::uint32> lastBlockMs { 0 };

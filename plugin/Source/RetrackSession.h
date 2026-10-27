@@ -73,6 +73,7 @@ private:
     Take take;
     juce::String failureText;
     juce::String lastMembersSignature;
+    juce::uint32 outOfStepSinceMs = 0; // when the copies started disagreeing on the loop, or 0
 
     JUCE_DECLARE_NON_COPYABLE (RetrackSession)
 };

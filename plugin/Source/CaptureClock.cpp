@@ -86,7 +86,7 @@ juce::Array<CaptureClock::Segment> CaptureClock::advance (const Position& p)
     // A block that starts just before the loop and runs into it is a pre-roll, not stale.
     const double blockEndPpq = p.ppq + p.numSamples / samplesPerPpq;
     const bool runsIntoLoop = state == State::waiting && p.ppq < p.loopStart && blockEndPpq > p.loopStart + onePpqSample;
-    const bool outsideLoop = p.ppq < p.loopStart - onePpqSample || p.ppq >= p.loopEnd + onePpqSample;
+    const bool outsideLoop = p.ppq < p.loopStart - onePpqSample || p.ppq >= p.loopEnd + 2.0 * onePpqSample;
     if (outsideLoop && ! runsIntoLoop)
     {
         if (state == State::recording)
@@ -94,14 +94,35 @@ juce::Array<CaptureClock::Segment> CaptureClock::advance (const Position& p)
         return out;
     }
 
-    if (state == State::recording && std::abs (p.ppq - expectedPpq) > 2.0 * onePpqSample)
+    // A wrap that lands exactly on a block boundary. Depending on rounding, Logic reports the
+    // next block either at the loop end or back at the loop start, and the previous block may
+    // have come out a fraction of a sample short of the wrap. Either way this block is the
+    // first of the next loop, so the wrap goes at its first sample.
+    double ppq = p.ppq;
+    bool wrapAtStart = false;
+    if (state == State::recording)
     {
-        fail (Failure::playheadMoved);
-        return out;
+        const double tolerance = 2.0 * onePpqSample;
+        const bool startsAtLoopEnd = ppq > p.loopEnd - 1.0e-6 * onePpqSample && ppq <= p.loopEnd + tolerance;
+        const bool atLoopEnd = startsAtLoopEnd && std::abs (expectedPpq - p.loopEnd) <= tolerance;
+        const bool wrapCounted = startsAtLoopEnd && std::abs (expectedPpq - p.loopStart) <= tolerance;
+        const bool missedWrap = std::abs (ppq - p.loopStart) <= tolerance && std::abs (expectedPpq - p.loopEnd) <= tolerance;
+        if (atLoopEnd || missedWrap)
+        {
+            wrapAtStart = true;
+            ppq = p.loopStart;
+        }
+        else if (wrapCounted)
+            ppq = p.loopStart; // the previous block already ended the loop
+        else if (std::abs (ppq - expectedPpq) > tolerance)
+        {
+            fail (Failure::playheadMoved);
+            return out;
+        }
     }
 
     // Samples from the block start to the loop end (Logic wraps on the sample after this).
-    const int toLoopEnd = (int) std::ceil ((p.loopEnd - p.ppq) * samplesPerPpq - 1.0e-6);
+    const int toLoopEnd = (int) std::ceil ((p.loopEnd - ppq) * samplesPerPpq - 1.0e-6);
 
     int cursor = 0, leadIn = 0;
     if (state == State::waiting)
@@ -114,7 +135,7 @@ juce::Array<CaptureClock::Segment> CaptureClock::advance (const Position& p)
         else if (late <= maxLateSeconds * p.sampleRate)
             leadIn = (int) std::llround (late); // this copy's first block was stale or late; every copy still starts loop 1 together
         else if (toLoopEnd < p.numSamples)
-            cursor = toLoopEnd; // started mid-loop: begin at the wrap
+            cursor = juce::jmax (0, toLoopEnd); // started mid-loop: begin at the wrap
         else
             return out; // started mid-loop: wait for the wrap
 
@@ -123,6 +144,17 @@ juce::Array<CaptureClock::Segment> CaptureClock::advance (const Position& p)
         pass = 0;
         samplesInPass = leadIn;
         totalSamples += leadIn;
+    }
+
+    if (wrapAtStart)
+    {
+        ++pass;
+        samplesInPass = 0;
+        if (pass >= passes)
+        {
+            state = State::done;
+            return out;
+        }
     }
 
     int wrapAt = toLoopEnd;
@@ -150,6 +182,6 @@ juce::Array<CaptureClock::Segment> CaptureClock::advance (const Position& p)
     // Where the next block should start, to catch the playhead being moved.
     const int afterWrap = (toLoopEnd >= 0 && toLoopEnd <= p.numSamples) ? p.numSamples - toLoopEnd : -1;
     expectedPpq = afterWrap >= 0 ? p.loopStart + afterWrap / samplesPerPpq
-                                 : p.ppq + p.numSamples / samplesPerPpq;
+                                 : ppq + p.numSamples / samplesPerPpq;
     return out;
 }

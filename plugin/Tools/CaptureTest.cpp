@@ -44,11 +44,15 @@ namespace
 
     enum class Stale { none, extraBlock, replacesFirst };
 
+    /** How the block right after a wrap that lands exactly on a block boundary is reported.
+        Seen in Logic at 108 BPM with a 16-beat loop: the third wrap falls on a boundary. */
+    enum class Boundary { atLoopStart, atLoopEnd, previousShort };
+
     /** One run: nParts parts, loop [0, loopPpq), playback starting at startPpq.
         Stale::replacesFirst is what Logic did in real use: the Stereo Out copy's first
         block has the real audio but the old playhead position. */
     void run (const juce::String& name, int nParts, double loopPpq, double startPpq, Stale stale,
-              int loopsToPlay, bool cycleOn)
+              int loopsToPlay, bool cycleOn, Boundary boundary = Boundary::atLoopStart)
     {
         std::cout << name << "\n";
         juce::OwnedArray<RetrackProcessor> parts;
@@ -80,6 +84,8 @@ namespace
         const juce::int64 toPlay = (juce::int64) (loopEndSamples * loopsToPlay) + 3 * block;
         bool firstBlock = true;
 
+        int boundaryWraps = 0;
+        double nudge = 0.0; // added to the reported position, in samples
         auto blockAt = [&] (juce::int64 p, bool playing)
         {
             head.info = {};
@@ -88,7 +94,7 @@ namespace
             head.info.setBpm (bpm);
             head.info.setTimeSignature (juce::AudioPlayHead::TimeSignature { 4, 4 });
             head.info.setLoopPoints (juce::AudioPlayHead::LoopPoints { 0.0, loopPpq });
-            head.info.setPpqPosition ((double) p / spp);
+            head.info.setPpqPosition (((double) p + nudge) / spp);
             head.info.setTimeInSamples (p);
         };
 
@@ -97,6 +103,13 @@ namespace
         {
             // Logic wraps on the first sample at or after the loop end, mid-block.
             const int wrap = cycleOn ? (int) std::ceil (loopEndSamples - (double) pos - 1.0e-9) : block + 1;
+            const bool afterBoundary = cycleOn && pos == 0 && playedLoopSamples > 0;
+            nudge = 0.0;
+            if (afterBoundary && boundary == Boundary::atLoopEnd)
+                nudge = loopEndSamples; // reported at the loop end, though it plays from the loop start
+            if (wrap == block && boundary == Boundary::previousShort)
+                nudge = -0.001; // a hair early, so the wrap seems to land one sample past the block
+            if (wrap == block) ++boundaryWraps;
             juce::AudioBuffer<float> mix (2, block);
             mix.clear();
 
@@ -127,6 +140,7 @@ namespace
                 blockAt ((juce::int64) (583.6 * spp), true); // the old playhead position
                 bed.processBlock (junk, midi);
             }
+            if (firstBlock && stale == Stale::replacesFirst) nudge = 0.0;
             blockAt (firstBlock && stale == Stale::replacesFirst ? (juce::int64) (583.6 * spp) : pos, true);
             bed.processBlock (mix, midi);
             firstBlock = false;
@@ -135,7 +149,11 @@ namespace
             playedLoopSamples += block;
         }
 
+        if (boundary != Boundary::atLoopStart || std::abs (std::fmod (loopEndSamples, (double) block)) < 1.0e-3)
+            check (boundaryWraps > 0, "a wrap landed on a block boundary (" + juce::String (boundaryWraps) + ")");
+
         // Stop.
+        nudge = 0.0;
         juce::AudioBuffer<float> silence (2, block);
         silence.clear();
         blockAt (pos, false);
@@ -191,6 +209,13 @@ int main()
     // Loops of 8 quarter notes at 108 BPM = 213333.33 samples, so wraps land mid-block.
     run ("4 parts, cycle on, start at the loop start, extra stale Bed block", 4, 8.0, 0.0, Stale::extraBlock, 4, true);
     run ("4 parts, the Bed's first block has a stale playhead (seen in Logic)", 4, 8.0, 0.0, Stale::replacesFirst, 4, true);
+    // Luke's session: 108 BPM, a 16-beat loop, 2048-sample blocks.
+    run ("4 parts, 16-beat loop", 4, 16.0, 0.0, Stale::none, 4, true);
+    // A loop of exactly 200 blocks, so every wrap lands on a block boundary.
+    const double boundaryLoop = 200.0 * block / spp;
+    run ("4 parts, wraps on block boundaries, next block at the loop start", 4, boundaryLoop, 0.0, Stale::none, 4, true, Boundary::atLoopStart);
+    run ("4 parts, wraps on block boundaries, next block reported at the loop end", 4, boundaryLoop, 0.0, Stale::none, 4, true, Boundary::atLoopEnd);
+    run ("4 parts, wraps on block boundaries, the block before reported a hair early", 4, boundaryLoop, 0.0, Stale::none, 4, true, Boundary::previousShort);
     run ("3 parts, play starts a little before the loop (pre-roll)", 3, 8.0, -0.03, Stale::none, 3, true);
     run ("2 parts, start mid-loop (waits for the wrap)", 2, 8.0, 3.3, Stale::none, 3, true);
     run ("3 parts, stopped after 2 loops (should fail cleanly)", 3, 8.0, 0.0, Stale::none, 2, true);

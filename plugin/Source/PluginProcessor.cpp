@@ -117,6 +117,7 @@ void RetrackProcessor::prepareTake(const juce::File& folder, int partIndex, int 
     clock.reset(numParts, needsLoop);
     previousBlockLength = 0;
     blockNoteCount = 0;
+    wrapNoteCount = 0;
     clockState = (int) CaptureClock::State::idle;
     clockFailure = (int) CaptureClock::Failure::none;
     clockPass = 0;
@@ -217,6 +218,8 @@ void RetrackProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     if (! tl.isLocked())
         return;
 
+    const int passBefore = clock.getPass();
+    const auto stateBefore = clock.getState();
     auto segments = clock.advance(pos);
     for (auto& seg : segments)
         writeAndMute(buffer, seg);
@@ -229,12 +232,22 @@ void RetrackProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
         previousBlockLength = buffer.getNumSamples();
     }
 
+    const BlockNote note { pos.ppq, pos.loopStart, pos.loopEnd, pos.numSamples, segments.size(),
+                           segments.isEmpty() ? 0 : segments[0].leadIn, (int) clock.getState(), pos.playing, pos.looping };
     if (const int n = blockNoteCount.load(); n < (int) blockNotes.size() && pos.playing)
     {
-        blockNotes[(size_t) n] = { pos.ppq, pos.loopStart, pos.loopEnd, pos.numSamples, segments.size(),
-                                   segments.isEmpty() ? 0 : segments[0].leadIn, (int) clock.getState(), pos.playing, pos.looping };
+        blockNotes[(size_t) n] = note;
         blockNoteCount = n + 1;
     }
+    const bool wrapped = stateBefore == CaptureClock::State::recording
+                         && (clock.getPass() != passBefore || clock.getState() != stateBefore);
+    if (const int n = wrapNoteCount.load(); wrapped && n + 2 <= (int) wrapNotes.size())
+    {
+        wrapNotes[(size_t) n] = lastNote;
+        wrapNotes[(size_t) n + 1] = note;
+        wrapNoteCount = n + 2;
+    }
+    lastNote = note;
 
     clockState = (int) clock.getState();
     clockFailure = (int) clock.getFailure();
@@ -247,13 +260,17 @@ juce::String RetrackProcessor::describeFirstBlocks() const
 {
     juce::String out;
     out << (getTrackName().isEmpty() ? juce::String("(no name)") : getTrackName()) << (isBed() ? " [bed]" : " [part]") << "\n";
-    for (int i = 0; i < juce::jmin(blockNoteCount.load(), (int) blockNotes.size()); ++i)
+    auto line = [&out] (const BlockNote& b)
     {
-        auto& b = blockNotes[(size_t) i];
         out << "  ppq " << juce::String(b.ppq, 6) << "  loop " << juce::String(b.loopStart, 3) << "-" << juce::String(b.loopEnd, 3)
             << "  n " << b.numSamples << (b.looping ? "  cycle" : "  no-cycle") << "  segs " << b.segments
             << "  lead " << b.leadIn << "  state " << b.stateAfter << "\n";
-    }
+    };
+    for (int i = 0; i < juce::jmin(blockNoteCount.load(), (int) blockNotes.size()); ++i)
+        line(blockNotes[(size_t) i]);
+    out << "  around each loop end:\n";
+    for (int i = 0; i < juce::jmin(wrapNoteCount.load(), (int) wrapNotes.size()); ++i)
+        line(wrapNotes[(size_t) i]);
     return out;
 }
 

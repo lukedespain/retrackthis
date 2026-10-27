@@ -121,6 +121,7 @@ bool RetrackSession::arm()
 
     failureText = {};
     lastMembersSignature = membersSignature(); // armed with exactly these copies
+    outOfStepSinceMs = 0;
     setPhase (Phase::armed);
     return true;
 }
@@ -228,6 +229,31 @@ void RetrackSession::timerCallback()
         allDone = allDone && s == CaptureClock::State::done;
         if (s == CaptureClock::State::failed)
             failure = m->getClockFailure();
+    }
+
+    // Every copy should be on the same loop, give or take a block around each wrap.
+    // If they disagree for longer, a part or bed would hold the wrong loop, so stop.
+    int lowPass = 1 << 20, highPass = -1;
+    for (auto* m : all)
+    {
+        const int pass = m->getClockState() == CaptureClock::State::done ? take.partNames.size() : m->getClockPass();
+        lowPass = juce::jmin (lowPass, pass);
+        highPass = juce::jmax (highPass, pass);
+    }
+    const auto nowMs = juce::Time::getMillisecondCounter();
+    if (! anyRecording || lowPass == highPass)
+        outOfStepSinceMs = 0;
+    else if (outOfStepSinceMs == 0)
+        outOfStepSinceMs = nowMs;
+    const bool outOfStep = outOfStepSinceMs != 0 && nowMs - outOfStepSinceMs > 1000;
+
+    if (outOfStep && failure == CaptureClock::Failure::none)
+    {
+        for (auto* m : all) m->closeTake();
+        failureText = "Retrack lost its place in the loop on one track. Arm and press play to try again.";
+        writeCaptureLog ("failed: copies out of step");
+        setPhase (Phase::failed);
+        return;
     }
 
     if (failure != CaptureClock::Failure::none)

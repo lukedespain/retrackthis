@@ -269,18 +269,6 @@ void WorkspaceView::paintHeader (juce::Graphics& g)
     drawBadge (g, { pad, y - 13.0f, 26.0f, 26.0f });
     drawWordmark (g, { pad + 34.0f, y + 6.0f }, 17.0f);
 
-    // Which track this copy is on.
-    if (! previewMode || preview.parts.size() > 0)
-    {
-        auto name = previewMode ? preview.parts[0] : proc.getTrackName();
-        if (name.isEmpty()) name = "This track";
-        auto x = pad + 34.0f + juce::GlyphArrangement::getStringWidth (font (17.0f, Weight::semibold), "RetrackThis") + 8.0f;
-        g.setColour (muted);
-        g.setFont (font (13.5f));
-        g.drawText (utf8 ("\xc2\xb7 ") + name, juce::Rectangle<float> (x, y - 12.0f, helpArea().getX() - x - 8.0f, 24.0f),
-                    juce::Justification::centredLeft, true);
-    }
-
     // The help button turns purple with an X while the walkthrough is open.
     auto help = helpArea();
     if (showingIntro)

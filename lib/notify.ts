@@ -324,6 +324,43 @@ export async function notifyMusicianAwarded(opts: {
   );
 }
 
+/** An admin replaced one of a musician's take files (e.g. to line it up with the bed). */
+export async function notifyMusicianTakeEditedByAdmin(opts: {
+  musicianId: string;
+  jobTitle: string;
+  fileLabel: string;
+  note: string;
+}) {
+  if (!emailConfigured()) return;
+
+  const musician = await db.user.findUnique({
+    where: { id: opts.musicianId },
+    select: { email: true, name: true },
+  });
+  if (!musician) return;
+
+  const paragraphs = opts.note
+    .trim()
+    .split(/\n{2,}/)
+    .map((p) => `<p style="margin:0 0 10px;">${escape(p).replace(/\n/g, "<br>")}</p>`)
+    .join("");
+
+  await safeSend(`take edited ${opts.musicianId}`, () =>
+    sendEmail({
+      to: musician.email,
+      subject: `We updated your take on “${opts.jobTitle}”`,
+      heading: "We updated your take",
+      bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(musician.name.split(" ")[0] || "there")},</p>
+        <p style="margin:0 0 14px;">The Retrack This team replaced <strong>${escape(opts.fileLabel)}</strong> in your take on <strong>${escape(opts.jobTitle)}</strong>. Here’s what we did:</p>
+        <div style="margin:0 0 14px;padding:12px 14px;border-radius:10px;background:#f3f1ff;">${paragraphs}</div>
+        <p style="margin:0;">Have a listen. If anything sounds off, reply to this email.</p>`,
+      ctaLabel: "See your submissions",
+      ctaHref: dashboardSubmissionsUrl(),
+      includeSettingsFooter: false,
+    })
+  );
+}
+
 export async function notifyMusiciansJobCancelled(opts: {
   jobId: string;
   jobTitle: string;

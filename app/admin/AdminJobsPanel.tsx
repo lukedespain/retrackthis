@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { EditJobForm } from "@/app/dashboard/EditJobForm";
 import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
+import { FileUpload } from "@/components/FileUpload";
 import { AdminActionsMenu, type AdminAction } from "./AdminActionsMenu";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { TestJobBadge } from "@/components/TestJobBadge";
@@ -161,7 +162,7 @@ export function AdminJobsPanel({
         href: `/admin/preview/producer/${job.creator.id}?job=${job.id}`,
       },
       {
-        label: listeningId === job.id ? "Stop listening" : "Listen to takes",
+        label: listeningId === job.id ? "Close takes" : "View takes",
         onClick: () => setListeningId(listeningId === job.id ? null : job.id),
         disabled: takeCount === 0,
         hint: takeCount === 0 ? "No takes yet" : undefined,
@@ -309,7 +310,8 @@ export function AdminJobsPanel({
                 Takes · {listeningJob.title}
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                Posted by {listeningJob.creator.name}. Listen only. Picking stays with the creator.
+                Posted by {listeningJob.creator.name}. Listen, or replace a file when a musician asks
+                for help. Picking stays with the producer.
               </p>
             </div>
             <Button size="sm" variant="ghost" onClick={() => setListeningId(null)}>
@@ -428,6 +430,8 @@ function AdminTakesList({
 }) {
   const [takes, setTakes] = useState<Take[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fixingTakeId, setFixingTakeId] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -448,7 +452,7 @@ function AdminTakesList({
     return () => {
       cancelled = true;
     };
-  }, [jobId]);
+  }, [jobId, reload]);
 
   if (takes === null) {
     return (
@@ -512,6 +516,24 @@ function AdminTakesList({
             {take.note && (
               <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{take.note}</p>
             )}
+            {jobOpen && take.files?.some((f) => f.kind === "AUDIO") && (
+              <div className="mt-3">
+                {fixingTakeId === take.id ? (
+                  <ReplaceTakeFileForm
+                    take={take}
+                    onCancel={() => setFixingTakeId(null)}
+                    onSaved={() => {
+                      setFixingTakeId(null);
+                      setReload((n) => n + 1);
+                    }}
+                  />
+                ) : (
+                  <Button size="sm" variant="secondary" onClick={() => setFixingTakeId(take.id)}>
+                    Replace a file
+                  </Button>
+                )}
+              </div>
+            )}
             <div className="mt-3">
               <TakeSubmissionFiles
                 files={take.files}
@@ -525,6 +547,94 @@ function AdminTakesList({
           </Card>
         );
       })}
+    </div>
+  );
+}
+
+/** Admin fix for a musician's take: upload a corrected file in place of one of theirs.
+ *  The note is emailed to the musician, so they know what changed and why. */
+function ReplaceTakeFileForm({
+  take,
+  onCancel,
+  onSaved,
+}: {
+  take: Take;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const audio = audioFiles(take.files ?? []);
+  const [fileId, setFileId] = useState(audio[0]?.id ?? "");
+  const [uploaded, setUploaded] = useState<{ fileUrl: string; previewUrl: string | null } | null>(null);
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const firstName = take.musician.name.split(" ")[0] || "the musician";
+
+  async function save() {
+    if (!uploaded || !note.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/takes/${take.id}/files/${fileId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...uploaded, note }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error ?? "Couldn’t save the file");
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn’t save the file");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
+      <p className="text-sm font-medium text-gray-900">Replace a file in {firstName}’s take</p>
+      {audio.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {audio.map((f) => (
+            <Button
+              key={f.id}
+              size="sm"
+              variant={f.id === fileId ? "primary" : "secondary"}
+              onClick={() => setFileId(f.id)}
+            >
+              {f.label}
+            </Button>
+          ))}
+        </div>
+      )}
+      <FileUpload
+        label="Corrected file"
+        kind="take"
+        compact
+        onUploaded={(publicUrl, meta) => setUploaded({ fileUrl: publicUrl, previewUrl: meta?.previewUrl ?? null })}
+        onClear={() => setUploaded(null)}
+      />
+      <label className="block">
+        <span className="text-sm text-gray-700">What you changed</span>
+        <textarea
+          className="mt-1 w-full rounded-lg border border-gray-200 p-2 text-sm"
+          rows={3}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="For example: I lined your take up with the bed so it starts on the downbeat. Nothing else changed."
+        />
+        <span className="mt-1 block text-xs text-gray-500">
+          We email this to {firstName} when you save. The old file stays in storage.
+        </span>
+      </label>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <div className="flex gap-2">
+        <Button size="sm" onClick={() => void save()} disabled={!uploaded || !note.trim() || saving}>
+          {saving ? "Saving…" : `Save and email ${firstName}`}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancel} disabled={saving}>
+          Cancel
+        </Button>
+      </div>
     </div>
   );
 }

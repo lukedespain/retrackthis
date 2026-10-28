@@ -32,7 +32,7 @@ namespace
 
     /** One checklist row: a numbered circle (or a check) and a label, with an optional grey line under it. */
     float drawRow (juce::Graphics& g, juce::Rectangle<float> area, Mark mark, const juce::String& number,
-                   const juce::String& label, const juce::String& sub = {})
+                   const juce::String& label, const juce::String& sub = {}, const juce::StringArray& bullets = {})
     {
         auto dot = juce::Rectangle<float> (18.0f, 18.0f).withPosition (area.getX(), area.getY() + 1.0f);
         if (mark == Mark::done)
@@ -69,6 +69,18 @@ namespace
                            text.withTrimmedTop (1.0f));
         if (sub.isNotEmpty())
             y = drawText (g, sub, font (11.5f), muted, text.withY (y + 1.0f));
+        // One line per item, cut short with an ellipsis rather than wrapping.
+        if (! bullets.isEmpty())
+            y += 3.0f;
+        for (auto& item : bullets)
+        {
+            g.setColour (muted);
+            g.fillEllipse (text.getX() + 1.0f, y + 6.5f, 4.0f, 4.0f);
+            g.setFont (font (12.0f));
+            g.drawText (item, juce::Rectangle<float> (text.getX() + 12.0f, y, text.getWidth() - 12.0f, 17.0f),
+                        juce::Justification::centredLeft, true);
+            y += 17.0f;
+        }
         return y + 12.0f;
     }
 
@@ -265,7 +277,9 @@ juce::Rectangle<float> WorkspaceView::chipArea() const
 juce::Rectangle<float> WorkspaceView::helpArea() const
 {
     auto chip = chipArea();
-    return { chip.getX() - 8.0f - 30.0f, chip.getCentreY() - 15.0f, 30.0f, 30.0f };
+    // Room for "Tutorial", plus the X while the walkthrough is open.
+    auto w = juce::GlyphArrangement::getStringWidth (font (13.0f, Weight::medium), "Tutorial") + 28.0f + (showingIntro ? 18.0f : 0.0f);
+    return { chip.getX() - 8.0f - w, chip.getCentreY() - 15.0f, w, 30.0f };
 }
 
 void WorkspaceView::paintHeader (juce::Graphics& g)
@@ -274,30 +288,33 @@ void WorkspaceView::paintHeader (juce::Graphics& g)
     drawBadge (g, { pad, y - 13.0f, 26.0f, 26.0f });
     drawWordmark (g, { pad + 34.0f, y + 6.0f }, 17.0f);
 
-    // The help button turns purple with an X while the walkthrough is open.
+    // The Tutorial button turns purple with an X while the walkthrough is open.
     auto help = helpArea();
+    const float radius = help.getHeight() / 2.0f;
     if (showingIntro)
     {
         g.setColour (helpHover ? accentInk : accent);
-        g.fillEllipse (help);
-        auto c = help.getCentre();
-        juce::Path x;
-        x.startNewSubPath (c.x - 4.5f, c.y - 4.5f);
-        x.lineTo (c.x + 4.5f, c.y + 4.5f);
-        x.startNewSubPath (c.x + 4.5f, c.y - 4.5f);
-        x.lineTo (c.x - 4.5f, c.y + 4.5f);
+        g.fillRoundedRectangle (help, radius);
         g.setColour (juce::Colours::white);
-        g.strokePath (x, juce::PathStrokeType (1.8f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.setFont (font (13.0f, Weight::medium));
+        g.drawText ("Tutorial", help.withTrimmedLeft (14.0f), juce::Justification::centredLeft, false);
+        auto c = juce::Point<float> (help.getRight() - 17.0f, help.getCentreY());
+        juce::Path x;
+        x.startNewSubPath (c.x - 3.5f, c.y - 3.5f);
+        x.lineTo (c.x + 3.5f, c.y + 3.5f);
+        x.startNewSubPath (c.x + 3.5f, c.y - 3.5f);
+        x.lineTo (c.x - 3.5f, c.y + 3.5f);
+        g.strokePath (x, juce::PathStrokeType (1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
     else
     {
         g.setColour (helpHover ? soft.darker (0.03f) : surface);
-        g.fillEllipse (help);
+        g.fillRoundedRectangle (help, radius);
         g.setColour (line);
-        g.drawEllipse (help.reduced (0.5f), 1.0f);
-        g.setColour (muted);
-        g.setFont (font (14.0f, Weight::semibold));
-        g.drawText ("?", help, juce::Justification::centred, false);
+        g.drawRoundedRectangle (help.reduced (0.5f), radius, 1.0f);
+        g.setColour (ink);
+        g.setFont (font (13.0f, Weight::medium));
+        g.drawText ("Tutorial", help, juce::Justification::centred, false);
     }
 
     auto state = account.getState();
@@ -352,18 +369,21 @@ void WorkspaceView::paintChecklist (juce::Graphics& g, juce::Rectangle<float> ar
     const int beds = previewMode ? (preview.hasBed ? 1 : 0) : session.getBeds().size();
     const bool armed = screen == Screen::armed;
 
-    juce::String partsSub = names.isEmpty() ? juce::String() : names.joinIntoString (", ");
-    if (names.size() > 8) partsSub = "Up to 8 tracks per project";
+    juce::String partsSub = names.size() > 8 ? juce::String ("Up to 8 tracks per project") : juce::String();
+    juce::StringArray partsList;
+    for (int i = 0; i < names.size() && i < 8; ++i)
+        partsList.add (names[i]);
     juce::String bedSub = beds > 1 ? "Keep just one, on the Stereo Out" : juce::String();
 
     float y = area.getY();
-    auto row = [&] (Mark m, const char* n, const juce::String& label, const juce::String& sub = {})
+    auto row = [&] (Mark m, const char* n, const juce::String& label, const juce::String& sub = {},
+                    const juce::StringArray& bullets = {})
     {
-        y = drawRow (g, area.withY (y), m, n, label, sub);
+        y = drawRow (g, area.withY (y), m, n, label, sub, bullets);
     };
-    row (names.isEmpty() ? Mark::now : Mark::done, "1", "Insert on tracks to retrack", partsSub);
+    row (names.isEmpty() ? Mark::now : Mark::done, "1", "Insert on tracks", partsSub, partsList);
     row (names.isEmpty() ? Mark::todo : (bed ? Mark::done : Mark::now), "2", "Insert on Stereo Out", bedSub);
-    row (armed ? Mark::done : (! names.isEmpty() && bed ? Mark::now : Mark::todo), "3", "Click Arm");
+    row (armed ? Mark::done : (! names.isEmpty() && bed ? Mark::now : Mark::todo), "3", "Cycle and Arm");
     row (armed ? Mark::now : Mark::todo, "4", "Press play");
 }
 
@@ -451,7 +471,7 @@ void WorkspaceView::paintRight (juce::Graphics& g, juce::Rectangle<float> card)
             if (step == Step::insertParts || step == Step::insertBed)
             {
                 auto caption = step == Step::insertParts ? "Insert Retrack last on each track you want retracked."
-                                                         : "Insert Retrack last on the Stereo Out, after your other plugins.";
+                                                         : "Insert one more copy on the Stereo Out, as the last plugin in the chain.";
                 drawText (g, caption, font (12.5f), muted, inner.withTop ((float) mixer.getBottom() + 10.0f), juce::Justification::centredTop);
             }
             else
@@ -459,11 +479,8 @@ void WorkspaceView::paintRight (juce::Graphics& g, juce::Rectangle<float> card)
                 const int parts = previewMode ? preview.parts.size() : session.getParts().size();
                 auto caption = parts > 1 ? "Turn on Cycle over the section. With " + juce::String (parts)
                                                + " tracks, Retrack plays it " + juce::String (parts) + " times."
-                                         : juce::String ("Retrack records one pass. Cycle is optional.");
-                if (parts > 1)
-                    drawText (g, caption, font (12.5f), muted, inner.withTop ((float) cycle.getBottom() + 10.0f), juce::Justification::centredTop);
-                else
-                    drawText (g, caption, font (12.5f), muted, inner.withTop (inner.getY() + 60.0f), juce::Justification::centredTop);
+                                         : juce::String ("Turn on Cycle over the section, and the take ends right on the bar.");
+                drawText (g, caption, font (12.5f), muted, inner.withTop ((float) cycle.getBottom() + 10.0f), juce::Justification::centredTop);
             }
             break;
         }
@@ -480,7 +497,7 @@ void WorkspaceView::paintRight (juce::Graphics& g, juce::Rectangle<float> card)
                 drawText (g, "Turn on Cycle first, then press play again.", font (12.5f, Weight::medium), red,
                           inner.withTop (y + 36.0f), juce::Justification::centredTop);
             else
-                drawText (g, "Retrack records the next time you press play.", font (12.5f), muted,
+                drawText (g, "Retrack will start recording the next time you press play.", font (12.5f), muted,
                           inner.withTop (y + 36.0f), juce::Justification::centredTop);
             break;
         }
@@ -714,11 +731,8 @@ void WorkspaceView::layoutRight()
             {
                 // Arm sits where Disarm will be, at the bottom.
                 centreButton (armButton, inner.getBottom() - 40.0f, 160.0f);
-                if (names.size() > 1)
-                {
-                    cycle.setBounds (inner.withTop (inner.getY() + 18.0f).withHeight (54.0f).toNearestInt());
-                    shown.add (&cycle);
-                }
+                cycle.setBounds (inner.withTop (inner.getY() + 18.0f).withHeight (54.0f).toNearestInt());
+                shown.add (&cycle);
             }
             break;
         }

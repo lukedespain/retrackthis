@@ -372,12 +372,12 @@ namespace visuals
     {
         switch (page)
         {
-            case 0:  return "Insert Retrack as the last plugin on a track you want retracked.";
+            case 0:  return "Insert Retrack as the last plugin on each track you want retracked.";
             case 1:  return "Hold Option and drag it onto each other track you want retracked.";
-            case 2:  return "Drag one more copy onto the Stereo Out, after your other plugins.";
-            case 3:  return "Press C to turn on Cycle over the section. You need it for two or more tracks. With one, it ends the take exactly on the bar.";
-            case 4:  return "Optional: click the link button at the top right of the plugin window. Then one Retrack window follows whichever track you open.";
-            default: return "Click Arm in any Retrack window, then press play. Retrack records one loop for each track.";
+            case 2:  return "Drag one more copy onto the Stereo Out, as the last plugin in the chain.";
+            case 3:  return "Press C to turn on Cycle and capture just the section you want.";
+            case 4:  return "Optional: click the link button at the top right of the plugin window, so Retrack opens in one window instead of one for each track.";
+            default: return "Click Arm in any Retrack window, then press play. Retrack will record one loop for each track.";
         }
     }
 

@@ -54,9 +54,11 @@ bool RetrackProcessor::isBed() const
         case Role::bed:  return true;
         case Role::automatic: break;
     }
-    auto name = getTrackName().toLowerCase();
-    return name.contains("stereo out") || name == "output" || name.startsWith("output ")
-           || name.contains("master") || name.contains("main out");
+    // Match the whole name, so a track like "Song Master (Vocals)" still counts as a part.
+    // Trailing numbers are dropped first, for names like "Output 1-2" or "Master 1".
+    auto name = getTrackName().toLowerCase().trim().trimCharactersAtEnd("0123456789- ").trim();
+    return name == "stereo out" || name == "stereo output" || name == "output" || name == "master"
+           || name == "master bus" || name == "main" || name == "main out" || name == "main output";
 }
 
 void RetrackProcessor::getStateInformation(juce::MemoryBlock& dest)

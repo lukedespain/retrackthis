@@ -113,13 +113,15 @@ int main (int argc, char* argv[])
                 juce::PNGImageFormat().writeImageToStream (image, out);
             }
 
-        const char* screens[] = { "setup1", "setup2", "ready", "armed", "capturing", "failed", "jobs", "posting", "posted" };
+        // "ready1" is the Arm step with a single track.
+        const char* screens[] = { "setup1", "setup2", "ready", "ready1", "armed", "capturing", "failed", "jobs", "posting", "posted" };
         int n = 10;
         for (auto* sc : screens)
         {
             WorkspaceView::Preview p;
-            p.screen = sc;
-            if (juce::String (sc) != "setup1") p.parts = { "Drums", "Keys" };
+            p.screen = juce::String (sc) == "ready1" ? "ready" : sc;
+            if (juce::String (sc) == "ready1") p.parts = { "Lead Vocal" };
+            else if (juce::String (sc) != "setup1") p.parts = { "Drums", "Keys", "Song Master attempt.1 (Lead Vocals)" };
             p.hasBed = juce::String (sc) != "setup1" && juce::String (sc) != "setup2";
             ws.showPreview (p);
             auto image = ws.createComponentSnapshot (ws.getLocalBounds(), true, 2.0f);

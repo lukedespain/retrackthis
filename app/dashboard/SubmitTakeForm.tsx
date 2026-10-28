@@ -29,6 +29,7 @@ export function SubmitTakeForm({
   existingNote,
   existingFiles,
   backingSrc = null,
+  backingDownloadSrc = null,
   jobTitle = "Take",
   lyrics = null,
   submitter = null,
@@ -47,6 +48,8 @@ export function SubmitTakeForm({
   existingFiles?: TakeFileRecord[];
   /** Job bed, so a submitted take can be heard against it. */
   backingSrc?: string | null;
+  /** Master bed for download when backingSrc is a lighter preview. */
+  backingDownloadSrc?: string | null;
   jobTitle?: string;
   lyrics?: string | null;
   submitter?: { name: string; avatar: unknown } | null;
@@ -232,6 +235,7 @@ export function SubmitTakeForm({
             partDownloadSrc={downloadSrc}
             preloadSrcs={audio.map((file) => listenUrl(file)).filter((url): url is string => Boolean(url))}
             backingSrc={backingSrc}
+            backingDownloadSrc={backingDownloadSrc}
             partTabLabel="Part"
             partCaption="Your submitted take"
             initialMode={backingSrc ? "both" : "part"}

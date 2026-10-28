@@ -221,7 +221,7 @@ function SubmissionPlayer({
         className="flat"
         partSrc={playSrc}
         preloadSrcs={audio.map((file) => listenUrl(file)).filter((url): url is string => Boolean(url))}
-        backingSrc={take.job.backingFileUrl}
+        backingSrc={take.job.backingPreviewUrl || take.job.backingFileUrl}
         initialMode={take.job.backingFileUrl ? "part" : "part"}
         allowDownload={false}
         heading={
@@ -324,7 +324,8 @@ function SubmissionCard({
                 existingTakeUrl={liveTake.audioFileUrl}
                 existingFiles={liveTake.files}
                 existingNote={liveTake.note}
-                backingSrc={liveTake.job.backingFileUrl}
+                backingSrc={liveTake.job.backingPreviewUrl || liveTake.job.backingFileUrl}
+                backingDownloadSrc={liveTake.job.backingFileUrl}
                 onSubmitted={(next) => {
                   setLiveTake((prev) => ({
                     ...prev,

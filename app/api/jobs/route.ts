@@ -7,6 +7,7 @@ import { stripe } from "@/lib/stripe";
 import { getRequestUserId, pluginPostedFrom } from "@/lib/pluginAuth";
 import { getSessionUserId } from "@/lib/supabaseServer";
 import { getAdminUser, isAdminUserId } from "@/lib/admin";
+import { jobPreviewUrls } from "@/lib/jobPreviews";
 import { resolvePostableInstrument } from "@/lib/approvedInstruments";
 import {
   isTestInstrumentId,
@@ -32,6 +33,9 @@ function sanitizeInviteEmails(value: unknown): string[] {
     .filter((item) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item));
   return Array.from(new Set(emails)).slice(0, 5);
 }
+
+// The plugin uploads WAVs without asking for previews, so POST may encode them inline.
+export const maxDuration = 300;
 
 // POST /api/jobs - creator posts a new job and is sent to Stripe Checkout
 // (charge-upfront). Job stays PENDING_PAYMENT until checkout.session.completed.
@@ -153,6 +157,7 @@ export async function POST(req: NextRequest) {
   if (storageError) {
     return NextResponse.json({ error: storageError }, { status: 400 });
   }
+  const previews = await jobPreviewUrls(demoFileUrl.trim(), backing);
 
   let bpmValue: number | null = null;
   if (bpm !== null && bpm !== undefined && bpm !== "") {
@@ -182,6 +187,7 @@ export async function POST(req: NextRequest) {
         description: descriptionStr,
         demoFileUrl: demoFileUrl.trim(),
         backingFileUrl: backing,
+        ...previews,
         priceCents,
         durationSeconds: durationSecondsInt,
         musicalKey: musicalKeyValue,
@@ -213,6 +219,7 @@ export async function POST(req: NextRequest) {
       description: descriptionStr,
       demoFileUrl: demoFileUrl.trim(),
       backingFileUrl: backing,
+      ...previews,
       priceCents,
       durationSeconds: durationSecondsInt,
       musicalKey: musicalKeyValue,
@@ -427,6 +434,8 @@ async function createPartBundle(
     description: string;
     demoFileUrl: string;
     backingFileUrl: string | null;
+    demoPreviewUrl: string | null;
+    backingPreviewUrl: string | null;
     priceCents: number;
     durationSeconds: number;
     deadline: Date;
@@ -481,12 +490,15 @@ async function createPartBundle(
     const { assertAppStorageUrls } = await import("@/lib/storageUrls");
     const storageError = assertAppStorageUrls([demoFileUrl, backing]);
     if (storageError) return NextResponse.json({ error: storageError }, { status: 400 });
+    // Parts often share one bed, so the second lookup finds the preview the first one made.
+    const previews = await jobPreviewUrls(demoFileUrl, backing);
     ready.push({
       instrumentId: legacyTest ? TEST_INSTRUMENT_ID : postable.id,
       instrument: legacyTest ? TEST_INSTRUMENT_LABEL : postable.label,
       description,
       demoFileUrl,
       backingFileUrl: backing,
+      ...previews,
       priceCents,
       durationSeconds: Math.round(durationValue),
       deadline,
@@ -513,6 +525,8 @@ async function createPartBundle(
           description: part.description,
           demoFileUrl: part.demoFileUrl,
           backingFileUrl: part.backingFileUrl,
+          demoPreviewUrl: part.demoPreviewUrl,
+          backingPreviewUrl: part.backingPreviewUrl,
           priceCents: part.priceCents,
           durationSeconds: part.durationSeconds,
           musicalKey: musicalKeyValue,
@@ -547,6 +561,8 @@ async function createPartBundle(
         description: part.description,
         demoFileUrl: part.demoFileUrl,
         backingFileUrl: part.backingFileUrl,
+        demoPreviewUrl: part.demoPreviewUrl,
+        backingPreviewUrl: part.backingPreviewUrl,
         priceCents: part.priceCents,
         durationSeconds: part.durationSeconds,
         musicalKey: musicalKeyValue,

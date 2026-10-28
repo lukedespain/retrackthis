@@ -323,6 +323,7 @@ export function AdminJobsPanel({
               jobId={listeningJob.id}
               jobOpen={listeningJob.status === "OPEN"}
               jobBackingUrl={listeningJob.backingFileUrl}
+              jobBackingPreviewUrl={listeningJob.backingPreviewUrl}
               jobTitle={listeningJob.title}
               lyrics={listeningJob.lyrics}
             />
@@ -419,12 +420,14 @@ function AdminTakesList({
   jobId,
   jobOpen,
   jobBackingUrl = null,
+  jobBackingPreviewUrl = null,
   jobTitle = "",
   lyrics = null,
 }: {
   jobId: string;
   jobOpen: boolean;
   jobBackingUrl?: string | null;
+  jobBackingPreviewUrl?: string | null;
   jobTitle?: string;
   lyrics?: string | null;
 }) {
@@ -516,34 +519,40 @@ function AdminTakesList({
             {take.note && (
               <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{take.note}</p>
             )}
-            {jobOpen && take.files?.some((f) => f.kind === "AUDIO") && (
+            {fixingTakeId === take.id ? (
               <div className="mt-3">
-                {fixingTakeId === take.id ? (
-                  <ReplaceTakeFileForm
-                    take={take}
-                    onCancel={() => setFixingTakeId(null)}
-                    onSaved={() => {
-                      setFixingTakeId(null);
-                      setReload((n) => n + 1);
-                    }}
-                  />
-                ) : (
-                  <Button size="sm" variant="secondary" onClick={() => setFixingTakeId(take.id)}>
-                    Replace a file
-                  </Button>
-                )}
+                <TakeFilesEditor
+                  take={take}
+                  backingSrc={jobBackingPreviewUrl || jobBackingUrl}
+                  onCancel={() => setFixingTakeId(null)}
+                  onSaved={() => {
+                    setFixingTakeId(null);
+                    setReload((n) => n + 1);
+                  }}
+                />
               </div>
+            ) : (
+              <>
+                {jobOpen && take.files?.some((f) => f.kind === "AUDIO") && (
+                  <div className="mt-3">
+                    <Button size="sm" variant="outline" onClick={() => setFixingTakeId(take.id)}>
+                      Edit files
+                    </Button>
+                  </div>
+                )}
+                <div className="mt-3">
+                  <TakeSubmissionFiles
+                    files={take.files}
+                    fallbackAudioUrl={take.audioFileUrl}
+                    allowDownload
+                    collapsible={audioCount > 1}
+                    backingSrc={jobBackingPreviewUrl || jobBackingUrl}
+                    backingDownloadSrc={jobBackingUrl}
+                    downloadJob={{ id: jobId, title: jobTitle, lyrics }}
+                  />
+                </div>
+              </>
             )}
-            <div className="mt-3">
-              <TakeSubmissionFiles
-                files={take.files}
-                fallbackAudioUrl={take.audioFileUrl}
-                allowDownload
-                collapsible={audioCount > 1}
-                backingSrc={jobBackingUrl}
-                downloadJob={{ id: jobId, title: jobTitle, lyrics }}
-              />
-            </div>
           </Card>
         );
       })}
@@ -551,68 +560,151 @@ function AdminTakesList({
   );
 }
 
-/** Admin fix for a musician's take: upload a corrected file in place of one of theirs.
- *  The note is emailed to the musician, so they know what changed and why. */
-function ReplaceTakeFileForm({
+type Replacement = { fileUrl: string; previewUrl: string | null; label: string };
+
+/** Admin fix for a musician's take: replace or remove its files, hear the result against the
+ *  bed, then save. Nothing changes until Save, and the note is emailed to the musician. */
+function TakeFilesEditor({
   take,
+  backingSrc,
   onCancel,
   onSaved,
 }: {
   take: Take;
+  backingSrc: string | null;
   onCancel: () => void;
   onSaved: () => void;
 }) {
   const audio = audioFiles(take.files ?? []);
-  const [fileId, setFileId] = useState(audio[0]?.id ?? "");
-  const [uploaded, setUploaded] = useState<{ fileUrl: string; previewUrl: string | null } | null>(null);
+  const [selectedId, setSelectedId] = useState(audio[0]?.id ?? "");
+  const [replacements, setReplacements] = useState<Record<string, Replacement>>({});
+  const [removed, setRemoved] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const firstName = take.musician.name.split(" ")[0] || "the musician";
 
+  const kept = audio.filter((f) => !removed.includes(f.id));
+  const selected = kept.find((f) => f.id === selectedId) ?? kept[0];
+  const changed = Object.keys(replacements).some((id) => !removed.includes(id)) || removed.length > 0;
+  // What the take will sound like after saving.
+  const staged = kept.map((f) => {
+    const r = replacements[f.id];
+    return r ? { ...f, fileUrl: r.fileUrl, previewUrl: r.previewUrl, label: r.label } : f;
+  });
+
+  function remove(id: string) {
+    if (kept.length <= 1) return;
+    setRemoved((current) => [...current, id]);
+    if (selectedId === id) setSelectedId(kept.find((f) => f.id !== id)?.id ?? "");
+  }
+
   async function save() {
-    if (!uploaded || !note.trim()) return;
+    if (!changed || !note.trim()) return;
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/takes/${take.id}/files/${fileId}`, {
-        method: "PUT",
+      const res = await fetch(`/api/admin/takes/${take.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...uploaded, note }),
+        body: JSON.stringify({
+          replace: Object.entries(replacements)
+            .filter(([id]) => !removed.includes(id))
+            .map(([fileId, r]) => ({ fileId, ...r })),
+          remove: removed,
+          note,
+        }),
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error ?? "Couldn’t save the file");
+      if (!res.ok) throw new Error(body?.error ?? "Couldn’t save the changes");
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn’t save the file");
+      setError(err instanceof Error ? err.message : "Couldn’t save the changes");
       setSaving(false);
     }
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-sm font-medium text-gray-900">Replace a file in {firstName}’s take</p>
-      {audio.length > 1 && (
-        <div className="flex flex-wrap gap-2">
-          {audio.map((f) => (
-            <Button
+    <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4">
+      <div>
+        <p className="text-sm font-medium text-gray-900">Edit {firstName}’s files</p>
+        <p className="mt-0.5 text-xs text-gray-500">
+          Pick a file to replace, or remove one with its ×. Nothing changes until you save.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {kept.map((f) => {
+          const on = f.id === selected?.id;
+          const label = replacements[f.id]?.label ?? f.label;
+          return (
+            <span
               key={f.id}
-              size="sm"
-              variant={f.id === fileId ? "primary" : "secondary"}
-              onClick={() => setFileId(f.id)}
+              className={`inline-flex max-w-full items-center rounded-full border text-sm ${
+                on ? "border-accent bg-accent text-white" : "border-gray-200 bg-white text-gray-800 hover:border-gray-300"
+              }`}
             >
-              {f.label}
-            </Button>
-          ))}
+              <button type="button" className="truncate py-1.5 pl-3.5 pr-2" onClick={() => setSelectedId(f.id)} title={label}>
+                {label}
+              </button>
+              {kept.length > 1 && (
+                <button
+                  type="button"
+                  aria-label={`Remove ${label}`}
+                  title="Remove this file"
+                  className={`mr-1.5 grid h-6 w-6 place-items-center rounded-full ${on ? "hover:bg-white/20" : "text-gray-400 hover:bg-gray-100 hover:text-gray-700"}`}
+                  onClick={() => remove(f.id)}
+                >
+                  ×
+                </button>
+              )}
+            </span>
+          );
+        })}
+      </div>
+
+      {removed.length > 0 && (
+        <p className="text-xs text-gray-500">
+          Removing {audio.filter((f) => removed.includes(f.id)).map((f) => `“${f.label}”`).join(", ")}.{" "}
+          <button type="button" className="underline hover:text-gray-800" onClick={() => setRemoved([])}>
+            Undo
+          </button>
+        </p>
+      )}
+
+      {selected && (
+        <div>
+          <FileUpload
+            key={selected.id}
+            label={`Replace “${selected.label}”`}
+            kind="take"
+            compact
+            onUploaded={(publicUrl, meta) =>
+              setReplacements((current) => ({
+                ...current,
+                [selected.id]: {
+                  fileUrl: publicUrl,
+                  previewUrl: meta?.previewUrl ?? null,
+                  label: meta?.fileName ?? selected.label,
+                },
+              }))
+            }
+            onClear={() =>
+              setReplacements((current) => {
+                const next = { ...current };
+                delete next[selected.id];
+                return next;
+              })
+            }
+          />
         </div>
       )}
-      <FileUpload
-        label="Corrected file"
-        kind="take"
-        compact
-        onUploaded={(publicUrl, meta) => setUploaded({ fileUrl: publicUrl, previewUrl: meta?.previewUrl ?? null })}
-        onClear={() => setUploaded(null)}
-      />
+
+      <div>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">How it will sound</p>
+        <TakeSubmissionFiles files={staged} fallbackAudioUrl={take.audioFileUrl} backingSrc={backingSrc} />
+      </div>
+
       <label className="block">
         <span className="text-sm text-gray-700">What you changed</span>
         <textarea
@@ -620,15 +712,16 @@ function ReplaceTakeFileForm({
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="For example: I lined your take up with the bed so it starts on the downbeat. Nothing else changed."
+          placeholder="For example: I lined your take up with the bed so it starts on the downbeat, and removed the file that was off. Nothing else changed."
         />
         <span className="mt-1 block text-xs text-gray-500">
-          We email this to {firstName} when you save. The old file stays in storage.
+          We email this to {firstName} when you save. Replaced and removed files stay in storage.
         </span>
       </label>
+
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
-        <Button size="sm" onClick={() => void save()} disabled={!uploaded || !note.trim() || saving}>
+        <Button size="sm" onClick={() => void save()} disabled={!changed || !note.trim() || saving}>
           {saving ? "Saving…" : `Save and email ${firstName}`}
         </Button>
         <Button size="sm" variant="ghost" onClick={onCancel} disabled={saving}>

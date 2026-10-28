@@ -12,6 +12,8 @@ export type UploadedAudio = {
   publicUrl: string;
   previewUrl: string | null;
   path: string;
+  /** The name of the file as picked, e.g. "Vocal take.wav". */
+  fileName?: string;
   /** Seconds of sounding audio when measurable (Part uploads; skips silence). */
   durationSeconds?: number | null;
   /** Full file length, including silence around the part. */
@@ -169,6 +171,7 @@ export function FileUpload({
         publicUrl,
         previewUrl,
         path,
+        fileName: file.name,
         durationSeconds:
           kind === "demo" && measured && measured.playSeconds >= 1 ? measured.playSeconds : null,
         fileDurationSeconds: measured?.fileDurationSeconds ?? null,

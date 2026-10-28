@@ -135,6 +135,9 @@ model Job {
   description    String
   demoFileUrl    String    // part being retracked (e.g. vocal demo only)
   backingFileUrl String?   // background without that part (e.g. instrumental)
+  // Stream/scrub previews (usually MP3) for the players. Downloads stay on the files above.
+  demoPreviewUrl    String?
+  backingPreviewUrl String?
   // Words for a vocal part. The producer can edit them; that edit is what musicians see.
   lyrics         String?   @db.Text
   lyricsEdited   Boolean   @default(false)

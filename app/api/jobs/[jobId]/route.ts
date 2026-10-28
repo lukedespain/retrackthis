@@ -4,6 +4,10 @@ import { db } from "@/lib/db";
 import { cleanLyrics, isVocalPart } from "@/lib/lyrics";
 import { assertAppStorageUrls } from "@/lib/storageUrls";
 import { getSessionUserId } from "@/lib/supabaseServer";
+import { jobFilePreviewUrl } from "@/lib/jobPreviews";
+
+// A new file without a preview yet is encoded to MP3 inline.
+export const maxDuration = 300;
 
 // PATCH /api/jobs/:jobId - creator or admin updates an OPEN job.
 // Title, description, reference audio, and tempo only - never price or payment.
@@ -53,6 +57,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { jobId: str
     description?: string;
     demoFileUrl?: string;
     backingFileUrl?: string | null;
+    demoPreviewUrl?: string | null;
+    backingPreviewUrl?: string | null;
     bpm?: number | null;
     lyrics?: string | null;
     lyricsEdited?: boolean;
@@ -82,12 +88,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { jobId: str
     if (data.demoFileUrl !== job.demoFileUrl) {
       data.lyrics = null;
       data.lyricsEdited = false;
+      data.demoPreviewUrl = await jobFilePreviewUrl(data.demoFileUrl);
     }
   }
 
   if (body.backingFileUrl !== undefined) {
     if (body.backingFileUrl === null || body.backingFileUrl === "") {
       data.backingFileUrl = null;
+      data.backingPreviewUrl = null;
     } else if (typeof body.backingFileUrl !== "string") {
       return NextResponse.json({ error: "Invalid background file" }, { status: 400 });
     } else {
@@ -95,6 +103,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { jobId: str
       const err = assertAppStorageUrls([trimmed]);
       if (err) return NextResponse.json({ error: err }, { status: 400 });
       data.backingFileUrl = trimmed;
+      if (trimmed !== job.backingFileUrl) data.backingPreviewUrl = await jobFilePreviewUrl(trimmed);
     }
   }
 

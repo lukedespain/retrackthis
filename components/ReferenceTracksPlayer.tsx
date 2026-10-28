@@ -7,7 +7,9 @@ import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
  */
 export function ReferenceTracksPlayer({
   partSrc,
+  partDownloadSrc = null,
   backingSrc = null,
+  backingDownloadSrc = null,
   allowDownload = false,
   className = "",
   partTabLabel = "Part",
@@ -16,7 +18,10 @@ export function ReferenceTracksPlayer({
   downloadJob = null,
 }: {
   partSrc: string;
+  /** Master files for download when partSrc / backingSrc are lighter previews. */
+  partDownloadSrc?: string | null;
   backingSrc?: string | null;
+  backingDownloadSrc?: string | null;
   allowDownload?: boolean;
   className?: string;
   partTabLabel?: string;
@@ -29,7 +34,9 @@ export function ReferenceTracksPlayer({
   return (
     <WaveformMixPlayer
       partSrc={partSrc}
+      partDownloadSrc={partDownloadSrc}
       backingSrc={backingSrc}
+      backingDownloadSrc={backingDownloadSrc}
       allowDownload={allowDownload}
       downloadJob={downloadJob}
       className={`${flat ? "flat" : ""} ${className}`.trim()}

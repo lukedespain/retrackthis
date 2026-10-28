@@ -39,6 +39,7 @@ export function WaveformMixPlayer({
   partDownloadSrc = null,
   preloadSrcs = NO_PRELOAD,
   backingSrc = null,
+  backingDownloadSrc = null,
   allowDownload = false,
   downloadJob = null,
   className = "",
@@ -57,6 +58,8 @@ export function WaveformMixPlayer({
   /** Other part files to decode ahead of time, so a take switch can keep playing. */
   preloadSrcs?: string[];
   backingSrc?: string | null;
+  /** Master bed for download when backingSrc is a lighter preview. */
+  backingDownloadSrc?: string | null;
   allowDownload?: boolean;
   /** When set, Part, Bed, and lyrics download from one list. */
   downloadJob?: { id: string; title: string; lyrics?: string | null } | null;
@@ -75,6 +78,7 @@ export function WaveformMixPlayer({
   initialMode?: ModeId;
 }) {
   const partFileForDownload = partDownloadSrc || partSrc;
+  const bedFileForDownload = backingSrc ? backingDownloadSrc || backingSrc : null;
   const hasAb = Boolean(backingSrc);
   const modes: ModeId[] = hasAb ? ["part", "backing", "both"] : ["part"];
   const startMode: ModeId = hasAb && initialMode === "both" ? "both" : hasAb && initialMode === "backing" ? "backing" : "part";
@@ -132,13 +136,13 @@ export function WaveformMixPlayer({
     }
     void (async () => {
       const part = await megabytes(partFileForDownload);
-      const bed = backingSrc ? await megabytes(backingSrc) : undefined;
+      const bed = bedFileForDownload ? await megabytes(bedFileForDownload) : undefined;
       if (!cancel) setFileSizes({ part, bed });
     })();
     return () => {
       cancel = true;
     };
-  }, [partFileForDownload, backingSrc]);
+  }, [partFileForDownload, bedFileForDownload]);
 
   modeRef.current = mode;
   offsetMsRef.current = showNudge ? offsetMs : 0;
@@ -511,7 +515,11 @@ export function WaveformMixPlayer({
   const partName = downloadJob
     ? jobFileName(downloadJob.title, partTabLabel, partFileForDownload)
     : guessFilename(partFileForDownload, partTabLabel === "Take" ? "take.wav" : "part.mp3");
-  const bedName = !backingSrc ? "" : downloadJob ? jobFileName(downloadJob.title, "Bed", backingSrc) : guessFilename(backingSrc, "bed.mp3");
+  const bedName = !bedFileForDownload
+    ? ""
+    : downloadJob
+      ? jobFileName(downloadJob.title, "Bed", bedFileForDownload)
+      : guessFilename(bedFileForDownload, "bed.mp3");
   const partDetail = partCaption ?? (partTabLabel === "Take" ? "Your submitted take" : "The part being retracked");
 
   function downloadItems(): DownloadItem[] {
@@ -525,12 +533,12 @@ export function WaveformMixPlayer({
         filename: partName,
       },
     ];
-    if (backingSrc) {
+    if (bedFileForDownload) {
       items.push({
         id: "bed",
         name: "Bed",
         detail: ["The music you record over", fileKind(bedName), fileSizes.bed].filter(Boolean).join(" · "),
-        url: backingSrc,
+        url: bedFileForDownload,
         filename: bedName,
       });
     }

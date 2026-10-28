@@ -27,6 +27,7 @@ export async function GET() {
           musicalKey: true,
           status: true,
           backingFileUrl: true,
+          backingPreviewUrl: true,
           deadline: true,
           moneyClaimedAt: true,
           creator: { select: { name: true, avatar: true } },

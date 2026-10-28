@@ -9,6 +9,7 @@ import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
 export function TakeMixPlayer({
   takeSrc,
   bedSrc,
+  bedDownloadSrc = null,
   className = "",
   allowDownload = false,
   downloadSrc = null,
@@ -16,6 +17,8 @@ export function TakeMixPlayer({
 }: {
   takeSrc: string;
   bedSrc: string;
+  /** Master bed for download when bedSrc is a lighter preview. */
+  bedDownloadSrc?: string | null;
   className?: string;
   allowDownload?: boolean;
   /** Master file for download (WAV etc). Defaults to takeSrc when omitted. */
@@ -27,6 +30,7 @@ export function TakeMixPlayer({
       partSrc={takeSrc}
       partDownloadSrc={downloadSrc}
       backingSrc={bedSrc}
+      backingDownloadSrc={bedDownloadSrc}
       className={className}
       allowDownload={allowDownload}
       downloadJob={downloadJob}

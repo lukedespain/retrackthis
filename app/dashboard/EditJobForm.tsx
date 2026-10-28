@@ -326,8 +326,10 @@ export function EditJobForm({
               Part / Bed / Both - same player musicians get on the job.
             </p>
             <ReferenceTracksPlayer
-              partSrc={demoFileUrl}
-              backingSrc={backingFileUrl}
+              partSrc={(demoFileUrl === job.demoFileUrl && job.demoPreviewUrl) || demoFileUrl}
+              partDownloadSrc={demoFileUrl}
+              backingSrc={(backingFileUrl === job.backingFileUrl && job.backingPreviewUrl) || backingFileUrl}
+              backingDownloadSrc={backingFileUrl}
               allowDownload
               downloadJob={{ id: job.id, title, lyrics }}
             />

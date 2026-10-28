@@ -12,6 +12,9 @@ export type Job = {
   demoFileUrl: string;
   /** Background / instrumental without the part being retracked */
   backingFileUrl?: string | null;
+  /** Stream previews (usually MP3) of the files above, for the players. */
+  demoPreviewUrl?: string | null;
+  backingPreviewUrl?: string | null;
   lyrics?: string | null;
   lyricsEdited?: boolean;
   priceCents: number;
@@ -67,6 +70,7 @@ export type MyTake = {
     musicalKey?: string | null;
     status: "PENDING_PAYMENT" | "OPEN" | "AWARDING" | "CANCELLING" | "AWARDED" | "CANCELLED";
     backingFileUrl?: string | null;
+    backingPreviewUrl?: string | null;
     deadline?: string;
     moneyClaimedAt?: string | null;
     creator?: { name: string; avatar: unknown } | null;

@@ -144,6 +144,7 @@ export function TakeSubmissionFiles({
   collapsible = false,
   defaultExpanded = false,
   backingSrc = null,
+  backingDownloadSrc = null,
   downloadJob = null,
 }: {
   files?: TakeFileRecord[];
@@ -153,6 +154,8 @@ export function TakeSubmissionFiles({
   defaultExpanded?: boolean;
   /** Job bed track - enables Take / Bed / Both waveform player. */
   backingSrc?: string | null;
+  /** Master bed for download when backingSrc is a lighter preview. */
+  backingDownloadSrc?: string | null;
   downloadJob?: { id: string; title: string; lyrics?: string | null } | null;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -238,6 +241,7 @@ export function TakeSubmissionFiles({
                       <TakeMixPlayer
                         takeSrc={streamSrc}
                         bedSrc={backingSrc}
+                        bedDownloadSrc={backingDownloadSrc}
                         allowDownload={allowDownload && Boolean(downloadHref)}
                         downloadSrc={downloadHref}
                         downloadJob={downloadJob}

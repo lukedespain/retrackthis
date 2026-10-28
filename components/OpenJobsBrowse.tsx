@@ -426,8 +426,10 @@ function OpenJobCard({
             </div>
             <ReferenceTracksPlayer
               flat
-              partSrc={job.demoFileUrl}
-              backingSrc={job.backingFileUrl}
+              partSrc={job.demoPreviewUrl || job.demoFileUrl}
+              partDownloadSrc={job.demoFileUrl}
+              backingSrc={job.backingPreviewUrl || job.backingFileUrl}
+              backingDownloadSrc={job.backingFileUrl}
               allowDownload={signedIn}
               downloadJob={{ id: job.id, title: job.title, lyrics }}
             />
@@ -474,7 +476,8 @@ function OpenJobCard({
                 existingTakeUrl={myTake?.audioFileUrl}
                 existingNote={myTake?.note}
                 existingFiles={myTake?.files}
-                backingSrc={job.backingFileUrl}
+                backingSrc={job.backingPreviewUrl || job.backingFileUrl}
+                backingDownloadSrc={job.backingFileUrl}
                 jobTitle={job.title}
                 lyrics={lyrics}
                 summaryOnly

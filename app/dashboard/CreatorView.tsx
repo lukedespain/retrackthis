@@ -666,6 +666,7 @@ function CreatorJobCard({
                   pastDeadline={isPastDeadline}
                   paying={job.status === "AWARDING"}
                   jobBackingUrl={job.backingFileUrl}
+                  jobBackingPreviewUrl={job.backingPreviewUrl}
                   downloadJob={{ id: job.id, title: job.title, lyrics }}
                   onAwarded={onChanged}
                   onSelectionChange={setFavoriteName}
@@ -720,6 +721,7 @@ function TakesList({
   pastDeadline = false,
   paying = false,
   jobBackingUrl = null,
+  jobBackingPreviewUrl = null,
   downloadJob = null,
   onAwarded,
   onSelectionChange,
@@ -731,6 +733,8 @@ function TakesList({
   pastDeadline?: boolean;
   paying?: boolean;
   jobBackingUrl?: string | null;
+  /** Lighter copy of the bed to stream; downloads stay on jobBackingUrl. */
+  jobBackingPreviewUrl?: string | null;
   downloadJob?: { id: string; title: string; lyrics?: string | null } | null;
   onAwarded: () => void;
   onSelectionChange?: (winnerName: string | null) => void;
@@ -826,6 +830,7 @@ function TakesList({
           paying={paying}
           hasOtherSelection={hasSelection && !take.isWinner}
           jobBackingUrl={jobBackingUrl}
+          jobBackingPreviewUrl={jobBackingPreviewUrl}
           downloadJob={downloadJob}
           selecting={selectingId === take.id}
           disabled={selectingId !== null || readOnly}
@@ -848,6 +853,7 @@ function TakeCard({
   paying = false,
   hasOtherSelection,
   jobBackingUrl = null,
+  jobBackingPreviewUrl = null,
   downloadJob = null,
   selecting,
   disabled,
@@ -862,6 +868,8 @@ function TakeCard({
   paying?: boolean;
   hasOtherSelection: boolean;
   jobBackingUrl?: string | null;
+  /** Lighter copy of the bed to stream; downloads stay on jobBackingUrl. */
+  jobBackingPreviewUrl?: string | null;
   downloadJob?: { id: string; title: string; lyrics?: string | null } | null;
   selecting: boolean;
   disabled: boolean;
@@ -924,7 +932,8 @@ function TakeCard({
             partSrc={playSrc}
             partDownloadSrc={downloadSrc}
             preloadSrcs={audio.map((file) => listenUrl(file)).filter((url): url is string => Boolean(url))}
-            backingSrc={jobBackingUrl}
+            backingSrc={jobBackingPreviewUrl || jobBackingUrl}
+            backingDownloadSrc={jobBackingUrl}
             partTabLabel="Take"
             partCaption="Your submitted take"
             initialMode={jobBackingUrl ? "both" : "part"}

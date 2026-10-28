@@ -324,11 +324,11 @@ export async function notifyMusicianAwarded(opts: {
   );
 }
 
-/** An admin replaced one of a musician's take files (e.g. to line it up with the bed). */
+/** An admin replaced or removed files in a musician's take (e.g. to line it up with the bed). */
 export async function notifyMusicianTakeEditedByAdmin(opts: {
   musicianId: string;
   jobTitle: string;
-  fileLabel: string;
+  changes: string[];
   note: string;
 }) {
   if (!emailConfigured()) return;
@@ -339,6 +339,7 @@ export async function notifyMusicianTakeEditedByAdmin(opts: {
   });
   if (!musician) return;
 
+  const changes = opts.changes.map((c) => `<li style="margin:0 0 4px;">${escape(c)}</li>`).join("");
   const paragraphs = opts.note
     .trim()
     .split(/\n{2,}/)
@@ -351,7 +352,9 @@ export async function notifyMusicianTakeEditedByAdmin(opts: {
       subject: `We updated your take on “${opts.jobTitle}”`,
       heading: "We updated your take",
       bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(musician.name.split(" ")[0] || "there")},</p>
-        <p style="margin:0 0 14px;">The Retrack This team replaced <strong>${escape(opts.fileLabel)}</strong> in your take on <strong>${escape(opts.jobTitle)}</strong>. Here’s what we did:</p>
+        <p style="margin:0 0 8px;">The Retrack This team changed your take on <strong>${escape(opts.jobTitle)}</strong>:</p>
+        <ul style="margin:0 0 14px;padding-left:20px;">${changes}</ul>
+        <p style="margin:0 0 8px;">Here’s what we did:</p>
         <div style="margin:0 0 14px;padding:12px 14px;border-radius:10px;background:#f3f1ff;">${paragraphs}</div>
         <p style="margin:0;">Have a listen. If anything sounds off, reply to this email.</p>`,
       ctaLabel: "See your submissions",

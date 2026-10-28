@@ -497,7 +497,7 @@ void WorkspaceView::paintRight (juce::Graphics& g, juce::Rectangle<float> card)
                 drawText (g, "Turn on Cycle first, then press play again.", font (12.5f, Weight::medium), red,
                           inner.withTop (y + 36.0f), juce::Justification::centredTop);
             else
-                drawText (g, "Retrack will start recording the next time you press play.", font (12.5f), muted,
+                drawText (g, "Retrack will record the next time you press play.", font (12.5f), muted,
                           inner.withTop (y + 36.0f), juce::Justification::centredTop);
             break;
         }

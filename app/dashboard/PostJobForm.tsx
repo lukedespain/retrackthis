@@ -228,6 +228,12 @@ function PostJobFormInner({
   const durationUserSetRef = useRef(false);
   const [editLen, setEditLen] = useState(false);
   const [more, setMore] = useState<ExtraPart[]>(saved?.more ?? []);
+  const [previews, setPreviews] = useState<Record<string, string>>(saved?.previews ?? {});
+  const rememberPreview = useCallback((url: string, previewUrl: string | null | undefined) => {
+    if (previewUrl) setPreviews((p) => ({ ...p, [url]: previewUrl }));
+  }, []);
+  // Players stream the MP3 made at upload; the WAV is only a fallback.
+  const listen = (url: string | null) => (url ? previews[url] ?? url : url);
   const [inviteEmail, setInviteEmail] = useState(saved?.inviteEmail ?? "");
   const [musicalKey, setMusicalKey] = useState(saved?.musicalKey ?? "");
   const [deadlineText, setDeadlineText] = useState(saved?.deadlineText ?? String(DEFAULT_DEADLINE_DAYS));
@@ -542,6 +548,7 @@ function PostJobFormInner({
       priceDollars,
       inviteEmail,
       more,
+      previews,
     });
   }
 
@@ -777,6 +784,7 @@ function PostJobFormInner({
                 }}
                 onUploaded={(url, meta) => {
                   setDemoFileUrl(url);
+                  rememberPreview(url, meta?.previewUrl);
                   if (typeof meta?.fileDurationSeconds === "number") {
                     setPartFileSeconds(meta.fileDurationSeconds);
                   }
@@ -797,12 +805,15 @@ function PostJobFormInner({
                 kind="demo-backing"
                 accept={AUDIO_FILE_ACCEPT}
                 onClear={() => setBackingFileUrl(null)}
-                onUploaded={setBackingFileUrl}
+                onUploaded={(url, meta) => {
+                  setBackingFileUrl(url);
+                  rememberPreview(url, meta?.previewUrl);
+                }}
               />
             </div>
           </div>
           {demoFileUrl ? (
-            <ReferenceTracksPlayer partSrc={demoFileUrl} backingSrc={backingFileUrl} allowDownload={false} />
+            <ReferenceTracksPlayer partSrc={listen(demoFileUrl)!} backingSrc={listen(backingFileUrl)} allowDownload={false} />
           ) : null}
           {durationSeconds ? (
             <div className="plays">
@@ -879,6 +890,7 @@ function PostJobFormInner({
             key={part.key}
             index={index + 2}
             part={part}
+            rememberPreview={rememberPreview}
             disabled={submitting}
             onChange={(patch) =>
               setMore((list) => list.map((item) => (item.key === part.key ? { ...item, ...patch } : item)))
@@ -976,8 +988,8 @@ function PostJobFormInner({
                         {open && part.demoFileUrl ? (
                           <div className="jbody">
                             <ReferenceTracksPlayer
-                              partSrc={part.demoFileUrl}
-                              backingSrc={part.backingFileUrl}
+                              partSrc={listen(part.demoFileUrl)!}
+                              backingSrc={listen(part.backingFileUrl)}
                               allowDownload={false}
                             />
                           </div>
@@ -1073,12 +1085,14 @@ function ExtraPartCard({
   disabled,
   onChange,
   onRemove,
+  rememberPreview,
 }: {
   index: number;
   part: ExtraPart;
   disabled: boolean;
   onChange: (patch: Partial<ExtraPart>) => void;
   onRemove: () => void;
+  rememberPreview: (url: string, previewUrl: string | null | undefined) => void;
 }) {
   return (
     <section className="pcard open">
@@ -1109,6 +1123,7 @@ function ExtraPartCard({
             accept={AUDIO_FILE_ACCEPT}
             onClear={() => onChange({ demoFileUrl: null, fileDurationSeconds: null })}
             onUploaded={(url, meta) => {
+              rememberPreview(url, meta?.previewUrl);
               const measured = meta?.durationSeconds;
               onChange({
                 demoFileUrl: url,
@@ -1128,7 +1143,10 @@ function ExtraPartCard({
             kind="demo-backing"
             accept={AUDIO_FILE_ACCEPT}
             onClear={() => onChange({ backingFileUrl: null })}
-            onUploaded={(url) => onChange({ backingFileUrl: url })}
+            onUploaded={(url, meta) => {
+              rememberPreview(url, meta?.previewUrl);
+              onChange({ backingFileUrl: url });
+            }}
           />
         </div>
       </div>

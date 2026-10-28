@@ -28,6 +28,8 @@ export type PostJobDraft = {
   priceDollars: number;
   inviteEmail: string;
   more: PostJobDraftPart[];
+  /** MP3 previews made at upload, keyed by the uploaded file's URL. */
+  previews?: Record<string, string>;
 };
 
 export function readPostDraft(): PostJobDraft | null {

@@ -3,7 +3,7 @@
 import { WaveformMixPlayer } from "@/components/WaveformMixPlayer";
 
 /**
- * Producer take review: waveform Take/Bed/Both with manual ms nudge.
+ * Producer take review: waveform with a Take/Bed mix slider.
  * Streams takeSrc (usually MP3 preview); downloads use downloadSrc (master) when allowed.
  */
 export function TakeMixPlayer({
@@ -37,7 +37,6 @@ export function TakeMixPlayer({
       partTabLabel="Take"
       partCaption="Your submitted take"
       headingLabel="Submission"
-      showNudge
       initialMode="both"
     />
   );

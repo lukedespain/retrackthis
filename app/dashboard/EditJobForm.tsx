@@ -34,6 +34,14 @@ export function EditJobForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadKey, setUploadKey] = useState(0);
+  // MP3 previews for this job's files and any new uploads, keyed by the file's URL.
+  const [previews, setPreviews] = useState<Record<string, string>>(() => ({
+    ...(job.demoPreviewUrl ? { [job.demoFileUrl]: job.demoPreviewUrl } : {}),
+    ...(job.backingFileUrl && job.backingPreviewUrl ? { [job.backingFileUrl]: job.backingPreviewUrl } : {}),
+  }));
+  function rememberPreview(url: string, previewUrl: string | null | undefined) {
+    if (previewUrl) setPreviews((p) => ({ ...p, [url]: previewUrl }));
+  }
   const partReplaced = demoFileUrl !== job.demoFileUrl;
 
   async function handleSubmit(e: FormEvent) {
@@ -242,8 +250,9 @@ export function EditJobForm({
             accept={AUDIO_FILE_ACCEPT}
             compact
             hint="Optional. Leave as-is to keep the current scratch."
-            onUploaded={(url) => {
+            onUploaded={(url, meta) => {
               setDemoFileUrl(url);
+              rememberPreview(url, meta?.previewUrl);
               setUploadKey((k) => k + 1);
             }}
           />
@@ -298,8 +307,9 @@ export function EditJobForm({
                 accept={AUDIO_FILE_ACCEPT}
                 compact
                 hint="Optional. Upload a new bed to replace this one."
-                onUploaded={(url) => {
+                onUploaded={(url, meta) => {
                   setBackingFileUrl(url);
+                  rememberPreview(url, meta?.previewUrl);
                   setUploadKey((k) => k + 1);
                 }}
               />
@@ -311,8 +321,9 @@ export function EditJobForm({
               kind="demo-backing"
               accept={AUDIO_FILE_ACCEPT}
               hint="MP3 or WAV. Full songs are fine."
-              onUploaded={(url) => {
+              onUploaded={(url, meta) => {
                 setBackingFileUrl(url);
+                rememberPreview(url, meta?.previewUrl);
                 setUploadKey((k) => k + 1);
               }}
             />
@@ -326,9 +337,9 @@ export function EditJobForm({
               Part / Bed / Both - same player musicians get on the job.
             </p>
             <ReferenceTracksPlayer
-              partSrc={(demoFileUrl === job.demoFileUrl && job.demoPreviewUrl) || demoFileUrl}
+              partSrc={previews[demoFileUrl] ?? demoFileUrl}
               partDownloadSrc={demoFileUrl}
-              backingSrc={(backingFileUrl === job.backingFileUrl && job.backingPreviewUrl) || backingFileUrl}
+              backingSrc={backingFileUrl ? previews[backingFileUrl] ?? backingFileUrl : null}
               backingDownloadSrc={backingFileUrl}
               allowDownload
               downloadJob={{ id: job.id, title, lyrics }}

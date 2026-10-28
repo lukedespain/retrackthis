@@ -54,6 +54,8 @@ export type WaveLayer = {
   peaks: Float32Array;
   role: "part" | "bed";
   shiftPx?: number;
+  /** Bar height from 0 to 1, following the track's volume in the mix. */
+  scale?: number;
 };
 
 function barLayout(width: number) {
@@ -71,9 +73,13 @@ function drawBars(
   mid: number,
   color: string,
   shiftPx: number,
-  { widthScale = 1, dots = true }: { widthScale?: number; dots?: boolean } = {}
+  {
+    widthScale = 1,
+    dots = true,
+    heightScale = 1,
+  }: { widthScale?: number; dots?: boolean; heightScale?: number } = {}
 ) {
-  if (peaks.length === 0 || width <= 0) return;
+  if (peaks.length === 0 || width <= 0 || heightScale <= 0.01) return;
   const { bars, barW } = barLayout(width);
   const data = bucketPeaks(peaks, bars);
   const drawW = Math.max(1.6, barW * widthScale);
@@ -90,7 +96,7 @@ function drawBars(
       ctx.arc(cx, mid, 1.35, 0, Math.PI * 2);
       continue;
     }
-    const h = Math.max(4, data[i] * (mid - 2) * 1.92);
+    const h = Math.max(4, data[i] * (mid - 2) * 1.92) * heightScale;
     roundWaveRect(ctx, x, mid - h / 2, drawW, h, widthScale < 1 ? 1.2 : 1.6);
   }
   ctx.fill();
@@ -157,8 +163,14 @@ export function paintWaveform(opts: {
   const overlay = Boolean(bed && part);
 
   if (overlay && bed && part) {
-    drawBars(ctx, bed.peaks, cssW, mid, "#b9b8b3", 0);
-    drawBars(ctx, part.peaks, cssW, mid, accent, part.shiftPx ?? 0, { widthScale: 0.48, dots: false });
+    const bedScale = bed.scale ?? 1;
+    drawBars(ctx, bed.peaks, cssW, mid, "#b9b8b3", 0, { heightScale: bedScale });
+    // The part's bars widen as the bed fades out, filling the slots on their own.
+    drawBars(ctx, part.peaks, cssW, mid, accent, part.shiftPx ?? 0, {
+      widthScale: 0.48 + 0.52 * (1 - bedScale),
+      dots: bedScale <= 0.01,
+      heightScale: part.scale ?? 1,
+    });
     if (progressX > 1 && progressX < cssW - 1) {
       ctx.fillStyle = "rgba(255,255,255,0.42)";
       ctx.fillRect(progressX, 0, cssW - progressX, height);

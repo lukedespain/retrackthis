@@ -49,7 +49,6 @@ export function ReferenceTracksPlayer({
           </strong>
         ) : undefined
       }
-      showNudge={false}
       initialMode="part"
     />
   );

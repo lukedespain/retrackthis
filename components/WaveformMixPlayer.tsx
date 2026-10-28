@@ -9,8 +9,8 @@ import { loadAudioForMixCached } from "@/lib/waveformPeaks";
 
 type ModeId = "part" | "backing" | "both";
 
-const OFFSET_MIN_MS = -2000;
-const OFFSET_MAX_MS = 2000;
+/** Mix position for each button: 0 is the part alone, 1 is the bed alone. */
+const MIX_FOR: Record<ModeId, number> = { part: 0, both: 0.5, backing: 1 };
 const START_AHEAD_SEC = 0.04;
 const NO_PRELOAD: string[] = [];
 
@@ -24,15 +24,17 @@ function guessFilename(src: string, fallback: string) {
   return fallback;
 }
 
-function formatOffset(ms: number) {
-  if (ms === 0) return "0 ms";
-  const sign = ms > 0 ? "+" : "−";
-  return `${sign}${Math.abs(ms)} ms`;
+/**
+ * Both tracks sit at full volume in the middle. Moving toward one side
+ * turns the other track down, so the ends play one track alone.
+ */
+function mixGains(mix: number) {
+  return { part: Math.min(1, 2 * (1 - mix)), bed: Math.min(1, 2 * mix) };
 }
 
 /**
- * Dual-track Web Audio waveform player (Part/Take + Bed + Both).
- * Optional manual nudge - only enable for producer take review.
+ * Dual-track Web Audio waveform player (Part/Take + Bed) with a mix slider
+ * between them. Part, Both, and Bed jump the slider to the left, middle, and right.
  */
 export function WaveformMixPlayer({
   partSrc,
@@ -49,7 +51,6 @@ export function WaveformMixPlayer({
   heading,
   beforeModes,
   showModeTip = true,
-  showNudge = false,
   initialMode = "part",
 }: {
   partSrc: string;
@@ -73,21 +74,18 @@ export function WaveformMixPlayer({
   /** Extra controls just left of Part / Bed / Both. */
   beforeModes?: ReactNode;
   showModeTip?: boolean;
-  /** Producer take review only - musicians / reference stay locked to the file. */
-  showNudge?: boolean;
   initialMode?: ModeId;
 }) {
   const partFileForDownload = partDownloadSrc || partSrc;
   const bedFileForDownload = backingSrc ? backingDownloadSrc || backingSrc : null;
   const hasAb = Boolean(backingSrc);
-  const modes: ModeId[] = hasAb ? ["part", "backing", "both"] : ["part"];
-  const startMode: ModeId = hasAb && initialMode === "both" ? "both" : hasAb && initialMode === "backing" ? "backing" : "part";
+  const modes: ModeId[] = ["part", "both", "backing"];
+  const startMix = hasAb ? MIX_FOR[initialMode] : 0;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  const modeRef = useRef<ModeId>(startMode);
-  const offsetMsRef = useRef(0);
+  const mixRef = useRef(startMix);
   const currentTimeRef = useRef(0);
   const durationRef = useRef(0);
   const playingRef = useRef(false);
@@ -108,11 +106,10 @@ export function WaveformMixPlayer({
   const scrubbingRef = useRef(false);
   const resumeAfterScrubRef = useRef(false);
 
-  const [mode, setMode] = useState<ModeId>(startMode);
+  const [mix, setMix] = useState(startMix);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [offsetMs, setOffsetMs] = useState(0);
   const [partPeaks, setPartPeaks] = useState<Float32Array | null>(null);
   const [bedPeaks, setBedPeaks] = useState<Float32Array | null>(null);
   const [waveError, setWaveError] = useState<string | null>(null);
@@ -144,28 +141,21 @@ export function WaveformMixPlayer({
     };
   }, [partFileForDownload, bedFileForDownload]);
 
-  modeRef.current = mode;
-  offsetMsRef.current = showNudge ? offsetMs : 0;
+  // Without a bed there is nothing to mix against, so the part plays alone.
+  mixRef.current = hasAb ? mix : 0;
   playingRef.current = playing;
   durationRef.current = duration;
 
-  const modeCopy: Record<ModeId, { title: string; hint: string }> = {
-    part: {
-      title: partTabLabel === "Take" ? "Take alone" : "Part being retracked",
-      hint: partTabLabel === "Take" ? "Just the submission." : "The part musicians are retracking.",
-    },
-    backing: { title: "Bed alone", hint: "Background / instrumental." },
-    both: {
-      title: partTabLabel === "Take" ? "Take + bed" : "Part + bed",
-      hint: showNudge
-        ? "Nudge the take until the transient locks."
-        : "Both tracks, locked to one clock.",
-    },
+  // The button whose position the slider sits on, if any.
+  const mode: ModeId | null = !hasAb
+    ? "part"
+    : (Object.keys(MIX_FOR) as ModeId[]).find((id) => Math.abs(MIX_FOR[id] - mix) < 0.001) ?? null;
+  const modeHint: Record<ModeId, string> = {
+    part: partTabLabel === "Take" ? "Just the submission." : "The part musicians are retracking.",
+    backing: "Background / instrumental.",
+    both: `Drag the slider to turn the ${partTabLabel.toLowerCase()} or the bed up and down.`,
   };
-
-  function offsetSec() {
-    return showNudge ? offsetMsRef.current / 1000 : 0;
-  }
+  const hint = modeHint[mode ?? "both"];
 
   function publishTime(t: number) {
     const clamped = Math.max(0, Math.min(t, durationRef.current || t));
@@ -178,6 +168,9 @@ export function WaveformMixPlayer({
       const ctx = new AudioContext();
       const partGain = ctx.createGain();
       const bedGain = ctx.createGain();
+      const gains = mixGains(mixRef.current);
+      partGain.gain.value = gains.part;
+      bedGain.gain.value = gains.bed;
       partGain.connect(ctx.destination);
       bedGain.connect(ctx.destination);
       partGainRef.current = partGain;
@@ -260,43 +253,34 @@ export function WaveformMixPlayer({
     durationRef.current = dur;
     const timeline = Math.max(0, Math.min(t, dur));
     const when = ctx.currentTime + START_AHEAD_SEC;
-    const m = modeRef.current;
-    const nudge = m === "both" ? offsetSec() : 0;
-
     const partGain = partGainRef.current!;
     const bedGain = bedGainRef.current!;
-    partGain.gain.value = m === "backing" ? 0 : 1;
-    bedGain.gain.value = m === "part" ? 0 : 1;
 
     let startedAny = false;
 
-    if (m === "part" || m === "both") {
-      const partFileTime = m === "both" ? timeline - nudge : timeline;
+    // Both tracks always run, so moving the slider only changes their volume.
+    if (timeline < partBuf.duration) {
       const src = ctx.createBufferSource();
       src.buffer = partBuf;
       src.connect(partGain);
-      if (partFileTime >= 0 && partFileTime < partBuf.duration) {
-        src.start(when, partFileTime);
-        startedAny = true;
-      } else if (partFileTime < 0) {
-        src.start(when - partFileTime, 0);
-        startedAny = true;
-      }
+      src.start(when, timeline);
+      startedAny = true;
       src.onended = () => {
-        if (partSrcNodeRef.current === src && m === "part" && playingRef.current) {
+        // Playing the part alone ends with the part, even when the bed runs longer.
+        if (partSrcNodeRef.current === src && mixRef.current === 0 && playingRef.current) {
           pauseTransport(0);
         }
       };
       partSrcNodeRef.current = src;
     }
 
-    if ((m === "backing" || m === "both") && bedBuf && timeline < bedBuf.duration) {
+    if (bedBuf && timeline < bedBuf.duration) {
       const src = ctx.createBufferSource();
       src.buffer = bedBuf;
       src.connect(bedGain);
       src.start(when, timeline);
       src.onended = () => {
-        if (bedSrcNodeRef.current === src && playingRef.current) {
+        if (bedSrcNodeRef.current === src && mixRef.current === 1 && playingRef.current) {
           pauseTransport(0);
         }
       };
@@ -410,25 +394,22 @@ export function WaveformMixPlayer({
     pauseTransport();
   }
 
-  async function switchMode(next: ModeId) {
-    if (next === modeRef.current) return;
-    const wasPlaying = playingRef.current;
-    let t = timelineNow();
-
-    if (showNudge) {
-      if (modeRef.current === "part" && next !== "part") {
-        t = Math.max(0, t + offsetSec());
-      } else if (modeRef.current !== "part" && next === "part") {
-        t = Math.max(0, t - offsetSec());
-      }
+  function applyMix(next: number) {
+    // Snap to the middle so "Both" is easy to land on by dragging.
+    const value = Math.abs(next - 0.5) < 0.03 ? 0.5 : Math.max(0, Math.min(1, next));
+    mixRef.current = value;
+    setMix(value);
+    const ctx = ctxRef.current;
+    if (!ctx || !partGainRef.current || !bedGainRef.current) return;
+    const gains = mixGains(value);
+    const now = ctx.currentTime;
+    for (const [node, target] of [
+      [partGainRef.current, gains.part],
+      [bedGainRef.current, gains.bed],
+    ] as const) {
+      node.gain.cancelScheduledValues(now);
+      node.gain.setTargetAtTime(target, now, 0.015);
     }
-
-    pauseTransport(t);
-    setMode(next);
-    modeRef.current = next;
-
-    if (wasPlaying) await startTransport(t);
-    else publishTime(t);
   }
 
   function seekToRatio(ratio: number) {
@@ -437,12 +418,11 @@ export function WaveformMixPlayer({
     publishTime(t);
   }
 
-  function waveLayers(shift: number): WaveLayer[] {
+  function waveLayers(): WaveLayer[] {
     const layers: WaveLayer[] = [];
-    const showPart = modeRef.current === "part" || modeRef.current === "both";
-    const showBed = modeRef.current === "backing" || modeRef.current === "both";
-    if (showBed && bedPeaks) layers.push({ peaks: bedPeaks, role: "bed" });
-    if (showPart && partPeaks) layers.push({ peaks: partPeaks, role: "part", shiftPx: shift });
+    const gains = mixGains(mixRef.current);
+    if (bedPeaks) layers.push({ peaks: bedPeaks, role: "bed", scale: gains.bed });
+    if (partPeaks) layers.push({ peaks: partPeaks, role: "part", scale: gains.part });
     return layers;
   }
 
@@ -450,12 +430,10 @@ export function WaveformMixPlayer({
     const canvas = canvasRef.current;
     const wrap = wrapRef.current;
     if (!canvas || !wrap) return;
-    const pxPerSec = wrap.clientWidth / (durationRef.current || 1);
-    const shift = modeRef.current === "both" && showNudge ? (offsetMsRef.current / 1000) * pxPerSec : 0;
     paintWaveform({
       canvas,
       wrap,
-      peaks: waveLayers(shift),
+      peaks: waveLayers(),
       currentTime: currentTimeRef.current,
       duration: durationRef.current,
     });
@@ -486,20 +464,9 @@ export function WaveformMixPlayer({
     if (resumeAfterScrubRef.current) void startTransport(currentTimeRef.current);
   }
 
-  function applyOffset(nextMs: number) {
-    if (!showNudge) return;
-    const clamped = Math.max(OFFSET_MIN_MS, Math.min(OFFSET_MAX_MS, Math.round(nextMs)));
-    setOffsetMs(clamped);
-    offsetMsRef.current = clamped;
-    if (modeRef.current !== "both") return;
-    const t = timelineNow();
-    if (playingRef.current) void startTransport(t);
-    else publishTime(t);
-  }
-
   useEffect(() => {
     paint();
-  }, [partPeaks, bedPeaks, mode, offsetMs, currentTime, duration, loadingWave, showNudge]);
+  }, [partPeaks, bedPeaks, mix, currentTime, duration, loadingWave]);
 
   const paintRef = useRef(paint);
   paintRef.current = paint;
@@ -559,9 +526,9 @@ export function WaveformMixPlayer({
       <div className="ref-head">
         {heading ?? (
           <strong className="ref-lbl">
-            {mode === "backing" ? "Bed" : mode === "both" ? "Both" : partTabLabel}
+            {mode === "backing" ? "Bed" : mode === "part" ? partTabLabel : "Both"}
             {showModeTip ? (
-              <i className="tip sm lead" tabIndex={0} data-tip={modeCopy[mode].hint}>
+              <i className="tip sm lead" tabIndex={0} data-tip={hint}>
                 i
               </i>
             ) : null}
@@ -570,26 +537,40 @@ export function WaveformMixPlayer({
         <div className="ref-tools">
           {beforeModes}
           {heading && showModeTip ? (
-            <i className="tip sm" tabIndex={0} data-tip={modeCopy[mode].hint}>
+            <i className="tip sm" tabIndex={0} data-tip={hint}>
               i
             </i>
           ) : null}
           {hasAb ? (
-            <div className="seg" role="tablist" aria-label={headingLabel}>
-              {modes.map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  className="mix-mode"
-                  aria-pressed={mode === id}
-                  onClick={() => void switchMode(id)}
-                >
-                  {id === "part" ? <i className="dot part" aria-hidden /> : null}
-                  {id === "backing" ? <i className="dot bed" aria-hidden /> : null}
-                  {id === "part" ? partTabLabel : id === "backing" ? "Bed" : "Both"}
-                </button>
-              ))}
+            <div className="mix">
+              <div className="seg" role="group" aria-label={headingLabel}>
+                {modes.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className="mix-mode"
+                    aria-pressed={mode === id}
+                    onClick={() => applyMix(MIX_FOR[id])}
+                  >
+                    {id === "part" ? <i className="dot part" aria-hidden /> : null}
+                    {id === "backing" ? <i className="dot bed" aria-hidden /> : null}
+                    {id === "part" ? partTabLabel : id === "backing" ? "Bed" : "Both"}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="range"
+                className="mix-slider"
+                min={0}
+                max={1}
+                step={0.01}
+                value={mix}
+                onChange={(e) => applyMix(Number(e.target.value))}
+                aria-label={`Mix between ${partTabLabel.toLowerCase()} and bed`}
+                aria-valuetext={
+                  mode === "part" ? `${partTabLabel} only` : mode === "backing" ? "Bed only" : mode === "both" ? "Both at full volume" : undefined
+                }
+              />
             </div>
           ) : null}
         </div>
@@ -651,40 +632,6 @@ export function WaveformMixPlayer({
           </div>
         </div>
       </div>
-
-      {showNudge && mode === "both" && hasAb && (
-        <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50/80 px-3.5 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-medium text-gray-700">Nudge take</p>
-            <p className="text-xs tabular-nums text-gray-500">{formatOffset(offsetMs)}</p>
-          </div>
-          <input
-            type="range"
-            min={OFFSET_MIN_MS}
-            max={OFFSET_MAX_MS}
-            step={5}
-            value={offsetMs}
-            onChange={(e) => applyOffset(Number(e.target.value))}
-            className="mt-2 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-gray-200"
-            style={{ accentColor: "var(--accent)" }}
-            aria-label="Nudge take in milliseconds"
-          />
-          <div className="mt-1 flex justify-between text-[10px] text-gray-400">
-            <span>Earlier</span>
-            <button
-              type="button"
-              className="font-medium text-gray-500 underline-offset-2 hover:text-gray-800 hover:underline"
-              onClick={() => applyOffset(0)}
-            >
-              Reset
-            </button>
-            <span>Later</span>
-          </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
-            Drag until the take transient lines up with the bed. Doesn’t change the uploaded file.
-          </p>
-        </div>
-      )}
 
       {allowDownload && downloadJob ? (
         <DownloadFiles title={downloadJob.title} jobId={downloadJob.id} items={downloadItems()} />

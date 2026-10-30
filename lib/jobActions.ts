@@ -6,6 +6,7 @@ import {
   notifyAdminManualPayout,
   notifyMusicianAwarded,
   notifyMusiciansJobCancelled,
+  notifyMusiciansNotPicked,
   notifyProducerDeadlineReached,
 } from "@/lib/notify";
 import { calcPlatformFeeCents, stripe } from "@/lib/stripe";
@@ -245,6 +246,11 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
       payoutAccountName: musician.payoutAccountName,
       payoutCents,
     });
+    await notifyMusiciansNotPicked({
+      jobId: job.id,
+      jobTitle: job.title,
+      pickedMusicianId: take.musicianId,
+    });
 
     return {
       ok: true,
@@ -293,6 +299,11 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
     musicianId: take.musicianId,
     jobTitle: job.title,
     payoutProvider: "stripe",
+  });
+  await notifyMusiciansNotPicked({
+    jobId: job.id,
+    jobTitle: job.title,
+    pickedMusicianId: take.musicianId,
   });
 
   return { ok: true, payout: "stripe" };

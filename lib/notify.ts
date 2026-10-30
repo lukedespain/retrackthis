@@ -428,6 +428,42 @@ export async function notifyMusiciansJobCancelled(opts: {
   );
 }
 
+/** Thank everyone whose take wasn't picked, once per musician. */
+export async function notifyMusiciansNotPicked(opts: {
+  jobId: string;
+  jobTitle: string;
+  pickedMusicianId: string;
+}) {
+  if (!emailConfigured()) return;
+
+  const takes = await db.take.findMany({
+    where: { jobId: opts.jobId, musicianId: { not: opts.pickedMusicianId } },
+    include: { musician: { select: { id: true, email: true, name: true, notifyTakeOutcome: true } } },
+  });
+
+  const seen = new Set<string>();
+  await Promise.all(
+    takes.map((take) => {
+      if (!take.musician.notifyTakeOutcome) return Promise.resolve();
+      if (seen.has(take.musician.id)) return Promise.resolve();
+      seen.add(take.musician.id);
+      return safeSend(`not picked ${opts.jobId} → ${take.musician.email}`, () =>
+        sendEmail({
+          to: take.musician.email,
+          subject: `Thanks for your take on “${opts.jobTitle}”`,
+          bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(take.musician.name.split(" ")[0] || "there")},</p>
+            <p style="margin:0 0 10px;">The producer has made their pick on <strong>${escape(opts.jobTitle)}</strong>, and this time they went with another take.</p>
+            <p style="margin:0 0 10px;">Thank you so much for submitting. RetrackThis only works because musicians like you put real time and care into someone else’s song, and we don’t take that for granted. A pick usually comes down to what fits one particular song, so please don’t read this as a judgment of your playing.</p>
+            <p style="margin:0 0 10px;">As long as your job alerts are on, we’ll email you the next time a job comes up that needs what you play.</p>
+            <p style="margin:0;">Thanks again,<br />The RetrackThis team</p>`,
+          ctaLabel: "See open jobs",
+          ctaHref: jobUrl(),
+        })
+      );
+    })
+  );
+}
+
 function escape(value: string) {
   return value
     .replace(/&/g, "&amp;")

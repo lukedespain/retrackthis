@@ -6,8 +6,8 @@ export default function TermsOfServicePage() {
   return (
     <LegalPage title="Terms of Service" updated="October 11, 2026">
       <p>
-        These Terms of Service (&quot;Terms&quot;) are an agreement between you and Retrack This
-        (&quot;Retrack This,&quot; &quot;we,&quot; &quot;us&quot;) and govern your use of
+        These Terms of Service (&quot;Terms&quot;) are an agreement between you and RetrackThis
+        (&quot;RetrackThis,&quot; &quot;we,&quot; &quot;us&quot;) and govern your use of
         retrackthis.com and related services (the &quot;Service&quot;). By creating an account,
         posting a job, submitting a take, or otherwise using the Service, you agree to these Terms.
         If you do not agree, do not use the Service.
@@ -37,7 +37,7 @@ export default function TermsOfServicePage() {
 
       <LegalSection title="2. The Service">
         <p>
-          Retrack This is a marketplace that connects Producers and Musicians. We are not a party to
+          RetrackThis is a marketplace that connects Producers and Musicians. We are not a party to
           the agreement between a Producer and a Musician for a Take, we do not employ Musicians,
           and we do not guarantee the quality, timing, or outcome of any Job or Take.
         </p>
@@ -115,7 +115,7 @@ export default function TermsOfServicePage() {
           <li>
             <strong>Full payment.</strong> The Job price paid to the Musician is full compensation
             for the Picked Take. No royalties, backend, residuals, or other payments are owed by the
-            Producer or Retrack This.
+            Producer or RetrackThis.
           </li>
           <li>
             <strong>Credit.</strong> Credit is optional and at the Producer&apos;s choice. To the
@@ -180,7 +180,7 @@ export default function TermsOfServicePage() {
             terms, systems, and timelines.
           </li>
           <li>
-            Retrack This sets the platform fee and may change it from time to time. The fee that
+            RetrackThis sets the platform fee and may change it from time to time. The fee that
             applies to a Job is the one in effect when the Job is picked.
           </li>
           <li>
@@ -193,7 +193,7 @@ export default function TermsOfServicePage() {
 
       <LegalSection title="10. Our license to operate the Service">
         <p>
-          You grant Retrack This a non-exclusive, worldwide, royalty-free license to host, store,
+          You grant RetrackThis a non-exclusive, worldwide, royalty-free license to host, store,
           copy, stream, and display content you upload, only as needed to operate the Service. This
           license ends when the content is removed from the Service, except for backups kept for a
           limited time and records we must keep by law.
@@ -219,7 +219,7 @@ export default function TermsOfServicePage() {
           The Service is provided &quot;as is&quot; and &quot;as available,&quot; without
           warranties of any kind. We do not guarantee uninterrupted availability, that any Take will
           meet your needs, or that any user will act professionally or follow these Terms. To the
-          fullest extent the law allows, Retrack This is not liable for indirect, incidental,
+          fullest extent the law allows, RetrackThis is not liable for indirect, incidental,
           special, or consequential damages, or for any amount greater than the fees we earned on
           the Job giving rise to the claim.
         </p>
@@ -227,7 +227,7 @@ export default function TermsOfServicePage() {
 
       <LegalSection title="13. Indemnity">
         <p>
-          You agree to defend and hold harmless Retrack This from claims, losses, and costs arising
+          You agree to defend and hold harmless RetrackThis from claims, losses, and costs arising
           from content you upload, your breach of these Terms, or your violation of anyone
           else&apos;s rights.
         </p>

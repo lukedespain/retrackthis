@@ -82,7 +82,7 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
               currency: "usd",
               unit_amount: job.payment.amountCents,
               product_data: {
-                name: `Retrack This: ${job.title}`.slice(0, 120),
+                name: `RetrackThis: ${job.title}`.slice(0, 120),
                 description: `${instrumentLabel} · paid upfront; musician is paid when you make the pick`.slice(
                   0,
                   500

@@ -14,7 +14,7 @@ export function assertAppStorageUrls(urls: Array<string | null | undefined>): st
   for (const url of urls) {
     if (url == null || url === "") continue;
     if (!isAppStoragePublicUrl(url)) {
-      return "File URL must be an upload from Retrack This storage.";
+      return "File URL must be an upload from RetrackThis storage.";
     }
   }
   return null;

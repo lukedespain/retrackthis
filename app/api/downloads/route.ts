@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
-  const title = typeof body?.title === "string" ? body.title : "Retrack This";
+  const title = typeof body?.title === "string" ? body.title : "RetrackThis";
   const jobId = typeof body?.jobId === "string" ? body.jobId : "";
   const items: Item[] = Array.isArray(body?.items) ? body.items : [];
   if (!jobId || items.length === 0) {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
   }
 
   const zip = zipFiles(packed);
-  const zipName = cleanFileName(`${title || job.title}.zip`, "retrack-this.zip");
+  const zipName = cleanFileName(`${title || job.title}.zip`, "retrackthis.zip");
   return new NextResponse(Buffer.from(zip), {
     headers: {
       "Content-Type": "application/zip",

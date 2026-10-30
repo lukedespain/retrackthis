@@ -34,10 +34,10 @@ export function BadgeMark() {
 
 export function Wordmark({ small = false, href = "/" }: { small?: boolean; href?: string }) {
   return (
-    <Link className={small ? "wordmark sm" : "wordmark"} href={href} aria-label="Retrack This">
+    <Link className={small ? "wordmark sm" : "wordmark"} href={href} aria-label="RetrackThis">
       <BadgeMark />
       <span>
-        Retrack <b>This</b>
+        Retrack<b>This</b>
       </span>
     </Link>
   );

@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { requireAdmin } from "@/lib/admin";
 import { isAltPayoutProvider } from "@/lib/connectCountries";
 import { db } from "@/lib/db";
+import { notifyAdminManualPayout } from "@/lib/notify";
 import { calcPlatformFeeCents, stripe } from "@/lib/stripe";
 
 function chargeIdFromIntent(pi: Stripe.PaymentIntent): string | null {
@@ -132,6 +133,14 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
     await db.payment.update({
       where: { id: job.payment.id },
       data: { status: "pending_manual_payout", platformFeeCents },
+    });
+    await notifyAdminManualPayout({
+      jobTitle: job.title,
+      musicianName: musician.name,
+      provider: musician.payoutProvider,
+      payoutEmail: musician.payoutEmail,
+      payoutAccountName: musician.payoutAccountName,
+      payoutCents,
     });
     return NextResponse.json({
       success: true,

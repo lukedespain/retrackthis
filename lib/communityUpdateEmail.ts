@@ -19,7 +19,7 @@ export function communityUpdateBodyHtml(firstName: string) {
       <p style="margin:0 0 14px;">If you want the full details, our ${link("https://retrackthis.com/faq", "FAQ")}, ${link("https://retrackthis.com/terms", "Terms")}, and ${link("https://retrackthis.com/privacy", "Privacy")} pages are up-to-date.</p>
       <p style="margin:0 0 14px;">If anything looks buggy or seems off, reply to this email. We’re a small team and appreciate any feedback or input you have!</p>
       <p style="margin:0 0 14px;">Thanks again for helping us shape this.</p>
-      <p style="margin:0;">Retrack This team</p>
+      <p style="margin:0;">RetrackThis team</p>
     `;
 }
 

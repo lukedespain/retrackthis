@@ -211,7 +211,7 @@ export async function notifyJobInvites(opts: {
       safeSend(`job-invite ${opts.job.id} → ${email}`, () =>
         sendEmail({
           to: email,
-          subject: `${opts.creatorName} invited you to a ${opts.job.instrument} gig on Retrack This`,
+          subject: `${opts.creatorName} invited you to a ${opts.job.instrument} gig on RetrackThis`,
           heading: "You're invited to submit a take",
           bodyHtml: `<p style="margin:0 0 10px;">Hi there,</p>
             <p style="margin:0 0 10px;"><strong>${escape(opts.creatorName)}</strong> posted a job and invited you to send a take:</p>
@@ -324,6 +324,38 @@ export async function notifyMusicianAwarded(opts: {
   );
 }
 
+/** Tell the team a picked take needs a PayPal or Wise payout sent by hand. */
+export async function notifyAdminManualPayout(opts: {
+  jobTitle: string;
+  musicianName: string;
+  provider: string | null;
+  payoutEmail: string | null;
+  payoutAccountName: string | null;
+  payoutCents: number;
+}) {
+  if (!emailConfigured()) return;
+
+  const to = process.env.ADMIN_ALERT_EMAIL?.trim() || "hello@retrackthis.com";
+  const providerLabel = opts.provider === "wise" ? "Wise" : "PayPal";
+  const amount = formatCents(opts.payoutCents);
+
+  await safeSend(`manual payout ${opts.jobTitle}`, () =>
+    sendEmail({
+      to,
+      subject: `Send ${amount} via ${providerLabel} for “${opts.jobTitle}”`,
+      heading: "A payout needs to be sent by hand",
+      bodyHtml: `<p style="margin:0 0 10px;">A take was picked on <strong>${escape(opts.jobTitle)}</strong>, and the musician is paid through ${providerLabel}.</p>
+        <p style="margin:0 0 4px;"><strong>Amount:</strong> ${escape(amount)}</p>
+        <p style="margin:0 0 4px;"><strong>Name:</strong> ${escape(opts.payoutAccountName || opts.musicianName)}</p>
+        <p style="margin:0 0 10px;"><strong>${providerLabel} email:</strong> ${escape(opts.payoutEmail || "not set")}</p>
+        <p style="margin:0;">Once it’s sent, click Mark paid on the job in Admin and enter the amount and transaction ID.</p>`,
+      ctaLabel: "Open Admin jobs",
+      ctaHref: `${appBaseUrl()}/admin?tab=jobs`,
+      includeSettingsFooter: false,
+    })
+  );
+}
+
 /** An admin replaced or removed files in a musician's take (e.g. to line it up with the bed). */
 export async function notifyMusicianTakeEditedByAdmin(opts: {
   musicianId: string;
@@ -352,7 +384,7 @@ export async function notifyMusicianTakeEditedByAdmin(opts: {
       subject: `We updated your take on “${opts.jobTitle}”`,
       heading: "We updated your take",
       bodyHtml: `<p style="margin:0 0 10px;">Hi ${escape(musician.name.split(" ")[0] || "there")},</p>
-        <p style="margin:0 0 8px;">The Retrack This team changed your take on <strong>${escape(opts.jobTitle)}</strong>:</p>
+        <p style="margin:0 0 8px;">The RetrackThis team changed your take on <strong>${escape(opts.jobTitle)}</strong>:</p>
         <ul style="margin:0 0 14px;padding-left:20px;">${changes}</ul>
         <p style="margin:0 0 8px;">Here’s what we did:</p>
         <div style="margin:0 0 14px;padding:12px 14px;border-radius:10px;background:#f3f1ff;">${paragraphs}</div>

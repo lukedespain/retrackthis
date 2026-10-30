@@ -31,7 +31,7 @@ export function RetrackMark({ className = "h-7 w-7" }: { className?: string }) {
   );
 }
 
-/** Site wordmark (Badge mark + "Retrack This"). */
+/** Site wordmark (Badge mark + "RetrackThis"). */
 export function Logo({ href = "/" }: { href?: string }) {
   return <Wordmark href={href} />;
 }

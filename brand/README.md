@@ -1,4 +1,4 @@
-# Retrack This brand assets
+# RetrackThis brand assets
 
 **Type:** Inter (sitewide)  
 **Mark / logos:** Exact Figma PNGs - **do not recreate for the site**. Resize only.  
@@ -6,7 +6,7 @@ SVGs in this folder are reference / export helpers and may lag the PNG masters.
 
 ## Site header
 
-The live site keeps **icon mark + “Retrack This” text** (`components/Logo.tsx`) so the mark can
+The live site keeps **icon mark + “RetrackThis” text** (`components/Logo.tsx`) so the mark can
 hover-scale. Do **not** replace the header with the full horizontal wordmark PNG.
 
 ## Accent colors
@@ -46,9 +46,9 @@ Tailwind `accent` / `accent-hover` / `accent-muted` map to those variables.
 The avatar and contact name next to Gmail are **not** controlled by our email HTML. For `hello@retrackthis.com`:
 
 1. [admin.google.com](https://admin.google.com) → Directory → Users → `hello@retrackthis.com`
-2. Set **Name** to `Retrack This` (not your personal name)
+2. Set **Name** to `RetrackThis` (not your personal name)
 3. Upload **`public/brand/retrackthis-workspace-512.png`** as the user’s profile photo  
    (or Account → Personal info if you’re signed in as that user)
 4. Give Gmail a few minutes (sometimes hours) to refresh avatars
 
-Resend’s `from` display name should stay `Retrack This <hello@retrackthis.com>` (already the default in `lib/email.ts`).
+Resend’s `from` display name should stay `RetrackThis <hello@retrackthis.com>` (already the default in `lib/email.ts`).

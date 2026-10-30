@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render a lightweight looping GIF of the Retrack This hero (MIDI → takes → pick)."""
+"""Render a lightweight looping GIF of the RetrackThis hero (MIDI → takes → pick)."""
 
 from __future__ import annotations
 

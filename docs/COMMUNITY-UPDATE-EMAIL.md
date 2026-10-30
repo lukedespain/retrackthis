@@ -1,7 +1,7 @@
 # Community update email (Hazel draft)
 
 **To:** beta / early users (test: music@lukedespain.com + hazeldespain@gmail.com)  
-**From:** Retrack This team  
+**From:** RetrackThis team  
 **Subject:** We heard you, here's what's new!
 
 ---
@@ -29,4 +29,4 @@ If anything looks buggy or seems off, reply to this email. We’re a small team 
 
 Thanks again for helping us shape this.
 
-Retrack This team
+RetrackThis team

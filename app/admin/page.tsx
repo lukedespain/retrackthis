@@ -171,6 +171,7 @@ function AdminPageInner() {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [tab, setTab] = useState<Tab>("members");
   const [period, setPeriod] = useState<Period>("30d");
+  const [netRevenueCents, setNetRevenueCents] = useState<number | null>(null);
   const [members, setMembers] = useState<Member[] | null>(null);
   const [memberQuery, setMemberQuery] = useState("");
   const [memberSort, setMemberSort] = useState<{
@@ -374,6 +375,7 @@ function AdminPageInner() {
 
   function changePeriod(next: Period) {
     setPeriod(next);
+    setNetRevenueCents(null);
     setSelectedDay(null);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", "income");
@@ -697,7 +699,11 @@ function AdminPageInner() {
                 value={money(stats.income.platformFeeEarnedCents)}
                 hint="Gross 10%, before Stripe fees"
               />
-              <StatCard label="Payments" value={`${stats.income.paymentCount}`} hint="In this period" />
+              <StatCard
+                label="Net platform revenue"
+                value={netRevenueCents == null ? "…" : money(netRevenueCents)}
+                hint="After refunds and Stripe fees"
+              />
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -711,7 +717,10 @@ function AdminPageInner() {
               />
             </div>
 
-            <AdminFinanceWaterfall period={period} />
+            <AdminFinanceWaterfall
+              period={period}
+              onLoaded={(finance) => setNetRevenueCents(finance.netRevenueCents)}
+            />
 
             <div className="rounded-2xl border border-gray-100 p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500">

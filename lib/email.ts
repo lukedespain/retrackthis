@@ -38,7 +38,7 @@ export async function sendEmail({
     return;
   }
 
-  const from = process.env.RESEND_FROM?.trim() || "Retrack This <hello@retrackthis.com>";
+  const from = process.env.RESEND_FROM?.trim() || "RetrackThis <hello@retrackthis.com>";
   const replyTo = process.env.RESEND_REPLY_TO?.trim() || "hello@retrackthis.com";
   const settingsUrl = `${appBaseUrl()}/settings`;
   const fontStack =
@@ -47,11 +47,11 @@ export async function sendEmail({
   // Brand (Iris): light = #7B61FF / soft #f3f1ff; dark = #b6a8ff / soft #2a2654
   const footer = includeSettingsFooter
     ? `<p class="email-footer" style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;font-family:${fontStack};">
-        You’re getting this because of your Retrack This notification settings.
+        You’re getting this because of your RetrackThis notification settings.
         <a href="${escapeAttr(settingsUrl)}" style="color:#6b7280;">Manage alerts</a>
       </p>`
     : `<p class="email-footer" style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#9ca3af;font-family:${fontStack};">
-        Sent via Retrack This · <a href="${escapeAttr(appBaseUrl())}" style="color:#6b7280;">retrackthis.com</a>
+        Sent via RetrackThis · <a href="${escapeAttr(appBaseUrl())}" style="color:#6b7280;">retrackthis.com</a>
       </p>`;
 
   const bottomImg = bottomImageUrl

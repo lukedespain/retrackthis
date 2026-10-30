@@ -24,7 +24,7 @@ async function main() {
     subject: COMMUNITY_UPDATE_SUBJECT,
     includeSettingsFooter: false,
     bodyHtml: communityUpdateBodyHtml(FIRST_NAME),
-    ctaLabel: "Open Retrack This",
+    ctaLabel: "Open RetrackThis",
     ctaHref: "https://retrackthis.com",
   });
 

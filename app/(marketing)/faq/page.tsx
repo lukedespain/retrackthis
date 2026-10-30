@@ -7,19 +7,19 @@ import { PLATFORM_FEE_PERCENT } from "@/lib/stripe";
 import "./faq.css";
 
 export const metadata: Metadata = {
-  title: "FAQ · Retrack This",
+  title: "FAQ · RetrackThis",
   description:
-    "How payments, picks, payouts, takes, Part/Bed/Both listening, and the pricing calculator work on Retrack This.",
+    "How payments, picks, payouts, takes, Part/Bed/Both listening, and the pricing calculator work on RetrackThis.",
 };
 
 const faqItems: FaqItem[] = [
   {
     id: "what-is",
-    question: "What is Retrack This?",
+    question: "What is RetrackThis?",
     answer: (
       <>
         <p>
-          Retrack This is a marketplace where producers can post a part of their song to replace, or
+          RetrackThis is a marketplace where producers can post a part of their song to replace, or
           &quot;retrack,&quot; such as a vocal guide, scratch guitar, MIDI violin, drum loop, and so
           on.
         </p>
@@ -208,7 +208,7 @@ const faqItems: FaqItem[] = [
         </p>
         <p>
           Set this up and edit it in Settings &gt; Payouts. If possible, use the same email and name
-          you are using for Retrack This for your PayPal or Wise account. This will make automatic
+          you are using for RetrackThis for your PayPal or Wise account. This will make automatic
           payments easier.
         </p>
       </>
@@ -220,7 +220,7 @@ const faqItems: FaqItem[] = [
     answer: (
       <>
         <p>
-          Yes. Retrack This takes {PLATFORM_FEE_PERCENT}% of the job price when a take is picked.
+          Yes. RetrackThis takes {PLATFORM_FEE_PERCENT}% of the job price when a take is picked.
           The rest goes to the winning musician.
         </p>
         <p>
@@ -240,7 +240,7 @@ const faqItems: FaqItem[] = [
           preferred for musicians uploading and submitting takes.
         </p>
         <p>
-          For listening on the site, Retrack This automatically creates an MP3 version of the
+          For listening on the site, RetrackThis automatically creates an MP3 version of the
           musician&apos;s submissions for lighter streaming previews. Once the job is picked at the
           deadline, the master files become available for download.
         </p>

@@ -3,6 +3,7 @@ import { isAltPayoutProvider } from "@/lib/connectCountries";
 import { db } from "@/lib/db";
 import {
   notifyJobThreeDaysLeft,
+  notifyAdminManualPayout,
   notifyMusicianAwarded,
   notifyMusiciansJobCancelled,
   notifyProducerDeadlineReached,
@@ -235,6 +236,14 @@ export async function finalizeAward(jobId: string, takeId?: string): Promise<Fin
       musicianId: take.musicianId,
       jobTitle: job.title,
       payoutProvider: musician.payoutProvider ?? undefined,
+    });
+    await notifyAdminManualPayout({
+      jobTitle: job.title,
+      musicianName: musician.name,
+      provider: musician.payoutProvider,
+      payoutEmail: musician.payoutEmail,
+      payoutAccountName: musician.payoutAccountName,
+      payoutCents,
     });
 
     return {

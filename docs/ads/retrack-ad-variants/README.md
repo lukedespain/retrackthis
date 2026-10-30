@@ -1,4 +1,4 @@
-# Retrack This — animated ad variants
+# RetrackThis — animated ad variants
 
 Two 7-second, 1080×1350 (4:5) silent video ads, each in five instruments.
 They are built from code, so new instruments or wording changes re-render

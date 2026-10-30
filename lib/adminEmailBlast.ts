@@ -99,7 +99,7 @@ export async function sendPersonalizedEmails(opts: {
         ctaLabel: opts.ctaLabel || undefined,
         ctaHref: opts.ctaHref || undefined,
         bottomImageUrl: opts.bottomImageUrl || undefined,
-        bottomImageAlt: opts.bottomImageUrl ? "Retrack This" : undefined,
+        bottomImageAlt: opts.bottomImageUrl ? "RetrackThis" : undefined,
         bottomImageHref: opts.bottomImageUrl ? "https://retrackthis.com" : undefined,
       });
       sent += 1;

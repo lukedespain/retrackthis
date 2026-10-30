@@ -85,7 +85,7 @@ export async function POST(req: Request) {
   const fullPlain = `Hi {{firstName}},\n\n${bodyPlain}`;
   const bodyHtml = plainBodyToHtml(fullPlain);
 
-  const ctaLabel = (body.ctaLabel ?? "").trim() || "Open Retrack This";
+  const ctaLabel = (body.ctaLabel ?? "").trim() || "Open RetrackThis";
   const ctaHref = (body.ctaHref ?? "").trim() || "https://retrackthis.com";
   const bottomImageUrl = body.includeHeroGif ? COMMUNITY_UPDATE_HERO_GIF : null;
 

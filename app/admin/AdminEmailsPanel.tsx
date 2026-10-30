@@ -165,7 +165,7 @@ export function AdminEmailsPanel() {
           subject,
           bodyPlain,
           includeHeroGif,
-          ctaLabel: "Open Retrack This",
+          ctaLabel: "Open RetrackThis",
           ctaHref: "https://retrackthis.com",
           ...(mode === "test" ? { testEmails } : {}),
         }),

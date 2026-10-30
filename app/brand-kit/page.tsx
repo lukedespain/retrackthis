@@ -8,7 +8,7 @@ import { MOTTO, MOTTO_LINE, MOTTO_STEPS } from "@/lib/motto";
 import { getSessionUserId } from "@/lib/supabaseServer";
 
 export const metadata: Metadata = {
-  title: "Brand kit · Retrack This",
+  title: "Brand kit · RetrackThis",
   robots: { index: false, follow: false },
 };
 
@@ -28,7 +28,7 @@ const TYPE = [
   { name: "Hero", sample: "Retrack your demo", style: { fontSize: "clamp(40px, 6vw, 64px)", fontWeight: 600, letterSpacing: "-0.055em", lineHeight: 0.95 } },
   { name: "Page title", sample: "Find work", style: { fontSize: 44, fontWeight: 600, letterSpacing: "-0.045em", lineHeight: 1 } },
   { name: "Section", sample: "What you play", style: { fontSize: 20, fontWeight: 600, letterSpacing: "-0.03em" } },
-  { name: "Nav wordmark", sample: "Retrack This", style: { fontSize: 21, fontWeight: 600, letterSpacing: "-0.04em" } },
+  { name: "Nav wordmark", sample: "RetrackThis", style: { fontSize: 21, fontWeight: 600, letterSpacing: "-0.04em" } },
   { name: "Body", sample: "Real musicians send back their take.", style: { fontSize: 15, lineHeight: 1.5 } },
   { name: "Small", sample: "Footer, hints, and file labels.", style: { fontSize: 13, color: "var(--muted)" } },
 ];
@@ -134,7 +134,7 @@ export default async function BrandKitPage() {
 
         <section className="card">
           <h2>Motto</h2>
-          <p>Retrack This. “This” is Iris. Use the full motto when there is room. The shorter lines are the same words, cut down.</p>
+          <p>RetrackThis. “This” is Iris. Use the full motto when there is room. The shorter lines are the same words, cut down.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {[
               { name: "Full", text: MOTTO, use: "Page bios, link text, and anywhere with a sentence of room." },

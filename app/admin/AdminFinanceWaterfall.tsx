@@ -27,7 +27,14 @@ type Step = {
   detail?: string;
 };
 
-export function AdminFinanceWaterfall({ period }: { period: Period }) {
+export function AdminFinanceWaterfall({
+  period,
+  onLoaded,
+}: {
+  period: Period;
+  /** Called with the breakdown once it loads, e.g. to show net revenue in a stat card. */
+  onLoaded?: (data: FinanceBreakdown) => void;
+}) {
   const [data, setData] = useState<FinanceBreakdown | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +46,10 @@ export function AdminFinanceWaterfall({ period }: { period: Period }) {
       .then(async (res) => {
         const body = await res.json().catch(() => null);
         if (!res.ok) throw new Error(body?.error ?? `Could not load (${res.status})`);
-        if (!cancelled) setData(body);
+        if (!cancelled) {
+          setData(body);
+          onLoaded?.(body);
+        }
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : "Could not load");
@@ -47,6 +57,7 @@ export function AdminFinanceWaterfall({ period }: { period: Period }) {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]);
 
   return (

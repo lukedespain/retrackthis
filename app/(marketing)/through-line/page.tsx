@@ -4,9 +4,9 @@ import { MarketingFooter } from "@/components/MarketingFooter";
 import { PLATFORM_FEE_PERCENT } from "@/lib/stripe";
 
 export const metadata: Metadata = {
-  title: "Through-lines · Retrack This",
+  title: "Through-lines · RetrackThis",
   description:
-    "Producer and musician through-lines: what happens today on Retrack This, side by side.",
+    "Producer and musician through-lines: what happens today on RetrackThis, side by side.",
   robots: { index: false, follow: false },
 };
 

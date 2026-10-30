@@ -38,7 +38,7 @@ const BADGE = (size) => `
     <path d="M14 25L35 13L35 37Z" fill="#fff" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/>
   </g>
 </svg>`;
-const WORDMARK = `<div class="wm">${BADGE(44)}<span>Retrack <b>This</b></span></div>`;
+const WORDMARK = `<div class="wm">${BADGE(44)}<span>Retrack<b>This</b></span></div>`;
 const STAR = `<svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 15.8 7.2 18.1l.9-5.4L4.2 8.9l5.4-.8L12 3.2z"/></svg>`;
 
 function seeded(seed) {

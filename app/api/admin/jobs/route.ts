@@ -15,7 +15,16 @@ export async function GET() {
     take: 100,
     include: {
       creator: { select: { id: true, name: true, email: true } },
-      payment: { select: { amountCents: true, status: true, platformFeeCents: true } },
+      payment: {
+        select: {
+          amountCents: true,
+          status: true,
+          platformFeeCents: true,
+          manualPayoutCents: true,
+          manualPayoutRef: true,
+          manualPayoutAt: true,
+        },
+      },
       _count: { select: { takes: true } },
       takes: {
         where: { isWinner: true },
@@ -72,6 +81,15 @@ export async function GET() {
         takeCount: job._count.takes,
         hasSelectedWinner: winningTakes.length > 0,
         needsManualPayout,
+        manualPayout:
+          job.payment?.manualPayoutRef && job.payment.manualPayoutCents != null
+            ? {
+                sentLabel: formatCents(job.payment.manualPayoutCents),
+                transactionId: job.payment.manualPayoutRef,
+                paidAt: job.payment.manualPayoutAt?.toISOString() ?? null,
+                providerLabel: formatPayoutProviderLabel(winner?.payoutProvider ?? null),
+              }
+            : null,
         winnerPayout: winner
           ? {
               musicianName: winner.name,

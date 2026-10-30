@@ -15,9 +15,10 @@ function chargeIdFromIntent(pi: Stripe.PaymentIntent): string | null {
 /**
  * Admin: finish musician payout for an AWARDED job.
  * - Stripe Connect: transfer (or markOnly if already done in Dashboard)
- * - PayPal/Wise (pending_manual_payout): markOnly after you paid outside Stripe
+ * - PayPal/Wise (pending_manual_payout): markOnly after you paid outside Stripe,
+ *   with the amount sent and the PayPal/Wise transaction ID
  * POST /api/admin/jobs/:jobId/complete-payout
- * Body optional: { markOnly?: boolean }
+ * Body optional: { markOnly?: boolean, sentCents?: number, transactionId?: string }
  */
 export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
   const { error } = await requireAdmin();
@@ -25,6 +26,8 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
 
   const body = await req.json().catch(() => ({}));
   const markOnly = Boolean(body?.markOnly);
+  const sentCents = Number(body?.sentCents);
+  const transactionId = typeof body?.transactionId === "string" ? body.transactionId.trim() : "";
 
   const job = await db.job.findUnique({
     where: { id: params.jobId },
@@ -72,9 +75,21 @@ export async function POST(req: NextRequest, { params }: { params: { jobId: stri
         { status: 400 }
       );
     }
+    if (!Number.isInteger(sentCents) || sentCents < 1) {
+      return NextResponse.json({ error: "Enter the amount you sent." }, { status: 400 });
+    }
+    if (!transactionId || transactionId.length > 100) {
+      return NextResponse.json({ error: "Enter the transaction ID." }, { status: 400 });
+    }
     await db.payment.update({
       where: { id: job.payment.id },
-      data: { status: "transferred", platformFeeCents },
+      data: {
+        status: "transferred",
+        platformFeeCents,
+        manualPayoutCents: sentCents,
+        manualPayoutRef: transactionId,
+        manualPayoutAt: new Date(),
+      },
     });
     return NextResponse.json({
       success: true,

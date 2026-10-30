@@ -5,6 +5,7 @@ import { EditJobForm } from "@/app/dashboard/EditJobForm";
 import { ExtendDeadlineDialog } from "@/components/ExtendDeadlineDialog";
 import { FileUpload } from "@/components/FileUpload";
 import { AdminActionsMenu, type AdminAction } from "./AdminActionsMenu";
+import { MarkPaidDialog } from "./MarkPaidDialog";
 import { TakeSubmissionFiles } from "@/components/TakeSubmissionFiles";
 import { TestJobBadge } from "@/components/TestJobBadge";
 import { Badge } from "@/components/ui/Badge";
@@ -24,6 +25,12 @@ export type AdminJobRow = Job & {
   flexibleTempo: boolean;
   takeCount?: number;
   needsManualPayout?: boolean;
+  manualPayout?: {
+    sentLabel: string;
+    transactionId: string;
+    paidAt: string | null;
+    providerLabel: string;
+  } | null;
   winnerPayout?: {
     musicianName: string;
     musicianEmail: string;
@@ -55,6 +62,7 @@ export function AdminJobsPanel({
   const [notifyJobId, setNotifyJobId] = useState<string | null>(null);
   const [notifyMessage, setNotifyMessage] = useState<string | null>(null);
   const [extendingId, setExtendingId] = useState<string | null>(null);
+  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
 
   const manualCount = useMemo(
     () => jobs.filter((j) => j.needsManualPayout).length,
@@ -146,6 +154,7 @@ export function AdminJobsPanel({
   }
 
   const extendingJob = extendingId ? jobs.find((j) => j.id === extendingId) : null;
+  const markingPaidJob = markingPaidId ? jobs.find((j) => j.id === markingPaidId) : null;
 
   function busyLabelFor(jobId: string): string | null {
     if (notifyJobId === jobId) return "Sending…";
@@ -195,7 +204,10 @@ export function AdminJobsPanel({
       actions.push({
         label: "Mark paid",
         hint: "After you send via PayPal/Wise",
-        onClick: () => void completePayout(job.id, true),
+        onClick: () => {
+          setPayoutError(null);
+          setMarkingPaidId(job.id);
+        },
         disabled: busy,
       });
     } else if (job.status === "AWARDED" && job.paymentStatus === "captured") {
@@ -234,6 +246,18 @@ export function AdminJobsPanel({
             setNotifyMessage(
               `Extended “${extendingJob.title}” by ${days === 1 ? "1 day" : `${days} days`} and emailed ${notified} musician(s).`
             );
+            onChanged();
+          }}
+        />
+      )}
+      {markingPaidJob?.winnerPayout && (
+        <MarkPaidDialog
+          job={markingPaidJob}
+          payout={markingPaidJob.winnerPayout}
+          onClose={() => setMarkingPaidId(null)}
+          onPaid={() => {
+            setMarkingPaidId(null);
+            setNotifyMessage(`Marked “${markingPaidJob.title}” paid.`);
             onChanged();
           }}
         />
@@ -391,6 +415,19 @@ export function AdminJobsPanel({
                             {job.winnerPayout.payoutAccountName ?? job.winnerPayout.musicianName}
                           </div>
                           <div className="truncate">{job.winnerPayout.payoutEmail}</div>
+                        </div>
+                      )}
+                      {job.manualPayout && (
+                        <div className="mt-1.5 max-w-[14rem] rounded-lg bg-emerald-50 px-2 py-1.5 text-[11px] leading-snug text-emerald-900">
+                          <div className="font-medium">
+                            Sent {job.manualPayout.sentLabel} via {job.manualPayout.providerLabel}
+                            {job.manualPayout.paidAt
+                              ? ` on ${new Date(job.manualPayout.paidAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+                              : ""}
+                          </div>
+                          <div className="mt-0.5 truncate" title={job.manualPayout.transactionId}>
+                            ID {job.manualPayout.transactionId}
+                          </div>
                         </div>
                       )}
                     </td>

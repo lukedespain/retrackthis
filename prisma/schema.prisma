@@ -214,6 +214,10 @@ model Payment {
   amountCents             Int
   platformFeeCents        Int
   status                  String   // "pending_checkout" | "authorized" | "captured" | "transferred" | "pending_manual_payout" | "cancelled" | "refunded" | "failed"
+  // PayPal/Wise payouts sent by hand: what an admin logged on "Mark paid".
+  manualPayoutCents       Int?
+  manualPayoutRef         String?
+  manualPayoutAt          DateTime?
   createdAt               DateTime @default(now())
 
   @@index([stripePaymentIntentId])

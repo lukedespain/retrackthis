@@ -135,7 +135,7 @@ target_link_libraries(RetrackCaptureTest
 # Test plugin for multi-part capture (cycle-loop detection and copies seeing each
 # other). Not shipped. Writes WAVs and logs to ~/Desktop/Bridge Probe/.
 juce_add_plugin(RTBridgeProbe
-    COMPANY_NAME "Retrack This"
+    COMPANY_NAME "RetrackThis"
     BUNDLE_ID "com.retrackthis.bridgeprobe"
     PLUGIN_MANUFACTURER_CODE RtTh
     PLUGIN_CODE Prb1

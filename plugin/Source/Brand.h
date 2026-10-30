@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 
-/** Retrack This brand, matching app/brand.css on the site (light mode). */
+/** RetrackThis brand, matching app/brand.css on the site (light mode). */
 namespace brand
 {
     const juce::Colour page        { 0xfff3f2ee };
